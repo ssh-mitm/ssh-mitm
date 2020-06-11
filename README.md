@@ -11,9 +11,6 @@
 
 At this time, only ssh (terminal) and scp filetransfers are supported.
 
-This library can be used in cyber defense exercises when communication with a compromised server
-and using credentials like usernames and passwords is not possible, because an attacker can use those to compromise more services and servers.
-
 > :warning: **do not use this library in production environments! This tool is only for security audits!**
 
 ## Installation
