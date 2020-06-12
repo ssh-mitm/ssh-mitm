@@ -25,18 +25,12 @@ class Session:
         self.scp_channel = None
         self.scp_command = ''
 
-        self.current_number = 0
-
         self.username = ''
         self.remote_address = (None, None)
         self.key = None
         self.agent = None
         self.client_ready = threading.Event()
         self.authenticator = authenticator(self)
-
-    def get_unique_prefix(self):
-        self.current_number += 1
-        return str(threading.current_thread().ident) + '_' + str(self.current_number) + '_'
 
     @property
     def running(self):

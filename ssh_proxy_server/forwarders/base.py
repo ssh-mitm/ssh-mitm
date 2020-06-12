@@ -17,6 +17,5 @@ class BaseForwarder(Module):
     def forward(self):
         raise NotImplementedError
 
-    @staticmethod
-    def _closed(channel):
+    def _closed(self, channel):
         return channel.closed or channel.eof_received or channel.eof_sent or not channel.active
