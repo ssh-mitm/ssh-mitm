@@ -5,7 +5,8 @@ from enhancements.modules import Module
 
 import paramiko
 
-from ssh_proxy_server.client import SSHClient, AuthenticationMethod
+from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
+from ssh_proxy_server.clients.sftp import SFTPClient
 from ssh_proxy_server.exceptions import MissingHostException
 
 
@@ -127,6 +128,7 @@ class Authenticator(Module):
         )
         if sshclient.connect():
             self.session.ssh_client = sshclient
+            self.session.sftp_client = SFTPClient.from_client(sshclient)
             return paramiko.AUTH_SUCCESSFUL
         logging.debug('connection failed!')
         return paramiko.AUTH_FAILED

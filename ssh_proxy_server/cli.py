@@ -7,14 +7,16 @@ from ssh_proxy_server.authentication import (
     Authenticator,
     AuthenticatorPassThrough
 )
-from ssh_proxy_server.server_stubs import (
-    BaseAuthenticationInterface,
-    AuthenticationInterface
+from ssh_proxy_server.interfaces import (
+    BaseServerInterface,
+    ServerInterface
 )
 from ssh_proxy_server.forwarders import (
     BaseForwarder,
     SCPBaseForwarder,
     SCPForwarder,
+    SFTPBaseForwarder,
+    SFTPForwarder,
     SSHBaseForwarder,
     SSHForwarder
 )
@@ -54,10 +56,17 @@ def main():
         baseclass=SCPBaseForwarder
     )
     parser.add_module(
-        '--auth-interface',
+        '--sftp-interface',
+        dest='sftp_interface',
+        default=SFTPForwarder,
+        help='ProxyManager to manage the Proxy',
+        baseclass=SFTPBaseForwarder
+    )
+    parser.add_module(
+        '--server-interface',
         dest='auth_interface',
-        default=AuthenticationInterface,
-        baseclass=BaseAuthenticationInterface,
+        default=ServerInterface,
+        baseclass=BaseServerInterface,
         help='interface for authentication'
     )
     parser.add_module(

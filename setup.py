@@ -19,6 +19,7 @@ setup(
     long_description_content_type='text/markdown',
     packages=find_packages(),
     url="https://github.com/manfred-kaiser/ssh-proxy-server",
+    python_requires='>= 3.5',
     classifiers=[
         "Programming Language :: Python :: 3",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
