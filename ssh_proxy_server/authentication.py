@@ -5,7 +5,7 @@ from enhancements.modules import Module
 
 import paramiko
 
-from ssh_proxy_server.client import SSHClient, AuthenticationMethod
+from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
 from ssh_proxy_server.exceptions import MissingHostException
 
 
