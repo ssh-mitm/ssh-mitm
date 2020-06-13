@@ -4,14 +4,14 @@ import paramiko
 from enhancements.modules import Module
 
 
-class BaseAuthenticationInterface(paramiko.ServerInterface, Module):
+class BaseServerInterface(paramiko.ServerInterface, Module):
 
     def __init__(self, session):
         super().__init__()
         self.session = session
 
 
-class AuthenticationInterface(BaseAuthenticationInterface):
+class ServerInterface(BaseServerInterface):
 
     @classmethod
     def parser_arguments(cls):

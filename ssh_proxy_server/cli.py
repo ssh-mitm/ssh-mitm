@@ -7,9 +7,9 @@ from ssh_proxy_server.authentication import (
     Authenticator,
     AuthenticatorPassThrough
 )
-from ssh_proxy_server.server_stubs import (
-    BaseAuthenticationInterface,
-    AuthenticationInterface
+from ssh_proxy_server.server_interface import (
+    BaseServerInterface,
+    ServerInterface
 )
 from ssh_proxy_server.forwarders import (
     BaseForwarder,
@@ -54,10 +54,10 @@ def main():
         baseclass=SCPBaseForwarder
     )
     parser.add_module(
-        '--auth-interface',
+        '--server-interface',
         dest='auth_interface',
-        default=AuthenticationInterface,
-        baseclass=BaseAuthenticationInterface,
+        default=ServerInterface,
+        baseclass=BaseServerInterface,
         help='interface for authentication'
     )
     parser.add_module(
