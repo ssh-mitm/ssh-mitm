@@ -23,7 +23,7 @@ from ssh_proxy_server.forwarders import (
 
 
 def main():
-    parser = ModuleParser(description='SSH Proxy Server', baseclass=BaseForwarder)
+    parser = ModuleParser(description='SSH Proxy Server', baseclass=BaseForwarder, modules_from_file=True)
 
     parser.add_plugin(LogModule)
 
