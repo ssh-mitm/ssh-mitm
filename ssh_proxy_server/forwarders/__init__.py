@@ -13,3 +13,8 @@ from ssh_proxy_server.forwarders.ssh import (
     SSHForwarder,
     SSHLogForwarder
 )
+
+from ssh_proxy_server.forwarders.sftp import (
+    SFTPBaseForwarder,
+    SFTPForwarder
+)

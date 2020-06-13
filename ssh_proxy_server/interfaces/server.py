@@ -1,4 +1,5 @@
 import logging
+import os
 
 import paramiko
 from enhancements.modules import Module
@@ -122,10 +123,51 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_subsystem_request(self, channel, name):
         if name.upper() == 'SFTP':
-            logging.warning('sftp not implemented')
-            return False
+            logging.warning('sftp not fully supported! file transfers not working')
+            self.session.sftp = True
+            self.session.sftp_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 
     def check_port_forward_request(self, address, port):
         logging.warning("port forward attemt")
         return False
+
+
+class ProxySFTPServer(paramiko.SFTPServer):
+    def start_subsystem(self, name, transport, channel):
+        self.server.session.sftp_client.subsystem_count += 1
+        super().start_subsystem(name, transport, channel)
+
+    def finish_subsystem(self):
+        super().finish_subsystem()
+        self.server.session.sftp_client.subsystem_count -= 1
+        self.server.session.sftp_client.close()
+
+    def _process(self, target, requestNumber, msg):
+        if target == paramiko.sftp.CMD_CLOSE:
+            position = msg.packet.tell()
+            handle = msg.get_binary()
+            if handle in self.file_table:
+                sftpHandle = self.file_table[handle]
+                filename = sftpHandle.filename
+                writefile = getattr(sftpHandle, 'writefile', None)
+                remotePath = sftpHandle.remotePath
+                sftpHandle.close()
+                del self.file_table[handle]
+
+                status = paramiko.SFTP_OK
+                if writefile:
+                    try:
+                        # TODO: check file
+                        self.server.session.sftp_client.put(filename, remotePath, confirm=True)
+                    except (OSError, IOError) as e:
+                        logging.exception('error in sftp put')
+                        status = paramiko.SFTPServer.convert_errno(e.errno)
+                keep_files = False
+                if not keep_files:
+                    os.remove(filename)
+                self._send_status(requestNumber, status)
+                return
+            msg.packet.seek(position)
+
+        super()._process(target, requestNumber, msg)
