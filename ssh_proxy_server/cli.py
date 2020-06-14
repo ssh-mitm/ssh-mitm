@@ -15,8 +15,6 @@ from ssh_proxy_server.forwarders import (
     BaseForwarder,
     SCPBaseForwarder,
     SCPForwarder,
-    SFTPBaseForwarder,
-    SFTPForwarder,
     SSHBaseForwarder,
     SSHForwarder
 )
@@ -54,13 +52,6 @@ def main():
         default=SCPForwarder,
         help='ProxyManager to manage the Proxy',
         baseclass=SCPBaseForwarder
-    )
-    parser.add_module(
-        '--sftp-interface',
-        dest='sftp_interface',
-        default=SFTPForwarder,
-        help='ProxyManager to manage the Proxy',
-        baseclass=SFTPBaseForwarder
     )
     parser.add_module(
         '--server-interface',
