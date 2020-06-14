@@ -1,3 +1,4 @@
+import logging
 import paramiko
 
 
@@ -8,7 +9,15 @@ class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
         self.session = authenticationinterface.session
 
     def chattr(self, path, attr):
-        raise NotImplementedError('chattr not implemented')
+        self.session.sftp_client_ready.wait()
+        if attr.st_mode:
+            return self.session.sftp_client.chmod(path, attr.st_mode)
+        oldattr = paramiko.SFTPAttributes.from_stat(self.stat(path))
+        if not attr.st_uid:
+            attr.st_uid = oldattr.st_uid
+        if not attr.st_gid:
+            attr.st_gid = oldattr.st_gid
+        return self.session.sftp_client.chown(path, attr.st_uid, attr.st_gid)
 
     def list_folder(self, path):
         self.session.sftp_client_ready.wait()
@@ -23,6 +32,7 @@ class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
     def open(self, remotePath, flags, attr):
+        logging.error('open not implemented')
         raise NotImplementedError('open not implemented!')
 
     def readlink(self, path):
