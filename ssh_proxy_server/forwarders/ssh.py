@@ -99,8 +99,7 @@ class SSHLogForwarder(SSHForwarder):
         )
         self.fileIn, self.fileOut, self.timeingfile = self._initFiles(logdir)
 
-    @staticmethod
-    def _initFiles(logdir):
+    def _initFiles(self, logdir):
         if not os.path.isdir(logdir):
             os.mkdir(logdir)
         timecomponent = str(time.time()).split('.')[0]

@@ -2,6 +2,7 @@ import logging
 import os
 import time
 from io import BytesIO
+import uuid
 
 import paramiko
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF
@@ -63,12 +64,10 @@ class SCPForwarder(SCPBaseForwarder):
     def handleTraffic(self, traffic, recipient):
         return traffic
 
-    @staticmethod
-    def handleErrorTraffic(traffic):
+    def handleErrorTraffic(self, traffic):
         return traffic
 
-    @staticmethod
-    def _sendall(channel, data, sendfunc):
+    def _sendall(self, channel, data, sendfunc):
         if not data:
             return 0
         if channel.exit_status_ready():
@@ -82,8 +81,7 @@ class SCPForwarder(SCPBaseForwarder):
             sent += newsent
         return sent
 
-    @staticmethod
-    def close_session(channel, status):
+    def close_session(self, channel, status):
         # pylint: disable=protected-access
         if channel.closed:
             return
@@ -132,17 +130,18 @@ class SCPStorageForwarder(SCPForwarder):
             help='directory to store files from scp'
         )
         cls.PARSER.add_argument(
-            '--scp-keep_files',
+            '--scp-keep-files',
             dest='scp_keep_files',
-            required=True,
-            help='directory to store files from scp'
+            action='store_true',
+            help='do not delete intercepted files'
         )
 
     def __init__(self, session):
         super().__init__(session)
 
         self.fileSizeRemaining = 0
-        self.fileName = ''
+        self.file_name = ''
+        self.file_id = str(uuid.uuid4())
         self.tmpFile = None
         self.trafficBuffer = BytesIO()
         self.response = False
@@ -180,6 +179,8 @@ class SCPStorageForwarder(SCPForwarder):
         1 -> Nicht kritischer Fehler
         2 -> Kritischer Fehler (Verbindung wird beendet)
         """
+        os.makedirs(self.args.scp_storage_dir, exist_ok=True)
+        output_path = os.path.join(self.args.scp_storage_dir, self.file_id)
 
         # ignoriert das Datenpaket
         if self.response:
@@ -204,15 +205,11 @@ class SCPStorageForwarder(SCPForwarder):
             self.trafficBuffer.truncate(0)
 
             # setze Name, Dateigröße und das zu sendende Kommando
-            self.fileName = name
+            self.file_name = name
+            logging.info('scp file transfer - %s -> %s', self.file_id, self.file_name)
             self.fileSizeRemaining = int(size)
             traffic = command + b'\n'
             # erstelle eine temporäre Datei
-            name = self.session.get_unique_prefix() + self.fileName
-            try:
-                os.stat(os.path.dirname(self.args.scp_storage_dir))
-            except Exception:
-                os.makedirs(os.path.dirname(self.args.scp_storage_dir))
 
             # das nächste Datenpaket soll verworfen werden
             # (Antworten interessieren uns nicht!)
@@ -222,15 +219,15 @@ class SCPStorageForwarder(SCPForwarder):
         # notwendig, da im letzten Datenpaket ein NULL-Byte angehängt wird
         bytesToWrite = min(len(traffic), self.fileSizeRemaining)
         self.fileSizeRemaining -= bytesToWrite
-        with open(self.args.scp_storage_dir, 'a+b') as tmpFile:
+        with open(output_path, 'a+b') as tmpFile:
             tmpFile.write(traffic[:bytesToWrite])
         traffic = ''
 
         # Dateiende erreicht
         if self.fileSizeRemaining == 0:
-            result = self.inspect_file(self.args.scp_storage_dir)
+            result = self.inspect_file(output_path)
             if result == paramiko.SFTP_OK:
-                with open(self.args.scp_storage_dir, 'rb') as tmpFile:
+                with open(output_path, 'rb') as tmpFile:
                     # while buf := tmpFile.read(self.BUF_LEN):  # use with python3.8
                     while True:
                         buf = tmpFile.read(self.BUF_LEN)
@@ -241,11 +238,10 @@ class SCPStorageForwarder(SCPForwarder):
             else:
                 self.close_session(self.session.scp_channel, 2)
             if not self.args.scp_keep_files:
-                os.remove(self.args.scp_storage_dir)
+                os.remove(output_path)
         return traffic
 
-    @staticmethod
-    def inspect_file(filepath):
+    def inspect_file(self, filepath):
         """
         Validationsergebnisse für den Proxy. Entscheidet, ob eine Datei transferiert werden darf.
         """

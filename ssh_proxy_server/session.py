@@ -4,6 +4,9 @@ import threading
 from paramiko import Transport, AUTH_SUCCESSFUL
 from paramiko.agent import AgentServerProxy
 
+from ssh_proxy_server.interfaces.server import ProxySFTPServer
+from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
+
 
 class Session:
     CIPHERS = None
@@ -25,18 +28,16 @@ class Session:
         self.scp_channel = None
         self.scp_command = ''
 
-        self.current_number = 0
+        self.sftp = False
+        self.sftp_channel = None
+        self.sftp_client = None
+        self.sftp_client_ready = threading.Event()
 
         self.username = ''
         self.remote_address = (None, None)
         self.key = None
         self.agent = None
-        self.client_ready = threading.Event()
         self.authenticator = authenticator(self)
-
-    def get_unique_prefix(self):
-        self.current_number += 1
-        return str(threading.current_thread().ident) + '_' + str(self.current_number) + '_'
 
     @property
     def running(self):
@@ -51,6 +52,7 @@ class Session:
                     raise ValueError('ciphers must be a tuple')
                 self._transport.get_security_options().ciphers = self.CIPHERS
             self._transport.add_server_key(self.proxyserver.host_key)
+            self._transport.set_subsystem_handler('sftp', ProxySFTPServer, SFTPProxyServerInterface)
 
         return self._transport
 
@@ -83,7 +85,7 @@ class Session:
 
         # create client or master channel
         if self.ssh_client:
-            self.client_ready.set()
+            self.sftp_client_ready.set()
         else:
             if not self.agent and self.authenticator.AGENT_FORWARDING:
                 try:
@@ -103,11 +105,12 @@ class Session:
             logging.info('connection established')
             # Connect method end
 
-            if not self.scp and not self.ssh:
+            if not self.scp and not self.ssh and not self.sftp:
                 if self.transport.is_active():
                     self.transport.close()
                     return False
-            self.client_ready.set()
+
+            self.sftp_client_ready.set()
 
         logging.info("session started")
         return True

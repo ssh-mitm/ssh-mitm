@@ -5,7 +5,8 @@ from enhancements.modules import Module
 
 import paramiko
 
-from ssh_proxy_server.client import SSHClient, AuthenticationMethod
+from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
+from ssh_proxy_server.clients.sftp import SFTPClient
 from ssh_proxy_server.exceptions import MissingHostException
 
 
@@ -13,23 +14,54 @@ class Authenticator(Module):
 
     AGENT_FORWARDING = False
 
+    @classmethod
+    def parser_arguments(cls):
+        cls.PARSER.add_argument(
+            '--remote-host',
+            dest='remote_host',
+            help='remote host to connect to'
+        )
+        cls.PARSER.add_argument(
+            '--remote-port',
+            dest='remote_port',
+            default=22,
+            type=int,
+            help='remote port to connect to'
+        )
+        cls.PARSER.add_argument(
+            '--auth-username',
+            dest='auth_username',
+            help='username for remote authentication'
+        )
+        cls.PARSER.add_argument(
+            '--auth-password',
+            dest='auth_password',
+            help='password for remote authentication'
+        )
+
     def __init__(self, session):
         super().__init__()
         self.session = session
 
-    @staticmethod
-    def split_username(username):
-        p = r'(?P<username>[^@]+)@(?P<host>[^:]+):?(?P<port>[0-9]*)'
-        m = re.search(p, username)
-        return (
-            m['username'],
-            m['host'],
-            int(m['port']) if m['port'] else 22
-        )
+    def get_remote_host_credentials(self, username):
+        if self.args.remote_host:
+            return (
+                self.args.auth_username or username,
+                self.args.remote_host,
+                self.args.remote_port
+            )
+        else:
+            p = r'(?P<username>[^@]+)@(?P<host>[^:]+):?(?P<port>[0-9]*)'
+            m = re.search(p, username)
+            return (
+                self.args.auth_username or m['username'],
+                m['host'],
+                int(m['port']) if m['port'] else self.args.remote_port
+            )
 
     def authenticate(self, username=None, password=None, key=None):
         if username:
-            user, host, port = self.split_username(username)
+            user, host, port = self.get_remote_host_credentials(username)
             self.session.username = user
             self.session.remote_address = (host, port)
         if key:
@@ -37,11 +69,25 @@ class Authenticator(Module):
 
         try:
             if self.session.agent:
-                return self.auth_agent(self.session.username, self.session.remote_address[0], self.session.remote_address[1])
+                return self.auth_agent(
+                    self.session.username,
+                    self.session.remote_address[0],
+                    self.session.remote_address[1]
+                )
             if password:
-                return self.auth_password(self.session.username, self.session.remote_address[0], self.session.remote_address[1], password)
+                return self.auth_password(
+                    self.session.username,
+                    self.session.remote_address[0],
+                    self.session.remote_address[1],
+                    self.args.auth_password or password
+                )
             if key:
-                return self.auth_publickey(self.session.username, self.session.remote_address[0], self.session.remote_address[1], key)
+                return self.auth_publickey(
+                    self.session.username,
+                    self.session.remote_address[0],
+                    self.session.remote_address[1],
+                    key
+                )
         except MissingHostException:
             logging.error("no remote host")
         except Exception:
@@ -82,6 +128,7 @@ class Authenticator(Module):
         )
         if sshclient.connect():
             self.session.ssh_client = sshclient
+            self.session.sftp_client = SFTPClient.from_client(sshclient)
             return paramiko.AUTH_SUCCESSFUL
         logging.debug('connection failed!')
         return paramiko.AUTH_FAILED
