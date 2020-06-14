@@ -31,7 +31,7 @@ setup(
         ]
     },
     install_requires=[
-        'enhancements',
+        'enhancements>=0.0.4',
         'paramiko',
         'pytz'
     ]
