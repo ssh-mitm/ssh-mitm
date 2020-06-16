@@ -1,6 +1,8 @@
 from enhancements.modules import ModuleParser
 from enhancements.plugins import LogModule
 
+from paramiko import Transport
+
 from ssh_proxy_server.server import SSHProxyServer
 
 from ssh_proxy_server.authentication import (
@@ -73,6 +75,11 @@ def main():
         action='store_true',
         help='enables agent forwarding'
     )
+    parser.add_argument(
+        '--banner-name',
+        dest='banner_name',
+        help='set a custom string as server banner'
+    )
 
     args = parser.parse_args()
 
@@ -85,4 +92,6 @@ def main():
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator
     )
+    if args.banner_name is not None:
+        Transport._CLIENT_ID = args.banner_name
     proxy.start()
