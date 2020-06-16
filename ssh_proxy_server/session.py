@@ -14,6 +14,8 @@ class Session:
     def __init__(self, proxyserver, client_socket, client_address, authenticator):
 
         self._transport = None
+        self._server_banner = None
+
         self.channel = None
 
         self.proxyserver = proxyserver
@@ -53,8 +55,18 @@ class Session:
                 self._transport.get_security_options().ciphers = self.CIPHERS
             self._transport.add_server_key(self.proxyserver.host_key)
             self._transport.set_subsystem_handler('sftp', ProxySFTPServer, SFTPProxyServerInterface)
+            if self.banner:
+                self._transport.local_version = self.banner
 
         return self._transport
+
+    @property
+    def banner(self):
+        return self._server_banner
+
+    @banner.setter
+    def banner(self, value):
+        self._server_banner = value
 
     def start(self):
         event = threading.Event()

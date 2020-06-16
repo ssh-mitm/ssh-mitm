@@ -129,12 +129,6 @@ class SCPStorageForwarder(SCPForwarder):
             required=True,
             help='directory to store files from scp'
         )
-        cls.PARSER.add_argument(
-            '--scp-keep-files',
-            dest='scp_keep_files',
-            action='store_true',
-            help='do not delete intercepted files'
-        )
 
     def __init__(self, session):
         super().__init__(session)
@@ -237,8 +231,6 @@ class SCPStorageForwarder(SCPForwarder):
                 traffic = '\0'
             else:
                 self.close_session(self.session.scp_channel, 2)
-            if not self.args.scp_keep_files:
-                os.remove(output_path)
         return traffic
 
     def inspect_file(self, filepath):
