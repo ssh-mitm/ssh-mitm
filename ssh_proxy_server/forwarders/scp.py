@@ -4,7 +4,6 @@ import time
 from io import BytesIO
 import uuid
 
-import paramiko
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF
 from paramiko.message import Message
 
@@ -133,11 +132,11 @@ class SCPStorageForwarder(SCPForwarder):
     def __init__(self, session):
         super().__init__(session)
 
-        self.fileSizeRemaining = 0
+        self.file_size_remaining = 0
         self.file_name = ''
         self.file_id = str(uuid.uuid4())
-        self.tmpFile = None
-        self.trafficBuffer = BytesIO()
+        self.tmp_file = None
+        self.traffic_buffer = BytesIO()
         self.response = False
 
     def handleTraffic(self, traffic, recipient):
@@ -181,9 +180,9 @@ class SCPStorageForwarder(SCPForwarder):
             self.response = False
             return traffic
 
-        if self.fileSizeRemaining == 0:
-            self.trafficBuffer.write(traffic)
-            bufferVal = self.trafficBuffer.getvalue()
+        if self.file_size_remaining == 0:
+            self.traffic_buffer.write(traffic)
+            bufferVal = self.traffic_buffer.getvalue()
             cIndex = bufferVal.find(b'C')
             if cIndex == -1:
                 return traffic
@@ -193,15 +192,16 @@ class SCPStorageForwarder(SCPForwarder):
             command = bufferVal[cIndex:nIndex]
             # Kommandos des Formats "C0660 1234 file.txt" werden aufgesplittet
             _, size, name = command.decode('utf8').split(' ', 2)
+            logging.info("got command: %s", command.decode('utf-8'))
 
             # resettet den Buffer
-            self.trafficBuffer.seek(0)
-            self.trafficBuffer.truncate(0)
+            self.traffic_buffer.seek(0)
+            self.traffic_buffer.truncate(0)
 
             # setze Name, Dateigröße und das zu sendende Kommando
             self.file_name = name
             logging.info('scp file transfer - %s -> %s', self.file_id, self.file_name)
-            self.fileSizeRemaining = int(size)
+            self.file_size_remaining = int(size)
             traffic = command + b'\n'
             # erstelle eine temporäre Datei
 
@@ -211,30 +211,20 @@ class SCPStorageForwarder(SCPForwarder):
             return traffic
 
         # notwendig, da im letzten Datenpaket ein NULL-Byte angehängt wird
-        bytesToWrite = min(len(traffic), self.fileSizeRemaining)
-        self.fileSizeRemaining -= bytesToWrite
-        with open(output_path, 'a+b') as tmpFile:
-            tmpFile.write(traffic[:bytesToWrite])
+        bytes_to_write = min(len(traffic), self.file_size_remaining)
+        self.file_size_remaining -= bytes_to_write
+        with open(output_path, 'a+b') as tmp_file:
+            tmp_file.write(traffic[:bytes_to_write])
         traffic = ''
 
         # Dateiende erreicht
-        if self.fileSizeRemaining == 0:
-            result = self.inspect_file(output_path)
-            if result == paramiko.SFTP_OK:
-                with open(output_path, 'rb') as tmpFile:
-                    # while buf := tmpFile.read(self.BUF_LEN):  # use with python3.8
-                    while True:
-                        buf = tmpFile.read(self.BUF_LEN)
-                        self._sendall(recipient, buf, recipient.send)
-                        if len(buf) != self.BUF_LEN:
-                            break
-                traffic = '\0'
-            else:
-                self.close_session(self.session.scp_channel, 2)
+        if self.file_size_remaining == 0:
+            with open(output_path, 'rb') as tmp_file:
+                # while buf := tmp_file.read(self.BUF_LEN):  # use with python3.8
+                while True:
+                    buf = tmp_file.read(self.BUF_LEN)
+                    self._sendall(recipient, buf, recipient.send)
+                    if len(buf) != self.BUF_LEN:
+                        break
+            traffic = '\0'
         return traffic
-
-    def inspect_file(self, filepath):
-        """
-        Validationsergebnisse für den Proxy. Entscheidet, ob eine Datei transferiert werden darf.
-        """
-        return paramiko.SFTP_OK
