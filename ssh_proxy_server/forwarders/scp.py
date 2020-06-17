@@ -134,7 +134,7 @@ class SCPStorageForwarder(SCPForwarder):
 
         self.file_size_remaining = 0
         self.file_name = ''
-        self.file_id = str(uuid.uuid4())
+        self.file_id = None
         self.tmp_file = None
         self.traffic_buffer = BytesIO()
         self.response = False
@@ -173,11 +173,14 @@ class SCPStorageForwarder(SCPForwarder):
         2 -> Kritischer Fehler (Verbindung wird beendet)
         """
         os.makedirs(self.args.scp_storage_dir, exist_ok=True)
+        if not self.file_id:
+            self.file_id = str(uuid.uuid4())
         output_path = os.path.join(self.args.scp_storage_dir, self.file_id)
 
         # ignoriert das Datenpaket
         if self.response:
             self.response = False
+            logging.info(traffic)
             return traffic
 
         if self.file_size_remaining == 0:
@@ -215,16 +218,8 @@ class SCPStorageForwarder(SCPForwarder):
         self.file_size_remaining -= bytes_to_write
         with open(output_path, 'a+b') as tmp_file:
             tmp_file.write(traffic[:bytes_to_write])
-        traffic = ''
 
         # Dateiende erreicht
         if self.file_size_remaining == 0:
-            with open(output_path, 'rb') as tmp_file:
-                # while buf := tmp_file.read(self.BUF_LEN):  # use with python3.8
-                while True:
-                    buf = tmp_file.read(self.BUF_LEN)
-                    self._sendall(recipient, buf, recipient.send)
-                    if len(buf) != self.BUF_LEN:
-                        break
-            traffic = '\0'
+            self.file_id = None
         return traffic
