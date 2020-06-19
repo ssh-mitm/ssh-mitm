@@ -1,8 +1,8 @@
 import logging
 import os
 import time
-from io import BytesIO
 import uuid
+import re
 
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF
 from paramiko.message import Message
@@ -11,10 +11,12 @@ from ssh_proxy_server.forwarders.base import BaseForwarder
 
 
 class SCPBaseForwarder(BaseForwarder):
-    pass
 
+    def handle_traffic(self, traffic):
+        return traffic
 
-class SCPForwarder(SCPBaseForwarder):
+    def handle_error(self, traffic):
+        return traffic
 
     def forward(self):
 
@@ -25,20 +27,20 @@ class SCPForwarder(SCPBaseForwarder):
                 # redirect stdout <-> stdin und stderr <-> stderr
                 if self.session.scp_channel.recv_ready():
                     buf = self.session.scp_channel.recv(self.BUF_LEN)
-                    buf = self.handleTraffic(buf, self.server_channel)
-                    self._sendall(self.server_channel, buf, self.server_channel.send)
+                    buf = self.handle_traffic(buf)
+                    self.sendall(self.server_channel, buf, self.server_channel.send)
                 if self.server_channel.recv_ready():
                     buf = self.server_channel.recv(self.BUF_LEN)
-                    buf = self.handleTraffic(buf, self.session.scp_channel)
-                    self._sendall(self.session.scp_channel, buf, self.session.scp_channel.send)
+                    buf = self.handle_traffic(buf)
+                    self.sendall(self.session.scp_channel, buf, self.session.scp_channel.send)
                 if self.session.scp_channel.recv_stderr_ready():
                     buf = self.session.scp_channel.recv_stderr(self.BUF_LEN)
-                    buf = self.handleErrorTraffic(buf)
-                    self._sendall(self.server_channel, buf, self.server_channel.send_stderr)
+                    buf = self.handle_error(buf)
+                    self.sendall(self.server_channel, buf, self.server_channel.send_stderr)
                 if self.server_channel.recv_stderr_ready():
                     buf = self.server_channel.recv_stderr(self.BUF_LEN)
-                    buf = self.handleErrorTraffic(buf)
-                    self._sendall(self.session.scp_channel, buf, self.session.scp_channel.send_stderr)
+                    buf = self.handle_error(buf)
+                    self.sendall(self.session.scp_channel, buf, self.session.scp_channel.send_stderr)
 
                 if self._closed(self.session.scp_channel):
                     self.server_channel.close()
@@ -60,13 +62,7 @@ class SCPForwarder(SCPBaseForwarder):
             logging.exception('error processing scp command')
             raise
 
-    def handleTraffic(self, traffic, recipient):
-        return traffic
-
-    def handleErrorTraffic(self, traffic):
-        return traffic
-
-    def _sendall(self, channel, data, sendfunc):
+    def sendall(self, channel, data, sendfunc):
         if not data:
             return 0
         if channel.exit_status_ready():
@@ -115,6 +111,60 @@ class SCPForwarder(SCPBaseForwarder):
         channel._unlink()
 
 
+class SCPForwarder(SCPBaseForwarder):
+
+    def __init__(self, session):
+        super().__init__(session)
+
+        self.await_response = False
+        self.bytes_remaining = 0
+        self.bytes_to_write = 0
+
+        self.file_command = None
+        self.file_mode = None
+        self.file_size = 0
+        self.file_name = ''
+
+    def handle_command(self, traffic):
+        command = traffic.decode('utf-8')
+
+        match1 = re.match(r"([CD])([0-7]{4})\s([0-9]+)\s(.*)\n", command)
+        if not match1:
+            match2 = re.match(r"(E)\n", command)
+            if match2:
+                logging.info("got command %s", command.strip())
+            return traffic
+
+        # setze Name, Dateigröße und das zu sendende Kommando
+        logging.info("got command %s", command.strip())
+
+        self.file_command = match1[1]
+        self.file_mode = match1[2]
+        self.bytes_remaining = self.file_size = int(match1[3])
+        self.file_name = match1[4]
+
+        # next traffic package is a respone package
+        self.await_response = True
+        return traffic
+
+    def process_data(self, traffic):
+        return traffic
+
+    def process_response(self, traffic):
+        return traffic
+
+    def handle_traffic(self, traffic):
+        # ignoriert das Datenpaket
+        if self.await_response:
+            self.await_response = False
+            return self.process_response(traffic)
+
+        if self.bytes_remaining == 0:
+            return self.handle_command(traffic)
+
+        return self.process_data(traffic)
+
+
 class SCPStorageForwarder(SCPForwarder):
     """
     Kapselt das Weiterleiten bzw. Abfangen eines SCP Kommandos und der Dateien
@@ -131,95 +181,23 @@ class SCPStorageForwarder(SCPForwarder):
 
     def __init__(self, session):
         super().__init__(session)
-
-        self.file_size_remaining = 0
-        self.file_name = ''
         self.file_id = None
         self.tmp_file = None
-        self.traffic_buffer = BytesIO()
-        self.response = False
 
-    def handleTraffic(self, traffic, recipient):
-        """
-        Behandelt den SCP Traffic zwischen Client und Server.
-        Es ist nicht notwendig zu unterscheiden, ob wir Dateien senden oder
-        empfangen bzw. ob der aktuelle `traffic` vom Client oder vom Server
-        gesendet wurde.
-        Ein typischer Dateitransfer sieht folgendermaßen aus:
-
-        C0660 4 file.txt\n
-        \0
-        1234\0
-        \0
-        D0600 0 testdirectory\n
-        \0
-        C0660 5 file2.txt\n
-        \0
-        54321\0
-        \0
-        E\n
-        \0
-
-        Eine Dateiübertragung wird stets mit einem "C-Kommando" eingeleitet,
-        mit der Syntax `C<mode> <filesize> <filename>`. Die eigentliche Datei
-        wird daraufhin byteweise übertragen und außerdem ein 0 Byte angehängt.
-        Äquivalent zu den "C-Kommandos" gibt es die "D-Kommandos",
-        die verwendet werden um in Unterverzeichnisse zu wechseln.
-        Die angegebene Dateigröße wird hierbei ignoriert. Um wieder aus einem
-        Verzeichnis raus zu wechseln wird das "E-Kommando" verwendet.
-        Jedes Kommando wird mit einem Statuscode beantwortet:
-        0 -> paramiko.SFTP_OK
-        1 -> Nicht kritischer Fehler
-        2 -> Kritischer Fehler (Verbindung wird beendet)
-        """
+    def process_data(self, traffic):
         os.makedirs(self.args.scp_storage_dir, exist_ok=True)
         if not self.file_id:
             self.file_id = str(uuid.uuid4())
         output_path = os.path.join(self.args.scp_storage_dir, self.file_id)
 
-        # ignoriert das Datenpaket
-        if self.response:
-            self.response = False
-            logging.info(traffic)
-            return traffic
-
-        if self.file_size_remaining == 0:
-            self.traffic_buffer.write(traffic)
-            bufferVal = self.traffic_buffer.getvalue()
-            cIndex = bufferVal.find(b'C')
-            if cIndex == -1:
-                return traffic
-            nIndex = bufferVal.find(b'\n', cIndex)
-            if nIndex == -1:
-                return traffic
-            command = bufferVal[cIndex:nIndex]
-            # Kommandos des Formats "C0660 1234 file.txt" werden aufgesplittet
-            _, size, name = command.decode('utf8').split(' ', 2)
-            logging.info("got command: %s", command.decode('utf-8'))
-
-            # resettet den Buffer
-            self.traffic_buffer.seek(0)
-            self.traffic_buffer.truncate(0)
-
-            # setze Name, Dateigröße und das zu sendende Kommando
-            self.file_name = name
-            logging.info('scp file transfer - %s -> %s', self.file_id, self.file_name)
-            self.file_size_remaining = int(size)
-            traffic = command + b'\n'
-            # erstelle eine temporäre Datei
-
-            # das nächste Datenpaket soll verworfen werden
-            # (Antworten interessieren uns nicht!)
-            self.response = True
-            return traffic
-
         # notwendig, da im letzten Datenpaket ein NULL-Byte angehängt wird
-        bytes_to_write = min(len(traffic), self.file_size_remaining)
-        self.file_size_remaining -= bytes_to_write
+        self.bytes_to_write = min(len(traffic), self.bytes_remaining)
+        self.bytes_remaining -= self.bytes_to_write
         with open(output_path, 'a+b') as tmp_file:
-            tmp_file.write(traffic[:bytes_to_write])
+            tmp_file.write(traffic[:self.bytes_to_write])
 
         # Dateiende erreicht
-        if self.file_size_remaining == 0:
+        if self.file_name and self.bytes_remaining == 0:
+            logging.info("file %s -> %s", self.file_name, self.file_id)
             self.file_id = None
         return traffic
