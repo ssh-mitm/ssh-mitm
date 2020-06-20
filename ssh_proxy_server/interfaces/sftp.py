@@ -53,7 +53,6 @@ class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
             # Code aus dem StubSFTPServer der Paramiko Demo auf Github
             if (flags & os.O_CREAT) and attr:
                 attr._flags &= ~attr.FLAG_PERMISSIONS
-                paramiko.SFTPServer.set_file_attr(remotePath, attr)
             if flags & os.O_WRONLY:
                 if flags & os.O_APPEND:
                     fstr = 'ab'
@@ -86,6 +85,8 @@ class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
             elif fstr in ('a+b', 'r+b'):
                 fobj.writefile = client_f
                 fobj.readfile = client_f
+            if fobj.writefile:
+                self.chattr(remotePath, attr)
             return fobj
         except Exception as e:
             logging.exception("Error")

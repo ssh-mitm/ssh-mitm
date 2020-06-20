@@ -1,5 +1,4 @@
 import logging
-import os
 
 import paramiko
 from enhancements.modules import Module
