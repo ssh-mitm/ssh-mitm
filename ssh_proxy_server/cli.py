@@ -42,7 +42,11 @@ def main():
         type=int,
         help='listen port'
     )
-
+    parser.add_argument(
+        '--host-key',
+        dest='host_key',
+        help='rsa host key'
+    )
     parser.add_module(
         '--ssh-interface',
         dest='ssh_interface',
@@ -96,6 +100,7 @@ def main():
 
     proxy = SSHProxyServer(
         (args.listen_address, args.listen_port),
+        key_file=args.host_key,
         ssh_interface=args.ssh_interface,
         scp_interface=args.scp_interface,
         sftp_handler=args.sftp_handler,
