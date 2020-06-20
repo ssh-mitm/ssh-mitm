@@ -3,20 +3,6 @@ import paramiko
 import os
 
 
-class StubSFTPHandle(paramiko.SFTPHandle):
-    def __init__(self, flags=0):
-        super().__init__(flags)
-        self.writefile = None
-        self.readfile = None
-
-    def read(self, offset, length):
-        return self.readfile.read(length)
-
-    def write(self, offset, data):
-        self.writefile.write(data)
-        return paramiko.SFTP_OK
-
-
 class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
 
     def __init__(self, authenticationinterface):
@@ -73,7 +59,8 @@ class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
                 logging.exception("Error file")
                 return None
 
-            fobj = StubSFTPHandle(client_f)
+            sftp_handler = self.session.proxyserver.sftp_handler
+            fobj = sftp_handler(client_f)
 
             # writeonly
             if fstr in ('wb', 'ab'):
