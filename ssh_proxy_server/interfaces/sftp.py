@@ -1,5 +1,8 @@
 import logging
 import paramiko
+import os
+
+from ssh_proxy_server.forwarders.sftp import SFTPBaseHandle
 
 
 class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
@@ -32,8 +35,51 @@ class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
     def open(self, remotePath, flags, attr):
-        logging.error('open not implemented')
-        raise NotImplementedError('open not implemented!')
+        try:
+            self.session.sftp_client_ready.wait()
+
+            # Code aus dem StubSFTPServer der Paramiko Demo auf Github
+            if (flags & os.O_CREAT) and attr:
+                attr._flags &= ~attr.FLAG_PERMISSIONS
+            if flags & os.O_WRONLY:
+                if flags & os.O_APPEND:
+                    fstr = 'ab'
+                else:
+                    fstr = 'wb'
+            elif flags & os.O_RDWR:
+                if flags & os.O_APPEND:
+                    fstr = 'a+b'
+                else:
+                    fstr = 'r+b'
+            else:
+                # O_RDONLY (== 0)
+                fstr = 'rb'
+
+            try:
+                client_f = self.session.sftp_client._sftp.open(remotePath, fstr)
+            except Exception:
+                logging.exception("Error file")
+                return None
+
+            sftp_handler = self.session.proxyserver.sftp_handler
+            fobj = SFTPBaseHandle(sftp_handler, remotePath)
+
+            # writeonly
+            if fstr in ('wb', 'ab'):
+                fobj.writefile = client_f
+            # readonly
+            elif fstr == 'rb':
+                fobj.readfile = client_f
+            # read and write
+            elif fstr in ('a+b', 'r+b'):
+                fobj.writefile = client_f
+                fobj.readfile = client_f
+            if fobj.writefile:
+                self.chattr(remotePath, attr)
+            return fobj
+        except Exception as e:
+            logging.exception("Error")
+            return paramiko.SFTPServer.convert_errno(e.errno)
 
     def readlink(self, path):
         self.session.sftp_client_ready.wait()

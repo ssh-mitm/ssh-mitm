@@ -18,7 +18,9 @@ from ssh_proxy_server.forwarders import (
     SCPBaseForwarder,
     SCPForwarder,
     SSHBaseForwarder,
-    SSHForwarder
+    SSHForwarder,
+    SFTPHandlerBasePlugin,
+    SFTPHandlerPlugin
 )
 
 
@@ -40,7 +42,11 @@ def main():
         type=int,
         help='listen port'
     )
-
+    parser.add_argument(
+        '--host-key',
+        dest='host_key',
+        help='rsa host key'
+    )
     parser.add_module(
         '--ssh-interface',
         dest='ssh_interface',
@@ -54,6 +60,13 @@ def main():
         default=SCPForwarder,
         help='ProxyManager to manage the Proxy',
         baseclass=SCPBaseForwarder
+    )
+    parser.add_module(
+        '--sftp-handler',
+        dest='sftp_handler',
+        default=SFTPHandlerPlugin,
+        help='SFTP Handler to handle sftp file transfers',
+        baseclass=SFTPHandlerBasePlugin
     )
     parser.add_module(
         '--server-interface',
@@ -87,8 +100,10 @@ def main():
 
     proxy = SSHProxyServer(
         (args.listen_address, args.listen_port),
+        key_file=args.host_key,
         ssh_interface=args.ssh_interface,
         scp_interface=args.scp_interface,
+        sftp_handler=args.sftp_handler,
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator
     )

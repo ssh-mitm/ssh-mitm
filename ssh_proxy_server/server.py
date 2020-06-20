@@ -20,6 +20,7 @@ class SSHProxyServer:
         key_file=None,
         ssh_interface=None,
         scp_interface=None,
+        sftp_handler=None,
         authentication_interface=None,
         authenticator=None
     ):
@@ -33,6 +34,7 @@ class SSHProxyServer:
 
         self.ssh_interface = ssh_interface
         self.scp_interface = scp_interface
+        self.sftp_handler = sftp_handler
         self.authentication_interface = authentication_interface
         self.authenticator = authenticator
 
@@ -45,7 +47,10 @@ class SSHProxyServer:
             else:
                 if not os.path.isfile(self.key_file):
                     raise FileNotFoundError("host key '{}' file does not exist".format(self.key_file))
-                self._hostkey = RSAKey(filename=self.key_file)
+                try:
+                    self._hostkey = RSAKey(filename=self.key_file)
+                except Exception:
+                    logging.error('only rsa key files are supported!')
         return self._hostkey
 
     def start(self):

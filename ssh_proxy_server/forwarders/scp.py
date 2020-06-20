@@ -128,20 +128,23 @@ class SCPForwarder(SCPBaseForwarder):
     def handle_command(self, traffic):
         command = traffic.decode('utf-8')
 
-        match1 = re.match(r"([CD])([0-7]{4})\s([0-9]+)\s(.*)\n", command)
-        if not match1:
-            match2 = re.match(r"(E)\n", command)
-            if match2:
+        match_c_command = re.match(r"([CD])([0-7]{4})\s([0-9]+)\s(.*)\n", command)
+        if not match_c_command:
+            match_e_command = re.match(r"(E)\n", command)
+            if match_e_command:
+                logging.info("got command %s", command.strip())
+            match_t_command = re.match(r"(T)([0-9]+)\s([0-9]+)\s([0-9]+)\s([0-9]+)\n", command)
+            if match_t_command:
                 logging.info("got command %s", command.strip())
             return traffic
 
         # setze Name, Dateigröße und das zu sendende Kommando
         logging.info("got command %s", command.strip())
 
-        self.file_command = match1[1]
-        self.file_mode = match1[2]
-        self.bytes_remaining = self.file_size = int(match1[3])
-        self.file_name = match1[4]
+        self.file_command = match_c_command[1]
+        self.file_mode = match_c_command[2]
+        self.bytes_remaining = self.file_size = int(match_c_command[3])
+        self.file_name = match_c_command[4]
 
         # next traffic package is a respone package
         self.await_response = True
