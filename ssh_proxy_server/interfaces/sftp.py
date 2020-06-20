@@ -2,6 +2,8 @@ import logging
 import paramiko
 import os
 
+from ssh_proxy_server.forwarders.sftp import SFTPBaseHandle
+
 
 class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
 
@@ -60,7 +62,7 @@ class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
                 return None
 
             sftp_handler = self.session.proxyserver.sftp_handler
-            fobj = sftp_handler(client_f)
+            fobj = SFTPBaseHandle(sftp_handler, remotePath)
 
             # writeonly
             if fstr in ('wb', 'ab'):

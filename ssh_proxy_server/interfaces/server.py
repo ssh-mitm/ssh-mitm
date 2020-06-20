@@ -122,7 +122,6 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_subsystem_request(self, channel, name):
         if name.upper() == 'SFTP':
-            logging.warning('sftp not fully supported! file transfers not working')
             self.session.sftp = True
             self.session.sftp_channel = channel
         return super().check_channel_subsystem_request(channel, name)

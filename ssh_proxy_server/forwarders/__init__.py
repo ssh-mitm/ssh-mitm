@@ -16,5 +16,7 @@ from ssh_proxy_server.forwarders.ssh import (
 
 from ssh_proxy_server.forwarders.sftp import (
     SFTPBaseHandle,
-    SFTPForwardHandle
+    SFTPHandlerBasePlugin,
+    SFTPHandlerPlugin,
+    SFTPHandlerStoragePlugin
 )
