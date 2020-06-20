@@ -7,9 +7,9 @@
 [![GitHub](https://img.shields.io/github/license/manfred-kaiser/ssh-proxy-server.svg)](LICENSE)
 
 
-`ssh-proxy-server` is a python library and command line utility to intercept ssh traffic.
+`ssh-proxy-server` is an intercepting (mitm) proxy server for security audits.
 
-At this time, only ssh (terminal) and scp filetransfers are supported.
+**Since release 0.1.5, SSH Proxy Server has full support for tty (shell), scp and sftp!**
 
 > :warning: **do not use this library in production environments! This tool is only for security audits!**
 
@@ -27,7 +27,7 @@ Start the server:
 
 ```bash
 
-ssh-proxy-server
+ssh-proxy-server --remote-host 127.0.0.1
 
 ```
 
@@ -35,7 +35,7 @@ Connect to server:
 
 ```bash
 
-ssh -p 10022 user@remotehost@proxyserver
+ssh -p 10022 user@proxyserver
 
 ```
 
@@ -46,19 +46,49 @@ When public key authentication is used, the agent is forwarded to the remote ser
 Start the server:
 
 ```bash
-
-ssh-proxy-server --forward-agent
-
+ssh-proxy-server --forward-agent --remote-host 127.0.0.1
 ```
 
 Connect to server:
 
 ```bash
-
-ssh -A -p 10022 user@remotehost@proxyserver
-
+ssh -A -p 10022 user@proxyserver
 ```
-## Available module
+
+## SSH MITM Attacks
+
+SSH uses trust on first use. This means, that you have to accept the fingerprint if it is not known.
+
+```bash
+$ ssh -p 10022 hugo@localhost
+The authenticity of host '[localhost]:10022 ([127.0.0.1]:10022)' can't be established.
+RSA key fingerprint is SHA256:GIAALZgy8Z86Sezld13ZM74HGbE9HbWjG6T9nzja/D8.
+Are you sure you want to continue connecting (yes/no)? yes
+Warning: Permanently added '[localhost]:10022' (RSA) to the list of known hosts.
+```
+If a server fingerprint is known, ssh warns the user, that the host identification has changed.
+
+```bash
+$ ssh -p 10022 remoteuser@localhost
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+@    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
+@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
+IT IS POSSIBLE THAT SOMEONE IS DOING SOMETHING NASTY!
+Someone could be eavesdropping on you right now (man-in-the-middle attack)!
+It is also possible that a host key has just been changed.
+The fingerprint for the RSA key sent by the remote host is
+SHA256:GIAALZgy8Z86Sezld13ZM74HGbE9HbWjG6T9nzja/D8.
+Please contact your system administrator.
+Add correct host key in /home/user/.ssh/known_hosts to get rid of this message.
+Offending RSA key in /home/user/.ssh/known_hosts:22
+  remove with:
+  ssh-keygen -f "/home/user/.ssh/known_hosts" -R "[localhost]:10022"
+RSA host key for [localhost]:10022 has changed and you have requested strict checking.
+Host key verification failed.
+```
+
+
+## Available modules
 
 The proxy can be configured and extended using command line arguments.
 
