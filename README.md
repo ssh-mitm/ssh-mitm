@@ -3,7 +3,7 @@
 [![Github version](https://img.shields.io/github/v/release/manfred-kaiser/ssh-proxy-server?label=github&logo=github)](https://github.com/manfred-kaiser/ssh-proxy-server/releases)
 [![PyPI version](https://img.shields.io/pypi/v/ssh-proxy-server.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/ssh-proxy-server/)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/ssh-proxy-server.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/ssh-proxy-server/)
-[![PyPI downloads](https://pepy.tech/badge/ssh-proxy-server/week)](https://pepy.tech/project/ssh-proxy-server/week)
+[![PyPI downloads](https://pepy.tech/badge/ssh-proxy-server/month)](https://pepy.tech/project/ssh-proxy-server/month)
 [![GitHub](https://img.shields.io/github/license/manfred-kaiser/ssh-proxy-server.svg)](LICENSE)
 
 
