@@ -6,7 +6,7 @@ import time
 
 import pytz
 
-from ssh_proxy_server.forwarders import BaseForwarder
+from ssh_proxy_server.forwarders.base import BaseForwarder
 
 
 class SSHBaseForwarder(BaseForwarder):
