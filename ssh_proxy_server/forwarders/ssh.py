@@ -89,32 +89,40 @@ class SSHLogForwarder(SSHForwarder):
     def __init__(self, session):
         super().__init__(session)
         self.timestamp = None
-        logdir = os.path.join(
-            self.args.ssh_log_dir,
-            "{}_{}@{}".format(
-                str(time.time()).split('.')[0],
-                self.session.username,
-                self.session.remote_address[0]
-            )
-        )
-        self.fileIn, self.fileOut, self.timeingfile = self._initFiles(logdir)
 
-    def _initFiles(self, logdir):
-        if not os.path.isdir(logdir):
-            os.mkdir(logdir)
+        self.logdir = None
+        if self.args.ssh_log_dir:
+            self.logdir = os.path.join(
+                self.args.ssh_log_dir,
+                "{}_{}@{}".format(
+                    str(time.time()).split('.')[0],
+                    self.session.username,
+                    self.session.remote_address[0]
+                )
+            )
+        else:
+            logging.error('no --ssh-log-dir parameter given! - Logging disabled!')
+
+        self.fileIn, self.fileOut, self.timeingfile = self._initFiles()
+
+    def _initFiles(self):
+        if not self.logdir:
+            return None, None, None
+
+        os.makedirs(self.logdir, exist_ok=True)
         timecomponent = str(time.time()).split('.')[0]
 
         fileIn = tempfile.NamedTemporaryFile(
             prefix='ssh_in_{}_'.format(timecomponent),
             suffix='.log',
-            dir=logdir,
+            dir=self.logdir,
             delete=False
         )
 
         fileOut = tempfile.NamedTemporaryFile(
             prefix='ssh_out_{}_'.format(timecomponent),
             suffix='.log',
-            dir=logdir,
+            dir=self.logdir,
             delete=False
         )
         fileOut.write(
@@ -129,32 +137,36 @@ class SSHLogForwarder(SSHForwarder):
         timeingfile = tempfile.NamedTemporaryFile(
             prefix='ssh_time_{}_'.format(timecomponent),
             suffix='.log',
-            dir=logdir,
+            dir=self.logdir,
             delete=False
         )
         return fileIn, fileOut, timeingfile
 
     def close_session(self, channel):
         super().close_session(channel)
-        self.timeingfile.close()
-        self.fileOut.close()
-        self.fileIn.close()
+        if self.logdir:
+            self.timeingfile.close()
+            self.fileOut.close()
+            self.fileIn.close()
 
     def stdin(self, text):
-        self.fileIn.write(text)
-        self.fileIn.flush()
+        if self.logdir:
+            self.fileIn.write(text)
+            self.fileIn.flush()
         return text
 
     def stdout(self, text):
-        self.fileOut.write(text)
-        self.fileOut.flush()
-        self.write_timingfile(text)
+        if self.logdir:
+            self.fileOut.write(text)
+            self.fileOut.flush()
+            self.write_timingfile(text)
         return text
 
     def stderr(self, text):
-        self.fileOut.write(text)
-        self.fileOut.flush()
-        self.write_timingfile(text)
+        if self.logdir:
+            self.fileOut.write(text)
+            self.fileOut.flush()
+            self.write_timingfile(text)
         return text
 
     def write_timingfile(self, text):
