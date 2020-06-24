@@ -13,12 +13,16 @@ from ssh_proxy_server.interfaces import (
     BaseServerInterface,
     ServerInterface
 )
-from ssh_proxy_server.forwarders import (
-    BaseForwarder,
+from ssh_proxy_server.forwarders.base import BaseForwarder
+from ssh_proxy_server.forwarders.scp import (
     SCPBaseForwarder,
-    SCPForwarder,
+    SCPForwarder
+)
+from ssh_proxy_server.forwarders.ssh import (
     SSHBaseForwarder,
-    SSHForwarder,
+    SSHForwarder
+)
+from ssh_proxy_server.forwarders.sftp import (
     SFTPHandlerBasePlugin,
     SFTPHandlerPlugin
 )
