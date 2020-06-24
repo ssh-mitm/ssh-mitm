@@ -125,5 +125,5 @@ class Session:
     def __enter__(self):
         return self
 
-    def __exit__(self, type, value, traceback):
+    def __exit__(self, value_type, value, traceback):
         self.close()

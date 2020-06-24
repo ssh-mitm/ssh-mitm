@@ -50,14 +50,13 @@ class Authenticator(Module):
                 self.args.remote_host,
                 self.args.remote_port
             )
-        else:
-            p = r'(?P<username>[^@]+)@(?P<host>[^:]+):?(?P<port>[0-9]*)'
-            m = re.search(p, username)
-            return (
-                self.args.auth_username or m['username'],
-                m['host'],
-                int(m['port']) if m['port'] else self.args.remote_port
-            )
+        p = r'(?P<username>[^@]+)@(?P<host>[^:]+):?(?P<port>[0-9]*)'
+        m = re.search(p, username)
+        return (
+            self.args.auth_username or m['username'],
+            m['host'],
+            int(m['port']) if m['port'] else self.args.remote_port
+        )
 
     def authenticate(self, username=None, password=None, key=None):
         if username:
