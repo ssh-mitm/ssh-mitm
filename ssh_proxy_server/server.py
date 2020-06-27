@@ -22,7 +22,8 @@ class SSHProxyServer:
         scp_interface=None,
         sftp_handler=None,
         authentication_interface=None,
-        authenticator=None
+        authenticator=None,
+        transparent=False
     ):
         self._threads = []
         self._hostkey = None
@@ -37,6 +38,7 @@ class SSHProxyServer:
         self.sftp_handler = sftp_handler
         self.authentication_interface = authentication_interface
         self.authenticator = authenticator
+        self.transparent = transparent
 
     @property
     def host_key(self):
@@ -56,6 +58,8 @@ class SSHProxyServer:
     def start(self):
         sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        if self.transparent:
+            sock.setsockopt(socket.SOL_IP, socket.IP_TRANSPARENT, 1)
         sock.bind(self.listen_address)
         sock.listen(5)
 
@@ -66,9 +70,10 @@ class SSHProxyServer:
                 readable = select.select([sock], [], [], self.SELECT_TIMEOUT)[0]
                 if len(readable) == 1 and readable[0] is sock:
                     client, addr = sock.accept()
-                    logging.info('incoming connection from %s', str(addr))
+                    remoteaddr = client.getsockname()
+                    logging.info('incoming connection from %s to %s', str(addr), remoteaddr)
 
-                    thread = threading.Thread(target=self.create_session, args=(client, addr))
+                    thread = threading.Thread(target=self.create_session, args=(client, addr, remoteaddr))
                     thread.start()
                     self._threads.append(thread)
         except KeyboardInterrupt:
@@ -78,9 +83,9 @@ class SSHProxyServer:
             for thread in self._threads[:]:
                 thread.join()
 
-    def create_session(self, client, addr):
+    def create_session(self, client, addr, remoteaddr):
         try:
-            with Session(self, client, addr, self.authenticator) as session:
+            with Session(self, client, addr, self.authenticator, remoteaddr) as session:
                 if session.start():
                     time.sleep(0.1)
                     if session.ssh and self.ssh_interface:

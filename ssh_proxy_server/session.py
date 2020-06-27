@@ -11,7 +11,7 @@ from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
 class Session:
     CIPHERS = None
 
-    def __init__(self, proxyserver, client_socket, client_address, authenticator):
+    def __init__(self, proxyserver, client_socket, client_address, authenticator, remoteaddr):
 
         self._transport = None
 
@@ -35,6 +35,7 @@ class Session:
         self.sftp_client_ready = threading.Event()
 
         self.username = ''
+        self.socket_remote_address = remoteaddr
         self.remote_address = (None, None)
         self.key = None
         self.agent = None
