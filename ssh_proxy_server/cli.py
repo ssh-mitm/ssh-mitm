@@ -47,6 +47,12 @@ def main():
         help='listen port'
     )
     parser.add_argument(
+        '--transparent',
+        dest='transparent',
+        action='store_true',
+        help='enables transparent mode (requires root)'
+    )
+    parser.add_argument(
         '--host-key',
         dest='host_key',
         help='rsa host key'
@@ -109,7 +115,8 @@ def main():
         scp_interface=args.scp_interface,
         sftp_handler=args.sftp_handler,
         authentication_interface=args.auth_interface,
-        authenticator=args.authenticator
+        authenticator=args.authenticator,
+        transparent=args.transparent
     )
     if args.banner_name is not None:
         Transport._CLIENT_ID = args.banner_name

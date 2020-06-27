@@ -50,17 +50,26 @@ class Authenticator(Module):
                 self.args.remote_host,
                 self.args.remote_port
             )
+        if self.session.proxyserver.transparent:
+            return (
+                self.args.auth_username or username,
+                self.session.socket_remote_address[0],
+                self.session.socket_remote_address[1]
+            )
         p = r'(?P<username>[^@]+)@(?P<host>[^:]+):?(?P<port>[0-9]*)'
         m = re.search(p, username)
-        return (
-            self.args.auth_username or m['username'],
-            m['host'],
-            int(m['port']) if m['port'] else self.args.remote_port
-        )
+        if m['host']:
+            return (
+                self.args.auth_username or m['username'],
+                m['host'],
+                int(m['port']) if m['port'] else self.args.remote_port
+            )
+        raise ValueError('No remote host')
 
     def authenticate(self, username=None, password=None, key=None):
         if username:
             user, host, port = self.get_remote_host_credentials(username)
+            logging.info('try to connect to %s:%s with %s', host, port, user)
             self.session.username = user
             self.session.remote_address = (host, port)
         if key:
