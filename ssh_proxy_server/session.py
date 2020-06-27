@@ -57,6 +57,38 @@ class Session:
 
         return self._transport
 
+    def _start_channels(self):
+        # create client or master channel
+        if self.ssh_client:
+            self.sftp_client_ready.set()
+            return True
+
+        if not self.agent and self.authenticator.AGENT_FORWARDING:
+            try:
+                self.agent = AgentServerProxy(self.transport)
+                self.agent.connect()
+            except Exception:
+                self.close()
+                return False
+        # Connect method start
+        if not self.agent:
+            self.channel.send('Kein SSH Agent weitergeleitet\r\n')
+            return False
+
+        if self.authenticator.authenticate() != AUTH_SUCCESSFUL:
+            self.channel.send('Permission denied (publickey).\r\n')
+            return False
+        logging.info('connection established')
+
+        # Connect method end
+        if not self.scp and not self.ssh and not self.sftp:
+            if self.transport.is_active():
+                self.transport.close()
+                return False
+
+        self.sftp_client_ready.set()
+        return True
+
     def start(self):
         event = threading.Event()
         self.transport.start_server(
@@ -76,7 +108,6 @@ class Session:
             if self.transport.is_active():
                 self.transport.close()
             return False
-        logging.info('session started')
 
         # wait for authentication
         event.wait()
@@ -84,34 +115,8 @@ class Session:
         if not self.transport.is_active():
             return False
 
-        # create client or master channel
-        if self.ssh_client:
-            self.sftp_client_ready.set()
-        else:
-            if not self.agent and self.authenticator.AGENT_FORWARDING:
-                try:
-                    self.agent = AgentServerProxy(self.transport)
-                    self.agent.connect()
-                except Exception:
-                    self.close()
-                    return False
-            # Connect method start
-            if not self.agent:
-                self.channel.send('Kein SSH Agent weitergeleitet\r\n')
-                return False
-
-            if self.authenticator.authenticate() != AUTH_SUCCESSFUL:
-                self.channel.send('Permission denied (publickey).\r\n')
-                return False
-            logging.info('connection established')
-            # Connect method end
-
-            if not self.scp and not self.ssh and not self.sftp:
-                if self.transport.is_active():
-                    self.transport.close()
-                    return False
-
-            self.sftp_client_ready.set()
+        if not self._start_channels():
+            return False
 
         logging.info("session started")
         return True
