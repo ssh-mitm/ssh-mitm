@@ -1,6 +1,6 @@
 # ssh-proxy-server - intercept ssh traffic
 
-[![CodeFactor](https://www.codefactor.io/repository/github/manfred-kaiser/python-enhancements/badge)](https://www.codefactor.io/repository/github/manfred-kaiser/python-enhancements)
+[![CodeFactor](https://www.codefactor.io/repository/github/manfred-kaiser/ssh-proxy-server/badge)](https://www.codefactor.io/repository/github/manfred-kaiser/ssh-proxy-server)
 [![Github version](https://img.shields.io/github/v/release/manfred-kaiser/ssh-proxy-server?label=github&logo=github)](https://github.com/manfred-kaiser/ssh-proxy-server/releases)
 [![PyPI version](https://img.shields.io/pypi/v/ssh-proxy-server.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/ssh-proxy-server/)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/ssh-proxy-server.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/ssh-proxy-server/)
