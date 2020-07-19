@@ -17,13 +17,22 @@ setup(
     description='ssh proxy server to intercept ssh',
     long_description=long_description,
     long_description_content_type='text/markdown',
+    keywords="ssh proxy mitm network security audit",
     packages=find_packages(),
     url="https://github.com/manfred-kaiser/ssh-proxy-server",
+    project_urls={
+        'Source': 'https://github.com/manfred-kaiser/ssh-proxy-server',
+        'Tracker': 'https://github.com/manfred-kaiser/ssh-proxy-server/issues',
+    },
     python_requires='>= 3.5',
     classifiers=[
         "Programming Language :: Python :: 3",
+        "Programming Language :: Python :: 3.6",
+        "Programming Language :: Python :: 3.7",
+        "Programming Language :: Python :: 3.8",
         "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
-        "Topic :: System :: Networking"
+        "Topic :: System :: Networking",
+        "Development Status :: 4 - Beta"
     ],
     entry_points={
         'console_scripts': [
