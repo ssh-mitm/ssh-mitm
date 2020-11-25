@@ -37,13 +37,6 @@ class Authenticator(Module):
             dest='auth_password',
             help='password for remote authentication'
         )
-        cls.PARSER.add_module(
-            '--sftp-client-class',
-            dest='sftp_client_class',
-            default=SSHClient,
-            baseclass=BaseSSHClient,
-            help='interface for authentication'
-        )
 
     def __init__(self, session):
         super().__init__()
@@ -142,7 +135,7 @@ class Authenticator(Module):
         )
         if sshclient.connect():
             self.session.ssh_client = sshclient
-            self.session.sftp_client = SFTPClient.from_client(sshclient, self.args.sftp_client_class)
+            self.session.sftp_client = SFTPClient.from_client(sshclient)
             return paramiko.AUTH_SUCCESSFUL
         logging.debug('connection failed!')
         return paramiko.AUTH_FAILED

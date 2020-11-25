@@ -67,3 +67,32 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         data = self.plugin.handle_data(data)
         self.writefile.write(data)
         return paramiko.SFTP_OK
+
+
+class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
+    """
+    Replaces a SFTP transmitted File during transit
+    """
+    @classmethod
+    def parser_arguments(cls):
+        cls.PARSER.add_argument(
+            '--sftp-replace',
+            dest='sftp_replacement_file',
+            required=True,
+            help='file that is used for replacement'
+        )
+
+    def __init__(self, filename):
+        super().__init__(filename)
+        # self.file_id = filename # str(uuid.uuid4())
+        logging.info("sftp file transfer detected: %s", filename)
+        logging.info("intercepting sftp file, replacement: %s", self.args.sftp_replacement_file)
+        self.replacement = open(self.args.sftp_replacement_file, "rb")
+
+    def close(self):
+        self.replacement.close()
+
+    def handle_data(self, data):
+        buf = self.replacement.read(64)
+        return buf
+

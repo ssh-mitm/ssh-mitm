@@ -13,6 +13,7 @@ class AuthenticationMethod(Enum):
     publickey = "publickey"
     agent = "agent"
 
+
 class BaseSSHClient(Module):
     pass
 

@@ -14,13 +14,13 @@ class SFTPClient(SSHClient):
         self.subsystem_count = 0
 
     @classmethod
-    def from_client(cls, ssh_client, sftp_client_class):
+    def from_client(cls, ssh_client):
         if not ssh_client.connected and ssh_client.connect():
             logging.error('error creating sftp client!')
             return None
 
         try:
-            sftp = sftp_client_class(
+            sftp = cls(
                 ssh_client.host,
                 ssh_client.port,
                 ssh_client.method,
