@@ -80,14 +80,6 @@ def main():
         baseclass=SFTPHandlerBasePlugin
     )
     parser.add_module(
-        '--sftp-client-class',
-        dest='sftp_client_class',
-        default=SSHClient,
-        baseclass=BaseSSHClient,
-        help='SFTP Client that should be used'
-    )
-
-    parser.add_module(
         '--server-interface',
         dest='auth_interface',
         default=ServerInterface,

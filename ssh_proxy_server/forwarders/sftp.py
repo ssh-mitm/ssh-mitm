@@ -3,6 +3,7 @@ import os
 import logging
 import paramiko
 from enhancements.modules import Module
+from paramiko import SFTPFile
 
 
 class SFTPHandlerBasePlugin(Module):
@@ -88,11 +89,14 @@ class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
         logging.info("sftp file transfer detected: %s", filename)
         logging.info("intercepting sftp file, replacement: %s", self.args.sftp_replacement_file)
         self.replacement = open(self.args.sftp_replacement_file, "rb")
+        self.out_file = open("test/copy.txt", "w+")
 
     def close(self):
         self.replacement.close()
+        self.out_file.close()
 
     def handle_data(self, data):
-        buf = self.replacement.read(64)
+        buf = self.replacement.read(32768)
+        self.out_file.write(str(len(data)) + "\n")
         return buf
 
