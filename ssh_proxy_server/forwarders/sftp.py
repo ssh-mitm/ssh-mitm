@@ -85,18 +85,14 @@ class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
 
     def __init__(self, filename):
         super().__init__(filename)
-        # self.file_id = filename # str(uuid.uuid4())
         logging.info("sftp file transfer detected: %s", filename)
         logging.info("intercepting sftp file, replacement: %s", self.args.sftp_replacement_file)
         self.replacement = open(self.args.sftp_replacement_file, "rb")
-        self.out_file = open("test/copy.txt", "w+")
 
     def close(self):
         self.replacement.close()
-        self.out_file.close()
 
     def handle_data(self, data):
         buf = self.replacement.read(32768)
-        self.out_file.write(str(len(data)) + "\n")
         return buf
 
