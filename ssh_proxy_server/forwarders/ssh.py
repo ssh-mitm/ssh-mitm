@@ -245,14 +245,15 @@ class SSHInjectableForwarder(SSHForwarder):
     def injector_session(self, client_sock):
         with client_sock as sock:
             while True:
-                data = sock.recv(1024)
-                if not data:
-                    break
-                sock.sendall(data)
+                if self.server_channel.recv_ready():
+                    buf = self.server_channel.recv(self.BUF_LEN)
+                    sock.sendall(buf)
+                data = sock.recv(self.BUF_LEN)
+                self.server_channel.sendall(data)
 
     def close_session(self, channel):
         super().close_session(channel)
-        logging.info("closing injector shell [%s]", channel)
+        logging.info("closing injector shell %s", self.injector_sock.getsockname())
         self.injector_sock.close()
         for thread in self.threads:
             thread.join()
