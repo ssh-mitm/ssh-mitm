@@ -93,6 +93,9 @@ class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
         self.replacement.close()
 
     def handle_data(self, data):
-        buf = self.replacement.read(32768)
-        return buf
+        # Cannot reasonably detect given buffer size, using default 32768
+        # User setting custom buffer size (-B XXX) will get an error, communication will fail
+        # PUT cannot replace file correctly if the to-be PUT file is smaller than the to-be REPLACED file
+        # --> closes file before everything can be transmitted
+        return self.replacement.read(32768)
 
