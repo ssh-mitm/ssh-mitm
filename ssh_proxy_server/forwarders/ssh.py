@@ -1,7 +1,10 @@
 import datetime
 import logging
 import os
+import select
+import socket
 import tempfile
+import threading
 import time
 
 import pytz
@@ -191,3 +194,65 @@ class NoShellForwarder(SSHForwarder):
                     self.session.transport.close()
                     break
             time.sleep(0.5)
+
+
+class SSHInjectableForwarder(SSHForwarder):
+
+    @classmethod
+    def parser_arguments(cls):
+        cls.PARSER.add_argument(
+            '--ssh-injector-net',
+            dest='ssh_injector_net',
+            default='127.0.0.1',
+            help='local address/interface where injector sessions are served'
+        )
+        cls.PARSER.add_argument(
+            '--ssh-injector-port',
+            dest='ssh_injector_port',
+            default=0,
+            help='local port where injector sessions are served'
+        )
+
+    def __init__(self, session):
+        super(SSHInjectableForwarder, self).__init__(session)
+        self.injector_ip = self.args.ssh_injector_net
+        self.injector_port = self.args.ssh_injector_port
+        self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.injector_sock.bind((self.injector_ip, self.injector_port))
+        self.injector_sock.listen(5)
+
+        self.threads = []
+        thread = threading.Thread(target=self.injector_connect)
+        thread.start()
+        self.threads.append(thread)
+        logging.info("creating ssh injector shell %s", self.injector_sock.getsockname())
+
+    def injector_connect(self):
+        try:
+            while self.session.running:
+                readable = select.select([self.injector_sock], [], [])[0]
+                if len(readable) == 1 and readable[0] is self.injector_sock:
+                    client, addr = self.injector_sock.accept()
+                    logging.info("injector shell opened from %s", str(addr))
+                    thread = threading.Thread(target=self.injector_session, args=(client,))
+                    thread.start()
+                    self.threads.append(thread)
+        except Exception as e:
+            logging.warning("injector shell suffered an unexpected error")
+            logging.exception(e)
+            self.close_session(self.channel)
+
+    def injector_session(self, client_sock):
+        with client_sock as sock:
+            while True:
+                data = sock.recv(1024)
+                if not data:
+                    break
+                sock.sendall(data)
+
+    def close_session(self, channel):
+        super().close_session(channel)
+        logging.info("closing injector shell [%s]", channel)
+        self.injector_sock.close()
+        for thread in self.threads:
+            thread.join()
