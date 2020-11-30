@@ -4,7 +4,6 @@ import os
 import logging
 import paramiko
 from enhancements.modules import Module
-from paramiko import SFTPFile
 
 
 class SFTPHandlerBasePlugin(Module):
@@ -97,7 +96,7 @@ class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
         self.replacement.close()
 
     def handle_data(self, data):
-        # Cannot reasonably detect given buffer size, using best guess: biggest power of 2
+        # Cannot reasonably detect given buffer size; using best guess: biggest power of 2
         # PUT cannot replace file correctly if the to-be PUT file is smaller than the to-be REPLACED file
         # --> closes file before everything can be transmitted
         if not self.buf_size and not self.file:
@@ -108,4 +107,5 @@ class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
                 self.buf_size = pow(2, int(math.log(len(data)) // math.log(2)))
             else:
                 self.buf_size = len(data)
+            self.buf_size = len(data)
         return self.replacement.read(self.buf_size)

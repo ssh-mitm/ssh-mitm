@@ -3,7 +3,6 @@ from enhancements.plugins import LogModule
 
 from paramiko import Transport
 
-from ssh_proxy_server.clients.ssh import SSHClient, BaseSSHClient
 from ssh_proxy_server.server import SSHProxyServer
 
 from ssh_proxy_server.authentication import (
