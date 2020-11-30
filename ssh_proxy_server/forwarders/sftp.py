@@ -109,4 +109,3 @@ class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
             else:
                 self.buf_size = len(data)
         return self.replacement.read(self.buf_size)
-
