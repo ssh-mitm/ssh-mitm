@@ -75,17 +75,17 @@ class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
     Replaces a SFTP transmitted File during transit
     """
 
-    replacement = None
+    _replace_file = None
 
     def __init__(self, sftp, filename):
         super().__init__(sftp, filename)
         logging.info("sftp file transfer detected: %s", filename)
-        logging.info("intercepting sftp file, replacement: %s", SFTPHandlerReplacePlugin.replacement)
-        self.replacement = open(SFTPHandlerReplacePlugin.replacement, "rb")
+        logging.info("intercepting sftp file, replacement: %s", SFTPHandlerReplacePlugin._replace_file)
+        self.replacement = open(SFTPHandlerReplacePlugin._replace_file, "rb")
 
     @classmethod
     def set_replacement(cls, replacement):
-        SFTPHandlerReplacePlugin.replacement = replacement
+        SFTPHandlerReplacePlugin._replace_file = replacement
 
     def close(self):
         self.replacement.close()
