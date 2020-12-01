@@ -3,14 +3,14 @@ import os
 import logging
 import paramiko
 from enhancements.modules import Module
-from paramiko import SFTPFile
 
 
 class SFTPHandlerBasePlugin(Module):
 
-    def __init__(self, filename):
+    def __init__(self, sftp, filename):
         super().__init__()
         self.filename = filename
+        self.sftp = sftp
 
     def close(self):
         pass
@@ -33,8 +33,8 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
             help='directory to store files from scp'
         )
 
-    def __init__(self, filename):
-        super().__init__(filename)
+    def __init__(self, sftp, filename):
+        super().__init__(sftp, filename)
         self.file_id = str(uuid.uuid4())
         logging.info("sftp file transfer: %s -> %s", filename, self.file_id)
         self.output_path = os.path.join(self.args.sftp_storage_dir, self.file_id)
@@ -52,7 +52,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
 
     def __init__(self, plugin, filename, flags=0):
         super().__init__(flags)
-        self.plugin = plugin(filename)
+        self.plugin = plugin(self, filename)
         self.writefile = None
         self.readfile = None
 
@@ -62,7 +62,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
 
     def read(self, offset, length):
         data = self.readfile.read(length)
-        return self.plugin.handle_data(data)
+        return self.plugin.handle_data(data, length)
 
     def write(self, offset, data):
         data = self.plugin.handle_data(data)
@@ -74,28 +74,23 @@ class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
     """
     Replaces a SFTP transmitted File during transit
     """
-    @classmethod
-    def parser_arguments(cls):
-        cls.PARSER.add_argument(
-            '--sftp-replace',
-            dest='sftp_replacement_file',
-            required=True,
-            help='file that is used for replacement'
-        )
 
-    def __init__(self, filename):
-        super().__init__(filename)
+    _replace_file = None
+
+    def __init__(self, sftp, filename):
+        super().__init__(sftp, filename)
         logging.info("sftp file transfer detected: %s", filename)
-        logging.info("intercepting sftp file, replacement: %s", self.args.sftp_replacement_file)
-        self.replacement = open(self.args.sftp_replacement_file, "rb")
+        logging.info("intercepting sftp file, replacement: %s", SFTPHandlerReplacePlugin._replace_file)
+        self.replacement = open(SFTPHandlerReplacePlugin._replace_file, "rb")
+
+    @classmethod
+    def set_replacement(cls, replacement):
+        SFTPHandlerReplacePlugin._replace_file = replacement
 
     def close(self):
         self.replacement.close()
 
-    def handle_data(self, data):
-        # Cannot reasonably detect given buffer size, using default 32768
-        # User setting custom buffer size (-B XXX) will get an error, communication will fail
-        # PUT cannot replace file correctly if the to-be PUT file is smaller than the to-be REPLACED file
-        # --> closes file before everything can be transmitted
-        return self.replacement.read(32768)
-
+    def handle_data(self, data, length=None):
+        if self.sftp.writefile:
+            return self.replacement.read()
+        return self.replacement.read(length)

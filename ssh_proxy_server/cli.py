@@ -3,7 +3,6 @@ from enhancements.plugins import LogModule
 
 from paramiko import Transport
 
-from ssh_proxy_server.clients.ssh import SSHClient, BaseSSHClient
 from ssh_proxy_server.server import SSHProxyServer
 
 from ssh_proxy_server.authentication import (
@@ -26,6 +25,11 @@ from ssh_proxy_server.forwarders.ssh import (
 from ssh_proxy_server.forwarders.sftp import (
     SFTPHandlerBasePlugin,
     SFTPHandlerPlugin
+)
+
+from ssh_proxy_server.interfaces.sftp import (
+    BaseSFTPServerInterface,
+    SFTPProxyServerInterface
 )
 
 
@@ -73,6 +77,13 @@ def main():
         baseclass=SCPBaseForwarder
     )
     parser.add_module(
+        '--sftp-interface',
+        dest='sftp_interface',
+        default=SFTPProxyServerInterface,
+        help='SFTP Handler to handle sftp file transfers',
+        baseclass=BaseSFTPServerInterface
+    )
+    parser.add_module(
         '--sftp-handler',
         dest='sftp_handler',
         default=SFTPHandlerPlugin,
@@ -114,6 +125,7 @@ def main():
         key_file=args.host_key,
         ssh_interface=args.ssh_interface,
         scp_interface=args.scp_interface,
+        sftp_interface=args.sftp_interface,
         sftp_handler=args.sftp_handler,
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator,
