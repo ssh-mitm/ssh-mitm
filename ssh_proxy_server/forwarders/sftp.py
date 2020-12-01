@@ -1,4 +1,3 @@
-import math
 import uuid
 import os
 import logging
@@ -63,7 +62,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
 
     def read(self, offset, length):
         data = self.readfile.read(length)
-        return self.plugin.handle_data(data)
+        return self.plugin.handle_data(data, length)
 
     def write(self, offset, data):
         data = self.plugin.handle_data(data)
@@ -75,37 +74,23 @@ class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
     """
     Replaces a SFTP transmitted File during transit
     """
-    @classmethod
-    def parser_arguments(cls):
-        cls.PARSER.add_argument(
-            '--sftp-replace',
-            dest='sftp_replacement_file',
-            required=True,
-            help='file that is used for replacement'
-        )
+
+    replacement = None
 
     def __init__(self, sftp, filename):
         super().__init__(sftp, filename)
         logging.info("sftp file transfer detected: %s", filename)
-        logging.info("intercepting sftp file, replacement: %s", self.args.sftp_replacement_file)
-        self.file = None
-        self.replacement = open(self.args.sftp_replacement_file, "rb")
-        self.buf_size = None
+        logging.info("intercepting sftp file, replacement: %s", SFTPHandlerReplacePlugin.replacement)
+        self.replacement = open(SFTPHandlerReplacePlugin.replacement, "rb")
+
+    @classmethod
+    def set_replacement(cls, replacement):
+        SFTPHandlerReplacePlugin.replacement = replacement
 
     def close(self):
         self.replacement.close()
 
-    def handle_data(self, data):
-        # Cannot reasonably detect given buffer size; using best guess: biggest power of 2
-        # PUT cannot replace file correctly if the to-be PUT file is smaller than the to-be REPLACED file
-        # --> closes file before everything can be transmitted
-        if not self.buf_size and not self.file:
-            self.file = self.sftp.writefile if self.sftp.readfile is None else self.sftp.readfile
-            if len(data) == 0:
-                self.buf_size = 1
-            elif len(data) == self.file.stat().st_size:
-                self.buf_size = pow(2, int(math.log(len(data)) // math.log(2)))
-            else:
-                self.buf_size = len(data)
-            self.buf_size = len(data)
-        return self.replacement.read(self.buf_size)
+    def handle_data(self, data, length=None):
+        if self.sftp.writefile:
+            return self.replacement.read()
+        return self.replacement.read(length)
