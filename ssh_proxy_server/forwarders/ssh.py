@@ -205,12 +205,14 @@ class SSHInjectableForwarder(SSHForwarder):
         def __init__(self, client_sock, server_sock):
             self.sock = client_sock
             self.server_channel = server_sock
+            self.intercepting = False
             self.thread = threading.Thread(target=self.run)
             self.thread.start()
 
         def run(self):
             while True:
                 buf = self.sock.recv(self.BUF_LEN)
+                self.intercepting = True
                 if buf == b'\r\n':
                     buf = b'\r'
                 logging.info("RECV-INJECT: " + str(buf))
@@ -224,6 +226,9 @@ class SSHInjectableForwarder(SSHForwarder):
             if text.startswith(b'\r\n'):
                 text = text.replace(b'\r\n', b'\r')
             self.sock.sendall(text)
+            if self.intercepting:
+                self.intercepting = False
+                return b''
             return text
 
         def close(self):
