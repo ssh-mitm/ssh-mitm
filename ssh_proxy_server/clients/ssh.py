@@ -4,6 +4,7 @@ from enum import Enum
 import paramiko
 import paramiko.hostkeys
 
+from enhancements.modules import Module
 from ssh_proxy_server.exceptions import NoAgentKeys, InvalidHostKey
 
 
@@ -13,7 +14,11 @@ class AuthenticationMethod(Enum):
     agent = "agent"
 
 
-class SSHClient:
+class BaseSSHClient(Module):
+    pass
+
+
+class SSHClient(BaseSSHClient):
 
     CIPHERS = None
 

@@ -156,6 +156,7 @@ Loading a class from a file (experimental):
 
 - **`ssh_proxy_server.forwarders.sftp.SFTPHandlerPlugin`** - transfer file between client and server
 - **`ssh_proxy_server.forwarders.sftp.SFTPHandlerStoragePlugin`** - save file to file system
+- **`ssh_proxy_server.plugins.sftp_replace.SFTPProxyReplaceHandler`** - replace transfered file with another file
 
 ### Authentication:
 

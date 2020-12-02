@@ -2,14 +2,19 @@ import logging
 import paramiko
 import os
 
+from enhancements.modules import Module
+
 from ssh_proxy_server.forwarders.sftp import SFTPBaseHandle
 
 
-class SFTPProxyServerInterface(paramiko.SFTPServerInterface):
+class BaseSFTPServerInterface(paramiko.SFTPServerInterface, Module):
 
     def __init__(self, authenticationinterface):
         super().__init__(authenticationinterface)
         self.session = authenticationinterface.session
+
+
+class SFTPProxyServerInterface(BaseSFTPServerInterface):
 
     def chattr(self, path, attr):
         self.session.sftp_client_ready.wait()
