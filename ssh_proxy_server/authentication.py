@@ -4,7 +4,6 @@ import re
 from enhancements.modules import Module
 
 import paramiko
-
 from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
 from ssh_proxy_server.clients.sftp import SFTPClient
 from ssh_proxy_server.exceptions import MissingHostException
