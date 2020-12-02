@@ -242,6 +242,7 @@ class SSHInjectableForwarder(SSHForwarder):
         self.injector_sock.listen(5)
 
         self.queue = queue.Queue()
+        self.sender = None
         self.injector_shells = []
         thread = threading.Thread(target=self.injector_connect)
         thread.start()
@@ -267,13 +268,23 @@ class SSHInjectableForwarder(SSHForwarder):
         with client_sock as sock:
             while True:
                 data = sock.recv(self.BUF_LEN)
-                self.queue.put(data)
+                self.queue.put((data, sock))
                 time.sleep(0.3)
+
+    def forward_stdout(self):
+        if self.server_channel.recv_ready():
+            buf = self.server_channel.recv(self.BUF_LEN)
+            if self.sender:
+                self.sender.sendall(buf.rstrip())
+                self.sender = None
+                return
+            self.session.ssh_channel.sendall(buf)
 
     def forward_extra(self):
         if not self.server_channel.recv_ready() and not self.session.ssh_channel.recv_ready() and not self.queue.empty():
-            msg = self.queue.get()
+            msg, sender = self.queue.get()
             self.server_channel.sendall(msg)
+            self.sender = sender
             self.queue.task_done()
 
     def close_session(self, channel):
