@@ -1,6 +1,7 @@
 import datetime
 import logging
 import os
+import queue
 import select
 import socket
 import tempfile
@@ -33,6 +34,7 @@ class SSHForwarder(SSHBaseForwarder):
                 # forward stdout <-> stdin und stderr <-> stderr
                 self.forward_stdin()
                 self.forward_stdout()
+                self.forward_extra()
                 self.forward_stderr()
 
                 if self._closed(self.session.ssh_channel):
@@ -66,6 +68,9 @@ class SSHForwarder(SSHBaseForwarder):
             buf = self.server_channel.recv(self.BUF_LEN)
             buf = self.stdout(buf)
             self.session.ssh_channel.sendall(buf)
+
+    def forward_extra(self):
+        pass
 
     def forward_stderr(self):
         if self.server_channel.recv_stderr_ready():
@@ -207,47 +212,6 @@ class NoShellForwarder(SSHForwarder):
 
 class SSHInjectableForwarder(SSHForwarder):
 
-    class InjectorShell(threading.Thread):
-
-        BUF_LEN = 1024
-
-        def __init__(self, client_sock, server_sock):
-            threading.Thread.__init__(self)
-            self.sock = client_sock
-            self.server_channel = server_sock
-            self.intercepting = 0
-            self._lock = threading.Lock()
-
-        def run(self):
-            while True:
-                buf = self.sock.recv(self.BUF_LEN)
-                with self._lock:
-                    self.intercepting = 2
-                    if buf == b'\r\n':
-                        self.intercepting = 1
-                        buf = b'\r'
-                logging.info("RECV-INJECT: " + str(buf))
-                self.server_channel.sendall(buf)
-                time.sleep(0.1)
-
-        def stdin(self, text):
-            return text
-
-        def stdout(self, text):
-            #if text.startswith(b'\r\n'):
-            #    text = text.replace(b'\r\n', b'\r')
-            self.sock.sendall(text)
-            with self._lock:
-                if self.intercepting > 0:
-                    logging.info(self.intercepting)
-                    self.intercepting -= 1
-                    return b''
-            return text
-
-        def join(self, timeout=None):
-            super().join(timeout)
-            self.sock.close()
-
     @classmethod
     def parser_arguments(cls):
         cls.PARSER.add_argument(
@@ -269,10 +233,15 @@ class SSHInjectableForwarder(SSHForwarder):
         self.injector_ip = self.args.ssh_injector_net
         self.injector_port = self.args.ssh_injector_port
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.injector_sock.bind((self.injector_ip, self.injector_port))
+        while True:
+            if self.injector_sock.connect_ex((self.injector_ip, self.injector_port)) == 0:
+                self.injector_port += 1
+            else:
+                self.injector_sock.bind((self.injector_ip, self.injector_port))
+                break
         self.injector_sock.listen(5)
-        self.InjectorShell.BUF_LEN = self.BUF_LEN
 
+        self.queue = queue.Queue()
         self.injector_shells = []
         thread = threading.Thread(target=self.injector_connect)
         thread.start()
@@ -286,7 +255,7 @@ class SSHInjectableForwarder(SSHForwarder):
                 if len(readable) == 1 and readable[0] is self.injector_sock:
                     client, addr = self.injector_sock.accept()
                     logging.info("injector shell opened from %s", str(addr))
-                    injector_shell = SSHInjectableForwarder.InjectorShell(client, self.server_channel)
+                    injector_shell = threading.Thread(target=self.injector_session, args=(client,))
                     injector_shell.start()
                     self.injector_shells.append(injector_shell)
         except Exception as e:
@@ -294,18 +263,18 @@ class SSHInjectableForwarder(SSHForwarder):
             logging.exception(e)
             self.close_session(self.channel)
 
-    def stdin(self, text):
-        #logging.info("IN: " + str(text))
-        for shell in self.injector_shells:
-            shell.stdin(text)
-        return text
+    def injector_session(self, client_sock):    # Exception handling
+        with client_sock as sock:
+            while True:
+                data = sock.recv(self.BUF_LEN)
+                self.queue.put(data)
+                time.sleep(0.3)
 
-    def stdout(self, text):
-        logging.info("OUT: " + str(text))
-        for shell in self.injector_shells:
-            text = shell.stdout(text)
-        logging.info(text)
-        return text
+    def forward_extra(self):
+        if not self.server_channel.recv_ready() and not self.session.ssh_channel.recv_ready() and not self.queue.empty():
+            msg = self.queue.get()
+            self.server_channel.sendall(msg)
+            self.queue.task_done()
 
     def close_session(self, channel):
         super().close_session(channel)
