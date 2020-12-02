@@ -11,9 +11,9 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ssh_proxy_server',
-    version='0.2.3',
+    version='0.2.4',
     author='Manfred Kaiser, Simon Böhm',
-    author_email='manfred.kaiser@logfile.at, simon.boehm@htl.rennweg.at',
+    author_email='ssh-proxy-server@logfile.at',
     description='ssh proxy server to intercept ssh',
     long_description=long_description,
     long_description_content_type='text/markdown',
