@@ -31,18 +31,9 @@ class SSHForwarder(SSHBaseForwarder):
         try:
             while self.session.running:
                 # forward stdout <-> stdin und stderr <-> stderr
-                if self.session.ssh_channel.recv_ready():
-                    buf = self.session.ssh_channel.recv(self.BUF_LEN)
-                    buf = self.stdin(buf)
-                    self.server_channel.sendall(buf)
-                if self.server_channel.recv_ready():
-                    buf = self.server_channel.recv(self.BUF_LEN)
-                    buf = self.stdout(buf)
-                    self.session.ssh_channel.sendall(buf)
-                if self.server_channel.recv_stderr_ready():
-                    buf = self.server_channel.recv_stderr(self.BUF_LEN)
-                    buf = self.stderr(buf)
-                    self.session.ssh_channel.sendall_stderr(buf)
+                self.forward_stdin()
+                self.forward_stdout()
+                self.forward_stderr()
 
                 if self._closed(self.session.ssh_channel):
                     self.server_channel.close()
@@ -63,6 +54,24 @@ class SSHForwarder(SSHBaseForwarder):
         except Exception:
             logging.exception('error processing ssh session!')
             raise
+
+    def forward_stdin(self):
+        if self.session.ssh_channel.recv_ready():
+            buf = self.session.ssh_channel.recv(self.BUF_LEN)
+            buf = self.stdin(buf)
+            self.server_channel.sendall(buf)
+
+    def forward_stdout(self):
+        if self.server_channel.recv_ready():
+            buf = self.server_channel.recv(self.BUF_LEN)
+            buf = self.stdout(buf)
+            self.session.ssh_channel.sendall(buf)
+
+    def forward_stderr(self):
+        if self.server_channel.recv_stderr_ready():
+            buf = self.server_channel.recv_stderr(self.BUF_LEN)
+            buf = self.stderr(buf)
+            self.session.ssh_channel.sendall_stderr(buf)
 
     def close_session(self, channel):
         channel.get_transport().close()
@@ -198,25 +207,25 @@ class NoShellForwarder(SSHForwarder):
 
 class SSHInjectableForwarder(SSHForwarder):
 
-    class InjectorShell:
+    class InjectorShell(threading.Thread):
 
         BUF_LEN = 1024
 
         def __init__(self, client_sock, server_sock):
+            threading.Thread.__init__(self)
             self.sock = client_sock
             self.server_channel = server_sock
-            self.intercepting = False
-            self.thread = threading.Thread(target=self.run)
-            self.thread.start()
+            self.intercepting = 0
             self._lock = threading.Lock()
 
         def run(self):
             while True:
                 buf = self.sock.recv(self.BUF_LEN)
                 with self._lock:
-                    self.intercepting = True
-                if buf == b'\r\n':
-                    buf = b'\r'
+                    self.intercepting = 2
+                    if buf == b'\r\n':
+                        self.intercepting = 1
+                        buf = b'\r'
                 logging.info("RECV-INJECT: " + str(buf))
                 self.server_channel.sendall(buf)
                 time.sleep(0.1)
@@ -225,18 +234,19 @@ class SSHInjectableForwarder(SSHForwarder):
             return text
 
         def stdout(self, text):
-            if text.startswith(b'\r\n'):
-                text = text.replace(b'\r\n', b'\r')
+            #if text.startswith(b'\r\n'):
+            #    text = text.replace(b'\r\n', b'\r')
             self.sock.sendall(text)
             with self._lock:
-                if self.intercepting:
-                    self.intercepting = False
+                if self.intercepting > 0:
+                    logging.info(self.intercepting)
+                    self.intercepting -= 1
                     return b''
             return text
 
-        def close(self):
+        def join(self, timeout=None):
+            super().join(timeout)
             self.sock.close()
-            self.thread.join()
 
     @classmethod
     def parser_arguments(cls):
@@ -250,6 +260,7 @@ class SSHInjectableForwarder(SSHForwarder):
             '--ssh-injector-port',
             dest='ssh_injector_port',
             default=0,
+            type=int,
             help='local port where injector sessions are served'
         )
 
@@ -276,6 +287,7 @@ class SSHInjectableForwarder(SSHForwarder):
                     client, addr = self.injector_sock.accept()
                     logging.info("injector shell opened from %s", str(addr))
                     injector_shell = SSHInjectableForwarder.InjectorShell(client, self.server_channel)
+                    injector_shell.start()
                     self.injector_shells.append(injector_shell)
         except Exception as e:
             logging.warning("injector shell suffered an unexpected error")
@@ -283,7 +295,7 @@ class SSHInjectableForwarder(SSHForwarder):
             self.close_session(self.channel)
 
     def stdin(self, text):
-        logging.info("IN: " + str(text))
+        #logging.info("IN: " + str(text))
         for shell in self.injector_shells:
             shell.stdin(text)
         return text
@@ -291,7 +303,8 @@ class SSHInjectableForwarder(SSHForwarder):
     def stdout(self, text):
         logging.info("OUT: " + str(text))
         for shell in self.injector_shells:
-            shell.stdout(text)
+            text = shell.stdout(text)
+        logging.info(text)
         return text
 
     def close_session(self, channel):
@@ -300,4 +313,4 @@ class SSHInjectableForwarder(SSHForwarder):
         self.injector_sock.close()
         self.conn_thread.join()
         for shell in self.injector_shells:
-            shell.close()
+            shell.join()
