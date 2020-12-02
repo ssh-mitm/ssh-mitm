@@ -6,6 +6,7 @@ from paramiko.agent import AgentServerProxy
 
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
 
+
 class Session:
     CIPHERS = None
 
