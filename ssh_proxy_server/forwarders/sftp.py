@@ -12,6 +12,10 @@ class SFTPHandlerBasePlugin(Module):
         self.filename = filename
         self.sftp = sftp
 
+    @classmethod
+    def get_interface(cls):
+        return None
+
     def close(self):
         pass
 
@@ -61,36 +65,12 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         self.plugin.close()
 
     def read(self, offset, length):
+        logging.info("R_OFFSET: " + str(offset))
         data = self.readfile.read(length)
         return self.plugin.handle_data(data, length)
 
     def write(self, offset, data):
+        logging.info("W_OFFSET: " + str(offset))
         data = self.plugin.handle_data(data)
         self.writefile.write(data)
         return paramiko.SFTP_OK
-
-
-class SFTPHandlerReplacePlugin(SFTPHandlerPlugin):
-    """
-    Replaces a SFTP transmitted File during transit
-    """
-
-    _replace_file = None
-
-    def __init__(self, sftp, filename):
-        super().__init__(sftp, filename)
-        logging.info("sftp file transfer detected: %s", filename)
-        logging.info("intercepting sftp file, replacement: %s", SFTPHandlerReplacePlugin._replace_file)
-        self.replacement = open(SFTPHandlerReplacePlugin._replace_file, "rb")
-
-    @classmethod
-    def set_replacement(cls, replacement):
-        SFTPHandlerReplacePlugin._replace_file = replacement
-
-    def close(self):
-        self.replacement.close()
-
-    def handle_data(self, data, length=None):
-        if self.sftp.writefile:
-            return self.replacement.read()
-        return self.replacement.read(length)

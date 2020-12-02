@@ -5,7 +5,7 @@ import os
 from enhancements.modules import Module
 from paramiko import SFTPAttributes
 
-from ssh_proxy_server.forwarders.sftp import SFTPBaseHandle, SFTPHandlerReplacePlugin
+from ssh_proxy_server.forwarders.sftp import SFTPBaseHandle
 
 
 class BaseSFTPServerInterface(paramiko.SFTPServerInterface, Module):
@@ -109,35 +109,3 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
     def symlink(self, targetPath, path):
         self.session.sftp_client_ready.wait()
         return self.session.sftp_client.symlink(targetPath, path)
-
-
-class ReplacerSFTPProxyServerInterface(SFTPProxyServerInterface):
-
-    @classmethod
-    def parser_arguments(cls):
-        cls.PARSER.add_argument(
-            '--sftp-replace',
-            dest='sftp_replacement_file',
-            required=True,
-            help='file that is used for replacement'
-        )
-
-    def __init__(self, authenticationinterface):
-        super().__init__(authenticationinterface)
-        self.replacement = self.args.sftp_replacement_file
-        SFTPHandlerReplacePlugin.set_replacement(self.replacement)
-        self.session.proxyserver.sftp_handler = SFTPHandlerReplacePlugin
-
-    def lstat(self, path):
-        self.session.sftp_client_ready.wait()
-        stat_remote = self.session.sftp_client.lstat(path)
-        stat_replace = SFTPAttributes.from_stat(os.stat(self.replacement))
-        stat_remote.st_size = stat_replace.st_size
-        return stat_remote
-
-    def stat(self, remotePath):
-        self.session.sftp_client_ready.wait()
-        stat_remote = self.session.sftp_client.stat(remotePath)
-        stat_replace = SFTPAttributes.from_stat(os.stat(self.replacement))
-        stat_remote.st_size = stat_replace.st_size
-        return stat_remote
