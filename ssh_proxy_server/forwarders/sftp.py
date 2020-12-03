@@ -1,5 +1,3 @@
-import uuid
-import os
 import logging
 import paramiko
 from enhancements.modules import Module
@@ -19,37 +17,12 @@ class SFTPHandlerBasePlugin(Module):
     def close(self):
         pass
 
-    def handle_data(self, data):
+    def handle_data(self, data, *, offset=None, length=None):
         return data
 
 
 class SFTPHandlerPlugin(SFTPHandlerBasePlugin):
     pass
-
-
-class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
-    @classmethod
-    def parser_arguments(cls):
-        cls.PARSER.add_argument(
-            '--sftp-storage',
-            dest='sftp_storage_dir',
-            required=True,
-            help='directory to store files from scp'
-        )
-
-    def __init__(self, sftp, filename):
-        super().__init__(sftp, filename)
-        self.file_id = str(uuid.uuid4())
-        logging.info("sftp file transfer: %s -> %s", filename, self.file_id)
-        self.output_path = os.path.join(self.args.sftp_storage_dir, self.file_id)
-        self.out_file = open(self.output_path, 'wb')
-
-    def close(self):
-        self.out_file.close()
-
-    def handle_data(self, data):
-        self.out_file.write(data)
-        return data
 
 
 class SFTPBaseHandle(paramiko.SFTPHandle):
@@ -65,12 +38,12 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         self.plugin.close()
 
     def read(self, offset, length):
-        logging.info("R_OFFSET: " + str(offset))
+        logging.debug("R_OFFSET: %s", offset)
         data = self.readfile.read(length)
-        return self.plugin.handle_data(data, length)
+        return self.plugin.handle_data(data, length=length)
 
     def write(self, offset, data):
-        logging.info("W_OFFSET: " + str(offset))
-        data = self.plugin.handle_data(data)
+        logging.debug("W_OFFSET: %s", offset)
+        data = self.plugin.handle_data(data, offset=offset)
         self.writefile.write(data)
         return paramiko.SFTP_OK

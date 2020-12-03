@@ -132,8 +132,8 @@ Loading a class from a file (experimental):
 #### Available forwarders:
 
 - **`ssh_proxy_server.forwarders.ssh.SSHForwarder`** - forwards traffic from client to remote server
-- **`ssh_proxy_server.forwarders.ssh.SSHLogForwarder`** - write the session to a file, which can be replayed with `script`
-- **`ssh_proxy_server.forwarders.ssh.NoShellForwarder`** - keeps the session open, when used as master channel, but tty should not be possible to the remote server
+- **`ssh_proxy_server.plugins.ssh.sessionlogger.SSHLogForwarder`** - write the session to a file, which can be replayed with `script`
+- **`ssh_proxy_server.plugins.ssh.noshell.NoShellForwarder`** - keeps the session open, when used as master channel, but tty should not be possible to the remote server
 
 
 ### SCP interface
@@ -145,7 +145,7 @@ Loading a class from a file (experimental):
 #### Available forwarders:
 
 - **`ssh_proxy_server.forwarders.scp.SCPForwarder`** - transfer file between client and server
-- **`ssh_proxy_server.forwarders.scp.SCPStorageForwarder`** - save file to file system
+- **`ssh_proxy_server.plugins.scp.store_file.SCPStorageForwarder`** - save file to file system
 
 ### SFTP Handler
 
@@ -156,7 +156,7 @@ Loading a class from a file (experimental):
 #### Available forwarders:
 
 - **`ssh_proxy_server.forwarders.sftp.SFTPHandlerPlugin`** - transfer file between client and server
-- **`ssh_proxy_server.forwarders.sftp.SFTPHandlerStoragePlugin`** - save file to file system
+- **`ssh_proxy_server.plugins.sftp.store_file.SFTPHandlerStoragePlugin`** - save file to file system
 - **`ssh_proxy_server.plugins.sftp_replace.SFTPProxyReplaceHandler`** - replace transfered file with another file
 
 ### Authentication:
