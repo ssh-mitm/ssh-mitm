@@ -25,6 +25,6 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
     def close(self):
         self.out_file.close()
 
-    def handle_data(self, data):
+    def handle_data(self, data, *, offset=None, length=None):
         self.out_file.write(data)
         return data

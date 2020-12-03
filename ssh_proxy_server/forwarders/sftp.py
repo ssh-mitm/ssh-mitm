@@ -17,7 +17,7 @@ class SFTPHandlerBasePlugin(Module):
     def close(self):
         pass
 
-    def handle_data(self, data):
+    def handle_data(self, data, *, offset=None, length=None):
         return data
 
 
@@ -40,10 +40,10 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
     def read(self, offset, length):
         logging.info("R_OFFSET: " + str(offset))
         data = self.readfile.read(length)
-        return self.plugin.handle_data(data, length)
+        return self.plugin.handle_data(data, length=length)
 
     def write(self, offset, data):
         logging.info("W_OFFSET: " + str(offset))
-        data = self.plugin.handle_data(data)
+        data = self.plugin.handle_data(data, offset=offset)
         self.writefile.write(data)
         return paramiko.SFTP_OK
