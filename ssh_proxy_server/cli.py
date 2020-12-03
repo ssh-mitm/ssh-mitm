@@ -134,7 +134,3 @@ def main():
     if args.banner_name is not None:
         Transport._CLIENT_ID = args.banner_name
     proxy.start()
-
-
-if __name__ == '__main__':
-    main()
