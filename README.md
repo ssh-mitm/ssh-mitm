@@ -10,6 +10,7 @@
 
 `ssh-proxy-server` is an intercepting (mitm) proxy server for security audits.
 
+* **Replace File in SCP supported in 0.2.6**
 * **Replace File in SFTP supported in 0.2.3**
 * **Transparent proxy support in 0.2.2!** - intercepting traffic to other hosts is now possible when using arp spoofing or proxy is used as gateway.
 * **Since release 0.2.0, SSH Proxy Server has full support for tty (shell), scp and sftp!**
