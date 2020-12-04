@@ -23,18 +23,10 @@ class SSHForwarder(SSHBaseForwarder):
         try:
             while self.session.running:
                 # forward stdout <-> stdin und stderr <-> stderr
-                if self.session.ssh_channel.recv_ready():
-                    buf = self.session.ssh_channel.recv(self.BUF_LEN)
-                    buf = self.stdin(buf)
-                    self.server_channel.sendall(buf)
-                if self.server_channel.recv_ready():
-                    buf = self.server_channel.recv(self.BUF_LEN)
-                    buf = self.stdout(buf)
-                    self.session.ssh_channel.sendall(buf)
-                if self.server_channel.recv_stderr_ready():
-                    buf = self.server_channel.recv_stderr(self.BUF_LEN)
-                    buf = self.stderr(buf)
-                    self.session.ssh_channel.sendall_stderr(buf)
+                self.forward_stdin()
+                self.forward_stdout()
+                self.forward_extra()
+                self.forward_stderr()
 
                 if self._closed(self.session.ssh_channel):
                     self.server_channel.close()
@@ -55,6 +47,27 @@ class SSHForwarder(SSHBaseForwarder):
         except Exception:
             logging.exception('error processing ssh session!')
             raise
+
+    def forward_stdin(self):
+        if self.session.ssh_channel.recv_ready():
+            buf = self.session.ssh_channel.recv(self.BUF_LEN)
+            buf = self.stdin(buf)
+            self.server_channel.sendall(buf)
+
+    def forward_stdout(self):
+        if self.server_channel.recv_ready():
+            buf = self.server_channel.recv(self.BUF_LEN)
+            buf = self.stdout(buf)
+            self.session.ssh_channel.sendall(buf)
+
+    def forward_extra(self):
+        pass
+
+    def forward_stderr(self):
+        if self.server_channel.recv_stderr_ready():
+            buf = self.server_channel.recv_stderr(self.BUF_LEN)
+            buf = self.stderr(buf)
+            self.session.ssh_channel.sendall_stderr(buf)
 
     def close_session(self, channel):
         channel.get_transport().close()
