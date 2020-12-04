@@ -5,7 +5,6 @@ from paramiko import Transport, AUTH_SUCCESSFUL
 from paramiko.agent import AgentServerProxy
 
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
-from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
 
 
 class Session:
@@ -54,7 +53,7 @@ class Session:
                     raise ValueError('ciphers must be a tuple')
                 self._transport.get_security_options().ciphers = self.CIPHERS
             self._transport.add_server_key(self.proxyserver.host_key)
-            self._transport.set_subsystem_handler('sftp', ProxySFTPServer, SFTPProxyServerInterface)
+            self._transport.set_subsystem_handler('sftp', ProxySFTPServer, self.proxyserver.sftp_interface)
 
         return self._transport
 

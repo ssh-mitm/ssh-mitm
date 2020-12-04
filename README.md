@@ -4,12 +4,14 @@
 [![Github version](https://img.shields.io/github/v/release/manfred-kaiser/ssh-proxy-server?label=github&logo=github)](https://github.com/manfred-kaiser/ssh-proxy-server/releases)
 [![PyPI version](https://img.shields.io/pypi/v/ssh-proxy-server.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/ssh-proxy-server/)
 [![Supported Python versions](https://img.shields.io/pypi/pyversions/ssh-proxy-server.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/ssh-proxy-server/)
-[![PyPI downloads](https://pepy.tech/badge/ssh-proxy-server/month)](https://pepy.tech/project/ssh-proxy-server/month)
-[![GitHub](https://img.shields.io/github/license/manfred-kaiser/ssh-proxy-server.svg)](LICENSE)
+[![PyPI downloads](https://pepy.tech/badge/ssh-proxy-server/month)](https://pepy.tech/project/ssh-proxy-server)
+[![GitHub](https://img.shields.io/github/license/manfred-kaiser/ssh-proxy-server.svg)](https://github.com/manfred-kaiser/ssh-proxy-server/blob/master/LICENSE)
 
 
 `ssh-proxy-server` is an intercepting (mitm) proxy server for security audits.
 
+* **Replace File in SCP supported in 0.2.6**
+* **Replace File in SFTP supported in 0.2.3**
 * **Transparent proxy support in 0.2.2!** - intercepting traffic to other hosts is now possible when using arp spoofing or proxy is used as gateway.
 * **Since release 0.2.0, SSH Proxy Server has full support for tty (shell), scp and sftp!**
 
@@ -131,8 +133,8 @@ Loading a class from a file (experimental):
 #### Available forwarders:
 
 - **`ssh_proxy_server.forwarders.ssh.SSHForwarder`** - forwards traffic from client to remote server
-- **`ssh_proxy_server.forwarders.ssh.SSHLogForwarder`** - write the session to a file, which can be replayed with `script`
-- **`ssh_proxy_server.forwarders.ssh.NoShellForwarder`** - keeps the session open, when used as master channel, but tty should not be possible to the remote server
+- **`ssh_proxy_server.plugins.ssh.sessionlogger.SSHLogForwarder`** - write the session to a file, which can be replayed with `script`
+- **`ssh_proxy_server.plugins.ssh.noshell.NoShellForwarder`** - keeps the session open, when used as master channel, but tty should not be possible to the remote server
 
 
 ### SCP interface
@@ -144,7 +146,8 @@ Loading a class from a file (experimental):
 #### Available forwarders:
 
 - **`ssh_proxy_server.forwarders.scp.SCPForwarder`** - transfer file between client and server
-- **`ssh_proxy_server.forwarders.scp.SCPStorageForwarder`** - save file to file system
+- **`ssh_proxy_server.plugins.scp.store_file.SCPStorageForwarder`** - save file to file system
+- **`ssh_proxy_server.plugins.scp.replace_file.SCPReplaceFile`** - replace transfered file with another file
 
 ### SFTP Handler
 
@@ -155,7 +158,8 @@ Loading a class from a file (experimental):
 #### Available forwarders:
 
 - **`ssh_proxy_server.forwarders.sftp.SFTPHandlerPlugin`** - transfer file between client and server
-- **`ssh_proxy_server.forwarders.sftp.SFTPHandlerStoragePlugin`** - save file to file system
+- **`ssh_proxy_server.plugins.sftp.store_file.SFTPHandlerStoragePlugin`** - save file to file system
+- **`ssh_proxy_server.plugins.sftp_replace.SFTPProxyReplaceHandler`** - replace transfered file with another file
 
 ### Authentication:
 
@@ -168,3 +172,9 @@ Loading a class from a file (experimental):
 - **`ssh_proxy_server.authentication.AuthenticatorPassThrough`** - default authenticator, which can reuse credentials
 
 Currently, only one authenticator (AuthenticatorPassThrough) exists, but it supports arguments to specify remote host, username and password, which shlould fit most scenarios. (public keys are on the roadmap)
+
+
+## Authors
+
+- Manfred Kaiser
+- Simon Böhm
