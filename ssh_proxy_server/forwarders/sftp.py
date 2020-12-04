@@ -14,6 +14,10 @@ class SFTPHandlerBasePlugin(Module):
     def get_interface(cls):
         return None
 
+    @classmethod
+    def get_file_handle(cls):
+        return None
+
     def close(self):
         pass
 

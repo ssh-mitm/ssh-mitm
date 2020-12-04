@@ -67,7 +67,8 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
                 return None
 
             sftp_handler = self.session.proxyserver.sftp_handler
-            fobj = SFTPBaseHandle(sftp_handler, remotePath)
+            sftp_file_handle = sftp_handler.get_file_handle() or SFTPBaseHandle
+            fobj = sftp_file_handle(sftp_handler, remotePath)
 
             # writeonly
             if fstr in ('wb', 'ab'):

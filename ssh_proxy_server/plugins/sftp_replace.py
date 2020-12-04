@@ -3,7 +3,7 @@ import os
 
 from paramiko import SFTPAttributes
 
-from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin
+from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
 from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
 
 
@@ -25,6 +25,15 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
         def stat(self, remotePath):
             return self.lstat(remotePath)
 
+    class SFTPHandle(SFTPBaseHandle):
+
+        def close(self):
+            if not self.plugin.data_handled:
+                args, _ = SFTPProxyReplaceHandler.PARSER.parse_known_args()
+                with open(args.sftp_replacement_file, "rb") as r:
+                    self.writefile.write(r.read())
+            super().close()
+
     @classmethod
     def get_interface(cls):
         return cls.SFTPInterface
@@ -44,11 +53,13 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
         logging.info("intercepting sftp file, replacement: %s", self.args.sftp_replacement_file)
         self.replacement = open(self.args.sftp_replacement_file, "rb")
         self.file_uploaded = False
+        self.data_handled = False
 
     def close(self):
         self.replacement.close()
 
     def handle_data(self, data, *, offset=None, length=None):
+        self.data_handled = True
         """
         - PUT: Zero byte files dont even access this method
         - PUT: Big replacement files are very slow (loads whole file into memory first)
