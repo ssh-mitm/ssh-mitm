@@ -146,6 +146,7 @@ Loading a class from a file (experimental):
 
 - **`ssh_proxy_server.forwarders.scp.SCPForwarder`** - transfer file between client and server
 - **`ssh_proxy_server.plugins.scp.store_file.SCPStorageForwarder`** - save file to file system
+- **`ssh_proxy_server.plugins.scp.replace_file.SCPReplaceFile`** - replace transfered file with another file
 
 ### SFTP Handler
 
