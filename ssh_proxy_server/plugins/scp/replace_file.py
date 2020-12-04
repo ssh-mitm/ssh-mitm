@@ -22,7 +22,7 @@ class SCPReplaceFile(SCPForwarder):
 
     def handle_command(self, traffic):
         traffic = super().handle_command(traffic)
-        if not self.await_response:
+        if not self.got_c_command:
             return traffic
 
         self.bytes_remaining = self.file_size = self.file_stat.st_size
