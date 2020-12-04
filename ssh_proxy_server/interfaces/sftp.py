@@ -3,7 +3,6 @@ import paramiko
 import os
 
 from enhancements.modules import Module
-from paramiko import SFTPAttributes
 
 from ssh_proxy_server.forwarders.sftp import SFTPBaseHandle
 
@@ -13,6 +12,7 @@ class BaseSFTPServerInterface(paramiko.SFTPServerInterface, Module):
     def __init__(self, authenticationinterface):
         super().__init__(authenticationinterface)
         self.session = authenticationinterface.session
+
 
 class SFTPProxyServerInterface(BaseSFTPServerInterface):
 

@@ -11,9 +11,9 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ssh_proxy_server',
-    version='0.2.2',
+    version='0.2.5',
     author='Manfred Kaiser, Simon Böhm',
-    author_email='manfred.kaiser@logfile.at, simon.boehm@htl.rennweg.at',
+    author_email='ssh-proxy-server@logfile.at',
     description='ssh proxy server to intercept ssh',
     long_description=long_description,
     long_description_content_type='text/markdown',
@@ -24,7 +24,7 @@ setup(
         'Source': 'https://github.com/manfred-kaiser/ssh-proxy-server',
         'Tracker': 'https://github.com/manfred-kaiser/ssh-proxy-server/issues',
     },
-    python_requires='>= 3.5',
+    python_requires='>= 3.6',
     classifiers=[
         "Programming Language :: Python :: 3",
         "Programming Language :: Python :: 3.6",

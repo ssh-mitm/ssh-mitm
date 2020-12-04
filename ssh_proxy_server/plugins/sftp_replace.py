@@ -48,7 +48,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
     def close(self):
         self.replacement.close()
 
-    def handle_data(self, data, length=None):
+    def handle_data(self, data, *, offset=None, length=None):
         """
         - PUT: Zero byte files dont even access this method
         - PUT: Big replacement files are very slow (loads whole file into memory first)
