@@ -134,7 +134,9 @@ Loading a class from a file (experimental):
 
 - **`ssh_proxy_server.forwarders.ssh.SSHForwarder`** - forwards traffic from client to remote server
 - **`ssh_proxy_server.plugins.ssh.sessionlogger.SSHLogForwarder`** - write the session to a file, which can be replayed with `script`
-- **`ssh_proxy_server.plugins.ssh.noshell.NoShellForwarder`** - keeps the session open, when used as master channel, but tty should not be possible to the remote server
+- **`ssh_proxy_server.plugins.ssh.noshell.NoShellForwarder`** - keeps the session open, when used as master channel, but tty should not be possible to the
+remote server
+- **`ssh_proxy_server.plugins.ssh.mirrorshell.SSHMirrorForwarder`** - Mirror ssh session to a raw socket
 
 
 ### SCP interface
