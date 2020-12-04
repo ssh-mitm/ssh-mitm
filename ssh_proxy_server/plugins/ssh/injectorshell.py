@@ -25,6 +25,11 @@ class SSHInjectableForwarder(SSHForwarder):
             type=int,
             help='local port where injector sessions are served'
         )
+        cls.PARSER.add_argument(
+            '--ssh-injector-disable-mirror',
+            dest='ssh_injector_disable_mirror',
+            help='disables host session mirroring for the injector shell'
+        )
 
     def __init__(self, session):
         super(SSHInjectableForwarder, self).__init__(session)
@@ -32,17 +37,22 @@ class SSHInjectableForwarder(SSHForwarder):
         self.injector_port = self.args.ssh_injector_port
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        while True:
-            if self.injector_sock.connect_ex((self.injector_ip, self.injector_port)) == 0:
+        while True: # test/fix this
+            b = self.injector_sock.connect_ex((self.injector_ip, self.injector_port)) == 0
+            logging.debug(b)
+            logging.debug(self.injector_port)
+            if b:
                 self.injector_port += 1
             else:
                 self.injector_sock.bind((self.injector_ip, self.injector_port))
                 break
         self.injector_sock.listen(5)
 
+        self.mirror_enabled = False if self.args.ssh_injector_disable_mirror else True
         self.queue = queue.Queue()
         self.sender = self.session.ssh_channel
         self.injector_shells = []
+        InjectorShell.BUF_LEN = self.BUF_LEN
         thread = threading.Thread(target=self.injector_connect)
         thread.start()
         self.conn_thread = thread
@@ -55,23 +65,13 @@ class SSHInjectableForwarder(SSHForwarder):
                 if len(readable) == 1 and readable[0] is self.injector_sock:
                     client, addr = self.injector_sock.accept()
                     logging.info("injector shell opened from %s", str(addr))
-                    injector_shell = threading.Thread(target=self.injector_session, args=(client,))
+                    injector_shell = InjectorShell(client, self.queue)
                     injector_shell.start()
                     self.injector_shells.append(injector_shell)
         except Exception as e:
             logging.warning("injector connection suffered an unexpected error")
             logging.exception(e)
             self.close_session(self.channel)
-
-    def injector_session(self, client_sock):
-        try:
-            with client_sock as sock:
-                while True:
-                    data = sock.recv(self.BUF_LEN)
-                    self.queue.put((data, sock))
-                    time.sleep(0.1)
-        except OSError:
-            logging.warning("injector shell %s was closed unexpectedly", client_sock.getsockname())
 
     def forward_stdin(self):    # maybe add host priority (priority queue)
         if self.session.ssh_channel.recv_ready():
@@ -82,6 +82,10 @@ class SSHInjectableForwarder(SSHForwarder):
         if self.server_channel.recv_ready():
             buf = self.server_channel.recv(self.BUF_LEN)
             self.sender.sendall(buf)
+            if self.mirror_enabled:
+                for shell in self.injector_shells:
+                    if shell.client_sock is not self.sender:
+                        shell.client_sock.sendall(buf)
 
     def forward_extra(self):
         if not self.server_channel.recv_ready() and not self.session.ssh_channel.recv_ready() and not self.queue.empty():
@@ -100,3 +104,30 @@ class SSHInjectableForwarder(SSHForwarder):
         self.conn_thread.join()
         for shell in self.injector_shells:
             shell.join()
+
+
+class InjectorShell(threading.Thread):
+
+    BUF_LEN = 1024
+
+    def __init__(self, client_sock, queue):
+        super(InjectorShell, self).__init__()
+        self.queue = queue
+        self.client_sock = client_sock
+
+    def run(self) -> None:
+        try:
+            while True:
+                data = self.client_sock.recv(self.BUF_LEN)
+                if data == b'exit':
+                    break
+                self.queue.put((data, self.client_sock))
+                time.sleep(0.1)
+        except OSError:
+            logging.warning("injector shell %s was closed unexpectedly", self.client_sock.getsockname())
+        finally:
+            self.join()
+
+    def join(self, timeout=None) -> None:
+        super(InjectorShell, self).join(timeout)
+        self.client_sock.close()
