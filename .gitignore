@@ -114,6 +114,7 @@ venv.bak/
 .spyderproject
 .spyproject
 
+
 # JetBrains project setting
 .idea
 test
