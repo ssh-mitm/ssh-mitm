@@ -10,7 +10,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 
 setup(
-    name='ss-mitm',
+    name='ssh-mitm',
     version='0.3.0',
     author='Manfred Kaiser, Simon Böhm',
     author_email='ssh-proxy-server@logfile.at',
