@@ -10,8 +10,8 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 
 setup(
-    name='ssh_proxy_server',
-    version='0.2.8',
+    name='ss-mitm',
+    version='0.3.0',
     author='Manfred Kaiser, Simon Böhm',
     author_email='ssh-proxy-server@logfile.at',
     description='ssh proxy server to intercept ssh',
@@ -36,7 +36,8 @@ setup(
     ],
     entry_points={
         'console_scripts': [
-            'ssh-proxy-server = ssh_proxy_server.cli:main'
+            'ssh-proxy-server = ssh_proxy_server.cli:main',
+            'ssh-mitm = ssh_proxy_server.cli:main',
         ]
     },
     install_requires=[
