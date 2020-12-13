@@ -11,7 +11,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ssh-mitm',
-    version='0.3.1',
+    version='0.3.2',
     author='Manfred Kaiser, Simon Böhm',
     author_email='ssh-proxy-server@logfile.at',
     description='ssh proxy server to intercept ssh',
@@ -21,6 +21,7 @@ setup(
     packages=find_packages(),
     url="https://ssh-mitm.logfile.at",
     project_urls={
+        'Documentation': 'https://ssh-mitm.readthedocs.io/en/latest/',
         'Source': 'https://github.com/ssh-mitm/ssh-mitm',
         'Tracker': 'https://github.com/ssh-mitm/ssh-mitm/issues',
     },
