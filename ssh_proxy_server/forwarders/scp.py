@@ -123,7 +123,10 @@ class SCPForwarder(SCPBaseForwarder):
         self.file_size = 0
         self.file_name = ''
 
+        self.got_c_command = False
+
     def handle_command(self, traffic):
+        self.got_c_command = False
         command = traffic.decode('utf-8')
 
         match_c_command = re.match(r"([CD])([0-7]{4})\s([0-9]+)\s(.*)\n", command)
@@ -138,6 +141,7 @@ class SCPForwarder(SCPBaseForwarder):
 
         # setze Name, Dateigröße und das zu sendende Kommando
         logging.info("got command %s", command.strip())
+        self.got_c_command = True
 
         self.file_command = match_c_command[1]
         self.file_mode = match_c_command[2]
@@ -160,7 +164,8 @@ class SCPForwarder(SCPBaseForwarder):
             self.await_response = False
             return self.process_response(traffic)
 
-        if self.bytes_remaining == 0:
+        if self.bytes_remaining == 0 and not self.got_c_command:
             return self.handle_command(traffic)
 
+        self.got_c_command = False
         return self.process_data(traffic)

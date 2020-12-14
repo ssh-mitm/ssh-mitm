@@ -18,7 +18,7 @@ import datetime
 
 # -- Project information -----------------------------------------------------
 
-project = 'SSH Proxy Server'
+project = 'SSH MITM Proxy Server'
 author = 'Manfred Kaiser'
 copyright = '{}, {}'.format(datetime.datetime.now().year, author)  # pylint: disable=redefined-builtin
 

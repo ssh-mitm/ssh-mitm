@@ -1,15 +1,16 @@
-# ssh-proxy-server - intercept ssh traffic
+# ssh-mitm - intercept ssh traffic
 
-[![CodeFactor](https://www.codefactor.io/repository/github/manfred-kaiser/ssh-proxy-server/badge)](https://www.codefactor.io/repository/github/manfred-kaiser/ssh-proxy-server)
-[![Github version](https://img.shields.io/github/v/release/manfred-kaiser/ssh-proxy-server?label=github&logo=github)](https://github.com/manfred-kaiser/ssh-proxy-server/releases)
-[![PyPI version](https://img.shields.io/pypi/v/ssh-proxy-server.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/ssh-proxy-server/)
-[![Supported Python versions](https://img.shields.io/pypi/pyversions/ssh-proxy-server.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/ssh-proxy-server/)
-[![PyPI downloads](https://pepy.tech/badge/ssh-proxy-server/month)](https://pepy.tech/project/ssh-proxy-server)
-[![GitHub](https://img.shields.io/github/license/manfred-kaiser/ssh-proxy-server.svg)](https://github.com/manfred-kaiser/ssh-proxy-server/blob/master/LICENSE)
+[![CodeFactor](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm/badge)](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm)
+[![Github version](https://img.shields.io/github/v/release/ssh-mitm/ssh-mitm?label=github&logo=github)](https://github.com/ssh-mitm/ssh-mitm/releases)
+[![PyPI version](https://img.shields.io/pypi/v/ssh-mitm.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/ssh-mitm/)
+[![Supported Python versions](https://img.shields.io/pypi/pyversions/ssh-mitm.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/ssh-mitm/)
+[![PyPI downloads](https://pepy.tech/badge/ssh-mitm/month)](https://pepy.tech/project/ssh-mitm)
+[![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm.svg)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
 
 
-`ssh-proxy-server` is an intercepting (mitm) proxy server for security audits.
+`ssh-mitm` is an intercepting (mitm) proxy server for security audits.
 
+* **Redirect/mirror Shell to another ssh client supported in 0.2.8**
 * **Replace File in SCP supported in 0.2.6**
 * **Replace File in SFTP supported in 0.2.3**
 * **Transparent proxy support in 0.2.2!** - intercepting traffic to other hosts is now possible when using arp spoofing or proxy is used as gateway.
@@ -19,7 +20,7 @@
 
 ## Installation
 
-`pip install ssh-proxy-server`
+`pip install ssh-mitm`
 
 ## Start Proxy Server
 
@@ -31,7 +32,7 @@ Start the server:
 
 ```bash
 
-ssh-proxy-server --remote-host 127.0.0.1
+ssh-mitm --remote-host 127.0.0.1
 
 ```
 
@@ -50,7 +51,7 @@ When public key authentication is used, the agent is forwarded to the remote ser
 Start the server:
 
 ```bash
-ssh-proxy-server --forward-agent --remote-host 127.0.0.1
+ssh-mitm --forward-agent --remote-host 127.0.0.1
 ```
 
 Connect to server:
@@ -116,13 +117,13 @@ Some arguments accept Python-class names as string.
 
 Loading a class from a package:
 
-`ssh-proxy-server --ssh-interface ssh_proxy_server.forwarders.ssh.SSHForwarder`
+`ssh-mitm --ssh-interface ssh_proxy_server.forwarders.ssh.SSHForwarder`
 
 > :warning: creating a pip package for custom classes is recommended, because loading from files has some bugs at the moment
 
 Loading a class from a file (experimental):
 
-`ssh-proxy-server --ssh-interface /path/to/my/file.py:ExtendedSSHForwarder`
+`ssh-mitm --ssh-interface /path/to/my/file.py:ExtendedSSHForwarder`
 
 ### SSH interface
 
@@ -134,7 +135,9 @@ Loading a class from a file (experimental):
 
 - **`ssh_proxy_server.forwarders.ssh.SSHForwarder`** - forwards traffic from client to remote server
 - **`ssh_proxy_server.plugins.ssh.sessionlogger.SSHLogForwarder`** - write the session to a file, which can be replayed with `script`
-- **`ssh_proxy_server.plugins.ssh.noshell.NoShellForwarder`** - keeps the session open, when used as master channel, but tty should not be possible to the remote server
+- **`ssh_proxy_server.plugins.ssh.noshell.NoShellForwarder`** - keeps the session open, when used as master channel, but tty should not be possible to the
+remote server
+- **`ssh_proxy_server.plugins.ssh.mirrorshell.SSHMirrorForwarder`** - Mirror ssh session to another ssh client
 
 
 ### SCP interface
