@@ -19,13 +19,6 @@ class SSHInjectableForwarder(SSHForwarder):
             help='local address/interface where injector sessions are served'
         )
         cls.PARSER.add_argument(
-            '--ssh-injector-port',
-            dest='ssh_injector_port',
-            default=0,
-            type=int,
-            help='local port where injector sessions are served'
-        )
-        cls.PARSER.add_argument(
             '--ssh-injector-disable-mirror',
             dest='ssh_injector_disable_mirror',
             action="store_true",
@@ -35,18 +28,15 @@ class SSHInjectableForwarder(SSHForwarder):
     def __init__(self, session):
         super(SSHInjectableForwarder, self).__init__(session)
         self.injector_ip = self.args.ssh_injector_net
-        self.injector_port = self.args.ssh_injector_port
+        self.injector_port = 5555
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        while True:     # TODO: test/fix this
-            b = self.injector_sock.connect_ex((self.injector_ip, self.injector_port)) == 0
-            logging.debug(b)
-            logging.debug(self.injector_port)
-            if b:
-                self.injector_port += 1
-            else:
+        while True:
+            try:
                 self.injector_sock.bind((self.injector_ip, self.injector_port))
                 break
+            except OSError:
+                self.injector_port += 1
         self.injector_sock.listen(5)
         self.injector_running = True
 
@@ -66,7 +56,7 @@ class SSHInjectableForwarder(SSHForwarder):
                 readable = select.select([self.injector_sock], [], [], 0.5)[0]
                 if len(readable) == 1 and readable[0] is self.injector_sock:
                     client, addr = self.injector_sock.accept()
-                    logging.info("injector shell opened from %s", str(addr))
+                    logging.info("injector shell opened from %s to ('%s', %d)", str(addr), self.injector_ip, self.injector_port)
                     injector_shell = InjectorShell(addr, client, self)
                     injector_shell.start()
                     self.injector_shells.append(injector_shell)
@@ -120,7 +110,6 @@ class InjectorShell(threading.Thread):
         self.forwarder = forwarder
         self.queue = self.forwarder.queue
         self.client_sock = client_sock
-        self.client_sock.settimeout(60)
 
     def run(self) -> None:
         try:
@@ -132,8 +121,6 @@ class InjectorShell(threading.Thread):
                         break
                     self.queue.put((data, self.client_sock))
                 time.sleep(0.1)
-        except socket.timeout:
-            logging.info("injector shell %s timed out", str(self.remote))
         except OSError:
             logging.warning("injector shell %s with unexpected error", str(self.remote))
         finally:
