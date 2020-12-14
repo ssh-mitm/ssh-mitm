@@ -28,15 +28,10 @@ class SSHInjectableForwarder(SSHForwarder):
     def __init__(self, session):
         super(SSHInjectableForwarder, self).__init__(session)
         self.injector_ip = self.args.ssh_injector_net
-        self.injector_port = 5555
+        self.injector_port = 0
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        while True:
-            try:
-                self.injector_sock.bind((self.injector_ip, self.injector_port))
-                break
-            except OSError:
-                self.injector_port += 1
+        self.injector_sock.bind((self.injector_ip, self.injector_port))
         self.injector_sock.listen(5)
         self.injector_running = True
 
