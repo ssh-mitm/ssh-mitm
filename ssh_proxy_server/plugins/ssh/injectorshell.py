@@ -66,7 +66,8 @@ class SSHInjectableForwarder(SSHForwarder):
             logging.exception(e)
             self.close_session(self.channel)
 
-    def forward_stdin(self):    # TODO: maybe add host priority (priority queue)
+    def forward_stdin(self):
+        # MTODO: maybe add host priority (priority queue); silent mode with client blocking input from injectors
         if self.session.ssh_channel.recv_ready():
             buf = self.session.ssh_channel.recv(self.BUF_LEN)
             self.queue.put((buf, self.session.ssh_channel))
@@ -83,7 +84,6 @@ class SSHInjectableForwarder(SSHForwarder):
     def forward_extra(self):
         if not self.server_channel.recv_ready() and not self.session.ssh_channel.recv_ready() and not self.queue.empty():
             msg, sender = self.queue.get()
-            logging.debug("QUEUED MSG: " + str(msg))
             if msg == b'\r\n' and sender is not self.session.ssh_channel:
                 msg = b'\r'
             self.server_channel.sendall(msg)
