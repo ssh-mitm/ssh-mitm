@@ -102,12 +102,58 @@ attack this machine. An attacker also does not know if the fingerprint is correc
 
 ### User-Case: Security Audit
 
-Intercepting ssh during security audits is useful to understand, how an application works.
+When trying to figure out the communication schematics of an application, intercepting ssh can be an invaluable tool.
 
-For example, if you have an application, which connects to you local router via ssh, to configure the device, you can intercept those connections, if the application does not know the fingerprint and accept it on first use.
+For example, if you have an application, which connects to you local router via ssh, to configure the device, you can intercept those connections, if the application does not know the fingerprint and accepts it on first use.
 
 If the application knows the fingerprint, then the same host key is used on every device. In this case, you have a good chance to extract the host key from a firmware updated and use it to trick the application.
 
+### Use-Case: Transparent Proxy
+
+When the ssh proxy server needs to monitor general ssh communication in a network the transparent feature can be used.
+
+To setup this feature correctly and intercept ssh traffic to multiple different hosts traffic needs to be routed through the ssh proxy server.
+
+SSH packets that need to be audited can now be transparently processed and forwarded by the ssh proxy server making use of the TPROXY feature of the linux kernel.
+
+For example, when traffic is routed through a CentOS 7 machine following configuration can be used:
+
+##### With iptables
+```bash
+iptables -t mangle -A PREROUTING -p tcp --dport 22 -j TPROXY --tproxy-mark 0x1/0x1 --on-port=10022 --on-ip=127.0.0.1
+
+# Saving the configuration permanently
+yum install -y iptables-services
+systemctl enable iptables
+iptables-save > /etc/sysconfig/iptables
+systemctl start iptables
+``` 
+##### With firewalld
+```bash
+# Making use of directly and permanently adding a rule to the iptables table
+firewall-cmd --direct --permanent --add-rule ipv4 mangle PREROUTING 1 -p tcp --dport 22 --j TPROXY --tproxy-mark 0x1/0x1 --on-port=10022 --on-ip=127.0.0.1
+```
+> :information: additional firewall rules may be necessary to maintain device management capabilities over ssh
+
+To process the packets locally further routing needs to take place:
+
+```bash
+echo 100 tproxy >> /etc/iproute2/rt_tables
+ip rule add fwmark 1 lookup tproxy
+ip route add local 0.0.0.0/0 dev lo table tproxy
+
+# Setting routes and policies persistent
+echo 'from all fwmark 0x1 lookup tproxy' > /etc/sysconfig/network-scripts/rule-lo
+echo 'local default dev lo scope host table tproxy' > /etc/sysconfig/network-scripts/route-lo
+```
+
+Now only the ssh proxy server needs to be started in transparent mode to be able to handle sockets that do not have local addresses:
+
+```bash
+ssh-mitm --transparent
+```
+
+https://powerdns.org/tproxydoc/tproxy.md.html
 
 ## Available modules
 
@@ -138,7 +184,7 @@ Loading a class from a file (experimental):
 - **`ssh_proxy_server.plugins.ssh.noshell.NoShellForwarder`** - keeps the session open, when used as master channel, but tty should not be possible to the
 remote server
 - **`ssh_proxy_server.plugins.ssh.mirrorshell.SSHMirrorForwarder`** - Mirror ssh session to another ssh client
-
+- **`ssh_proxy_server.plugins.ssh.injectorshell.SSHInjectableForwarder`** - Creates injection shells for listening on and writing to a ssh session
 
 ### SCP interface
 
