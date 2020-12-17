@@ -143,8 +143,8 @@ ip rule add fwmark 1 lookup tproxy
 ip route add local 0.0.0.0/0 dev lo table tproxy
 
 # Setting routes and policies persistent
-echo 'from all fwmark 0x1 lookup tproxy' > /etc/sysconfig/network-scripts/rule-lo
-echo 'local default dev lo scope host table tproxy' > /etc/sysconfig/network-scripts/route-lo
+echo 'from all fwmark 0x1 lookup tproxy' >> /etc/sysconfig/network-scripts/rule-lo
+echo 'local default dev lo scope host table tproxy' >> /etc/sysconfig/network-scripts/route-lo
 ```
 
 Now only the ssh proxy server needs to be started in transparent mode to be able to handle sockets that do not have local addresses:
