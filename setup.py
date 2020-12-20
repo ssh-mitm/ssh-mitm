@@ -19,9 +19,9 @@ setup(
     long_description_content_type='text/markdown',
     keywords="ssh proxy mitm network security audit",
     packages=find_packages(),
-    url="https://ssh-mitm.logfile.at",
+    url="https://ssh-mitm.at",
     project_urls={
-        'Documentation': 'https://ssh-mitm.readthedocs.io/en/latest/',
+        'Documentation': 'https://docs.ssh-mitm.at',
         'Source': 'https://github.com/ssh-mitm/ssh-mitm',
         'Tracker': 'https://github.com/ssh-mitm/ssh-mitm/issues',
     },
