@@ -41,6 +41,5 @@ class SCPReplaceFile(SCPForwarder):
             data = self.file_to_send.read()
             data += b"\x00"
             return data
-        else:
-            self.file_to_send.close()
-            return b"\x00"
+        self.file_to_send.close()
+        return b"\x00"

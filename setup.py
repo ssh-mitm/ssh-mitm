@@ -11,7 +11,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ssh-mitm',
-    version='0.3.5',
+    version='0.3.6',
     author='Manfred Kaiser, Simon Böhm',
     author_email='support@ssh-mitm.at',
     description='ssh proxy server to intercept ssh',
