@@ -62,10 +62,6 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
     def handle_data(self, data, *, offset=None, length=None):
         self.data_handled = True
-        """
-        - PUT: Zero byte files dont even access this method
-        - PUT: Big replacement files are very slow (loads whole file into memory first)
-        """
         if self.file_uploaded:
             return b''
         if self.sftp.writefile:
