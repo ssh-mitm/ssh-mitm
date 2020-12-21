@@ -21,6 +21,8 @@ class SCPStorageForwarder(SCPForwarder):
 
     def __init__(self, session):
         super().__init__(session)
+        self.args.scp_storage_dir = os.path.expanduser(self.args.scp_storage_dir)
+
         self.file_id = None
         self.tmp_file = None
 

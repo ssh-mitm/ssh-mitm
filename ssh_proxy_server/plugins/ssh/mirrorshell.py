@@ -3,6 +3,8 @@ import select
 import threading
 import socket
 import time
+import os
+
 import paramiko
 
 from ssh_proxy_server.forwarders.ssh import SSHForwarder
@@ -37,22 +39,24 @@ class SSHMirrorForwarder(SSHForwarder):
     @classmethod
     def parser_arguments(cls):
         cls.PARSER.add_argument(
-            '--ssh-injector-net',
-            dest='ssh_injector_net',
+            '--ssh-mirrorshell-net',
+            dest='ssh_mirrorshell_net',
             default='127.0.0.1',
             help='local address/interface where injector sessions are served'
         )
         cls.PARSER.add_argument(
-            '--ssh-injector-key',
-            dest='ssh_injector_key',
+            '--ssh-mirrorshell-key',
+            dest='ssh_mirrorshell_key',
             required=True
         )
 
     def __init__(self, session):
         super().__init__(session)
+        self.args.ssh_mirrorshell_key = os.path.expanduser(self.args.ssh_mirrorshell_key)
+
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.injector_sock.bind((self.args.ssh_injector_net, 0))
+        self.injector_sock.bind((self.args.ssh_mirrorshell_net, 0))
         self.injector_sock.listen(5)
         self.inject_server = None
 
@@ -73,7 +77,7 @@ class SSHMirrorForwarder(SSHForwarder):
                     t.set_gss_host(socket.getfqdn(""))
 
                     t.load_server_moduli()
-                    t.add_server_key(paramiko.RSAKey(filename=self.args.ssh_injector_key))
+                    t.add_server_key(paramiko.RSAKey(filename=self.args.ssh_mirrorshell_key))
                     self.inject_server = InjectServer(self.server_channel)
                     event = threading.Event()
                     t.start_server(event=event, server=self.inject_server)

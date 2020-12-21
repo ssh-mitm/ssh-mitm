@@ -15,8 +15,9 @@ class SCPReplaceFile(SCPForwarder):
 
     def __init__(self, session) -> None:
         super().__init__(session)
-        self.data_sent = False
+        self.args.scp_replacement_file = os.path.expanduser(self.args.scp_replacement_file)
 
+        self.data_sent = False
         self.file_stat = os.stat(self.args.scp_replacement_file)
         self.file_to_send = open(self.args.scp_replacement_file, 'rb')
 

@@ -17,6 +17,8 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
 
     def __init__(self, sftp, filename):
         super().__init__(sftp, filename)
+        self.args.sftp_storage_dir = os.path.expanduser(self.args.sftp_storage_dir)
+
         self.file_id = str(uuid.uuid4())
         logging.info("sftp file transfer: %s -> %s", filename, self.file_id)
         self.output_path = os.path.join(self.args.sftp_storage_dir, self.file_id)
