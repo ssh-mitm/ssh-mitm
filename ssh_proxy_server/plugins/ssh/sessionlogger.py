@@ -22,6 +22,7 @@ class SSHLogForwarder(SSHForwarder):
 
     def __init__(self, session):
         super().__init__(session)
+        self.args.ssh_log_dir = os.path.expanduser(self.args.ssh_log_dir)
         self.timestamp = None
 
         self.logdir = None

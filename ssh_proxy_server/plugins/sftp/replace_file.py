@@ -49,6 +49,8 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
     def __init__(self, sftp, filename):
         super().__init__(sftp, filename)
+        self.args.sftp_replacement_file = os.path.expanduser(self.args.sftp_replacement_file)
+
         logging.info("sftp file transfer detected: %s", filename)
         logging.info("intercepting sftp file, replacement: %s", self.args.sftp_replacement_file)
         self.replacement = open(self.args.sftp_replacement_file, "rb")
