@@ -39,12 +39,6 @@ def main():
     parser.add_plugin(LogModule)
 
     parser.add_argument(
-        '--listen-address',
-        dest='listen_address',
-        default='127.0.0.1',
-        help='listen port'
-    )
-    parser.add_argument(
         '--listen-port',
         dest='listen_port',
         default=10022,
@@ -121,7 +115,7 @@ def main():
     args.authenticator.AGENT_FORWARDING = args.foreward_agent
 
     proxy = SSHProxyServer(
-        (args.listen_address, args.listen_port),
+        args.listen_port,
         key_file=args.host_key,
         ssh_interface=args.ssh_interface,
         scp_interface=args.scp_interface,

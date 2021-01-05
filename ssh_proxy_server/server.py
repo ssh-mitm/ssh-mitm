@@ -1,11 +1,16 @@
 import logging
 import os
 import select
-import socket
 import time
 import threading
 
 from paramiko import RSAKey
+
+from tcp_proxy_server.multisocket import (
+    create_server_sock,
+    has_dual_stack,
+    MultipleSocketsListener
+)
 
 from ssh_proxy_server.session import Session
 
@@ -16,7 +21,7 @@ class SSHProxyServer:
 
     def __init__(
         self,
-        listen_address,
+        listen_port,
         key_file=None,
         ssh_interface=None,
         scp_interface=None,
@@ -29,7 +34,8 @@ class SSHProxyServer:
         self._threads = []
         self._hostkey = None
 
-        self.listen_address = listen_address
+        self.listen_address = ('0.0.0.0', listen_port)
+        self.listen_address_v6 = ('::', listen_port)
         self.running = False
 
         self.key_file = key_file
@@ -58,14 +64,12 @@ class SSHProxyServer:
         return self._hostkey
 
     def start(self):
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        if self.transparent:
-            sock.setsockopt(socket.SOL_IP, socket.IP_TRANSPARENT, 1)
-        sock.bind(self.listen_address)
-        sock.listen(5)
+        sock = create_server_sock(self.listen_address, transparent=self.transparent)
+        if not has_dual_stack(sock):
+            sock.close()
+            sock = MultipleSocketsListener([self.listen_address, self.listen_address_v6], transparent=self.transparent)
 
-        logging.info('listen on %s', self.listen_address)
+        logging.info('listen on %s and %s', self.listen_address, self.listen_address_v6)
         self.running = True
         try:
             while self.running:
@@ -92,7 +96,7 @@ class SSHProxyServer:
                     time.sleep(0.1)
                     if session.ssh and self.ssh_interface:
                         session.ssh = False
-                        self.ssh_interface(session).forward()
+                        self.ssh_inpythonterface(session).forward()
                     elif session.scp and self.scp_interface:
                         session.scp = False
                         self.scp_interface(session).forward()

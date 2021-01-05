@@ -11,10 +11,10 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ssh-mitm',
-    version='0.3.6',
-    author='Manfred Kaiser, Simon Böhm',
+    version='0.3.7',
+    author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
-    description='ssh proxy server to intercept ssh',
+    description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
     long_description=long_description,
     long_description_content_type='text/markdown',
     keywords="ssh proxy mitm network security audit",
@@ -43,6 +43,7 @@ setup(
     },
     install_requires=[
         'enhancements>=0.0.4',
+        'tcp-proxy-server>=0.0.2',
         'paramiko',
         'pytz'
     ]
