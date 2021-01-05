@@ -34,8 +34,9 @@ class SSHProxyServer:
         self._threads = []
         self._hostkey = None
 
-        self.listen_address = ('0.0.0.0', listen_port)
-        self.listen_address_v6 = ('::', listen_port)
+        self.listen_port = listen_port
+        self.listen_address = '0.0.0.0'  # nosec
+        self.listen_address_v6 = '::'
         self.running = False
 
         self.key_file = key_file
@@ -64,12 +65,21 @@ class SSHProxyServer:
         return self._hostkey
 
     def start(self):
-        sock = create_server_sock(self.listen_address, transparent=self.transparent)
+        sock = create_server_sock(
+            (self.listen_address, self.listen_port),
+            transparent=self.transparent
+        )
         if not has_dual_stack(sock):
             sock.close()
-            sock = MultipleSocketsListener([self.listen_address, self.listen_address_v6], transparent=self.transparent)
+            sock = MultipleSocketsListener(
+                [
+                    (self.listen_address, self.listen_port),
+                    (self.listen_address_v6, self.listen_port)
+                ],
+                transparent=self.transparent
+            )
 
-        logging.info('listen on %s and %s', self.listen_address, self.listen_address_v6)
+        logging.info('listen interfaces %s and %s on port %s', self.listen_address, self.listen_address_v6, self.listen_port)
         self.running = True
         try:
             while self.running:
