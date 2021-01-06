@@ -1,13 +1,20 @@
-Projekt Dokumentation
-=====================
+safsafdsf
+safsafdsf
+
+
+asfdsafas
+
+
+safsadfdsaf
+
+
+safsadfdsaf
+
+asfdsafas
 
 .. toctree::
    :maxdepth: 2
    :caption: Contents:
 
-
-Indices and tables
-==================
-
-* :ref:`genindex`
-* :ref:`search`
+   install
+   plugins

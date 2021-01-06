@@ -23,6 +23,7 @@ author = 'Manfred Kaiser'
 copyright = '{}, {}'.format(datetime.datetime.now().year, author)  # pylint: disable=redefined-builtin
 
 master_doc = 'index'
+html_add_permalinks = ''
 
 # -- General configuration ---------------------------------------------------
 
