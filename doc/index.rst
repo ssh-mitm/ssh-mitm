@@ -1,16 +1,5 @@
-safsafdsf
-safsafdsf
-
-
-asfdsafas
-
-
-safsadfdsaf
-
-
-safsadfdsaf
-
-asfdsafas
+SSH-MITM Docs - Startseite
+==========================
 
 .. toctree::
    :maxdepth: 2

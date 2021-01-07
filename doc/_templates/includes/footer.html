@@ -1,0 +1,17 @@
+<footer class="footer">
+    <div class="container text-center py-5">
+        <!--/* This template is free as long as you keep the footer attribution link. If you'd like to use the template without the attribution link, you can buy the commercial license via our website: themes.3rdwavemedia.com Thank you for your support. :) */-->
+        <ul class="social-list list-unstyled pt-4 mb-0">
+            {% include 'includes/social.html' %}
+        </ul><!--//social-list-->
+
+        <small class="copyright">
+            {%- if hasdoc('copyright') %}
+                {% trans path=pathto('copyright'), copyright=copyright|e %}&#169; <a href="{{ path }}">Copyright</a> {{ copyright }}.{% endtrans %}
+            {%- else %}
+                {% trans copyright=copyright|e %}&#169; Copyright {{ copyright }}.{% endtrans %}
+            {%- endif %}<br/>
+            Designed with <i class="fas fa-heart" style="color: #fb866a;"></i> by <a class="theme-link" href="http://themes.3rdwavemedia.com" target="_blank">Xiaoying Riley</a> for developers
+        </small>
+    </div>
+</footer>

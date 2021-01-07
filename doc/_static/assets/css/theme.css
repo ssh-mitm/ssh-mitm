@@ -9125,6 +9125,9 @@ a.theme-link:hover {
     -moz-opacity: 0.8;
     opacity: 0.8;
 }
+.docs-top-utilities .social-list {
+    padding-right: 100px;
+}
 .social-list li {
     font-size: 1.125rem;
     background: #f4fcf6;

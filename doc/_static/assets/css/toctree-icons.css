@@ -1,0 +1,5 @@
+#docs-nav .toctree-l1:nth-child(1):before,
+#docs-cards .toctree-l1:nth-child(1) i:before {
+    font-family: FontAwesome;
+    content: "\f3e2";
+}
