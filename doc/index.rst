@@ -6,4 +6,5 @@ SSH-MITM Docs - Startseite
    :caption: Contents:
 
    install
+   quickstart
    plugins

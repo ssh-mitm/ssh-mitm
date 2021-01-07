@@ -1,4 +1,10 @@
+.docs-content li>p {
+    margin-bottom: 0;
+}
 
+div.section {
+    scroll-margin-top: 75px;
+}
 
 .docs-nav p {
     display: none;
@@ -10,6 +16,14 @@
     list-style-type: none;
     list-style: none;
     color: #5d6778;
+}
+
+.docs-nav ul li a {
+    color: #5d6778;
+}
+
+.docs-nav ul li.current a {
+    color: #28b76b;
 }
 
 li.toctree-l1 {
@@ -93,6 +107,102 @@ h2 .headerlink {
     font-size: 0.4em;
     vertical-align: 1em;
 }
+
+
+
+
+blockquote {
+    margin-left: 24px;
+    line-height: 24px;
+    margin-bottom: 24px
+}
+
+pre.literal-block {
+    white-space: pre;
+    margin: 0;
+    padding: 12px 12px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
+    display: block;
+    overflow: auto
+}
+
+pre.literal-block,
+div[class^='highlight'] {
+    border: 1px solid #e1e4e5;
+    overflow-x: auto;
+    margin: 1px 0 24px 0
+}
+
+pre.literal-block div[class^='highlight'],
+div[class^='highlight'] div[class^='highlight'] {
+    padding: 0px;
+    border: none;
+    margin: 0
+}
+
+div[class^='highlight'] td.code {
+    width: 100%
+}
+
+.linenodiv pre {
+    border-right: solid 1px #e6e9ea;
+    margin: 0;
+    padding: 12px 12px;
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
+    user-select: none;
+    pointer-events: none
+}
+
+div[class^='highlight'] pre {
+    white-space: pre;
+    margin: 0;
+    padding: 12px 12px;
+    display: block;
+    overflow: auto
+}
+
+div[class^='highlight'] pre .hll {
+    display: block;
+    margin: 0 -12px;
+    padding: 0 12px
+}
+
+pre.literal-block,
+div[class^='highlight'] pre,
+.linenodiv pre {
+    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
+    font-size: 12px;
+    line-height: 1.4
+}
+
+.code-block-caption {
+    font-style: italic;
+    font-size: 85%;
+    line-height: 1;
+    padding: 1em 0;
+    text-align: center
+}
+
+@media print {
+    .codeblock,
+    div[class^='highlight'],
+    div[class^='highlight'] pre {
+        white-space: pre-wrap
+    }
+}
+
+
+
+
+
+
+
+
+
+
+
+
+
 
 
 /*!
