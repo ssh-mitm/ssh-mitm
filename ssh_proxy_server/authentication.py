@@ -112,7 +112,15 @@ class Authenticator(Module):
 
     def connect(self, user, host, port, method, password=None, key=None):
         logging.info(
-            "Client Verbindung mit folgenden Parametern wird hergestellt: Remote Address: %s; Port: %s; Username: %s; Password: %s; Key: %s; Agent: %s",
+            "\n".join((
+                "Client connection established with parameters:",
+                "\tRemote Address: %s",
+                "\tPort: %s",
+                "\tUsername: %s",
+                "\tPassword: %s",
+                "\tKey: %s",
+                "\tAgent: %s"
+            )),
             host,
             port,
             user,
