@@ -127,7 +127,7 @@ class ServerInterface(BaseServerInterface):
         return super().check_channel_subsystem_request(channel, name)
 
     def check_port_forward_request(self, address, port):
-        logging.warning("port forward attemt")
+        logging.warning("port forward attempt")
         return False
 
 
