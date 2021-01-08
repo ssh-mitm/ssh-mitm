@@ -32,13 +32,13 @@ Or, download the tarball:
 .. code-block:: bash
     :linenos:
 
-    $ curl -OL https://github.com/ssh-mitm/ssh-mitm/tarball/master
-    # optionally, zipball is also available (for Windows users).
+    $ curl -L https://github.com/ssh-mitm/ssh-mitm/archive/master.tar.gz | tar xz
+
 
 Once you have a copy of the source, you can embed it in your own Python package, or install it into your site-packages easily:
 
 .. code-block:: bash
     :linenos:
 
-    $ cd ssh-mitm
+    $ cd ssh-mitm-master
     $ python -m pip install .

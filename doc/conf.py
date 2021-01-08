@@ -22,6 +22,10 @@ project = 'SSH-MITM'
 author = 'Manfred Kaiser'
 copyright = '{}, {}'.format(datetime.datetime.now().year, author)  # pylint: disable=redefined-builtin
 
+extensions = [
+    'sphinx.ext.autosectionlabel',
+]
+
 master_doc = 'index'
 html_add_permalinks = ''
 
@@ -62,7 +66,8 @@ footer = {
 }
 
 page_descriptions = {
-    'install.html': 'Das ist ein Test'
+    'install.html': 'SSH-MITM server is easy to install with Python and PIP',
+    'quickstart.html': 'Short guide to setup an intercepting ssh-mitm server with a single command'
 }
 
 html_context = {
