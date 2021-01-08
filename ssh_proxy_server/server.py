@@ -106,7 +106,7 @@ class SSHProxyServer:
                     time.sleep(0.1)
                     if session.ssh and self.ssh_interface:
                         session.ssh = False
-                        self.ssh_inpythonterface(session).forward()
+                        self.ssh_interface(session).forward()
                     elif session.scp and self.scp_interface:
                         session.scp = False
                         self.scp_interface(session).forward()
