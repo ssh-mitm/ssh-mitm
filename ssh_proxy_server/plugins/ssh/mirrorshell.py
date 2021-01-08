@@ -15,6 +15,9 @@ class InjectServer(paramiko.ServerInterface):
         self.server_channel = server_channel
         self.injector_channel = None
 
+    def check_auth_none(self, username):
+        return paramiko.AUTH_SUCCESSFUL
+
     def check_channel_request(self, kind, chanid):
         if kind == 'session':
             return paramiko.OPEN_SUCCEEDED
@@ -36,6 +39,8 @@ class InjectServer(paramiko.ServerInterface):
 
 class SSHMirrorForwarder(SSHForwarder):
 
+    HOST_KEY_LENGTH = 2048
+
     @classmethod
     def parser_arguments(cls):
         cls.PARSER.add_argument(
@@ -46,13 +51,13 @@ class SSHMirrorForwarder(SSHForwarder):
         )
         cls.PARSER.add_argument(
             '--ssh-mirrorshell-key',
-            dest='ssh_mirrorshell_key',
-            required=True
+            dest='ssh_mirrorshell_key'
         )
 
     def __init__(self, session):
         super().__init__(session)
-        self.args.ssh_mirrorshell_key = os.path.expanduser(self.args.ssh_mirrorshell_key)
+        if self.args.ssh_mirrorshell_key:
+            self.args.ssh_mirrorshell_key = os.path.expanduser(self.args.ssh_mirrorshell_key)
 
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -66,7 +71,13 @@ class SSHMirrorForwarder(SSHForwarder):
         self.conn_thread.start()
 
     def injector_connect(self):
-        logging.info("creating ssh injector shell %s, connect with telnet", self.injector_sock.getsockname())
+        inject_host, inject_port = self.injector_sock.getsockname()
+        logging.info(
+            "created injector shell on port {port}. connect with: ssh -p {port} {host}".format(
+                host=inject_host,
+                port=inject_port
+            )
+        )
         try:
             while self.session.running:
                 readable = select.select([self.injector_sock], [], [])[0]
@@ -77,7 +88,11 @@ class SSHMirrorForwarder(SSHForwarder):
                     t.set_gss_host(socket.getfqdn(""))
 
                     t.load_server_moduli()
-                    t.add_server_key(paramiko.RSAKey(filename=self.args.ssh_mirrorshell_key))
+                    if self.args.ssh_mirrorshell_key:
+                        t.add_server_key(paramiko.RSAKey(filename=self.args.ssh_mirrorshell_key))
+                    else:
+                        t.add_server_key(paramiko.RSAKey.generate(bits=self.HOST_KEY_LENGTH))
+
                     self.inject_server = InjectServer(self.server_channel)
                     event = threading.Event()
                     t.start_server(event=event, server=self.inject_server)
