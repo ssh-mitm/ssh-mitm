@@ -74,6 +74,10 @@ hr {
     box-sizing: content-box;
     height: 0;
     overflow: visible;
+    margin-top: 1rem;
+    margin-bottom: 1rem;
+    border: 0;
+    border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 h1,
 h2,
@@ -90,7 +94,7 @@ p {
 }
 abbr[title],
 abbr[data-original-title] {
-    text-decoration: underline;
+    /*text-decoration: underline;*/
     -webkit-text-decoration: underline dotted;
     text-decoration: underline dotted;
     cursor: help;
@@ -373,12 +377,6 @@ h6,
     font-size: 3.5rem;
     font-weight: 300;
     line-height: 1.2;
-}
-hr {
-    margin-top: 1rem;
-    margin-bottom: 1rem;
-    border: 0;
-    border-top: 1px solid rgba(0, 0, 0, 0.1);
 }
 small,
 .small {
@@ -2413,8 +2411,8 @@ fieldset:disabled a.btn {
     color: #28b76b;
 }
 .btn-light:hover {
-    color: #252930;
-    /*background-color: #e9ebee;*/
+    /*color: #252930;
+    background-color: #e9ebee;*/
     border-color: #e2e5e9;
     background: #f4fcf6;
     color: #28b76b;
@@ -9340,7 +9338,7 @@ a.theme-link:hover {
     background-color: #f4fcf6;
     content: " ";
     display: inline-block;
-    height: inherit;
+    /*height: inherit;*/
     left: 0;
     margin-top: -0.5rem;
     position: absolute;
