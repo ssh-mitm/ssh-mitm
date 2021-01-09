@@ -178,6 +178,9 @@ pre {
     margin-bottom: 1rem;
     overflow: auto;
     -ms-overflow-style: scrollbar;
+    display: block;
+    font-size: 87.5%;
+    color: #252930;
 }
 figure {
     margin: 0 0 1rem;
@@ -460,11 +463,6 @@ kbd kbd {
     padding: 0;
     font-size: 100%;
     font-weight: 700;
-}
-pre {
-    display: block;
-    font-size: 87.5%;
-    color: #252930;
 }
 pre code {
     font-size: inherit;
@@ -2232,7 +2230,6 @@ fieldset:disabled a.btn {
     color: #fff;
     background-color: #5d6778;
     border-color: #5d6778;
-    color: #fff;
 }
 .btn-secondary:hover {
     color: #fff;
@@ -2405,7 +2402,7 @@ fieldset:disabled a.btn {
     box-shadow: 0 0 0 0.2rem rgba(217, 131, 128, 0.5);
 }
 .btn-light {
-    color: #252930;
+    /*color: #252930;*/
     border-color: #fff;
     background: #f4fcf6;
     color: #28b76b;
@@ -2904,18 +2901,16 @@ input.btn-block[type="button"] {
 .dropright .dropdown-toggle::after {
     display: inline-block;
     margin-left: 0.255em;
-    vertical-align: 0.255em;
+    /*vertical-align: 0.255em;*/
     content: "";
     border-top: 0.3em solid transparent;
     border-right: 0;
     border-bottom: 0.3em solid transparent;
     border-left: 0.3em solid;
+    vertical-align: 0;
 }
 .dropright .dropdown-toggle:empty::after {
     margin-left: 0;
-}
-.dropright .dropdown-toggle::after {
-    vertical-align: 0;
 }
 .dropleft .dropdown-menu {
     top: 0;
@@ -2925,28 +2920,23 @@ input.btn-block[type="button"] {
     margin-right: 0.125rem;
 }
 .dropleft .dropdown-toggle::after {
-    display: inline-block;
+    /*display: inline-block;*/
     margin-left: 0.255em;
     vertical-align: 0.255em;
     content: "";
-}
-.dropleft .dropdown-toggle::after {
     display: none;
 }
 .dropleft .dropdown-toggle::before {
     display: inline-block;
     margin-right: 0.255em;
-    vertical-align: 0.255em;
     content: "";
     border-top: 0.3em solid transparent;
     border-right: 0.3em solid;
     border-bottom: 0.3em solid transparent;
+    vertical-align: 0;
 }
 .dropleft .dropdown-toggle:empty::after {
     margin-left: 0;
-}
-.dropleft .dropdown-toggle::before {
-    vertical-align: 0;
 }
 .dropdown-menu[x-placement^="top"],
 .dropdown-menu[x-placement^="right"],
