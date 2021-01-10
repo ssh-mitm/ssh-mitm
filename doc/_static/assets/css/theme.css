@@ -55,13 +55,16 @@ section {
 }
 body {
     margin: 0;
-    font-family: -apple-system, BlinkMacSystemFont, "Segoe UI", Roboto, "Helvetica Neue", Arial, "Noto Sans", sans-serif, "Apple Color Emoji", "Segoe UI Emoji", "Segoe UI Symbol", "Noto Color Emoji";
     font-size: 1rem;
     font-weight: 400;
     line-height: 1.5;
-    color: #252930;
     text-align: left;
     background-color: #fff;
+    font-family: Poppins, sans-serif;
+    -webkit-font-smoothing: antialiased;
+    -moz-osx-font-smoothing: grayscale;
+    color: #5d6778;
+    padding-top: 69px;
 }
 [tabindex="-1"]:focus:not(:focus-visible) {
     outline: 0 !important;
@@ -74,6 +77,9 @@ h5,
 h6 {
     margin-top: 0;
     margin-bottom: 0.5rem;
+    font-family: Poppins, sans-serif;
+    color: #252930;
+    font-weight: 600;
 }
 p {
     margin-top: 0;
@@ -271,8 +277,11 @@ small {
 }
 code {
     font-size: 87.5%;
-    color: #e83e8c;
     word-wrap: break-word;
+    background: #f4fcf6;
+    color: #252930;
+    padding: 0.25rem 0.375rem;
+    border-radius: 0.25rem;
 }
 a > code {
     color: inherit;
@@ -712,6 +721,7 @@ pre code {
     padding: 0.75rem;
     vertical-align: top;
     border-top: 1px solid #e7e9ed;
+    border-color: #e7e9ed;
 }
 .table-sm td {
     padding: 0.3rem;
@@ -900,7 +910,6 @@ input.form-control[type="time"] {
 }
 .btn {
     display: inline-block;
-    font-weight: 400;
     color: #252930;
     text-align: center;
     vertical-align: middle;
@@ -910,11 +919,13 @@ input.form-control[type="time"] {
     user-select: none;
     background-color: transparent;
     border: 1px solid transparent;
-    padding: 0.375rem 0.75rem;
     font-size: 1rem;
     line-height: 1.5;
     border-radius: 0.25rem;
-    transition: color 0.15s ease-in-out, background-color 0.15s ease-in-out, border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    font-weight: 600;
+    padding: 0.6rem 1.25rem;
+    transition: all 0.4s ease-in-out;
+    border: none;
 }
 @media (prefers-reduced-motion: reduce) {
     .btn {
@@ -924,10 +935,6 @@ input.form-control[type="time"] {
 .btn:hover {
     color: #252930;
     text-decoration: none;
-}
-.btn:focus {
-    outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(40, 183, 107, 0.25);
 }
 .btn.disabled,
 .btn:disabled {
@@ -1000,14 +1007,15 @@ a.btn.disabled {
     box-shadow: 0 0 0 0.2rem rgba(116, 168, 237, 0.5);
 }
 .btn-light {
-    color: #252930;
-    background-color: #fff;
     border-color: #fff;
+    background: #f4fcf6;
+    color: #28b76b;
 }
 .btn-light:hover {
     color: #252930;
     background-color: #e9ebee;
     border-color: #e2e5e9;
+    color: #28b76b;
 }
 .btn-light:focus {
     color: #252930;
@@ -2747,32 +2755,6 @@ a.text-dark:hover {
  * Website: http://themes.3rdwavemedia.com/
  * Twitter: @3rdwave_themes
 */
-body {
-    font-family: Poppins, sans-serif;
-    -webkit-font-smoothing: antialiased;
-    -moz-osx-font-smoothing: grayscale;
-    color: #5d6778;
-    padding-top: 69px;
-}
-h1,
-h2,
-h3,
-h4,
-h5,
-h6 {
-    font-family: Poppins, sans-serif;
-    color: #252930;
-    font-weight: 600;
-}
-code {
-    background: #f4fcf6;
-    color: #252930;
-    padding: 0.25rem 0.375rem;
-    border-radius: 0.25rem;
-}
-.table td {
-    border-color: #e7e9ed;
-}
 a.theme-link {
     color: #252930;
     text-decoration: underline;
@@ -2783,12 +2765,6 @@ a.theme-link:hover {
     color: #28b76b;
     -webkit-text-decoration-color: rgba(40, 183, 107, 0.8);
     text-decoration-color: rgba(40, 183, 107, 0.8);
-}
-.btn {
-    font-weight: 600;
-    padding: 0.6rem 1.25rem;
-    transition: all 0.4s ease-in-out;
-    border: none;
 }
 @media (prefers-reduced-motion: reduce) {
     .btn {
@@ -2802,18 +2778,8 @@ a.theme-link:hover {
     box-shadow: 0 12px 24px -6px rgba(0, 0, 0, 0.15);
 }
 .btn:focus {
-    box-shadow: none !important;
-}
-.btn-primary {
-    background: #28b76b;
-}
-.btn-light {
-    background: #f4fcf6;
-    color: #28b76b;
-}
-.btn-light:hover {
-    background: #f4fcf6;
-    color: #28b76b;
+    outline: 0;
+    box-shadow: 0 0 0 0.2rem rgba(40, 183, 107, 0.25);
 }
 .form-control {
     padding-top: 0.875rem;
