@@ -1,55 +1,41 @@
-.docs-content li>p {
+.docs-content li > p {
     margin-bottom: 0;
 }
-
 div.section {
     scroll-margin-top: 75px;
 }
-
 .docs-nav p {
     display: none;
 }
-
 .docs-nav ul {
     font-size: 0.875rem;
     padding-left: 0;
     list-style-type: none;
-    list-style: none;
     color: #5d6778;
 }
-
 .docs-nav ul li a {
     color: #5d6778;
 }
-
 .docs-nav ul li.current a {
     color: #28b76b;
 }
-
 li.toctree-l1 {
     margin-top: 1.5rem;
 }
-
 .docs-nav ul li .toctree-l1 {
     font-size: 1rem;
     margin-bottom: 1.5rem;
     padding-top: 1.5rem;
     display: table-row;
 }
-
-.docs-nav ul li.toctree-l1>a:hover {
+.docs-nav ul li.toctree-l1 > a:hover {
     text-decoration: none;
 }
-
 .docs-nav ul .toctree-l1:before {
     content: "\f02d";
-    /* FontAwesome Unicode */
     font-family: FontAwesome;
     display: inline-block;
     margin-right: 0.8rem;
-    /* same as padding-left set on li */
-    font-size: 0.875rem;
-    padding-top: 0.375rem;
     color: #28b76b;
     background: #f4fcf6;
     width: 32px;
@@ -59,36 +45,28 @@ li.toctree-l1 {
     text-align: center;
     border-radius: 50%;
 }
-
 .docs-nav ul .toctree-l1.current:before {
     color: #f4fcf6;
     background: #28b76b;
 }
-
 .docs-nav ul ul {
     font-size: 0.875rem;
     padding-left: 2.5rem;
     list-style-type: none;
-    list-style: none;
     color: #5d6778;
 }
-
 .docs-nav ul ul li {
     padding-top: 0.5rem;
 }
-
-.docs-nav ul ul li.toctree-l2>a {
+.docs-nav ul ul li.toctree-l2 > a {
     color: #5d6778;
 }
-
-.docs-nav ul ul li.toctree-l2>a:hover {
+.docs-nav ul ul li.toctree-l2 > a:hover {
     text-decoration: none;
 }
-
 .docs-nav ul .toctree-l2:before {
     display: inline-block;
     margin-right: 1.2rem;
-    /* same as padding-left set on li */
     font-size: 0.875rem;
     padding-top: 0.8rem;
     color: #f4fcf6;
@@ -101,115 +79,49 @@ li.toctree-l1 {
     margin-top: -0.5rem;
     width: 3px;
 }
-
-h1 .headerlink,
-h2 .headerlink {
-    font-size: 0.4em;
-    vertical-align: 1em;
-}
-
-
-
-
-blockquote {
-    margin-left: 24px;
-    line-height: 24px;
-    margin-bottom: 24px
-}
-
-pre.literal-block {
-    white-space: pre;
-    margin: 0;
-    padding: 12px 12px;
-    font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
-    display: block;
-    overflow: auto
-}
-
-pre.literal-block,
-div[class^='highlight'] {
+div[class^="highlight"] {
     border: 1px solid #e1e4e5;
     overflow-x: auto;
-    margin: 1px 0 24px 0
+    margin: 1px 0 24px;
 }
-
-pre.literal-block div[class^='highlight'],
-div[class^='highlight'] div[class^='highlight'] {
-    padding: 0px;
+div[class^="highlight"] div[class^="highlight"] {
+    padding: 0;
     border: none;
-    margin: 0
+    margin: 0;
 }
-
-div[class^='highlight'] td.code {
-    width: 100%
+div[class^="highlight"] td.code {
+    width: 100%;
 }
-
 .linenodiv pre {
     border-right: solid 1px #e6e9ea;
     margin: 0;
-    padding: 12px 12px;
+    padding: 12px;
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
     user-select: none;
-    pointer-events: none
+    pointer-events: none;
 }
-
-div[class^='highlight'] pre {
+div[class^="highlight"] pre {
     white-space: pre;
     margin: 0;
-    padding: 12px 12px;
+    padding: 12px;
     display: block;
-    overflow: auto
+    overflow: auto;
 }
-
-div[class^='highlight'] pre .hll {
-    display: block;
-    margin: 0 -12px;
-    padding: 0 12px
-}
-
-pre.literal-block,
-div[class^='highlight'] pre,
-.linenodiv pre {
+.linenodiv pre,
+div[class^="highlight"] pre {
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
     font-size: 12px;
-    line-height: 1.4
+    line-height: 1.4;
 }
-
-.code-block-caption {
-    font-style: italic;
-    font-size: 85%;
-    line-height: 1;
-    padding: 1em 0;
-    text-align: center
-}
-
 @media print {
-    .codeblock,
-    div[class^='highlight'],
-    div[class^='highlight'] pre {
-        white-space: pre-wrap
+    div[class^="highlight"],
+    div[class^="highlight"] pre {
+        white-space: pre-wrap;
     }
-}
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-
-/*!
+} /*!
  * "Fork me on GitHub" CSS ribbon v0.2.3 | MIT License
  * https://github.com/simonwhitaker/github-fork-ribbon-css
 */
-
 .github-fork-ribbon {
     width: 12.1em;
     height: 12.1em;
@@ -222,114 +134,76 @@ div[class^='highlight'] pre,
     font-size: 13px;
     text-decoration: none;
     text-indent: -999999px;
-  }
-
-  .github-fork-ribbon.fixed {
+}
+.github-fork-ribbon.fixed {
     position: fixed;
-  }
-
-  .github-fork-ribbon:hover, .github-fork-ribbon:active {
-    background-color: rgba(0, 0, 0, 0.0);
-  }
-
-  .github-fork-ribbon:before, .github-fork-ribbon:after {
-    /* The right and left classes determine the side we attach our banner to */
+}
+.github-fork-ribbon:active,
+.github-fork-ribbon:hover {
+    background-color: rgba(0, 0, 0, 0);
+}
+.github-fork-ribbon:after,
+.github-fork-ribbon:before {
     position: absolute;
     display: block;
     width: 15.38em;
     height: 1.54em;
-
     top: 3.23em;
     right: -3.23em;
-
     -webkit-box-sizing: content-box;
     -moz-box-sizing: content-box;
     box-sizing: content-box;
-
     -webkit-transform: rotate(45deg);
     -moz-transform: rotate(45deg);
     -ms-transform: rotate(45deg);
     -o-transform: rotate(45deg);
     transform: rotate(45deg);
-  }
-
-  .github-fork-ribbon:before {
+}
+.github-fork-ribbon:before {
     content: "";
-
-    /* Add a bit of padding to give some substance outside the "stitching" */
-    padding: .38em 0;
-
-    /* Set the base colour */
+    padding: 0.38em 0;
     background-color: #a00;
-
-    /* Set a gradient: transparent black at the top to almost-transparent black at the bottom */
     background-image: -webkit-gradient(linear, left top, left bottom, from(rgba(0, 0, 0, 0)), to(rgba(0, 0, 0, 0.15)));
     background-image: -webkit-linear-gradient(top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15));
     background-image: -moz-linear-gradient(top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15));
     background-image: -ms-linear-gradient(top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15));
     background-image: -o-linear-gradient(top, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15));
     background-image: linear-gradient(to bottom, rgba(0, 0, 0, 0), rgba(0, 0, 0, 0.15));
-
-    /* Add a drop shadow */
-    -webkit-box-shadow: 0 .15em .23em 0 rgba(0, 0, 0, 0.5);
-    -moz-box-shadow: 0 .15em .23em 0 rgba(0, 0, 0, 0.5);
-    box-shadow: 0 .15em .23em 0 rgba(0, 0, 0, 0.5);
-
+    -webkit-box-shadow: 0 0.15em 0.23em 0 rgba(0, 0, 0, 0.5);
+    -moz-box-shadow: 0 0.15em 0.23em 0 rgba(0, 0, 0, 0.5);
+    box-shadow: 0 0.15em 0.23em 0 rgba(0, 0, 0, 0.5);
     pointer-events: auto;
-  }
-
-  .github-fork-ribbon:after {
-    /* Set the text from the data-ribbon attribute */
+}
+.github-fork-ribbon:after {
     content: attr(data-ribbon);
-
-    /* Set the text properties */
     color: #fff;
     font: 700 1em "Helvetica Neue", Helvetica, Arial, sans-serif;
     line-height: 1.54em;
     text-decoration: none;
-    text-shadow: 0 -.08em rgba(0, 0, 0, 0.5);
+    text-shadow: 0 -0.08em rgba(0, 0, 0, 0.5);
     text-align: center;
     text-indent: 0;
-
-    /* Set the layout properties */
-    padding: .15em 0;
-    margin: .15em 0;
-
-    /* Add "stitching" effect */
-    border-width: .08em 0;
+    padding: 0.15em 0;
+    margin: 0.15em 0;
+    border-width: 0.08em 0;
     border-style: dotted;
     border-color: #fff;
     border-color: rgba(255, 255, 255, 0.7);
-  }
-
-  .github-fork-ribbon.left-top, .github-fork-ribbon.left-bottom {
+}
+.github-fork-ribbon.left-top {
     right: auto;
     left: 0;
-  }
-
-  .github-fork-ribbon.left-bottom, .github-fork-ribbon.right-bottom {
-    top: auto;
-    bottom: 0;
-  }
-
-  .github-fork-ribbon.left-top:before, .github-fork-ribbon.left-top:after, .github-fork-ribbon.left-bottom:before, .github-fork-ribbon.left-bottom:after {
+}
+.github-fork-ribbon.left-top:after,
+.github-fork-ribbon.left-top:before {
     right: auto;
     left: -3.23em;
-  }
-
-  .github-fork-ribbon.left-bottom:before, .github-fork-ribbon.left-bottom:after, .github-fork-ribbon.right-bottom:before, .github-fork-ribbon.right-bottom:after {
-    top: auto;
-    bottom: 3.23em;
-  }
-
-  .github-fork-ribbon.left-top:before, .github-fork-ribbon.left-top:after, .github-fork-ribbon.right-bottom:before, .github-fork-ribbon.right-bottom:after {
     -webkit-transform: rotate(-45deg);
     -moz-transform: rotate(-45deg);
     -ms-transform: rotate(-45deg);
     -o-transform: rotate(-45deg);
     transform: rotate(-45deg);
-  }
-
-  .hiddensearch {
-      visibility: hidden;
-  }
+}
+.hiddensearch {
+    visibility: hidden;
+}
