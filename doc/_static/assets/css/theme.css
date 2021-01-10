@@ -4,7 +4,7 @@
  * Copyright 2011-2020 Twitter, Inc.
  * Licensed under MIT (https://github.com/twbs/bootstrap/blob/main/LICENSE)
  */
- :root {
+:root {
     --blue: #007bff;
     --indigo: #6610f2;
     --purple: #6f42c1;
@@ -124,6 +124,9 @@ pre {
     margin-bottom: 1rem;
     overflow: auto;
     -ms-overflow-style: scrollbar;
+    display: block;
+    font-size: 87.5%;
+    color: #252930;
 }
 img {
     vertical-align: middle;
@@ -138,6 +141,7 @@ table {
 }
 button {
     border-radius: 0;
+    text-transform: none;
 }
 button:focus {
     outline: 1px dotted;
@@ -149,13 +153,7 @@ input {
     font-family: inherit;
     font-size: inherit;
     line-height: inherit;
-}
-button,
-input {
     overflow: visible;
-}
-button {
-    text-transform: none;
 }
 [role="button"] {
     cursor: pointer;
@@ -278,11 +276,6 @@ code {
 }
 a > code {
     color: inherit;
-}
-pre {
-    display: block;
-    font-size: 87.5%;
-    color: #252930;
 }
 pre code {
     font-size: inherit;
@@ -749,14 +742,13 @@ pre code {
     background-color: #d8dbe1;
 }
 .table-dark td {
-    border-color: #b7bdc7;
+    /*border-color: #b7bdc7;
+    border-color: #8993a4;*/
+    border-color: #515a6a;
 }
 .table-dark {
     color: #fff;
     background-color: #747f94;
-}
-.table-dark td {
-    border-color: #8993a4;
 }
 .form-control {
     display: block;
@@ -1314,9 +1306,6 @@ input.btn-block[type="submit"] {
 .card-img-top {
     flex-shrink: 0;
     width: 100%;
-}
-.card-img,
-.card-img-top {
     border-top-left-radius: calc(0.25rem - 1px);
     border-top-right-radius: calc(0.25rem - 1px);
 }
@@ -2709,8 +2698,6 @@ a.text-dark:hover {
     }
     pre {
         white-space: pre-wrap !important;
-    }
-    pre {
         border: 1px solid #cacfd6;
         page-break-inside: avoid;
     }
@@ -2785,9 +2772,6 @@ code {
 }
 .table td {
     border-color: #e7e9ed;
-}
-.table-dark td {
-    border-color: #515a6a;
 }
 a.theme-link {
     color: #252930;
