@@ -171,7 +171,7 @@ a.theme-link:hover {
     height: 600px;
     background: rgba(255, 255, 255, 0.15);
     position: absolute;
-    right: 0px;
+    right: 0;
     top: 30px;
     border-radius: 6px;
     transform: skew(25deg, 10deg);
@@ -205,7 +205,7 @@ a.theme-link:hover {
     height: 600px;
     background: rgba(255, 255, 255, 0.15);
     position: absolute;
-    left: 0px;
+    left: 0;
     top: 30px;
     border-radius: 4px;
     transform: skew(-25deg, 10deg);
@@ -474,7 +474,6 @@ a.theme-link:hover {
     background-color: #f4fcf6;
     content: " ";
     display: inline-block;
-    height: inherit;
     left: 0;
     margin-top: -0.5rem;
     position: absolute;
