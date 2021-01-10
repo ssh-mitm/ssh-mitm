@@ -921,7 +921,6 @@ input.form-control[type="time"] {
     -ms-user-select: none;
     user-select: none;
     background-color: transparent;
-    border: 1px solid transparent;
     font-size: 1rem;
     line-height: 1.5;
     border-radius: 0.25rem;
@@ -3120,7 +3119,6 @@ a.theme-link:hover {
     background-color: #f4fcf6;
     content: " ";
     display: inline-block;
-    height: inherit;
     left: 0;
     margin-top: -0.5rem;
     position: absolute;
