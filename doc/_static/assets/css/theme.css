@@ -763,7 +763,6 @@ pre code {
 .form-control {
     display: block;
     width: 100%;
-    height: calc(1.5em + 0.75rem + 2px);
     padding: 0.375rem 0.75rem;
     font-size: 1rem;
     font-weight: 400;
@@ -774,6 +773,10 @@ pre code {
     border: 1px solid #d9dce1;
     border-radius: 0.25rem;
     transition: border-color 0.15s ease-in-out, box-shadow 0.15s ease-in-out;
+    padding-top: 0.875rem;
+    padding-bottom: 0.875rem;
+    height: 2.75rem;
+    border-color: #e0f7e6;
 }
 @media (prefers-reduced-motion: reduce) {
     .form-control {
@@ -792,8 +795,8 @@ pre code {
     color: #919aaa;
     background-color: #fff;
     border-color: #7ce2ac;
+    box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.15);
     outline: 0;
-    box-shadow: 0 0 0 0.2rem rgba(40, 183, 107, 0.25);
 }
 .form-control::-webkit-input-placeholder {
     color: #adb4c0;
@@ -1012,7 +1015,6 @@ a.btn.disabled {
     color: #28b76b;
 }
 .btn-light:hover {
-    color: #252930;
     background-color: #e9ebee;
     border-color: #e2e5e9;
     color: #28b76b;
@@ -2780,16 +2782,6 @@ a.theme-link:hover {
 .btn:focus {
     outline: 0;
     box-shadow: 0 0 0 0.2rem rgba(40, 183, 107, 0.25);
-}
-.form-control {
-    padding-top: 0.875rem;
-    padding-bottom: 0.875rem;
-    height: 2.75rem;
-    border-color: #e0f7e6;
-}
-.form-control:focus {
-    box-shadow: 0 5px 15px 0 rgba(0, 0, 0, 0.15);
-    outline: 0;
 }
 .theme-icon-holder {
     display: inline-block;
