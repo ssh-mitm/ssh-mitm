@@ -1,6 +1,9 @@
 .docs-content li > p {
     margin-bottom: 0;
 }
+.docs-top-utilities .social-list {
+    padding-right: 100px;
+}
 div.section {
     scroll-margin-top: 75px;
 }
