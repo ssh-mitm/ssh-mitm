@@ -11,7 +11,6 @@ div.section {
     font-size: 0.875rem;
     padding-left: 0;
     list-style-type: none;
-    list-style: none;
     color: #5d6778;
 }
 .docs-nav ul li a {
@@ -38,7 +37,6 @@ li.toctree-l1 {
     display: inline-block;
     margin-right: 0.8rem;
     font-size: 0.875rem;
-    padding-top: 0.375rem;
     color: #28b76b;
     background: #f4fcf6;
     width: 32px;
@@ -56,7 +54,6 @@ li.toctree-l1 {
     font-size: 0.875rem;
     padding-left: 2.5rem;
     list-style-type: none;
-    list-style: none;
     color: #5d6778;
 }
 .docs-nav ul ul li {
@@ -86,7 +83,7 @@ li.toctree-l1 {
 div[class^="highlight"] {
     border: 1px solid #e1e4e5;
     overflow-x: auto;
-    margin: 1px 0 24px 0;
+    margin: 1px 0 24px;
 }
 div[class^="highlight"] div[class^="highlight"] {
     padding: 0;
@@ -99,7 +96,7 @@ div[class^="highlight"] td.code {
 .linenodiv pre {
     border-right: solid 1px #e6e9ea;
     margin: 0;
-    padding: 12px 12px;
+    padding: 12px;
     font-family: SFMono-Regular, Menlo, Monaco, Consolas, "Liberation Mono", "Courier New", Courier, monospace;
     user-select: none;
     pointer-events: none;
@@ -107,7 +104,7 @@ div[class^="highlight"] td.code {
 div[class^="highlight"] pre {
     white-space: pre;
     margin: 0;
-    padding: 12px 12px;
+    padding: 12px;
     display: block;
     overflow: auto;
 }
@@ -202,9 +199,6 @@ div[class^="highlight"] pre {
 .github-fork-ribbon.left-top:before {
     right: auto;
     left: -3.23em;
-}
-.github-fork-ribbon.left-top:after,
-.github-fork-ribbon.left-top:before {
     -webkit-transform: rotate(-45deg);
     -moz-transform: rotate(-45deg);
     -ms-transform: rotate(-45deg);
