@@ -1,6 +1,9 @@
 .docs-content li > p {
     margin-bottom: 0;
 }
+.docs-top-utilities .social-list {
+    padding-right: 100px;
+}
 div.section {
     scroll-margin-top: 75px;
 }
@@ -17,7 +20,7 @@ div.section {
     color: #5d6778;
 }
 .docs-nav ul li.current a {
-    color: #28b76b;
+    color: #4550e6;
 }
 li.toctree-l1 {
     margin-top: 1.5rem;
@@ -36,7 +39,7 @@ li.toctree-l1 {
     font-family: FontAwesome;
     display: inline-block;
     margin-right: 0.8rem;
-    color: #28b76b;
+    color: #4550e6;
     background: #f4fcf6;
     width: 32px;
     height: 32px;
@@ -47,7 +50,7 @@ li.toctree-l1 {
 }
 .docs-nav ul .toctree-l1.current:before {
     color: #f4fcf6;
-    background: #28b76b;
+    background: #4550e6;
 }
 .docs-nav ul ul {
     font-size: 0.875rem;
