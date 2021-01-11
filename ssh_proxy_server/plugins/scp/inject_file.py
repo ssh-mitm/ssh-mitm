@@ -31,9 +31,8 @@ class SCPInjectFile(SCPForwarder):
     def __new__(cls, *args, **kwargs):
         if args[0].scp_command.find(b'-f') != -1:
             return super(SCPInjectFile, cls).__new__(cls)
-        else:
-            logging.info("SCPClient is not downloading a file, reverting to normal SCPForwarder")
-            return SCPForwarder(args[0])
+        logging.info("SCPClient is not downloading a file, reverting to normal SCPForwarder")
+        return SCPForwarder(args[0])
 
     def __init__(self, session) -> None:
         super().__init__(session)
