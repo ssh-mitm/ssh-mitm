@@ -197,6 +197,7 @@ remote server
 - **`ssh_proxy_server.forwarders.scp.SCPForwarder`** - transfer file between client and server
 - **`ssh_proxy_server.plugins.scp.store_file.SCPStorageForwarder`** - save file to file system
 - **`ssh_proxy_server.plugins.scp.replace_file.SCPReplaceFile`** - replace transfered file with another file
+- **`ssh_proxy_server.plugins.scp.inject_file.SCPInjectFile`** - uses SSHtranger Things Exploit to inject file to vulnerable clients (into the working directory)
 
 ### SFTP Handler
 
