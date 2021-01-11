@@ -159,7 +159,7 @@ class SCPForwarder(SCPBaseForwarder):
         return traffic
 
     def handle_traffic(self, traffic):
-        # ignoriert das Datenpaket
+        # verarbeiten des cmd responses (OK 0x00, WARN 0x01, ERR 0x02)
         if self.await_response:
             self.await_response = False
             return self.process_response(traffic)
