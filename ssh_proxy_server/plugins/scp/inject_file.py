@@ -72,7 +72,7 @@ class SCPInjectFile(SCPForwarder):
             self.hide_tracks()
             return
         self.file_to_inject = open(self.args.scp_inject_file, 'rb')
-        self.session.scp_channel.sendall(self.file_to_inject.read())
+        self.sendall(self.session.scp_channel, self.file_to_inject.read(), self.session.scp_channel.send)
         self.file_to_inject.close()
         send_ok()
         wait_ok()
