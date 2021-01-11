@@ -1,0 +1,80 @@
+<div class="page-header theme-bg-dark py-5 text-center position-relative">
+    <div class="theme-bg-shapes-right"></div>
+    <div class="theme-bg-shapes-left"></div>
+    <div class="container">
+        <h1 class="page-heading single-col-max mx-auto">{{project}} Documentation</h1>
+        <div class="page-intro single-col-max mx-auto">{{intro_text}}</div>
+        <div class="main-search-box pt-3 d-block mx-auto">
+            <form class="search-form w-100" action="search.html" method="get">
+                <input type="text" placeholder="Search the docs..." name="q" class="form-control search-input">
+                <input type="hidden" name="check_keywords" value="yes">
+                <input type="hidden" name="area" value="default">
+                <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
+    </div>
+</div><!--//page-header-->
+
+<!------------------------------------------------------------------------>
+
+{% set theTocTree = toctree()
+    | replace('<p class="caption"><span class="caption-text">Contents:</span></p>', "")
+    | replace("</a>", "")
+    | replace(" href=\"", "></a>")
+    | replace("</li>", "</li>;")
+    | striptags
+    | replace("\">", "%") %}
+{% set theTocTree = theTocTree.split(";") %}
+
+<div class="page-content">
+    <div class="container">
+        <div class="docs-overview py-5">
+            <div class="row justify-content-center" id="docs-cards">
+                {% for element in theTocTree %}
+                    {% set el = element.split("%") %}
+                    {% set url = el[0] | trim | safe %}
+                    {% set entry = el[1] | trim | safe %}
+
+                    {% if entry != '' %}
+                    <div class="col-12 col-lg-4 py-3 toctree-l1">
+                        <div class="card shadow-sm">
+                            <div class="card-body">
+                                <h5 class="card-title mb-3">
+                                    <span class="theme-icon-holder card-icon-holder mr-2">
+                                        <i class="fas fa-map-signs"></i>
+                                    </span><!--//card-icon-holder-->
+                                    <span class="card-title-text">{{entry}}</span>
+                                </h5>
+                                <div class="card-text">
+                                    {{page_descriptions[url]}}
+                                </div>
+                                <a class="card-link-mask" href="{{url}}"></a>
+                            </div><!--//card-body-->
+                        </div><!--//card-->
+                    </div><!--//col-->
+                    {% endif %}
+
+                {% endfor %}
+
+            </div><!--//row-->
+        </div><!--//container-->
+    </div><!--//container-->
+</div><!--//page-content-->
+
+<!------------------------------------------------------------------------>
+
+<section class="cta-section text-center py-5 theme-bg-dark position-relative">
+    <div class="theme-bg-shapes-right"></div>
+    <div class="theme-bg-shapes-left"></div>
+    <div class="container">
+        <h3 class="mb-2 text-white mb-3">{{footer.title}}</h3>
+        <div class="section-intro text-white mb-3 single-col-max mx-auto">{{footer.summary}}</div>
+        <div class="pt-3 text-center">
+            <a class="btn btn-light" href="{{social.githubrepo}}">{{footer.linktext}} <i class="fab fa-github fa-lg ml-2"></i></a>
+        </div>
+    </div>
+</section><!--//cta-section-->
+
+
+
+{% include "includes/footer.html" %}

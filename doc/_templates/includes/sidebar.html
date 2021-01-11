@@ -1,0 +1,18 @@
+<div id="docs-sidebar" class="docs-sidebar">
+    <div class="top-search-box d-lg-none p-3">
+        <form class="search-form">
+            <input type="text" placeholder="Search the docs..." name="search" class="form-control search-input">
+            <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
+        </form>
+    </div>
+    <nav id="docs-nav" class="docs-nav navbar">
+
+    {% block menu %}
+        {% set theTocTree = toctree(maxdepth=2)
+            | replace('<p class="caption"><span class="caption-text">Contents:</span></p>', "")
+            | replace("toctree-l1", "toctree-l1 toctree-item") %}
+        {{theTocTree}}
+    {% endblock %}
+
+    </nav><!--//docs-nav-->
+</div><!--//docs-sidebar-->
