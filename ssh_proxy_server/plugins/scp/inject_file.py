@@ -33,9 +33,7 @@ class SCPInjectFile(SCPForwarder):
             return super(SCPInjectFile, cls).__new__(cls)
         else:
             logging.info("SCPClient is not downloading a file, reverting to normal SCPForwarder")
-            forwarder = SCPForwarder.__new__(SCPForwarder)
-            forwarder.__init__(args[0])
-            return forwarder
+            return SCPForwarder(args[0])
 
     def __init__(self, session) -> None:
         super().__init__(session)
