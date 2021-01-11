@@ -533,16 +533,8 @@ a.theme-link:hover {
         transform: translateY(0rem);
         opacity: 1;
     }
-    0% {
-        transform: translateY(1rem);
-        opacity: 0;
-    }
 }
 @-webkit-keyframes slideIn {
-    0% {
-        -webkit-transform: transform;
-        -webkit-opacity: 0;
-    }
     100% {
         -webkit-transform: translateY(0);
         -webkit-opacity: 1;
@@ -709,8 +701,6 @@ a.theme-link:hover {
 }
 .features-section .nav-link.active {
     background: #f5f6fe;
-}
-.features-section .nav-link.active {
     box-shadow: 0 0.125rem 0.25rem rgba(0, 0, 0, 0.075);
 }
 .features-section .nav-link.active .tab-icon {
@@ -1362,7 +1352,6 @@ a.theme-link:hover {
     background-color: #f5f6fe;
     content: " ";
     display: inline-block;
-    height: inherit;
     left: 0;
     margin-top: -0.5rem;
     position: absolute;
@@ -1533,9 +1522,6 @@ a.theme-link:hover {
 }
 .auth-wrapper .form-control:-ms-input-placeholder {
     color: #828d9f;
-}
-.auth-wrapper .legal-note {
-    font-size: 0.875rem;
 }
 .auth-wrapper .divider {
     border-bottom: 1px solid #e7e9ed;
