@@ -9,6 +9,9 @@ from ssh_proxy_server.forwarders.ssh import SSHForwarder
 
 
 class SSHInjectableForwarder(SSHForwarder):
+    # TODO: Upgrade to SSH
+    # TODO: Add script injection support
+    # TODO: Add stealth warning (maybe: complete stealth)
 
     @classmethod
     def parser_arguments(cls):
