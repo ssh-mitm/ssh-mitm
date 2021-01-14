@@ -26,7 +26,10 @@ class InjectServer(paramiko.ServerInterface):
         return paramiko.AUTH_SUCCESSFUL
 
     def get_allowed_auths(self, username):
-        return 'password'
+        return 'password, publickey'
+
+    def check_auth_publickey(self, username, key):
+        return paramiko.AUTH_SUCCESSFUL
 
     def check_channel_shell_request(self, channel):
         self.injector_channel = channel

