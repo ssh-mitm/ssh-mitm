@@ -99,7 +99,7 @@ def main():
         help='module for user authentication'
     )
     parser.add_argument(
-        '--forward-agent',
+        '--request-agent',
         dest='foreward_agent',
         action='store_true',
         help='enables agent forwarding'
