@@ -19,18 +19,6 @@ during authentication.
 
 It you need to intercept a client with public key authentication, there are some options.
 
-Redirect session to a honey pot
-"""""""""""""""""""""""""""""""
-
-The SSH-MITM proxy server can accept the public key auth request and
-redirect the session to a honey pot.
-
-If the client send some commands, which requires a password to enter (like sudo),
-those passwords can be used for further attacks.
-
-SSH-MITM does not support reusing entered passwords for remote authentication,
-but this feate could be implemented as a plugin.
-
 
 Request ssh agent for authentication
 """"""""""""""""""""""""""""""""""""
@@ -72,13 +60,35 @@ The client must be started with agent forwarding enabled.
 
 
 
+Redirect session to a honey pot
+"""""""""""""""""""""""""""""""
+
+If agent forwarding is not possible, the SSH-MITM proxy server can accept the
+public key authentication request and redirect the session to a honey pot.
+
+When the client sends a command, which requires a password to enter (like sudo),
+those passwords can be used for further attacks.
+
+SSH-MITM does not support reusing entered passwords for remote authentication,
+but this feate could be implemented as a plugin.
+
+
 Transparent proxy
 -----------------
 
-To intercept those connection, ssh-mitm proxy server can run in transparent mode,
-which uses the TProxy kernel feature from Linux.
+To intercept ssh sessions, where the destination is not known, ssh-mitm proxy server can run
+in transparent mode, which uses the TProxy kernel feature from Linux.
 
 Transparent proxying often involves "intercepting" traffic on a router. When redirecting packets
 to a local socket, the destination address will be rewritten to the routers address.
 
-To intercept ssh connections on a network, this is not acceptable.
+To intercept ssh connections on a network, this is not acceptable. By using TProxy from the
+Linux Kernel, SSH-MITM proxy server can intercept ssh connections, without loosing the
+destination address.
+
+.. note::
+
+    To intercept the traffic, a static route can be configured on a router.
+    An alternative to a static route is using arp spoofing.
+
+    Both configurations are not part of this documentation.

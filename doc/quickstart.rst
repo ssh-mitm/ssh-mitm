@@ -35,7 +35,6 @@ You will see the credentials in the log output.
 
 
 .. code-block:: none
-    :linenos:
 
     2021-01-01 11:38:26,098 [INFO]  Client connection established with parameters:
         Remote Address: 192.168.0.x
@@ -70,7 +69,6 @@ When a client connects, the ssh-mitm proxy server starts a new server, where you
 This server is used to hijack the session.
 
 .. code-block:: none
-    :linenos:
 
     2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463. connect with: ssh -p 34463 127.0.0.1
 
