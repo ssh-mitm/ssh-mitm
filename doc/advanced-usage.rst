@@ -115,7 +115,7 @@ When the client sends a command, which requires a password to enter (like sudo),
 those passwords can be used for further attacks.
 
 SSH-MITM does not support reusing entered passwords for remote authentication,
-but this feate could be implemented as a plugin.
+but this feature could be implemented as a plugin.
 
 
 Transparent proxy
@@ -179,5 +179,5 @@ Now only the ssh proxy server needs to be started in transparent mode to be able
 
     $ ssh-mitm --transparent
 
-By using the transparent mode, no remote host must be specified. If the ``--remote-host`` paramter is used,
+By using the transparent mode, no remote host must be specified. If the ``--remote-host`` parameter is used,
 all incoming connections are redirected to the same remote host.
