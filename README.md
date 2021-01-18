@@ -1,8 +1,8 @@
-# ssh-mitm - intercept ssh traffic
-
 [![CodeFactor](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm/badge)](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm)
 [![PyPI downloads](https://pepy.tech/badge/ssh-mitm/month)](https://pepy.tech/project/ssh-mitm)
 [![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm.svg)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
+
+# ssh-mitm - intercept ssh traffic
 
 **man in the middle (mitm) server for security audits supporting public key authentication, session hijacking and file manipulation**
 
