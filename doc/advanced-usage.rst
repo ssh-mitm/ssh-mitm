@@ -137,3 +137,47 @@ destination address.
     An alternative to a static route is using arp spoofing.
 
     Router configuration and arp spoofing are not part of this documentation.
+
+
+Setting up firewall rules
+"""""""""""""""""""""""""
+
+To setup SSH-MITM in transparent mode, the system has to be prepared.
+
+**Using iptables:**
+
+.. code-block:: none
+
+    $ iptables -t mangle -A PREROUTING -p tcp --dport 22 -j TPROXY --tproxy-mark 0x1/0x1 --on-port=10022 --on-ip=127.0.0.1
+
+**Using firewalld**
+
+.. code-block:: none
+
+    firewall-cmd --direct --permanent --add-rule ipv4 mangle PREROUTING 1 -p tcp --dport 22 --j TPROXY --tproxy-mark 0x1/0x1 --on-port=10022 --on-ip=127.0.0.1
+
+.. warning::
+
+    Additional firewall rules may be necessary to maintain device management capabilities over ssh
+
+
+.. note::
+
+    To process the packets locally further routing needs to take place:
+
+    .. code-block:: none
+
+        $ echo 100 tproxy >> /etc/iproute2/rt_tables
+        $ ip rule add fwmark 1 lookup tproxy
+        $ ip route add local 0.0.0.0/0 dev lo table tproxy
+
+
+Now only the ssh proxy server needs to be started in transparent mode to be able to handle sockets that do not have local addresses:
+
+
+.. code-block:: none
+
+    $ ssh-mitm --transparent
+
+By using the transparent mode, no remote host must be specified. If the ``--remote-host`` paramter is used,
+all incoming connections are redirected to the same remote host.
