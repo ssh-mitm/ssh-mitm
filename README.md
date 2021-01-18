@@ -18,9 +18,6 @@ To install SSH-MITM, simply run this simple command in your terminal of choice:
 
 ## Quickstart
 
-
-Eager to get started? 
-
 Starting an intercepting mitm-ssh server with password authentication and session hijacking is very simple.
 
 All you have to do is run this command in your terminal of choice.
@@ -44,10 +41,7 @@ You will see the credentials in the log output.
 
 
 Getting the plain text credentials is only half the fun.
-SSH-MITM proxy server is able to hijack a ssh session and allows you to interact with it.
-
-When a client connects, the ssh-mitm proxy server starts a new server, where you can connect with another ssh client.
-This server is used to hijack the session.
+When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
 
     2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463. connect with: ssh -p 34463 127.0.0.1
 
