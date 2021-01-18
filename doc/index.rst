@@ -7,3 +7,4 @@ SSH-MITM Docs - Startseite
 
    install
    quickstart
+   advanced-usage
