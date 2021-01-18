@@ -59,6 +59,51 @@ The client must be started with agent forwarding enabled.
         Warning: this is probably a break-in attempt by a malicious server.
 
 
+Using ssh agent forwarding comes with some security risks and should not be used,
+when the integrity of a machine is not trusted. (https://tools.ietf.org/html/draft-ietf-secsh-agent-02)
+
+.. code-block:: none
+
+    6.  Security Considerations
+
+    The authentication agent is used to control security-sensitive
+    operations, and is used to implement single sign-on.
+
+    Anyone with access to the authentication agent can perform private key
+    operations with the agent.  This is a power equivalent to possession of
+    the private key as long as the connection to the key is maintained.  It
+    is not possible to retrieve the key from the agent.
+
+    It is recommended that agent implementations allow and perform some form
+    of logging and access control.  This access control may utilize
+    information about the path through which the connection was received (as
+    collected with SSH_AGENT_FORWARDING_NOTICE messages; however, the path
+    is reliable only up to and including the first unreliable machine.).
+    Implementations should also allow restricting the operations that can be
+    performed with keys - e.g., limiting them to challenge-response only.
+
+    One should note that a local superuser will be able to obtain access to
+    agents running on the local machine.  This cannot be prevented; in most
+    operating systems, a user with sufficient privileges will be able to
+    read the keys from the physical memory.
+
+    The authentication agent should not be run or forwarded to machine whose
+    integrity is not trusted, as security on such machines might be
+    compromised and might allow an attacker to obtain unauthorized access to
+    the agent.
+
+    Adding a key with SSH_AGENT_ADD_KEY over the net (especially over the
+    Internet) is generally not recommended, because at present the private
+    key has to be moved unencrypted. Implementations SHOULD warn the user of
+    the implications. Even moving the key in encrypted form could be
+    considered unwise.
+
+
+Currently, SSH-MITM only uses the forwarded agent for remote authentication,
+but does not allow to rewrite the ``SSH_AGENT_FORWARDING_NOTICE`` message.
+
+If a client uses an agent, which displays a warning, when the client is accessed, the original notice will be shown.
+
 
 Redirect session to a honey pot
 """""""""""""""""""""""""""""""
@@ -91,4 +136,4 @@ destination address.
     To intercept the traffic, a static route can be configured on a router.
     An alternative to a static route is using arp spoofing.
 
-    Both configurations are not part of this documentation.
+    Router configuration and arp spoofing are not part of this documentation.
