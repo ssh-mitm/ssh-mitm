@@ -1,9 +1,6 @@
 # ssh-mitm - intercept ssh traffic
 
 [![CodeFactor](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm/badge)](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm)
-[![Github version](https://img.shields.io/github/v/release/ssh-mitm/ssh-mitm?label=github&logo=github)](https://github.com/ssh-mitm/ssh-mitm/releases)
-[![PyPI version](https://img.shields.io/pypi/v/ssh-mitm.svg?logo=pypi&logoColor=FFE873)](https://pypi.org/project/ssh-mitm/)
-[![Supported Python versions](https://img.shields.io/pypi/pyversions/ssh-mitm.svg?logo=python&logoColor=FFE873)](https://pypi.org/project/ssh-mitm/)
 [![PyPI downloads](https://pepy.tech/badge/ssh-mitm/month)](https://pepy.tech/project/ssh-mitm)
 [![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm.svg)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
 
