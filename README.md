@@ -40,6 +40,8 @@ You will see the credentials in the log output.
         Agent: None
 
 
+## Session hijacking
+
 Getting the plain text credentials is only half the fun.
 When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
 

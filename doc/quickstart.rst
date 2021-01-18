@@ -53,18 +53,6 @@ SSH-MITM proxy server is able to hijack a ssh session and allows you to interact
 
 Let's get startet with hijacking the session.
 
-.. code-block:: bash
-    :linenos:
-
-    $ ssh-mitm --remote-host 192.168.0.x --ssh-interface ssh_proxy_server.plugins.ssh.mirrorshell.SSHMirrorForwarder
-
-Connect your ssh client with the ssh-mitm proxy.
-
-.. code-block:: bash
-    :linenos:
-
-    $ ssh -p 10022 user@proxyserver
-
 When a client connects, the ssh-mitm proxy server starts a new server, where you can connect with another ssh client.
 This server is used to hijack the session.
 
