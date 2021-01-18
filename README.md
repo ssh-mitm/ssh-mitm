@@ -10,54 +10,18 @@
 
 ## Installation of SSH-MITM
 
-
-This part of the documentation covers the installation of SSH-MITM.
 The first step to using any software package is getting it properly installed.
-
-### $ python -m pip install ssh-mitm
-
 
 To install SSH-MITM, simply run this simple command in your terminal of choice:
 
-    $ python -m pip install ssh-mitm
-
-
-### Get the Source Code
-
-
-SSH-MITM is actively developed on GitHub, where the code is always available.
-
-You can either clone the public repository:
-
-    $ git clone git://github.com/ssh-mitm/ssh-mitm.git
-
-Or, download the tarball:
-
-    $ curl -L https://github.com/ssh-mitm/ssh-mitm/archive/master.tar.gz | tar xz
-
-
-Once you have a copy of the source, you can embed it in your own Python package, or install it into your site-packages easily:
-
-    $ cd ssh-mitm-master
-    $ python -m pip install .
+    $ pip install ssh-mitm
 
 ## Quickstart
 
 
-Eager to get started? This page gives a good introduction in how to get started with SSH-MITM.
+Eager to get started? 
 
-First, make sure that:
-
-* SSH-MITM is :ref:`installed <Installation of SSH-MITM>`
-* SSH-MITM is up-to-date
-
-Let’s get started with some simple examples.
-
-
-### Start the ssh-mitm proxy server
-
-
-Starting an intercepting mitm-ssh server with password authentication is very simple.
+Starting an intercepting mitm-ssh server with password authentication and session hijacking is very simple.
 
 All you have to do is run this command in your terminal of choice.
 
@@ -79,19 +43,8 @@ You will see the credentials in the log output.
         Agent: None
 
 
-### Hijack a SSH terminal session
-
-
 Getting the plain text credentials is only half the fun.
 SSH-MITM proxy server is able to hijack a ssh session and allows you to interact with it.
-
-Let's get startet with hijacking the session.
-
-    $ ssh-mitm --remote-host 192.168.0.x --ssh-interface ssh_proxy_server.plugins.ssh.mirrorshell.SSHMirrorForwarder
-
-Connect your ssh client with the ssh-mitm proxy.
-
-    $ ssh -p 10022 user@proxyserver
 
 When a client connects, the ssh-mitm proxy server starts a new server, where you can connect with another ssh client.
 This server is used to hijack the session.
@@ -107,9 +60,3 @@ After you are connected, your session will only be updated with new responses, b
 Try to execute somme commands in the hijacked session or in the original session.
 
 The output will be shown in both sessions.
-
-
-## Authors
-
-- Manfred Kaiser
-- Simon Böhm
