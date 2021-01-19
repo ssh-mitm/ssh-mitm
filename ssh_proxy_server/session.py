@@ -134,6 +134,8 @@ class Session:
             logging.debug("(%s) session cleaning up agent ...", self)
             self.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
+        # TODO: Unrelated to this method - clients on the proxy server are not terminated correctly/at all
+        # this can lead to a potential DoS attack on the proxy
 
     def __str__(self):
         return self.name

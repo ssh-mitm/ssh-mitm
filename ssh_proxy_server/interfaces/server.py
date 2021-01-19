@@ -141,3 +141,4 @@ class ProxySFTPServer(paramiko.SFTPServer):
         super().finish_subsystem()
         self.server.session.sftp_client.subsystem_count -= 1
         self.server.session.sftp_client.close()
+        self.server.session.close()
