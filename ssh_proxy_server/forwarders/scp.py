@@ -74,7 +74,7 @@ class SCPBaseForwarder(BaseForwarder):
             sent += newsent
         return sent
 
-    def close_session(self, channel, status):
+    def close_session(self, channel, status=0):
         # pylint: disable=protected-access
         if channel.closed:
             return
@@ -107,6 +107,9 @@ class SCPBaseForwarder(BaseForwarder):
         channel.transport._send_user_message(message)
 
         channel._unlink()
+
+        super(SCPBaseForwarder, self).close_session(channel)
+        logging.debug("[chan %d] SCP closed", channel.get_id())
 
 
 class SCPForwarder(SCPBaseForwarder):

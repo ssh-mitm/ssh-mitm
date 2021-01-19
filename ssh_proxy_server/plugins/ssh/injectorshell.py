@@ -159,7 +159,7 @@ class InjectorShell(threading.Thread):
             self.terminate()
 
     def terminate(self):
-        if self.forwarder.session.running:
+        if self.forwarder.inject_running:
             self.forwarder.injector_shells.remove(self)
         self.client_channel.get_transport().close()
         logging.info("injector shell %s was closed", str(self.remote))

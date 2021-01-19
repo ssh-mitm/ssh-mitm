@@ -95,6 +95,7 @@ class SSHProxyServer:
         except KeyboardInterrupt:
             self.running = False
         finally:
+            logging.info("Shutting down server ...")
             sock.close()
             for thread in self._threads[:]:
                 thread.join()
@@ -110,11 +111,13 @@ class SSHProxyServer:
                     elif session.scp and self.scp_interface:
                         session.scp = False
                         self.scp_interface(session).forward()
-                    while True:
-                        time.sleep(1)
                 else:
-                    logging.warning("Session not started")
+                    logging.warning("(%s) session not started", session)
                     self._threads.remove(threading.current_thread())
+                # Compromise, waiting for other channels to finish
+                # BUT only releases when server is shutdown (meh)
+                while session.running:
+                    time.sleep(1)
         except Exception:
-            logging.exception("error handling session")
+            logging.exception("error handling session creation")
         logging.info("session closed")

@@ -19,6 +19,7 @@ class Session:
         self.proxyserver = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
+        self.name = "{fr}->{to}".format(fr=client_address[0].split(":")[-1], to=remoteaddr[0].split(":")[-1])
 
         self.ssh = False
         self.ssh_channel = None
@@ -104,7 +105,7 @@ class Session:
                 return False
 
         if not self.channel:
-            logging.error('error opening channel!')
+            logging.error('(%s) session error opening channel!', self)
             if self.transport.is_active():
                 self.transport.close()
             return False
@@ -118,14 +119,24 @@ class Session:
         if not self._start_channels():
             return False
 
-        logging.info("session started")
+        logging.info("(%s) session started", self)
         return True
 
-    def close(self):
+    def close(self):    # , channel
+        # TODO: Check for single channel closing events, if possible, then only close one channel (if given)
+        # for now assume that closing of the main channel, indicates socket/transport termination
         if self.transport.is_active():
             self.transport.close()
+        logging.info("(%s) session closed", self)
         if self.agent:
+            # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well BUT never is (i think)
+            # in a new Thread -> this leads to the socket.connect blocking and only returning after .join(1000) timeout
+            logging.debug("(%s) session cleaning up agent ...", self)
             self.agent.close()
+            logging.debug("(%s) session agent cleaned up", self)
+
+    def __str__(self):
+        return self.name
 
     def __enter__(self):
         return self

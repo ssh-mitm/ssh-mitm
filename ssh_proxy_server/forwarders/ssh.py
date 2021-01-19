@@ -69,10 +69,6 @@ class SSHForwarder(SSHBaseForwarder):
             buf = self.stderr(buf)
             self.session.ssh_channel.sendall_stderr(buf)
 
-    def close_session(self, channel):
-        channel.get_transport().close()
-        logging.info("session closed")
-
     def stdin(self, text):
         return text
 
