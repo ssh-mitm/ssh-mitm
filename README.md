@@ -8,6 +8,9 @@
 
 ![SSH-MITM example](https://ssh-mitm.at/img/mitm-example.png)
 
+## Give a Star! :star:
+If you like or are using this project to learn or start your solution, please give it a star. Thanks!
+
 ## Installation of SSH-MITM
 
 The first step to using any software package is getting it properly installed.
