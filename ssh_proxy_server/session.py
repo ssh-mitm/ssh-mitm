@@ -44,7 +44,7 @@ class Session:
 
     @property
     def running(self):
-        # Using main channel status to determine session status (+ releasability of resources)
+        # Using status of main channels to determine session status (-> releasability of resources)
         # - often calculated, cpu heavy (?)
         ch_active = all([not ch.closed for ch in filter(None, [self.ssh_channel, self.scp_channel, self.sftp_channel])])
         return self.proxyserver.running and ch_active

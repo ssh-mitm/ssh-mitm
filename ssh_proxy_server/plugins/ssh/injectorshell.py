@@ -42,7 +42,6 @@ class SSHInjectableForwarder(SSHForwarder):
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.injector_sock.bind((self.args.ssh_injector_net, 0))
         self.injector_sock.listen(5)
-        self.inject_running = True
 
         self.mirror_enabled = self.args.ssh_injector_enable_mirror
         self.queue = queue.Queue()
@@ -118,7 +117,6 @@ class SSHInjectableForwarder(SSHForwarder):
 
     def close_session(self, channel):
         super().close_session(channel)
-        self.inject_running = False
         for shell in self.injector_shells:
             shell.join()
         self.conn_thread.join()
