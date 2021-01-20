@@ -20,7 +20,6 @@ class Session:
         self.client_socket = client_socket
         self.client_address = client_address
         self.name = "{fr}->{to}".format(fr=client_address[0].split(":")[-1], to=remoteaddr[0].split(":")[-1])
-        self.closed = False
 
         self.ssh = False
         self.ssh_channel = None
@@ -127,21 +126,24 @@ class Session:
         return True
 
     def close(self):
-        if not self.closed:
-            self.closed = True
-            if self.agent:
-                logging.debug("(%s) session cleaning up agent ... (because paramiko IO bocks, in a new Thread)", self)
-                self.agent._close()
-                # INFO: Agent closing sequence takes 15 minutes, due to blocking IO in paramiko
-                # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well (prob) BUT never is
-                # Agents starts Thread -> leads to the socket.connect blocking; only returns after .join(1000) timeout
-                threading.Thread(target=self.agent.close).start()
-                logging.debug("(%s) session agent cleaned up", self)
-            if self.transport.is_active():
-                self.transport.close()
-            logging.info("(%s) session closed", self)
-            logging.debug("(%s) closing ssh client to remote", self)
+        if self.ssh_client:
+            logging.info("(%s) closing ssh client to remote", self)
             self.ssh_client.transport.close()
+        if self.agent:
+            logging.debug("(%s) session cleaning up agent ... (because paramiko IO bocks, in a new Thread)", self)
+            self.agent._close()
+            # INFO: Agent closing sequence takes 15 minutes, due to blocking IO in paramiko
+            # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well (prob) BUT never is
+            # Agents starts Thread -> leads to the socket.connect blocking; only returns after .join(1000) timeout
+            threading.Thread(target=self.agent.close).start()
+            logging.debug("(%s) session agent cleaned up", self)
+        # Wait for transport to finish channel termination sequence
+        if self.transport.completion_event.is_set() and self.transport.is_active():
+            self.transport.completion_event.clear()
+            self.transport.completion_event.wait()
+        self.transport.close()
+        logging.info("(%s) session closed", self)
+
 
     def __str__(self):
         return self.name

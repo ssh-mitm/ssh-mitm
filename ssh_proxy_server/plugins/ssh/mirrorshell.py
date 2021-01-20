@@ -83,7 +83,7 @@ class SSHMirrorForwarder(SSHForwarder):
         )
         try:
             while self.session.running:
-                readable = select.select([self.injector_sock], [], [])[0]
+                readable = select.select([self.injector_sock], [], [], 0.5)[0]
                 if len(readable) == 1 and readable[0] is self.injector_sock:
                     self.injector_client_sock, addr = self.injector_sock.accept()
 
@@ -118,7 +118,8 @@ class SSHMirrorForwarder(SSHForwarder):
         super().close_session(channel)
         logging.info("closing injector connection %s", self.injector_sock.getsockname())
         self.injector_sock.close()
-        self.inject_server.injector_channel.get_transport().close()
+        if self.inject_server:
+            self.inject_server.injector_channel.get_transport().close()
         self.conn_thread.join()
 
     def forward_stdout(self):
