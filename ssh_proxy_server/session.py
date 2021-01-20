@@ -44,10 +44,10 @@ class Session:
 
     @property
     def running(self):
-        # Using main channel status to determine session status (+ releasability of ressources)
-        # - often calculated, cpu heavy
-        channels = all([not ch.closed for ch in filter(None, [self.ssh_channel, self.scp_channel, self.sftp_channel])])
-        return self.proxyserver.running and channels
+        # Using main channel status to determine session status (+ releasability of resources)
+        # - often calculated, cpu heavy (?)
+        ch_active = all([not ch.closed for ch in filter(None, [self.ssh_channel, self.scp_channel, self.sftp_channel])])
+        return self.proxyserver.running and ch_active
 
     @property
     def transport(self):
@@ -129,18 +129,19 @@ class Session:
     def close(self):
         if not self.closed:
             self.closed = True
+            if self.agent:
+                logging.debug("(%s) session cleaning up agent ... (because paramiko IO bocks, in a new Thread)", self)
+                self.agent._close()
+                # INFO: Agent closing sequence takes 15 minutes, due to blocking IO in paramiko
+                # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well (prob) BUT never is
+                # Agents starts Thread -> leads to the socket.connect blocking; only returns after .join(1000) timeout
+                threading.Thread(target=self.agent.close).start()
+                logging.debug("(%s) session agent cleaned up", self)
             if self.transport.is_active():
                 self.transport.close()
             logging.info("(%s) session closed", self)
-            # TODO: Agent closing sequence takes 15 minutes, due to blocking IO in paramiko
-            # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well BUT never is (i think)
-            # in a new Thread -> this leads to the socket.connect blocking and only returning after .join(1000) timeout
-            if self.agent:
-                logging.debug("(%s) session cleaning up agent ...", self)
-                self.agent.close()
-                logging.debug("(%s) session agent cleaned up", self)
-            # TODO: Clients on the proxy server are not terminated correctly (at all)
-            # this can lead to a potential DoS attack on the proxy
+            logging.debug("(%s) closing ssh client to remote", self)
+            self.ssh_client.transport.close()
 
     def __str__(self):
         return self.name

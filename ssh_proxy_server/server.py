@@ -116,7 +116,7 @@ class SSHProxyServer:
                 else:
                     logging.warning("(%s) session not started", session)
                     self._threads.remove(threading.current_thread())
-                #time.sleep(1)   # So the proxy server does not close the connection to fast
+                # Prevent client_loop errors: don't close proxy server -> client connection to fast
+                time.sleep(0.1)
         except Exception:
             logging.exception("error handling session creation")
-        logging.info("session closed")

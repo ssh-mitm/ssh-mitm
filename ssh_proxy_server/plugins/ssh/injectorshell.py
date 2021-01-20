@@ -61,7 +61,7 @@ class SSHInjectableForwarder(SSHForwarder):
             )
         )
         try:
-            while self.inject_running:
+            while not self.session.ssh_channel.closed:
                 readable = select.select([self.injector_sock], [], [], 0.5)[0]
                 if len(readable) == 1 and readable[0] is self.injector_sock:
                     client, addr = self.injector_sock.accept()
@@ -146,20 +146,22 @@ class InjectorShell(threading.Thread):
     def run(self) -> None:
         self.client_channel.sendall(self.STEALTH_WARNING)
         try:
-            while self.forwarder.inject_running:
+            while not self.forwarder.session.ssh_channel.closed:
                 if self.client_channel.recv_ready():
                     data = self.client_channel.recv(self.forwarder.BUF_LEN)
-                    if data == b'\x03' or data == b'':
+                    if data == b'\x03':
                         break
                     self.queue.put((data, self.client_channel))
+                if self.client_channel.exit_status_ready():
+                    break
                 time.sleep(0.1)
         except paramiko.SSHException:
-            logging.warning("injector shell %s with unexpected error", str(self.remote))
+            logging.warning("injector shell %s with unexpected SSHError", str(self.remote))
         finally:
             self.terminate()
 
     def terminate(self):
-        if self.forwarder.inject_running:
+        if not self.forwarder.session.ssh_channel.closed:
             self.forwarder.injector_shells.remove(self)
         self.client_channel.get_transport().close()
         logging.info("injector shell %s was closed", str(self.remote))
