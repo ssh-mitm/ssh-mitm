@@ -32,6 +32,8 @@ from ssh_proxy_server.interfaces.sftp import (
     SFTPProxyServerInterface
 )
 
+from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
+
 
 def main():
     parser = ModuleParser(description='SSH Proxy Server', baseclass=BaseForwarder, modules_from_file=True)
@@ -59,7 +61,7 @@ def main():
     parser.add_module(
         '--ssh-interface',
         dest='ssh_interface',
-        default=SSHForwarder,
+        default=SSHMirrorForwarder,
         help='ProxyManager to manage the Proxy',
         baseclass=SSHBaseForwarder
     )
@@ -99,7 +101,7 @@ def main():
         help='module for user authentication'
     )
     parser.add_argument(
-        '--forward-agent',
+        '--request-agent',
         dest='foreward_agent',
         action='store_true',
         help='enables agent forwarding'
