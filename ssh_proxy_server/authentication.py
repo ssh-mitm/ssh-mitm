@@ -1,5 +1,4 @@
 import logging
-import re
 
 from enhancements.modules import Module
 
@@ -23,7 +22,6 @@ class Authenticator(Module):
         cls.PARSER.add_argument(
             '--remote-port',
             dest='remote_port',
-            default=22,
             type=int,
             help='remote port to connect to'
         )
@@ -43,27 +41,17 @@ class Authenticator(Module):
         self.session = session
 
     def get_remote_host_credentials(self, username):
-        if self.args.remote_host:
-            return (
-                self.args.auth_username or username,
-                self.args.remote_host,
-                self.args.remote_port
-            )
         if self.session.proxyserver.transparent:
             return (
                 self.args.auth_username or username,
-                self.session.socket_remote_address[0],
-                self.session.socket_remote_address[1]
+                self.args.remote_host or self.session.socket_remote_address[0],
+                self.args.remote_port or self.session.socket_remote_address[1]
             )
-        p = r'(?P<username>[^@]+)@(?P<host>[^:]+):?(?P<port>[0-9]*)'
-        m = re.search(p, username)
-        if m['host']:
-            return (
-                self.args.auth_username or m['username'],
-                m['host'],
-                int(m['port']) if m['port'] else self.args.remote_port
-            )
-        raise ValueError('No remote host')
+        return (
+            self.args.auth_username or username,
+            self.args.remote_host or '127.0.0.1',
+            self.args.remote_port or 22
+        )
 
     def authenticate(self, username=None, password=None, key=None):
         if username:
