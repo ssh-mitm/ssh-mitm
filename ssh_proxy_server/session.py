@@ -67,7 +67,7 @@ class Session:
             self.sftp_client_ready.set()
             return True
 
-        if not self.agent and self.authenticator.AGENT_FORWARDING:
+        if not self.agent and self.authenticator.REQUEST_AGENT:
             try:
                 self.agent = AgentServerProxy(self.transport)
                 self.agent.connect()

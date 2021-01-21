@@ -62,7 +62,7 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def check_channel_forward_agent_request(self, channel):
-        if not self.session.authenticator.AGENT_FORWARDING:
+        if not self.session.authenticator.REQUEST_AGENT:
             channel.send_stderr('Agent forwarding is forbidden!\r\n')
             logging.warning("Agent forwarding is forbidden")
             return False
