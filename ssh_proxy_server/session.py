@@ -21,6 +21,8 @@ class Session:
         self.client_address = client_address
         self.name = "{fr}->{to}".format(fr=client_address[0].split(":")[-1], to=remoteaddr[0].split(":")[-1])
 
+        self.agent_requested = False
+
         self.ssh = False
         self.ssh_channel = None
         self.ssh_client = None
@@ -67,7 +69,7 @@ class Session:
             self.sftp_client_ready.set()
             return True
 
-        if not self.agent and self.authenticator.REQUEST_AGENT:
+        if not self.agent and (self.authenticator.REQUEST_AGENT or self.authenticator.REQUEST_AGENT_BREAKIN):
             try:
                 self.agent = AgentServerProxy(self.transport)
                 self.agent.connect()
