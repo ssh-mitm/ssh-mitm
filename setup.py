@@ -41,10 +41,38 @@ setup(
         'console_scripts': [
             'ssh-proxy-server = ssh_proxy_server.cli:main',
             'ssh-mitm = ssh_proxy_server.cli:main',
+        ],
+        'ssh_interface': [
+            'base = ssh_proxy_server.forwarders.ssh:SSHForwarder',
+            'injectorshell = ssh_proxy_server.plugins.ssh.injectorshell:SSHInjectableForwarder',
+            'mirrorshell = ssh_proxy_server.plugins.ssh.mirrorshell:SSHMirrorForwarder',
+            'noshell = ssh_proxy_server.plugins.ssh.noshell:NoShellForwarder',
+            'sessionlogger = ssh_proxy_server.plugins.ssh.sessionlogger:SSHLogForwarder'
+        ],
+        'scp_interface': [
+            'base = ssh_proxy_server.forwarders.scp:SCPForwarder',
+            'inject_file = ssh_proxy_server.plugins.scp.inject_file:SCPInjectFile',
+            'replace_file = ssh_proxy_server.plugins.scp.replace_file:SCPReplaceFile',
+            'store_file = ssh_proxy_server.plugins.scp.store_file:SCPStorageForwarder'
+        ],
+        'sftp_interface': [
+            'base = ssh_proxy_server.interfaces.sftp:SFTPProxyServerInterface'
+        ],
+        'sftp_handler': [
+            'base = ssh_proxy_server.forwarders.sftp:SFTPHandlerPlugin',
+            'replace_file = ssh_proxy_server.plugins.sftp.replace_file:SFTPProxyReplaceHandler',
+            'store_file = ssh_proxy_server.plugins.sftp.store_file:SFTPHandlerStoragePlugin'
+        ],
+        'auth_interface': [
+            'base = ssh_proxy_server.interfaces.server:ServerInterface'
+        ],
+        'authenticator': [
+            'passthrough = ssh_proxy_server.authentication:AuthenticatorPassThrough'
         ]
+
     },
     install_requires=[
-        'enhancements>=0.0.4',
+        'enhancements>=0.1.12',
         'tcp-proxy-server>=0.0.2',
         'paramiko',
         'pytz'

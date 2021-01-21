@@ -19,8 +19,7 @@ from ssh_proxy_server.forwarders.scp import (
     SCPForwarder
 )
 from ssh_proxy_server.forwarders.ssh import (
-    SSHBaseForwarder,
-    SSHForwarder
+    SSHBaseForwarder
 )
 from ssh_proxy_server.forwarders.sftp import (
     SFTPHandlerBasePlugin,
@@ -87,7 +86,7 @@ def main():
         baseclass=SFTPHandlerBasePlugin
     )
     parser.add_module(
-        '--server-interface',
+        '--auth-interface',
         dest='auth_interface',
         default=ServerInterface,
         baseclass=BaseServerInterface,
