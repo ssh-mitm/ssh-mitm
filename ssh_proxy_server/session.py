@@ -19,6 +19,7 @@ class Session:
         self.proxyserver = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
+        self.name = "{fr}->{to}".format(fr=client_address[0].split(":")[-1], to=remoteaddr[0].split(":")[-1])
 
         self.ssh = False
         self.ssh_channel = None
@@ -42,7 +43,10 @@ class Session:
 
     @property
     def running(self):
-        return self.proxyserver.running
+        # Using status of main channels to determine session status (-> releasability of resources)
+        # - often calculated, cpu heavy (?)
+        ch_active = all([not ch.closed for ch in filter(None, [self.ssh_channel, self.scp_channel, self.sftp_channel])])
+        return self.proxyserver.running and ch_active
 
     @property
     def transport(self):
@@ -104,7 +108,7 @@ class Session:
                 return False
 
         if not self.channel:
-            logging.error('error opening channel!')
+            logging.error('(%s) session error opening channel!', self)
             if self.transport.is_active():
                 self.transport.close()
             return False
@@ -118,14 +122,32 @@ class Session:
         if not self._start_channels():
             return False
 
-        logging.info("session started")
+        logging.info("(%s) session started", self)
         return True
 
     def close(self):
-        if self.transport.is_active():
-            self.transport.close()
         if self.agent:
-            self.agent.close()
+            logging.debug("(%s) session cleaning up agent ... (because paramiko IO bocks, in a new Thread)", self)
+            self.agent._close()
+            # INFO: Agent closing sequence takes 15 minutes, due to blocking IO in paramiko
+            # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well (prob) BUT never is
+            # Agents starts Thread -> leads to the socket.connect blocking; only returns after .join(1000) timeout
+            threading.Thread(target=self.agent.close).start()
+            # Can throw FileNotFoundError due to no verification (agent.py)
+            logging.debug("(%s) session agent cleaned up", self)
+        if self.ssh_client:
+            logging.info("(%s) closing ssh client to remote", self)
+            self.ssh_client.transport.close()
+            # With graceful exit the completion_event can be polled to wait, well ..., for completion
+            # it can also only be a graceful exit if the ssh client has already been established
+            if self.transport.completion_event.is_set() and self.transport.is_active():
+                self.transport.completion_event.clear()
+                self.transport.completion_event.wait()
+        self.transport.close()
+        logging.info("(%s) session closed", self)
+
+    def __str__(self):
+        return self.name
 
     def __enter__(self):
         return self
