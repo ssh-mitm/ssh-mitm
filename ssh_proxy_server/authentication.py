@@ -17,13 +17,13 @@ class Authenticator(Module):
         cls.PARSER.add_argument(
             '--remote-host',
             dest='remote_host',
-            help='remote host to connect to'
+            help='remote host to connect to (default 127.0.0.1)'
         )
         cls.PARSER.add_argument(
             '--remote-port',
             dest='remote_port',
             type=int,
-            help='remote port to connect to'
+            help='remote port to connect to (default 22)'
         )
         cls.PARSER.add_argument(
             '--auth-username',
