@@ -126,9 +126,6 @@ class Session:
         return True
 
     def close(self):
-        if self.ssh_client:
-            logging.info("(%s) closing ssh client to remote", self)
-            self.ssh_client.transport.close()
         if self.agent:
             logging.debug("(%s) session cleaning up agent ... (because paramiko IO bocks, in a new Thread)", self)
             self.agent._close()
@@ -136,14 +133,18 @@ class Session:
             # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well (prob) BUT never is
             # Agents starts Thread -> leads to the socket.connect blocking; only returns after .join(1000) timeout
             threading.Thread(target=self.agent.close).start()
+            # Can throw FileNotFoundError due to no verification (agent.py)
             logging.debug("(%s) session agent cleaned up", self)
-        # Wait for transport to finish channel termination sequence
-        if self.transport.completion_event.is_set() and self.transport.is_active():
-            self.transport.completion_event.clear()
-            self.transport.completion_event.wait()
+        if self.ssh_client:
+            logging.info("(%s) closing ssh client to remote", self)
+            self.ssh_client.transport.close()
+            # With graceful exit the completion_event can be polled to wait, well ..., for completion
+            # it can also only be a graceful exit if the ssh client has already been established
+            if self.transport.completion_event.is_set() and self.transport.is_active():
+                self.transport.completion_event.clear()
+                self.transport.completion_event.wait()
         self.transport.close()
         logging.info("(%s) session closed", self)
-
 
     def __str__(self):
         return self.name
