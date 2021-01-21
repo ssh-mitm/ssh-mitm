@@ -19,7 +19,7 @@ class Session:
         self.proxyserver = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
-        self.name = "{fr}->{to}".format(fr=client_address[0].split(":")[-1], to=remoteaddr[0].split(":")[-1])
+        self.name = "{fr}->{to}".format(fr=client_address, to=remoteaddr)
 
         self.agent_requested = False
 
