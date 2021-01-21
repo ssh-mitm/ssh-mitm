@@ -116,7 +116,7 @@ class SSHMirrorForwarder(SSHForwarder):
 
     def close_session(self, channel):
         super().close_session(channel)
-        logging.info("closing injector connection %s", self.injector_sock.getsockname())
+        logging.info("closing mirrorshell connection %s", self.injector_sock.getsockname())
         self.injector_sock.close()
         if self.inject_server:
             self.inject_server.injector_channel.get_transport().close()
