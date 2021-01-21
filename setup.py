@@ -8,12 +8,12 @@ import re
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
-    long_description = re.sub(r"## Give a Star.*?Thanks!$", "", f.read(), 0, re.DOTALL)
+    long_description = re.sub(r"## Give a Star.*?Thanks!", "", f.read(), 0, re.DOTALL)
 
 
 setup(
     name='ssh-mitm',
-    version='0.3.16',
+    version='0.3.17',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
     description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
