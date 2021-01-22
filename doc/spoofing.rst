@@ -9,7 +9,7 @@ SSH-MITM Fingerprints
 ----------------------
 
 SSH clients keep track of trusted servers by verifying a fingerprint with the user, storing
-identity and public key material in the known_hosts file when connecting for the first time.
+identity and public key material in the ``known_hosts`` file when connecting for the first time.
 
 
 .. note::
@@ -19,8 +19,9 @@ identity and public key material in the known_hosts file when connecting for the
     many people who value their security dearly. With the now readily available Public Key Infrastructure (PKI)
     of the internet there is really no excuse to not verify the identity of the server you are connecting
     to using certificates instead of the lousy fingerprint that no one checks anyway.
+
     These security considerations are shared by the official
-    :ref:`SSH RFC 4251 <https://tools.ietf.org/html/rfc4251#section-9.3.4>`. Additionally protection can
+    `Secure Shell RFC 4251 <https://tools.ietf.org/html/rfc4251#section-9.3.4>`_. Additionally protection can
     also be supplied by the network infrastructure in form of network segmentation, zero trust,
     VPNs and so on.
 
@@ -28,9 +29,12 @@ identity and public key material in the known_hosts file when connecting for the
 This way of handling trust can have multiple implications for an operating mitm server which is trying to audit
 ssh connections:
 
-* the mitm server wants the user to associate his public key with the identity of the actual remote host
-or if the remote host is already known
-* it wants to pass through the connection to the remote host and not alert the user of the mitm operation
+- the mitm server wants the user to associate his public key with the identity of the actual remote host
+
+OR if the remote host is already known
+
+- it wants to pass through the connection to the remote host and not alert the user of the mitm operation
+
 
 Under normal circumstances a ssh-mitm server cannot possibly know which of these scenarios is the case
 before it is already to late. Luckily the friendly folks at MITRE ATT&CK(R) have found an information
