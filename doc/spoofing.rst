@@ -12,7 +12,6 @@ SSH clients keep track of trusted servers by verifying a fingerprint with the us
 identity and public key material in the ``known_hosts`` file (or any other decentralized local database)
 when connecting for the first time.
 
-
 .. note::
 
     The ssh trust on first use concept is an artifact dating back to a more simpler time. Then it was
@@ -47,8 +46,9 @@ CVE-2020-14145: OpenSSH Client Information Leak
 This vulnerability enables a ssh server to figure out during algorithm negotiations if the client
 connecting has prior knowledge of the remote hosts public key fingerprint. According to the published
 `CVE document <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-14145>`_ this only affects OpenSSH
-Client versions 5.7 through 8.3; 8.4 is still susceptible though when using a non conform list of
-algorithms, according to different sources.
+Client versions 5.7 through 8.3 and the Putty SSH Client;
+OpenSSH 8.4 has implemented a patch but is still susceptible when removing the preferred default algorithm (ecdsa-sha2)
+from the list of server host key algorithm according to different sources.
 
 The reasoning behind this ability to extract information about client to server association lies in the
 algorithm negotiation itself. Particularly in the way the ``server_host_key_algorithms`` are sent.
@@ -109,7 +109,8 @@ Following comparison will make the described anomaly in question more clear:
 
     This is a shortened list of the actual output when using the default host key algorithms list. Note that
     when setting ``HostKeyAlgorithms`` as an ssh option manually this described anomaly will not occur
-    because the given list of algorithms will **always** be used as-is.
+    because the given list of algorithms will **always** be used as-is. This can be used to mitigate the
+    information leak.
 
 As one can see with no prior knowledge of the remote host
 the OpenSSH Client will send a pre-defined default list of server host key algorithms to choose from but with
