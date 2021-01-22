@@ -9,7 +9,8 @@ SSH-MITM Fingerprints
 ----------------------
 
 SSH clients keep track of trusted servers by verifying a fingerprint with the user, storing
-identity and public key material in the ``known_hosts`` file when connecting for the first time.
+identity and public key material in the ``known_hosts`` file (or any other decentralized local database)
+when connecting for the first time.
 
 
 .. note::
@@ -21,7 +22,8 @@ identity and public key material in the ``known_hosts`` file when connecting for
     to using certificates instead of the lousy fingerprint that no one checks anyway.
 
     These security considerations are shared by the official
-    `Secure Shell RFC 4251 <https://tools.ietf.org/html/rfc4251#section-9.3.4>`_. Additionally protection can
+    `Secure Shell RFC 4251 <https://tools.ietf.org/html/rfc4251>`_ sections 4.1. Host Keys and 9.3.8. Man-in-the-middle.
+    Additionally protection can
     also be supplied by the network infrastructure in form of network segmentation, zero trust,
     VPNs and so on.
 
@@ -37,8 +39,9 @@ OR if the remote host is already known
 
 
 Under normal circumstances a ssh-mitm server cannot possibly know which of these scenarios is the case
-before it is already to late. Luckily the friendly folks at MITRE ATT&CK(R) have found an information
+before it is already to late. Luckily the friendly folks at MITRE ATT&CK® have found an information
 leak in the OpenSSH Client software that we can use to our advantage.
+
 
 CVE-2020-14145: OpenSSH Client Information leak
 ------------------------------------------------
