@@ -59,7 +59,7 @@ to exactly this information leak when also applied to ``server_host_key_algorith
 to negotiate which public key associated with the corresponding key generation algorithm should be used
 to authenticate the identity of the server.
 
-Following comparison will make the problem in question more clear:
+Following comparison will make the described anomaly in question more clear:
 
 .. code-block:: bash
 
@@ -105,6 +105,16 @@ Following comparison will make the problem in question more clear:
     | ssh-rsa             | ssh-ed25519         |
     +---------------------+---------------------+
 
+.. note::
+
+    This is a shortened list of the actual output when using the default host key algorithms list. Note that
+    when setting ``HostKeyAlgorithms`` as an ssh option manually this described anomaly will not occur
+    because the given list of algorithms will **always** be used as-is.
+
+As one can see with no prior knowledge of the remote host
+the OpenSSH Client will send a pre-defined default list of server host key algorithms to choose from but with
+with an existing entry in the ``known_hosts`` file the list is altered and the algorithm noted there is put at first
+place (or at least the block of similar algorithms with more specific ones at the top).
 
 This begs the question if this is a fundamental security problem with the standard itself? Of course, implementations
 of the protocol could easily just ignore this requirement for the ``server_host_key_algorithms`` named list
