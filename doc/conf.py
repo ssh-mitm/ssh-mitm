@@ -19,7 +19,7 @@ import datetime
 # -- Project information -----------------------------------------------------
 
 project = 'SSH-MITM'
-author = 'Manfred Kaiser, Simon Böhm'
+author = 'SSH-MITM Dev-Team'
 copyright = '{}, {}'.format(datetime.datetime.now().year, author)  # pylint: disable=redefined-builtin
 
 extensions = [
