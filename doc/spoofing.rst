@@ -1,0 +1,123 @@
+CVE-2020-14145
+==============
+
+When running a ssh-mitm server transparency has to be taken under serious considerations. Representing yourself
+as a seamless counterpart to the real thing can be a very difficult task with many pitfalls. Just the slightest
+indication of malicious activity can tip a user of and reveal a mitm operation for what it really is.
+
+SSH-MITM Fingerprints
+----------------------
+
+SSH clients keep track of trusted servers by verifying a fingerprint with the user, storing
+identity and public key material in the ``known_hosts`` file (or any other decentralized local database)
+when connecting for the first time.
+
+.. note::
+
+    The ssh trust on first use concept is an artifact dating back to a more simpler time. Then it was
+    considered a definite step up to its counterparts in terms of security. Now it is frowned upon by
+    many people who value their security dearly. With the now readily available Public Key Infrastructure (PKI)
+    of the internet there is really no excuse to not verify the identity of the server you are connecting
+    to using certificates instead of the lousy fingerprint that no one checks anyway.
+
+    These security considerations are shared by the official
+    `Secure Shell RFC 4251 <https://tools.ietf.org/html/rfc4251>`_ sections 4.1. Host Keys and 9.3.8. Man-in-the-middle.
+    Additionally protection can
+    also be supplied by the network infrastructure in form of network segmentation, zero trust,
+    VPNs and so on.
+
+
+This way of handling trust can have multiple implications for an operating mitm server which is trying to audit
+ssh connections:
+
+- the mitm server wants the user to associate his public key with the identity of the actual remote host
+
+OR if the remote host is already known
+
+- it wants to pass through the connection to the remote host and not alert the user of the mitm operation
+
+
+Under normal circumstances a ssh-mitm server cannot possibly know which of these scenarios is the case
+before it is already to late.
+
+CVE-2020-14145: OpenSSH Client Information Leak
+------------------------------------------------
+
+This vulnerability enables a ssh server to figure out during algorithm negotiations if the client
+connecting has prior knowledge of the remote hosts public key fingerprint. According to the published
+`CVE document <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-14145>`_ this only affects OpenSSH
+Client versions 5.7 through 8.3 and the Putty SSH Client;
+OpenSSH 8.4 has implemented a patch but is still susceptible when removing the preferred default algorithm (ecdsa-sha2)
+from the list of server host key algorithm according to different sources.
+
+The reasoning behind this ability to extract information about client to server association lies in the
+algorithm negotiation itself. Particularly in the way the ``server_host_key_algorithms`` are sent.
+The official `SSH Transport RFC 4253 <https://tools.ietf.org/html/rfc4253#section-7>`_ **requires**
+each named list in the algorithm negotiation to make the first item a guessed preference.
+This is understandable for Key Exchange, Crypto or MAC algorithms but leads
+to exactly this information leak when also applied to ``server_host_key_algorithms``. This named list is used
+to negotiate which public key associated with the corresponding key generation algorithm should be used
+to authenticate the identity of the server.
+
+Following comparison will make the described anomaly in question more clear:
+
+.. code-block:: bash
+
+    New Fingerprint
+    server key:
+    ecdsa-sha2-nistp256
+    ecdsa-sha2-nistp384
+    ecdsa-sha2-nistp521
+    ssh-ed25519
+    rsa-sha2-512
+    rsa-sha2-256
+    ssh-rsa
+
+    Known Fingerprint
+    server key:
+    rsa-sha2-512
+    rsa-sha2-256
+    ssh-rsa
+    ecdsa-sha2-nistp256
+    ecdsa-sha2-nistp384
+    ecdsa-sha2-nistp521
+    ssh-ed25519
+
+..
+    commented out
+    +---------------------+---------------------+
+    | New Fingerprint     | Known Fingerprint   |
+    +=====================+=====================+
+    | server key:         | server key:         |
+    +---------------------+---------------------+
+    | ecdsa-sha2-nistp256 | rsa-sha2-512        |
+    +---------------------+---------------------+
+    | ecdsa-sha2-nistp384 | rsa-sha2-256        |
+    +---------------------+---------------------+
+    | ecdsa-sha2-nistp521 | ssh-rsa             |
+    +---------------------+---------------------+
+    | ssh-ed25519         | ecdsa-sha2-nistp256 |
+    +---------------------+---------------------+
+    | rsa-sha2-512        | ecdsa-sha2-nistp384 |
+    +---------------------+---------------------+
+    | rsa-sha2-256        | ecdsa-sha2-nistp521 |
+    +---------------------+---------------------+
+    | ssh-rsa             | ssh-ed25519         |
+    +---------------------+---------------------+
+
+.. note::
+
+    This is a shortened list of the actual output when using the default host key algorithms list. Note that
+    when setting ``HostKeyAlgorithms`` as an ssh option manually this described anomaly will not occur
+    because the given list of algorithms will **always** be used as-is. This can be used to mitigate the
+    information leak.
+
+As one can see with no prior knowledge of the remote host
+the OpenSSH Client will send a pre-defined default list of server host key algorithms to choose from but with
+with an existing entry in the ``known_hosts`` file the list is altered and the algorithm noted there is put at first
+place (or at least the block of similar algorithms with more specific ones at the top).
+
+This begs the question if this is a fundamental security problem with the standard itself? Of course, implementations
+of the protocol could easily just ignore this requirement for the ``server_host_key_algorithms`` named list
+without breaking any functionality - and many probably do in trying to fix this problem - but in my opinion
+this should also be reflected in the standard.

@@ -19,7 +19,7 @@ import datetime
 # -- Project information -----------------------------------------------------
 
 project = 'SSH-MITM'
-author = 'Manfred Kaiser'
+author = 'Manfred Kaiser, Simon Böhm'
 copyright = '{}, {}'.format(datetime.datetime.now().year, author)  # pylint: disable=redefined-builtin
 
 extensions = [
@@ -69,6 +69,7 @@ page_descriptions = {
     'install.html': 'SSH-MITM server is easy to install with Python and PIP',
     'quickstart.html': 'Short guide to setup an intercepting ssh-mitm server with a single command',
     'advanced-usage.html': 'Guide how to setup a man in the middle server for advanced security audits in large networks and special use cases',
+    'ssh_vulnerabilities.html': 'Explanation of vulnerabilities related to the ssh protocol',
 }
 
 html_context = {
