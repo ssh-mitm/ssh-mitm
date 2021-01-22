@@ -5,4 +5,4 @@ SSH Vurnabilities
    :maxdepth: 2
    :caption: Contents:
 
-   spoofing
+   CVE-2020-14145
