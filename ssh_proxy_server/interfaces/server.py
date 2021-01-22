@@ -62,10 +62,7 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def check_channel_forward_agent_request(self, channel):
-        if not self.session.authenticator.AGENT_FORWARDING:
-            channel.send_stderr('Agent forwarding is forbidden!\r\n')
-            logging.warning("Agent forwarding is forbidden")
-            return False
+        self.session.agent_requested = True
         logging.info("Requested Agent forwarding")
         return True
 
@@ -127,8 +124,11 @@ class ServerInterface(BaseServerInterface):
         return super().check_channel_subsystem_request(channel, name)
 
     def check_port_forward_request(self, address, port):
-        logging.warning("port forward attempt")
-        return False
+        logging.info("port forward attempt - address: %s, port: %s", address, port)
+        return True
+
+    def cancel_port_forward_request(self, address, port):
+        logging.info("port forward cancel - address: %s, port: %s", address, port)
 
 
 class ProxySFTPServer(paramiko.SFTPServer):

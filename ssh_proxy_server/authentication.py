@@ -10,20 +10,20 @@ from ssh_proxy_server.exceptions import MissingHostException
 
 class Authenticator(Module):
 
-    AGENT_FORWARDING = False
+    REQUEST_AGENT = False
 
     @classmethod
     def parser_arguments(cls):
         cls.PARSER.add_argument(
             '--remote-host',
             dest='remote_host',
-            help='remote host to connect to'
+            help='remote host to connect to (default 127.0.0.1)'
         )
         cls.PARSER.add_argument(
             '--remote-port',
             dest='remote_port',
             type=int,
-            help='remote port to connect to'
+            help='remote port to connect to (default 22)'
         )
         cls.PARSER.add_argument(
             '--auth-username',
@@ -148,7 +148,7 @@ class AuthenticatorPassThrough(Authenticator):
     def auth_publickey(self, username, host, port, key):
         if key.can_sign():
             return self.connect(username, host, port, AuthenticationMethod.publickey, key=key)
-        if self.AGENT_FORWARDING:
+        if self.REQUEST_AGENT:
             # Ein Publickey wird nur direkt von check_auth_publickey
             # übergeben. In dem Fall müssen wir den Client authentifizieren,
             # damit wir auf den Agent warten können!
