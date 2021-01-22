@@ -1,5 +1,5 @@
-Spoofing Concepts
-=====================
+CVE-2020-14145
+==============
 
 When running a ssh-mitm server transparency has to be taken under serious considerations. Representing yourself
 as a seamless counterpart to the real thing can be a very difficult task with many pitfalls. Just the slightest
@@ -39,16 +39,14 @@ OR if the remote host is already known
 
 
 Under normal circumstances a ssh-mitm server cannot possibly know which of these scenarios is the case
-before it is already to late. Luckily the friendly folks at MITRE ATT&CK® have found an information
-leak in the OpenSSH Client software that we can use to our advantage.
+before it is already to late.
 
-
-CVE-2020-14145: OpenSSH Client Information leak
+CVE-2020-14145: OpenSSH Client Information Leak
 ------------------------------------------------
 
 This vulnerability enables a ssh server to figure out during algorithm negotiations if the client
 connecting has prior knowledge of the remote hosts public key fingerprint. According to the published
-`CVE document <>https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-14145`_ this only affects OpenSSH
+`CVE document <https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-14145>`_ this only affects OpenSSH
 Client versions 5.7 through 8.3; 8.4 is still susceptible though when using a non conform list of
 algorithms, according to different sources.
 
@@ -57,14 +55,58 @@ algorithm negotiation itself. Particularly in the way the ``server_host_key_algo
 The official `SSH Transport RFC 4253 <https://tools.ietf.org/html/rfc4253#section-7>`_ **requires**
 each named list in the algorithm negotiation to make the first item a guessed preference.
 This is understandable for Key Exchange, Crypto or MAC algorithms but leads
-to exactly this information leak when also applied to ``server_host_key_algorithms`` which are used
+to exactly this information leak when also applied to ``server_host_key_algorithms``. This named list is used
 to negotiate which public key associated with the corresponding key generation algorithm should be used
 to authenticate the identity of the server.
 
-This is a
+Following comparison will make the problem in question more clear:
+
+.. code-block:: bash
+
+    | New Fingerprint
+    | server key:
+    | ecdsa-sha2-nistp256
+    | ecdsa-sha2-nistp384
+    | ecdsa-sha2-nistp521
+    | ssh-ed25519
+    | rsa-sha2-512
+    | rsa-sha2-256
+    | ssh-rsa
+
+    | Known Fingerprint
+    | server key:
+    | rsa-sha2-512
+    | rsa-sha2-256
+    | ssh-rsa
+    | ecdsa-sha2-nistp256
+    | ecdsa-sha2-nistp384
+    | ecdsa-sha2-nistp521
+    | ssh-ed25519
+
+..
+    commented out
+    +---------------------+---------------------+
+    | New Fingerprint     | Known Fingerprint   |
+    +=====================+=====================+
+    | server key:         | server key:         |
+    +---------------------+---------------------+
+    | ecdsa-sha2-nistp256 | rsa-sha2-512        |
+    +---------------------+---------------------+
+    | ecdsa-sha2-nistp384 | rsa-sha2-256        |
+    +---------------------+---------------------+
+    | ecdsa-sha2-nistp521 | ssh-rsa             |
+    +---------------------+---------------------+
+    | ssh-ed25519         | ecdsa-sha2-nistp256 |
+    +---------------------+---------------------+
+    | rsa-sha2-512        | ecdsa-sha2-nistp384 |
+    +---------------------+---------------------+
+    | rsa-sha2-256        | ecdsa-sha2-nistp521 |
+    +---------------------+---------------------+
+    | ssh-rsa             | ssh-ed25519         |
+    +---------------------+---------------------+
 
 
-As is see it this is a fundamental problem with the published standard itself. Of course, implementations
+This begs the question if this is a fundamental security problem with the standard itself? Of course, implementations
 of the protocol could easily just ignore this requirement for the ``server_host_key_algorithms`` named list
 without breaking any functionality - and many probably do in trying to fix this problem - but in my opinion
 this should also be reflected in the standard.

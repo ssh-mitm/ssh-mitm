@@ -15,3 +15,9 @@
     font-family: FontAwesome;
     content: "\f0e8";
 }
+
+#docs-nav .toctree-l1:nth-child(4):before,
+#docs-cards .toctree-l1:nth-child(4) i:before {
+    font-family: FontAwesome;
+    content: "\f714";
+}
