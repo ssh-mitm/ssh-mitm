@@ -63,25 +63,25 @@ Following comparison will make the problem in question more clear:
 
 .. code-block:: bash
 
-    | New Fingerprint
-    | server key:
-    | ecdsa-sha2-nistp256
-    | ecdsa-sha2-nistp384
-    | ecdsa-sha2-nistp521
-    | ssh-ed25519
-    | rsa-sha2-512
-    | rsa-sha2-256
-    | ssh-rsa
+    New Fingerprint
+    server key:
+    ecdsa-sha2-nistp256
+    ecdsa-sha2-nistp384
+    ecdsa-sha2-nistp521
+    ssh-ed25519
+    rsa-sha2-512
+    rsa-sha2-256
+    ssh-rsa
 
-    | Known Fingerprint
-    | server key:
-    | rsa-sha2-512
-    | rsa-sha2-256
-    | ssh-rsa
-    | ecdsa-sha2-nistp256
-    | ecdsa-sha2-nistp384
-    | ecdsa-sha2-nistp521
-    | ssh-ed25519
+    Known Fingerprint
+    server key:
+    rsa-sha2-512
+    rsa-sha2-256
+    ssh-rsa
+    ecdsa-sha2-nistp256
+    ecdsa-sha2-nistp384
+    ecdsa-sha2-nistp521
+    ssh-ed25519
 
 ..
     commented out
