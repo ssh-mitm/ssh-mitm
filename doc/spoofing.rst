@@ -46,5 +46,25 @@ leak in the OpenSSH Client software that we can use to our advantage.
 CVE-2020-14145: OpenSSH Client Information leak
 ------------------------------------------------
 
+This vulnerability enables a ssh server to figure out during algorithm negotiations if the client
+connecting has prior knowledge of the remote hosts public key fingerprint. According to the published
+`CVE document <>https://cve.mitre.org/cgi-bin/cvename.cgi?name=CVE-2020-14145`_ this only affects OpenSSH
+Client versions 5.7 through 8.3; 8.4 is still susceptible though when using a non conform list of
+algorithms, according to different sources.
+
+The reasoning behind this ability to extract information about client to server association lies in the
+algorithm negotiation itself. Particularly in the way the ``server_host_key_algorithms`` are sent.
+The official `SSH Transport RFC 4253 <https://tools.ietf.org/html/rfc4253#section-7>`_ **requires**
+each named list in the algorithm negotiation to make the first item a guessed preference.
+This is understandable for Key Exchange, Crypto or MAC algorithms but leads
+to exactly this information leak when also applied to ``server_host_key_algorithms`` which are used
+to negotiate which public key associated with the corresponding key generation algorithm should be used
+to authenticate the identity of the server.
+
+This is a
 
 
+As is see it this is a fundamental problem with the published standard itself. Of course, implementations
+of the protocol could easily just ignore this requirement for the ``server_host_key_algorithms`` named list
+without breaking any functionality - and many probably do in trying to fix this problem - but in my opinion
+this should also be reflected in the standard.
