@@ -113,7 +113,7 @@ def main():
 
     args = parser.parse_args()
 
-    args.authenticator.AGENT_FORWARDING = args.foreward_agent
+    args.authenticator.REQUEST_AGENT = args.foreward_agent
 
     proxy = SSHProxyServer(
         args.listen_port,
