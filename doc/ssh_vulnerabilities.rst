@@ -8,3 +8,6 @@ SSH Vurnabilities
    :caption: CVE List
 
    CVE-2020-14145
+   CVE-2019-6111
+   CVE-2019-6110
+   CVE-2019-6109
