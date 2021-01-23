@@ -2,7 +2,7 @@
 [![PyPI downloads](https://pepy.tech/badge/ssh-mitm/month)](https://pepy.tech/project/ssh-mitm)
 [![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm.svg)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
 
-# ssh-mitm - intercept ssh traffic
+# ssh-mitm - intercept ssh traffic [![Tweet](https://img.shields.io/twitter/url/http/shields.io.svg?style=social)](https://twitter.com/intent/tweet?text=ssh%20mitm%20server%20for%20security%20audits%20supporting%20public%20key%20authentication%2C%20session%20hijacking%20and%20file%20manipulation%20&url=https://github.com/ssh-mitm/ssh-mitms&hashtags=ssh,mitm,security,audit)
 
 **man in the middle (mitm) server for security audits supporting public key authentication, session hijacking and file manipulation**
 
