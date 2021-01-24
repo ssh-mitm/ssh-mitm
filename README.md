@@ -4,6 +4,7 @@
 [![Documentation Status](https://readthedocs.org/projects/ssh-mitm/badge/?version=latest)](https://docs.ssh-mitm.at/?badge=latest)
 [![PyPI downloads](https://pepy.tech/badge/ssh-mitm/month)](https://pepy.tech/project/ssh-mitm)
 [![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm.svg)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
 
 **man in the middle (mitm) server for security audits supporting public key authentication, session hijacking and file manipulation**
