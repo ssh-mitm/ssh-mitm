@@ -16,7 +16,7 @@ If you like or are using this project to learn or start your solution, please gi
 
 ## Installation of SSH-MITM
 
-<img src=https://ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" style="float:left;" >
+<img src="https://ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" align="left" width="128">
 
 The first step to using any software package is getting it properly installed.
 
@@ -25,6 +25,8 @@ To install SSH-MITM, simply run this simple command in your terminal of choice:
     $ pip install ssh-mitm
 
 ## Quickstart
+
+<img src="https://ssh-mitm.at/assets/images/streamline-free/programmer-male.svg" align="left" width="128">
 
 Starting an intercepting mitm-ssh server with password authentication and session hijacking is very simple.
 
@@ -50,6 +52,8 @@ You will see the credentials in the log output.
 
 ## Session hijacking
 
+<img src="https://ssh-mitm.at/assets/images/streamline-free/customer-service-woman.svg" align="left" width="128">
+
 Getting the plain text credentials is only half the fun.
 When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
 
@@ -64,6 +68,7 @@ After you are connected, your session will only be updated with new responses, b
 Try to execute somme commands in the hijacked session or in the original session.
 
 The output will be shown in both sessions.
+
 
 ## Contributing
 
