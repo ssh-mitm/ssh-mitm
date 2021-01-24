@@ -67,3 +67,14 @@ The output will be shown in both sessions.
 
 Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
 
+## Versioning
+
+We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/ssh-mitm/ssh-mitm/tags). 
+
+## Authors
+
+See also the list of [contributors](https://github.com/ssh-mitm/ssh-mitm/graphs/contributors) who participated in this project.
+
+## License
+
+This project is licensed under the LGPL-3.0 License  - see the [LICENSE.md](LICENSE.md) file for details
