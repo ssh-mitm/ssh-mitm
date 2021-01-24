@@ -72,16 +72,10 @@ The output will be shown in both sessions.
 
 ## Contributing
 
-Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+<img src="https://ssh-mitm.at/assets/images/streamline-free/write-paper-ink.svg" align="left" width="128">
 
-## Versioning
+**Pull requests are welcome.** 
 
-We use [SemVer](http://semver.org/) for versioning. For the versions available, see the [tags on this repository](https://github.com/ssh-mitm/ssh-mitm/tags). 
-
-## Authors
+For major changes, please open an issue first to discuss what you would like to change.
 
 See also the list of [contributors](https://github.com/ssh-mitm/ssh-mitm/graphs/contributors) who participated in this project.
-
-## License
-
-This project is licensed under the LGPL-3.0 License  - see the [LICENSE.md](LICENSE.md) file for details
