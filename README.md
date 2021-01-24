@@ -62,3 +62,8 @@ After you are connected, your session will only be updated with new responses, b
 Try to execute somme commands in the hijacked session or in the original session.
 
 The output will be shown in both sessions.
+
+## Contributing
+
+Pull requests are welcome. For major changes, please open an issue first to discuss what you would like to change.
+
