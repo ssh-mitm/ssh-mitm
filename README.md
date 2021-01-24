@@ -16,6 +16,8 @@ If you like or are using this project to learn or start your solution, please gi
 
 ## Installation of SSH-MITM
 
+<img src=https://ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" style="float:left;" >
+
 The first step to using any software package is getting it properly installed.
 
 To install SSH-MITM, simply run this simple command in your terminal of choice:
