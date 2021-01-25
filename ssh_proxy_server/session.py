@@ -157,8 +157,6 @@ class Session:
         # wait for authentication
         event.wait()
 
-
-
         if not self.transport.is_active():
             return False
 
