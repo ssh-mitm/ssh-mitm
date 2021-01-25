@@ -6,17 +6,11 @@ from paramiko import Transport, AUTH_SUCCESSFUL, common, ECDSAKey
 from paramiko.agent import AgentServerProxy
 
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
+from ssh_proxy_server.plugins.session.cve14145 import DEFAULT_ALGORITMS
 
 
 class Session:
 
-    DEFAULT_HOST_KEY_ALGOS = ['ecdsa-sha2-nistp256-cert-v01@openssh.com', 'ecdsa-sha2-nistp384-cert-v01@openssh.com',
-                              'ecdsa-sha2-nistp521-cert-v01@openssh.com', 'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com',
-                              'ssh-ed25519-cert-v01@openssh.com', 'sk-ssh-ed25519-cert-v01@openssh.com',
-                              'rsa-sha2-512-cert-v01@openssh.com', 'rsa-sha2-256-cert-v01@openssh.com',
-                              'ssh-rsa-cert-v01@openssh.com', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384',
-                              'ecdsa-sha2-nistp521', 'sk-ecdsa-sha2-nistp256@openssh.com', 'ssh-ed25519',
-                              'sk-ssh-ed25519@openssh.com', 'rsa-sha2-512', 'rsa-sha2-256', 'ssh-rsa']
     CIPHERS = None
 
     def __init__(self, proxyserver, client_socket, client_address, authenticator, remoteaddr):
@@ -85,17 +79,19 @@ class Session:
             m.get_bytes(16)  # cookie, discarded
             m.get_list()  # key_algo_list, discarded
             server_key_algo_list = m.get_list()
-            if server_key_algo_list == self.DEFAULT_HOST_KEY_ALGOS:
-                logging.warning("CVE-14145: Client connecting for the FIRST time!")
+            for host_key_algo in DEFAULT_ALGORITMS:
+                if server_key_algo_list == host_key_algo:
+                    logging.info("CVE-14145: Client connecting for the FIRST time!")
+                    break
             else:
-                logging.warning("CVE-14145: Client has a locally cached remote fingerprint! "
-                             "(may be the ssh-mitm fingerprint)")
-            if"openssh" in self.transport.remote_version.lower():
+                logging.info("CVE-14145: Client has a locally cached remote fingerprint!")
+            if "openssh" in self.transport.remote_version.lower():
                 if isinstance(self.proxyserver.host_key, ECDSAKey):
                     logging.warning("CVE-14145: ECDSA-SHA2 Key is a bad choice; this will produce more false positives!")
-                r = re.compile(".*openssh_(\d\.\d).*", re.IGNORECASE)
+                r = re.compile(r".*openssh_(\d\.\d).*", re.IGNORECASE)
                 if int(r.match(self.transport.remote_version).group(1).replace(".", "")) > 83:
                     logging.warning("CVE-14145: Remote OpenSSH Version > 8.3; CVE-14145 might produce false positive!")
+
             m.rewind()
             # normal operation
             Transport._negotiate_keys(transport, m)
