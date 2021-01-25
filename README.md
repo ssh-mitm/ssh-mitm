@@ -57,7 +57,8 @@ You will see the credentials in the log output.
 Getting the plain text credentials is only half the fun.
 When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
 
-    2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463. connect with: ssh -p 34463 127.0.0.1
+    2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463. 
+                                    connect with: ssh -p 34463 127.0.0.1
 
 To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
 
