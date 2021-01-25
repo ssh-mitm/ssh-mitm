@@ -86,9 +86,9 @@ class Session:
             m.get_list()  # key_algo_list, discarded
             server_key_algo_list = m.get_list()
             if server_key_algo_list == self.DEFAULT_HOST_KEY_ALGOS:
-                logging.info("CVE-14145: Client connecting for the FIRST time!")
+                logging.warning("CVE-14145: Client connecting for the FIRST time!")
             else:
-                logging.info("CVE-14145: Client has a locally cached remote fingerprint! "
+                logging.warning("CVE-14145: Client has a locally cached remote fingerprint! "
                              "(may be the ssh-mitm fingerprint)")
             if"openssh" in self.transport.remote_version.lower():
                 if isinstance(self.proxyserver.host_key, ECDSAKey):
