@@ -4,7 +4,7 @@ import select
 import time
 import threading
 
-from paramiko import RSAKey
+from paramiko import RSAKey, ECDSAKey
 
 from tcp_proxy_server.multisocket import (
     create_server_sock,

