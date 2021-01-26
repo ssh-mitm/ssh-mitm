@@ -58,12 +58,12 @@ class ServerInterface(BaseServerInterface):
             return True
 
         channel.send_stderr('Nicht erlaubt!\r\n')
-        logging.warning('Nicht erlaubtes SSH Kommando!')
+        logging.warning('ssh command not allowed!')
         return False
 
     def check_channel_forward_agent_request(self, channel):
         self.session.agent_requested = True
-        logging.info("Requested Agent forwarding")
+        logging.debug("Requested Agent forwarding")
         return True
 
     def check_channel_shell_request(self, channel):
@@ -94,21 +94,20 @@ class ServerInterface(BaseServerInterface):
         if not self.args.disable_password_auth:
             allowed_auths.append('password')
         if allowed_auths:
-            logging.info("Authentication types are: %s", ','.join(allowed_auths))
+            logging.debug("Authentication types are: %s", ','.join(allowed_auths))
             return ','.join(allowed_auths)
         logging.warning('Allowed authentication is none!')
         return 'none'
 
     def check_auth_publickey(self, username, key):
-        logging.info("try pubkey authentication")
+        logging.debug("try pubkey authentication")
         if self.args.disable_pubkey_auth:
             logging.warning("Public key login attempt, but public key auth was disabled!")
             return paramiko.AUTH_FAILED
         return self.session.authenticator.authenticate(username, key=key)
 
     def check_auth_password(self, username, password):
-        logging.info("try password authentication")
-
+        logging.debug("try password authentication")
         if self.args.disable_password_auth:
             logging.warning("Password login attempt, but password auth was disabled!")
             return paramiko.AUTH_FAILED
@@ -129,6 +128,10 @@ class ServerInterface(BaseServerInterface):
 
     def cancel_port_forward_request(self, address, port):
         logging.info("port forward cancel - address: %s, port: %s", address, port)
+
+    def check_channel_direct_tcpip_request(self, chanid, origin, destination):
+        logging.info("channel_direct_tcpip_request - chanid: %s, origin: %s, destination: %s", chanid, origin, destination)
+        return paramiko.OPEN_SUCCEEDED
 
 
 class ProxySFTPServer(paramiko.SFTPServer):

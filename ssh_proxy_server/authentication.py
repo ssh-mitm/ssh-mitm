@@ -56,7 +56,7 @@ class Authenticator(Module):
     def authenticate(self, username=None, password=None, key=None):
         if username:
             user, host, port = self.get_remote_host_credentials(username)
-            logging.info('try to connect to %s:%s with %s', host, port, user)
+            logging.debug('try to connect to %s:%s with %s', host, port, user)
             self.session.username = user
             self.session.remote_address = (host, port)
         if key:

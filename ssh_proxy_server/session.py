@@ -87,7 +87,7 @@ class Session:
         if self.authenticator.authenticate() != AUTH_SUCCESSFUL:
             self.channel.send('Permission denied (publickey).\r\n')
             return False
-        logging.info('connection established')
+        logging.debug('connection established')
 
         # Connect method end
         if not self.scp and not self.ssh and not self.sftp:
@@ -125,12 +125,12 @@ class Session:
         if not self._start_channels():
             return False
 
-        logging.info("(%s) session started", self)
+        logging.debug("(%s) session started", self)
         return True
 
     def close(self):
         if self.agent:
-            logging.debug("(%s) session cleaning up agent ... (because paramiko IO bocks, in a new Thread)", self)
+            logging.debug("(%s) session cleaning up agent ... (because paramiko IO blocks, in a new Thread)", self)
             self.agent._close()
             # INFO: Agent closing sequence takes 15 minutes, due to blocking IO in paramiko
             # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well (prob) BUT never is
@@ -139,7 +139,7 @@ class Session:
             # Can throw FileNotFoundError due to no verification (agent.py)
             logging.debug("(%s) session agent cleaned up", self)
         if self.ssh_client:
-            logging.info("(%s) closing ssh client to remote", self)
+            logging.debug("(%s) closing ssh client to remote", self)
             self.ssh_client.transport.close()
             # With graceful exit the completion_event can be polled to wait, well ..., for completion
             # it can also only be a graceful exit if the ssh client has already been established
@@ -147,7 +147,7 @@ class Session:
                 self.transport.completion_event.clear()
                 self.transport.completion_event.wait()
         self.transport.close()
-        logging.info("(%s) session closed", self)
+        logging.debug("(%s) session closed", self)
 
     def __str__(self):
         return self.name

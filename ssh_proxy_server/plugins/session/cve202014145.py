@@ -60,7 +60,7 @@ def hookup_cve_2020_14145(session):
         m.get_bytes(16)  # cookie, discarded
         m.get_list()  # key_algo_list, discarded
         server_key_algo_list = m.get_list()
-        logging.info(server_key_algo_list)
+        logging.debug(server_key_algo_list)
         for host_key_algo in DEFAULT_ALGORITMS:
             if server_key_algo_list == host_key_algo:
                 logging.info("CVE-2020-14145: Client connecting for the FIRST time!")

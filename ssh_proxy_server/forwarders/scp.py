@@ -136,14 +136,14 @@ class SCPForwarder(SCPBaseForwarder):
         if not match_c_command:
             match_e_command = re.match(r"(E)\n", command)
             if match_e_command:
-                logging.info("got command %s", command.strip())
+                logging.debug("got command %s", command.strip())
             match_t_command = re.match(r"(T)([0-9]+)\s([0-9]+)\s([0-9]+)\s([0-9]+)\n", command)
             if match_t_command:
-                logging.info("got command %s", command.strip())
+                logging.debug("got command %s", command.strip())
             return traffic
 
         # setze Name, Dateigröße und das zu sendende Kommando
-        logging.info("got command %s", command.strip())
+        logging.debug("got command %s", command.strip())
         self.got_c_command = True
 
         self.file_command = match_c_command[1]

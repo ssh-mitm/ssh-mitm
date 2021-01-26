@@ -1,3 +1,4 @@
+import logging
 from enhancements.modules import ModuleParser
 from enhancements.plugins import LogModule
 
@@ -110,8 +111,22 @@ def main():
         dest='banner_name',
         help='set a custom string as server banner'
     )
+    parser.add_argument(
+        '--paramiko-log-level',
+        dest='paramiko_log_level',
+        default='warning',
+        choices=['warning', 'info', 'debug'],
+        help='set paramikos log level'
+    )
 
     args = parser.parse_args()
+
+    if args.paramiko_log_level == 'debug':
+        logging.getLogger("paramiko").setLevel(logging.DEBUG)
+    elif args.paramiko_log_level == 'info':
+        logging.getLogger("paramiko").setLevel(logging.INFO)
+    else:
+        logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     args.authenticator.REQUEST_AGENT = args.foreward_agent
 
