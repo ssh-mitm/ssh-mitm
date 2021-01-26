@@ -108,14 +108,12 @@ class Session:
         while not self.channel:
             self.channel = self.transport.accept(0.5)
             if not self.running:
-                if self.transport.is_active():
-                    self.transport.close()
+                self.transport.close()
                 return False
 
         if not self.channel:
             logging.error('(%s) session error opening channel!', self)
-            if self.transport.is_active():
-                self.transport.close()
+            self.transport.close()
             return False
 
         # wait for authentication
