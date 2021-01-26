@@ -73,7 +73,6 @@ setup(
     },
     install_requires=[
         'enhancements>=0.1.12',
-        'tcp-proxy-server>=0.0.2',
         'paramiko',
         'pytz'
     ]
