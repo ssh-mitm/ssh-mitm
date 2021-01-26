@@ -64,7 +64,6 @@ class SSHInjectableForwarder(SSHForwarder):
                 readable = select.select([self.injector_sock], [], [], 0.5)[0]
                 if len(readable) == 1 and readable[0] is self.injector_sock:
                     client, addr = self.injector_sock.accept()
-                    logging.info("injector shell opened from %s to ('%s', %d)", str(addr), inject_host, inject_port)
 
                     t = paramiko.Transport(client)
                     t.set_gss_host(socket.getfqdn(""))
@@ -120,7 +119,6 @@ class SSHInjectableForwarder(SSHForwarder):
         for shell in self.injector_shells:
             shell.join()
         self.conn_thread.join()
-        logging.info("closing injector connection %s", self.injector_sock.getsockname())
         self.injector_sock.close()
 
 
@@ -162,4 +160,3 @@ class InjectorShell(threading.Thread):
         if not self.forwarder.session.ssh_channel.closed:
             self.forwarder.injector_shells.remove(self)
         self.client_channel.get_transport().close()
-        logging.info("injector shell %s was closed", str(self.remote))
