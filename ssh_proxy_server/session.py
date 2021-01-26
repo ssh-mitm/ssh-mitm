@@ -1,11 +1,17 @@
 import logging
 import threading
+import time
 
 from paramiko import Transport, AUTH_SUCCESSFUL
 from paramiko.agent import AgentServerProxy
+from paramiko.ssh_exception import ChannelException
 
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
 from ssh_proxy_server.plugins.session import cve202014145
+
+
+class NoAgentException(Exception):
+    pass
 
 
 class Session:
@@ -66,6 +72,15 @@ class Session:
 
         return self._transport
 
+    def _wait_for_agent(self, limit, force_agent=False):
+        max_retries = 0
+        while not self.agent_requested:
+            max_retries += 1
+            time.sleep(0.1)
+            if max_retries > 10:
+                return force_agent
+        return True
+
     def _start_channels(self):
         # create client or master channel
         if self.ssh_client:
@@ -74,9 +89,12 @@ class Session:
 
         if not self.agent and (self.authenticator.REQUEST_AGENT or self.authenticator.REQUEST_AGENT_BREAKIN):
             try:
-                self.agent = AgentServerProxy(self.transport)
-                self.agent.connect()
-            except Exception:
+                if self._wait_for_agent(10, self.authenticator.REQUEST_AGENT_BREAKIN):
+                    self.agent = AgentServerProxy(self.transport)
+                    self.agent.connect()
+            except ChannelException:
+                logging.error("Breakin not successful! Closing ssh connection to client")
+                self.agent = None
                 self.close()
                 return False
         # Connect method start
@@ -129,7 +147,7 @@ class Session:
 
     def close(self):
         if self.agent:
-            logging.debug("(%s) session cleaning up agent ... (because paramiko IO blocks, in a new Thread)", self)
+            logging.error("(%s) session cleaning up agent ... (because paramiko IO blocks, in a new Thread)", self)
             self.agent._close()
             # INFO: Agent closing sequence takes 15 minutes, due to blocking IO in paramiko
             # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well (prob) BUT never is

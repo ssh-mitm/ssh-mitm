@@ -107,6 +107,12 @@ def main():
         help='enables agent forwarding'
     )
     parser.add_argument(
+        '--request-agent-breakin',
+        dest='request_agent_breakin',
+        action='store_true',
+        help='enables agent forwarding and tryies to break in to the agent, if not forwarded'
+    )
+    parser.add_argument(
         '--banner-name',
         dest='banner_name',
         help='set a custom string as server banner'
@@ -129,6 +135,9 @@ def main():
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     args.authenticator.REQUEST_AGENT = args.foreward_agent
+    if args.request_agent_breakin:
+        args.authenticator.REQUEST_AGENT = True
+        args.authenticator.REQUEST_AGENT_BREAKIN = True
 
     proxy = SSHProxyServer(
         args.listen_port,

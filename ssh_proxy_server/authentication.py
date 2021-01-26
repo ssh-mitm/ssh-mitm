@@ -11,6 +11,7 @@ from ssh_proxy_server.exceptions import MissingHostException
 class Authenticator(Module):
 
     REQUEST_AGENT = False
+    REQUEST_AGENT_BREAKIN = False
 
     @classmethod
     def parser_arguments(cls):
