@@ -152,7 +152,7 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):
-        logging.debug(
+        logging.info(
             "check_channel_x11_request: single_connection=%s, auth_protocol=%s, auth_cookie=%s, screen_number=%s",
             single_connection, auth_protocol, auth_cookie, screen_number
         )
