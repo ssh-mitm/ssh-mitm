@@ -58,7 +58,7 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def check_channel_forward_agent_request(self, channel):
-        self.session.agent_requested = True
+        self.session.agent_requested.set()
         logging.debug("check_channel_forward_agent_request")
         return True
 

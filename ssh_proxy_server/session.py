@@ -29,7 +29,7 @@ class Session:
         self.client_address = client_address
         self.name = "{fr}->{to}".format(fr=client_address, to=remoteaddr)
 
-        self.agent_requested = False
+        self.agent_requested = threading.Event()
 
         self.ssh = False
         self.ssh_channel = None
@@ -72,15 +72,6 @@ class Session:
 
         return self._transport
 
-    def _wait_for_agent(self, limit, force_agent=False):
-        max_retries = 0
-        while not self.agent_requested:
-            max_retries += 1
-            time.sleep(0.1)
-            if max_retries > 10:
-                return force_agent
-        return True
-
     def _start_channels(self):
         # create client or master channel
         if self.ssh_client:
@@ -89,7 +80,7 @@ class Session:
 
         if not self.agent and (self.authenticator.REQUEST_AGENT or self.authenticator.REQUEST_AGENT_BREAKIN):
             try:
-                if self._wait_for_agent(10, self.authenticator.REQUEST_AGENT_BREAKIN):
+                if self.agent_requested.wait(1) or self.authenticator.REQUEST_AGENT_BREAKIN:
                     self.agent = AgentServerProxy(self.transport)
                     self.agent.connect()
             except ChannelException:
