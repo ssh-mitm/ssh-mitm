@@ -1,6 +1,5 @@
 import logging
 
-from paramiko.agent import AgentRequestHandler
 from enhancements.modules import Module
 
 
@@ -14,9 +13,9 @@ class BaseForwarder(Module):
     def __init__(self, session):
         super().__init__()
         self.server_channel = session.ssh_client.transport.open_session()
-        # if session.agent:   # Experimental
-        #     logging.info("Forwarding agent to remote")
-        #     AgentRequestHandler(self.server_channel)
+        if session.authenticator.args.forward_agent:
+            logging.info("Forwarding agent to remote")
+            session.agent.forward_agent(self.server_channel)
         self.channel = None
         self.session = session
 
