@@ -1,10 +1,7 @@
 import logging
-import os
 import threading
-import time
 
 from paramiko import Transport, AUTH_SUCCESSFUL
-from paramiko.agent import AgentServerProxy, Agent
 from paramiko.ssh_exception import ChannelException
 
 from ssh_proxy_server.forwarders.agent import AgentProxy
@@ -139,7 +136,6 @@ class Session:
 
     def close(self):
         if self.agent:
-            logging.error("(%s) session cleaning up agent", self)
             self.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
         if self.ssh_client:

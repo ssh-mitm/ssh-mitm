@@ -102,9 +102,9 @@ def main():
     )
     parser.add_argument(
         '--request-agent',
-        dest='foreward_agent',
+        dest='request_agent',
         action='store_true',
-        help='enables agent forwarding'
+        help='request agent for public key authentication'
     )
     parser.add_argument(
         '--request-agent-breakin',
@@ -134,7 +134,7 @@ def main():
     else:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
-    args.authenticator.REQUEST_AGENT = args.foreward_agent
+    args.authenticator.REQUEST_AGENT = args.request_agent
     if args.request_agent_breakin:
         args.authenticator.REQUEST_AGENT = True
         args.authenticator.REQUEST_AGENT_BREAKIN = True

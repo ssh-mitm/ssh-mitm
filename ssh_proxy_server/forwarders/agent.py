@@ -1,42 +1,35 @@
-import threading
 import time
 
-from paramiko.agent import Agent, AgentRequestHandler, AgentServerProxy, AgentClientProxy
-import logging
+from paramiko.agent import Agent, AgentServerProxy, AgentClientProxy
 import os
 
 class AgentProxy(object):
+    # TODO: OpenSSH 8.4 SCP AgentForwarding support for remote to remote copy
 
     def __init__(self, transport) -> None:
         self.agents = []
         self.transport = transport
-        agent = AgentServerProxy(self.transport)
-        os.environ.update(agent.get_env())
-        agent.connect()
-
-        self.agents.append(agent)
-        agent = Agent()
-        self.keys = agent.get_keys()[:]
-
-        self.agents.append(agent)
+        a = AgentServerProxy(self.transport)
+        os.environ.update(a.get_env())
+        a.connect()
+        self.agent = Agent()
+        self.keys = self.agent.get_keys()[:]
+        self.agents.append(self.agent)
         # should be able to be closed now, but for some reason there is a race
-        # self.a.close()
+        # agent is still sending over the channel
+        # agent.close()
 
     def get_keys(self):
         return self.keys
 
     def forward_agent(self, chanClient):
-        logging.info("Forwarding agent to remote")
         chanClient.request_forward_agent(self._forward_agent_handler)
 
     def _forward_agent_handler(self, chanRemote):
         agent = AgentServerProxy(self.transport)
         os.environ.update(agent.get_env())
+        time.sleep(0.1)
         self.agents.append(AgentClientProxy(chanRemote))
-
-    def wait_for_agent(self, agent):
-        while agent._conn is None:
-            time.sleep(0.2)
 
     def close(self):
         for a in self.agents:
