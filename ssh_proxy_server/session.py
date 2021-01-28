@@ -1,11 +1,13 @@
 import logging
+import os
 import threading
 import time
 
 from paramiko import Transport, AUTH_SUCCESSFUL
-from paramiko.agent import AgentServerProxy
+from paramiko.agent import AgentServerProxy, Agent
 from paramiko.ssh_exception import ChannelException
 
+from ssh_proxy_server.forwarders.agent import AgentProxy
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
 from ssh_proxy_server.plugins.session import cve202014145
 
@@ -81,8 +83,7 @@ class Session:
         if not self.agent and (self.authenticator.REQUEST_AGENT or self.authenticator.REQUEST_AGENT_BREAKIN):
             try:
                 if self.agent_requested.wait(1) or self.authenticator.REQUEST_AGENT_BREAKIN:
-                    self.agent = AgentServerProxy(self.transport)
-                    self.agent.connect()
+                    self.agent = AgentProxy(self.transport)
             except ChannelException:
                 logging.error("Breakin not successful! Closing ssh connection to client")
                 self.agent = None
@@ -138,13 +139,8 @@ class Session:
 
     def close(self):
         if self.agent:
-            logging.error("(%s) session cleaning up agent ... (because paramiko IO blocks, in a new Thread)", self)
-            self.agent._close()
-            # INFO: Agent closing sequence takes 15 minutes, due to blocking IO in paramiko
-            # Paramiko agent.py tries to connect to a UNIX_SOCKET; it should be created as well (prob) BUT never is
-            # Agents starts Thread -> leads to the socket.connect blocking; only returns after .join(1000) timeout
-            threading.Thread(target=self.agent.close).start()
-            # Can throw FileNotFoundError due to no verification (agent.py)
+            logging.error("(%s) session cleaning up agent", self)
+            self.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
         if self.ssh_client:
             logging.debug("(%s) closing ssh client to remote", self)
@@ -153,7 +149,9 @@ class Session:
             # it can also only be a graceful exit if the ssh client has already been established
             if self.transport.completion_event.is_set() and self.transport.is_active():
                 self.transport.completion_event.clear()
-                self.transport.completion_event.wait()
+                while self.transport.is_active():
+                    if self.transport.completion_event.wait(0.1):
+                        break
         self.transport.close()
         logging.debug("(%s) session closed", self)
 
