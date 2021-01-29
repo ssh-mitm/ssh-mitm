@@ -33,7 +33,6 @@ class ServerInterface(BaseServerInterface):
             action='store_true',
             help='disable password authentication'
         )
-
         cls.PARSER.add_argument(
             '--disable-pubkey-auth',
             dest='disable_pubkey_auth',
@@ -47,8 +46,9 @@ class ServerInterface(BaseServerInterface):
             self.session.scp_command = command
             self.session.scp_channel = channel
             return True
-        logging.warning('scp command not allowed!')
-        return False
+        elif self.args.disable_scp:
+            logging.warning('scp command not allowed!')
+            return False
 
         if not self.args.disable_ssh:
             self.session.sshCommand = command
