@@ -20,8 +20,11 @@ class SCPBaseForwarder(BaseForwarder):
 
         self.server_channel.exec_command(self.session.scp_command)  # nosec
 
-        # Wait for remote to remote auth, command exec and copy to finish
+        # Wait for SCP remote to remote auth, command exec and copy to finish
         if not self.session.scp_command.find(b' -t ') != -1 and not self.session.scp_command.find(b' -f ') != -1:
+            logging.debug("[chan %d] Initiating SCP remote to remote", self.session.scp_channel.get_id())
+            if not self.session.authenticator.args.forward_agent:
+                logging.warning("[chan %d] SCP remote to remote needs --forward-agent enabled", self.session.scp_channel.get_id())
             while not self._closed(self.server_channel):
                 time.sleep(1)
 
