@@ -21,7 +21,7 @@ class SCPBaseForwarder(BaseForwarder):
         self.server_channel.exec_command(self.session.scp_command)  # nosec
 
         # Wait for remote to remote  auth, command exec and copy to finish
-        if re.match('scp (-v)? [/\w]+ \w+@[\n\w:.]+', self.session.scp_command.decode('utf-8')):
+        if not self.session.scp_command.find(b' -t ') != -1 and not self.session.scp_command.find(b' -f ') != -1:
             while not self._closed(self.server_channel):
                 time.sleep(1)
 

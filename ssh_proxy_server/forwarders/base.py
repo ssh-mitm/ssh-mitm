@@ -8,6 +8,7 @@ class BaseForwarder(Module):
     base class for all forwarders.
     """
 
+    # Slow file transmission
     BUF_LEN = 65536
 
     def __init__(self, session):
