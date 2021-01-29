@@ -4,7 +4,6 @@ from paramiko.agent import Agent, AgentServerProxy, AgentClientProxy
 import os
 
 class AgentProxy(object):
-    # TODO: OpenSSH 8.4 SCP AgentForwarding support for remote to remote copy
 
     def __init__(self, transport) -> None:
         self.agents = []

@@ -33,7 +33,6 @@ class ServerInterface(BaseServerInterface):
             action='store_true',
             help='disable password authentication'
         )
-
         cls.PARSER.add_argument(
             '--disable-pubkey-auth',
             dest='disable_pubkey_auth',
@@ -42,14 +41,14 @@ class ServerInterface(BaseServerInterface):
         )
 
     def check_channel_exec_request(self, channel, command):
-        if command.decode('utf8').startswith('scp') and (command.find(b' -t ') != -1 or command.find(b' -f ') != -1):
-            if not self.args.disable_scp:
-                self.session.scp = True
-                self.session.scp_command = command
-                self.session.scp_channel = channel
-                return True
+        if self.args.disable_scp:
             logging.warning('scp command not allowed!')
             return False
+        if command.decode('utf8').startswith('scp'):
+            self.session.scp = True
+            self.session.scp_command = command
+            self.session.scp_channel = channel
+            return True
 
         if not self.args.disable_ssh:
             self.session.sshCommand = command
