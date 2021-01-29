@@ -8,7 +8,7 @@ class BaseForwarder(Module):
     base class for all forwarders.
     """
 
-    BUF_LEN = 8192
+    BUF_LEN = 65536
 
     def __init__(self, session):
         super().__init__()

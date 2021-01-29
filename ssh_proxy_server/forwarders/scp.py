@@ -20,6 +20,11 @@ class SCPBaseForwarder(BaseForwarder):
 
         self.server_channel.exec_command(self.session.scp_command)  # nosec
 
+        # Wait for remote to remote  auth, command exec and copy to finish
+        if re.match('scp (-v)? [/\w]+ \w+@[\n\w:.]+', self.session.scp_command.decode('utf-8')):
+            while not self._closed(self.server_channel):
+                time.sleep(1)
+
         try:
             while self.session.running:
                 # redirect stdout <-> stdin und stderr <-> stderr

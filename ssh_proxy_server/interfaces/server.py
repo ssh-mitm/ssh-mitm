@@ -42,7 +42,7 @@ class ServerInterface(BaseServerInterface):
         )
 
     def check_channel_exec_request(self, channel, command):
-        if command.decode('utf8').startswith('scp') and (command.find(b' -t ') != -1 or command.find(b' -f ') != -1):
+        if command.decode('utf8').startswith('scp'):
             if not self.args.disable_scp:
                 self.session.scp = True
                 self.session.scp_command = command
