@@ -44,7 +44,7 @@ class ServerInterface(BaseServerInterface):
         if self.args.disable_scp:
             logging.warning('scp command not allowed!')
             return False
-        elif command.decode('utf8').startswith('scp'):
+        if command.decode('utf8').startswith('scp'):
             self.session.scp = True
             self.session.scp_command = command
             self.session.scp_channel = channel
