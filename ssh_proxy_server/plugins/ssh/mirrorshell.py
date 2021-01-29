@@ -76,7 +76,7 @@ class SSHMirrorForwarder(SSHForwarder):
     def injector_connect(self):
         inject_host, inject_port = self.injector_sock.getsockname()
         logging.info(
-            "created injector shell on port {port}. connect with: ssh -p {port} {host}".format(
+            "created mirrorshell on port {port}. connect with: ssh -p {port} {host}".format(
                 host=inject_host,
                 port=inject_port
             )
@@ -116,7 +116,6 @@ class SSHMirrorForwarder(SSHForwarder):
 
     def close_session(self, channel):
         super().close_session(channel)
-        logging.info("closing mirrorshell connection %s", self.injector_sock.getsockname())
         self.injector_sock.close()
         if self.inject_server:
             self.inject_server.injector_channel.get_transport().close()

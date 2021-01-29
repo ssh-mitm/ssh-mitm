@@ -6,7 +6,7 @@ import threading
 
 from paramiko import RSAKey
 
-from tcp_proxy_server.multisocket import (
+from ssh_proxy_server.network.multisocket import (
     create_server_sock,
     has_dual_stack,
     MultipleSocketsListener
@@ -45,6 +45,7 @@ class SSHProxyServer:
         self.scp_interface = scp_interface
         self.sftp_handler = sftp_handler
         self.sftp_interface = self.sftp_handler.get_interface() or sftp_interface
+        # Server Interface
         self.authentication_interface = authentication_interface
         self.authenticator = authenticator
         self.transparent = transparent

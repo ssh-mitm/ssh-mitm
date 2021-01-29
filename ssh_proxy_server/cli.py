@@ -1,3 +1,4 @@
+import logging
 from enhancements.modules import ModuleParser
 from enhancements.plugins import LogModule
 
@@ -101,19 +102,42 @@ def main():
     )
     parser.add_argument(
         '--request-agent',
-        dest='foreward_agent',
+        dest='request_agent',
         action='store_true',
-        help='enables agent forwarding'
+        help='request agent for public key authentication'
+    )
+    parser.add_argument(
+        '--request-agent-breakin',
+        dest='request_agent_breakin',
+        action='store_true',
+        help='enables agent forwarding and tryies to break in to the agent, if not forwarded'
     )
     parser.add_argument(
         '--banner-name',
         dest='banner_name',
         help='set a custom string as server banner'
     )
+    parser.add_argument(
+        '--paramiko-log-level',
+        dest='paramiko_log_level',
+        default='warning',
+        choices=['warning', 'info', 'debug'],
+        help='set paramikos log level'
+    )
 
     args = parser.parse_args()
 
-    args.authenticator.REQUEST_AGENT = args.foreward_agent
+    if args.paramiko_log_level == 'debug':
+        logging.getLogger("paramiko").setLevel(logging.DEBUG)
+    elif args.paramiko_log_level == 'info':
+        logging.getLogger("paramiko").setLevel(logging.INFO)
+    else:
+        logging.getLogger("paramiko").setLevel(logging.WARNING)
+
+    args.authenticator.REQUEST_AGENT = args.request_agent
+    if args.request_agent_breakin:
+        args.authenticator.REQUEST_AGENT = True
+        args.authenticator.REQUEST_AGENT_BREAKIN = True
 
     proxy = SSHProxyServer(
         args.listen_port,

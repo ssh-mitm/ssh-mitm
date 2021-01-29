@@ -33,7 +33,6 @@ class ServerInterface(BaseServerInterface):
             action='store_true',
             help='disable password authentication'
         )
-
         cls.PARSER.add_argument(
             '--disable-pubkey-auth',
             dest='disable_pubkey_auth',
@@ -42,28 +41,24 @@ class ServerInterface(BaseServerInterface):
         )
 
     def check_channel_exec_request(self, channel, command):
-        if command.decode('utf8').startswith('scp') and (command.find(b' -t ') != -1 or command.find(b' -f ') != -1):
-            if not self.args.disable_scp:
-                self.session.scp = True
-                self.session.scp_command = command
-                self.session.scp_channel = channel
-                return True
-
-            channel.send_stderr('scp command not allowed!\r\n')
+        if self.args.disable_scp:
             logging.warning('scp command not allowed!')
             return False
+        if command.decode('utf8').startswith('scp'):
+            self.session.scp = True
+            self.session.scp_command = command
+            self.session.scp_channel = channel
+            return True
 
         if not self.args.disable_ssh:
             self.session.sshCommand = command
             return True
-
-        channel.send_stderr('Nicht erlaubt!\r\n')
-        logging.warning('Nicht erlaubtes SSH Kommando!')
+        logging.warning('ssh command not allowed!')
         return False
 
     def check_channel_forward_agent_request(self, channel):
-        self.session.agent_requested = True
-        logging.info("Requested Agent forwarding")
+        self.session.agent_requested.set()
+        logging.debug("check_channel_forward_agent_request")
         return True
 
     def check_channel_shell_request(self, channel):
@@ -73,8 +68,11 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    def check_channel_pty_request(self, channel, term, width, height,
-                                  pixelwidth, pixelheight, modes):
+    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
+        logging.debug(
+            "check_channel_pty_request: term=%s, width=%s, height=%s, pixelwidth=%s, pixelheight=%s, modes=%s",
+            term, width, height, pixelwidth, pixelheight, modes
+        )
         if not self.args.disable_ssh:
             self.session.ssh = True
             self.session.sshPtyKArgs = {
@@ -94,41 +92,75 @@ class ServerInterface(BaseServerInterface):
         if not self.args.disable_password_auth:
             allowed_auths.append('password')
         if allowed_auths:
-            logging.info("Authentication types are: %s", ','.join(allowed_auths))
             return ','.join(allowed_auths)
         logging.warning('Allowed authentication is none!')
         return 'none'
 
     def check_auth_publickey(self, username, key):
-        logging.info("try pubkey authentication")
         if self.args.disable_pubkey_auth:
             logging.warning("Public key login attempt, but public key auth was disabled!")
             return paramiko.AUTH_FAILED
         return self.session.authenticator.authenticate(username, key=key)
 
     def check_auth_password(self, username, password):
-        logging.info("try password authentication")
-
         if self.args.disable_password_auth:
             logging.warning("Password login attempt, but password auth was disabled!")
             return paramiko.AUTH_FAILED
         return self.session.authenticator.authenticate(username, password=password)
 
     def check_channel_request(self, kind, chanid):
+        logging.debug("check_channel_request: %s , %s", kind, chanid)
         return paramiko.OPEN_SUCCEEDED
 
+    def check_channel_env_request(self, channel, name, value):
+        logging.debug("check_channel_env_request: %s=%s", name, value)
+        return False
+
     def check_channel_subsystem_request(self, channel, name):
+        logging.debug("check_channel_subsystem_request: name=%s", name)
         if name.upper() == 'SFTP':
             self.session.sftp = True
             self.session.sftp_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 
     def check_port_forward_request(self, address, port):
-        logging.info("port forward attempt - address: %s, port: %s", address, port)
+        logging.debug(
+            "check_port_forward_request: address=%s, port=%s",
+            address, port
+        )
         return True
 
     def cancel_port_forward_request(self, address, port):
-        logging.info("port forward cancel - address: %s, port: %s", address, port)
+        logging.debug(
+            "cancel_port_forward_request: address=%s, port=%s",
+            address, port
+        )
+
+    def check_channel_direct_tcpip_request(self, chanid, origin, destination):
+        logging.debug(
+            "channel_direct_tcpip_request: chanid=%s, origin=%s, destination=%s",
+            chanid, origin, destination
+        )
+        return paramiko.OPEN_SUCCEEDED
+
+    def check_channel_window_change_request(self, channel, width, height, pixelwidth, pixelheight):
+        logging.debug(
+            "check_channel_window_change_request: width=%s, height=%s, pixelwidth=%s, pixelheight=%s",
+            width, height, pixelwidth, pixelheight
+        )
+        return False
+
+    def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):
+        logging.info(
+            "check_channel_x11_request: single_connection=%s, auth_protocol=%s, auth_cookie=%s, screen_number=%s",
+            single_connection, auth_protocol, auth_cookie, screen_number
+        )
+        return False
+
+    def check_global_request(self, msg):
+        logging.debug(
+            "check_global_request: msg=%s", msg
+        )
 
 
 class ProxySFTPServer(paramiko.SFTPServer):

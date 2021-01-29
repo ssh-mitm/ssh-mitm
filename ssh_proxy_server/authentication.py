@@ -11,6 +11,7 @@ from ssh_proxy_server.exceptions import MissingHostException
 class Authenticator(Module):
 
     REQUEST_AGENT = False
+    REQUEST_AGENT_BREAKIN = False
 
     @classmethod
     def parser_arguments(cls):
@@ -35,6 +36,18 @@ class Authenticator(Module):
             dest='auth_password',
             help='password for remote authentication'
         )
+        cls.PARSER.add_argument(
+            '--hide-credentials',
+            dest='auth_hide_credentials',
+            action='store_true',
+            help='do not log credentials (usefull for presentations)'
+        )
+        cls.PARSER.add_argument(
+            '--forward-agent',
+            dest='forward_agent',
+            action='store_true',
+            help='enables agent forwarding through the proxy'
+        )
 
     def __init__(self, session):
         super().__init__()
@@ -56,7 +69,6 @@ class Authenticator(Module):
     def authenticate(self, username=None, password=None, key=None):
         if username:
             user, host, port = self.get_remote_host_credentials(username)
-            logging.info('try to connect to %s:%s with %s', host, port, user)
             self.session.username = user
             self.session.remote_address = (host, port)
         if key:
@@ -99,23 +111,24 @@ class Authenticator(Module):
         raise NotImplementedError("authentication must be implemented")
 
     def connect(self, user, host, port, method, password=None, key=None):
-        logging.info(
-            "\n".join((
-                "Client connection established with parameters:",
-                "\tRemote Address: %s",
-                "\tPort: %s",
-                "\tUsername: %s",
-                "\tPassword: %s",
-                "\tKey: %s",
-                "\tAgent: %s"
-            )),
-            host,
-            port,
-            user,
-            password,
-            ('None' if key is None else 'not None'),
-            str(self.session.agent)
-        )
+        if not self.args.auth_hide_credentials:
+            logging.info(
+                "\n".join((
+                    "Client connection established with parameters:",
+                    "\tRemote Address: %s",
+                    "\tPort: %s",
+                    "\tUsername: %s",
+                    "\tPassword: %s",
+                    "\tKey: %s",
+                    "\tAgent: %s"
+                )),
+                host,
+                port,
+                user,
+                password,
+                ('None' if key is None else 'not None'),
+                str(self.session.agent)
+            )
 
         if not host:
             raise MissingHostException()
@@ -133,7 +146,7 @@ class Authenticator(Module):
             self.session.ssh_client = sshclient
             self.session.sftp_client = SFTPClient.from_client(sshclient)
             return paramiko.AUTH_SUCCESSFUL
-        logging.debug('connection failed!')
+        logging.warning('connection failed!')
         return paramiko.AUTH_FAILED
 
 

@@ -20,6 +20,14 @@ class SCPBaseForwarder(BaseForwarder):
 
         self.server_channel.exec_command(self.session.scp_command)  # nosec
 
+        # Wait for SCP remote to remote auth, command exec and copy to finish
+        if not self.session.scp_command.find(b' -t ') != -1 and not self.session.scp_command.find(b' -f ') != -1:
+            logging.debug("[chan %d] Initiating SCP remote to remote", self.session.scp_channel.get_id())
+            if not self.session.authenticator.args.forward_agent:
+                logging.warning("[chan %d] SCP remote to remote needs --forward-agent enabled", self.session.scp_channel.get_id())
+            while not self._closed(self.server_channel):
+                time.sleep(1)
+
         try:
             while self.session.running:
                 # redirect stdout <-> stdin und stderr <-> stderr
@@ -136,14 +144,14 @@ class SCPForwarder(SCPBaseForwarder):
         if not match_c_command:
             match_e_command = re.match(r"(E)\n", command)
             if match_e_command:
-                logging.info("got command %s", command.strip())
+                logging.debug("got command %s", command.strip())
             match_t_command = re.match(r"(T)([0-9]+)\s([0-9]+)\s([0-9]+)\s([0-9]+)\n", command)
             if match_t_command:
-                logging.info("got command %s", command.strip())
+                logging.debug("got command %s", command.strip())
             return traffic
 
         # setze Name, Dateigröße und das zu sendende Kommando
-        logging.info("got command %s", command.strip())
+        logging.debug("got command %s", command.strip())
         self.got_c_command = True
 
         self.file_command = match_c_command[1]
