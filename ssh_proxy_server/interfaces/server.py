@@ -41,14 +41,14 @@ class ServerInterface(BaseServerInterface):
         )
 
     def check_channel_exec_request(self, channel, command):
-        if command.decode('utf8').startswith('scp') and not self.args.disable_scp:
+        if self.args.disable_scp:
+            logging.warning('scp command not allowed!')
+            return False
+        elif command.decode('utf8').startswith('scp'):
             self.session.scp = True
             self.session.scp_command = command
             self.session.scp_channel = channel
             return True
-        elif self.args.disable_scp:
-            logging.warning('scp command not allowed!')
-            return False
 
         if not self.args.disable_ssh:
             self.session.sshCommand = command
