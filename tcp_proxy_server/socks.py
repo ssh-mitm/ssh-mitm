@@ -74,6 +74,7 @@ class SOCKS4Error(ProxyError):
 class HTTPError(ProxyError):
     pass
 
+
 SOCKS4_ERRORS = {
     0x5B: "Request rejected or failed",
     0x5C: ("Request rejected because SOCKS server cannot connect to identd on"

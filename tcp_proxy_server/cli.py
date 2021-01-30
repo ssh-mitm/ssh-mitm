@@ -6,10 +6,58 @@ import ssl
 import socket
 import sys
 
+from enhancements.modules import ModuleParser, ModuleError
+from enhancements.plugins import LogModule
+
+from tcp_proxy_server.network.handlers import TcpProxyHandler
+from tcp_proxy_server.exceptions import (
+    TooManyForwarders,
+    CertificateMissingException,
+    TcpProxyModuleError
+)
+from tcp_proxy_server.proxymanager import (
+    SingleProxyManager,
+    TcpProxyManager
+)
+
 
 def main():
-    print("not implemented")
+    moduleloader = ModuleParser(baseclass=TcpProxyHandler, description='TCP Proxy Server')
 
+    moduleloader.add_plugin(LogModule)
+
+    moduleloader.add_module(
+        '--proxymanager',
+        dest='proxymanager',
+        default=SingleProxyManager,
+        help='ProxyManager to manage the Proxy',
+        baseclass=TcpProxyManager
+    )
+
+    try:
+        args = moduleloader.parse_args()
+    except ModuleError as error:
+        logging.error('Module error! Module %s is not subclass of %s', error.moduleclass, error.baseclass)
+        sys.exit(1)
+
+    if args.nosslverify and not args.sslpubkeypin:
+        logging.warning("SSL certificate verification disabled, but publickey pinning not used! You should consider to enable piblickey pinning.")
+
+    if args.sslforward and args.socksproxy:
+        logging.warning("TCPProxy does not support Socks5 with SSL!")
+
+    try:
+        proxymanager = TcpProxyManager.get_instance(args.proxymanager)
+        proxymanager.start(args)
+
+    except TcpProxyModuleError:
+        logging.error("Failed to load module %s", args.modules)
+    except TooManyForwarders:
+        logging.error("Too many forwarders!")
+    except CertificateMissingException as cert_error:
+        logging.error("Certificate %s is missing - ssl disabled", cert_error.certificate_path)
+    except KeyboardInterrupt:
+        sys.exit(1)
 
 
 def certificate_hash_values():
