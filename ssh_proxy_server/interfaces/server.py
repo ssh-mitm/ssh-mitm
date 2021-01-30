@@ -124,20 +124,20 @@ class ServerInterface(BaseServerInterface):
         return super().check_channel_subsystem_request(channel, name)
 
     def check_port_forward_request(self, address, port):
-        logging.debug(
+        logging.info(
             "check_port_forward_request: address=%s, port=%s",
             address, port
         )
         return True
 
     def cancel_port_forward_request(self, address, port):
-        logging.debug(
+        logging.info(
             "cancel_port_forward_request: address=%s, port=%s",
             address, port
         )
 
     def check_channel_direct_tcpip_request(self, chanid, origin, destination):
-        logging.debug(
+        logging.info(
             "channel_direct_tcpip_request: chanid=%s, origin=%s, destination=%s",
             chanid, origin, destination
         )
