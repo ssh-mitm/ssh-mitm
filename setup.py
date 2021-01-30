@@ -41,6 +41,7 @@ setup(
         'console_scripts': [
             'ssh-proxy-server = ssh_proxy_server.cli:main',
             'ssh-mitm = ssh_proxy_server.cli:main',
+            'tcp-proxy-server = tcp_proxy_server.cli:main'
         ],
         'ssh_interface': [
             'base = ssh_proxy_server.forwarders.ssh:SSHForwarder',
