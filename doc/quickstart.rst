@@ -5,14 +5,14 @@ Eager to get started? This page gives a good introduction in how to get started 
 
 First, make sure that:
 
-* SSH-MITM is :ref:`installed <Installation of SSH-MITM>`
+* SSH-MITM is :ref:`installed <Installation>`
 * SSH-MITM is up-to-date
 
 Let’s get started with some simple examples.
 
 
-Start the ssh-mitm proxy server
--------------------------------
+Start ssh-mitm proxy server
+---------------------------
 
 Starting an intercepting mitm-ssh server with password authentication is very simple.
 

@@ -11,19 +11,20 @@
 	{{ metatags }}
     <meta name="author" content="{{author}}">
     <link rel="shortcut icon" href="favicon.ico">
+    <!-- Google Font -->
+    <link href="https://fonts.googleapis.com/css?family=Poppins:300,400,500,600,700&display=swap" rel="stylesheet">
 
-    <link rel="stylesheet" href="https://stackpath.bootstrapcdn.com/bootstrap/4.3.1/css/bootstrap.min.css" integrity="sha384-ggOyR0iXCbMQv3Xipma34MD+dH/1fQ784/j6cY/iJTQUOhcWr7x9JvoRxT2MZw1T" crossorigin="anonymous">
     <script src="https://kit.fontawesome.com/df034fdb97.js" crossorigin="anonymous"></script>
 
     <!-- Theme CSS -->
 	<link id="theme-style" rel="stylesheet" href="_static/pygments.css">
-    <link id="theme-style" rel="stylesheet" href="_static/assets/css/theme.css">
+    <link id="theme-style" rel="stylesheet" href="https://ssh-mitm.at/assets/css/theme.css">
     <link id="theme-style" rel="stylesheet" href="_static/assets/css/sphinx.css">
 	<link id="theme-style" rel="stylesheet" href="_static/assets/css/toctree-icons.css">
 	{%- block extrahead %} {% endblock %}
 </head>
 
-<body class="docs-page">
+<body>
 	{% include "includes/header.html" %}
 	{% if pagename == 'index' %}
 		{% include "includes/index.html" %}
@@ -33,7 +34,9 @@
 			<div class="docs-content">
 				<div class="container">
 					<article class="docs-article" id="section-1">
-						{% block body %}{{ body }}{% endblock %}
+                        <div role="main" class="document" itemscope="itemscope" itemtype="http://schema.org/Article">
+                        {% block body %}{{ body }}{% endblock %}
+                        </div>
 					</article>
 
 					{% include "includes/footer.html" %}
