@@ -9,7 +9,7 @@ import sys
 from enhancements.modules import ModuleParser, ModuleError
 from enhancements.plugins import LogModule
 
-from tcp_proxy_server.network.handlers import TcpProxyHandler
+from tcp_proxy_server.handlers import TcpProxyHandler
 from tcp_proxy_server.exceptions import (
     TooManyForwarders,
     CertificateMissingException,

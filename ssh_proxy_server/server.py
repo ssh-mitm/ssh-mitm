@@ -6,7 +6,7 @@ import threading
 
 from paramiko import RSAKey
 
-from tcp_proxy_server.network.multisocket import (
+from tcp_proxy_server.multisocket import (
     create_server_sock,
     has_dual_stack,
     MultipleSocketsListener
