@@ -1,11 +1,15 @@
 <div id="docs-sidebar" class="docs-sidebar">
-    <div class="top-search-box d-lg-none p-3">
-        <form class="search-form">
-            <input type="text" placeholder="Search the docs..." name="search" class="form-control search-input">
-            <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
-        </form>
-    </div>
+
     <nav id="docs-nav" class="docs-nav navbar">
+
+        <div class="top-search-box d-none d-lg-flex {% if pagename == 'index' %}hiddensearch{% endif %}">
+            <form class="search-form" action="search.html" method="get">
+                <input type="text" placeholder="Search the docs..." name="q" class="form-control search-input">
+                <input type="hidden" name="check_keywords" value="yes">
+                <input type="hidden" name="area" value="default">
+                <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
+            </form>
+        </div>
 
     {% block menu %}
         {% set theTocTree = toctree(maxdepth=2)

@@ -1,18 +1,13 @@
 <footer class="footer">
-    <div class="container text-center py-5">
-        <!--/* This template is free as long as you keep the footer attribution link. If you'd like to use the template without the attribution link, you can buy the commercial license via our website: themes.3rdwavemedia.com Thank you for your support. :) */-->
+    <div class="container">
+        <hr>
+    </div>
+    <div class="container text-center pb-5">
         <ul class="social-list list-unstyled pt-4 mb-0">
             {% include 'includes/social.html' %}
-        </ul><!--//social-list-->
-
+        </ul>
         <small class="copyright">
-            {%- if hasdoc('copyright') %}
-                {% trans path=pathto('copyright'), copyright=copyright|e %}&#169; <a href="{{ path }}">Copyright</a> {{ copyright }}.{% endtrans %}
-            {%- else %}
-                <a href="https://github.com/ssh-mitm/ssh-mitm/graphs/contributors">
-                    {% trans copyright=copyright|e %}&#169; Copyright {{ copyright }}.{% endtrans %}
-                </a>
-            {%- endif %}
+            &#169; Copyright 2021, <a href="https://github.com/ssh-mitm/ssh-mitm/graphs/contributors">SSH-MITM Dev-Team</a>
         </small>
     </div>
 </footer>
