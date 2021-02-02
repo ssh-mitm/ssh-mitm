@@ -201,7 +201,7 @@ class socksocket(socket.socket):
         _, port = relay
         super(socksocket, self).connect((host, port))
         super(socksocket, self).settimeout(self._timeout)
-        self.proxy_sockname = ("0.0.0.0", 0)  # Unknown
+        self.proxy_sockname = ("0.0.0.0", 0)  # nosec
 
     def sendto(self, bytedata, *args, **kwargs):
         if self.type != socket.SOCK_DGRAM:
@@ -226,8 +226,7 @@ class socksocket(socket.socket):
     def send(self, bytedata, flags=0, **kwargs):
         if self.type == socket.SOCK_DGRAM:
             return self.sendto(bytedata, flags, self.proxy_peername, **kwargs)
-        else:
-            return super(socksocket, self).send(bytedata, flags, **kwargs)
+        return super(socksocket, self).send(bytedata, flags, **kwargs)
 
     def recvfrom(self, bufsize, flags=0):
         if self.type != socket.SOCK_DGRAM:
@@ -339,9 +338,8 @@ class socksocket(socket.socket):
                     raise SOCKS5AuthError(
                         "All offered SOCKS5 authentication methods were"
                         " rejected")
-                else:
-                    raise GeneralProxyError(
-                        "SOCKS5 proxy server sent invalid data")
+                raise GeneralProxyError(
+                    "SOCKS5 proxy server sent invalid data")
 
             # Now we can request the actual connection
             writer.write(b"\x05" + cmd + b"\x00")
@@ -577,7 +575,7 @@ class socksocket(socket.socket):
 
             # If the host address is INADDR_ANY or similar, reset the peer
             # address so that packets are received from any peer
-            if dest_addr == "0.0.0.0" and not dest_port:
+            if dest_addr == "0.0.0.0" and not dest_port:  # nosec
                 self.proxy_peername = None
             else:
                 self.proxy_peername = (dest_addr, dest_port)

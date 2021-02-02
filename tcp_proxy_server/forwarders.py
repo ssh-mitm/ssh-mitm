@@ -216,7 +216,8 @@ class Socks5Forwarder(TcpProxyForwarder):
         if not self.auth_required and Socks5Forwarder.AuthenticationType.NONE in authmethods:
             clientsock.sendall(Socks5Forwarder.SOCKSVERSION + Socks5Forwarder.AuthenticationType.NONE)
             return True
-        elif self.auth_required and Socks5Forwarder.AuthenticationType.PASSWORD in authmethods:
+
+        if self.auth_required and Socks5Forwarder.AuthenticationType.PASSWORD in authmethods:
             clientsock.sendall(Socks5Forwarder.SOCKSVERSION + Socks5Forwarder.AuthenticationType.PASSWORD)
         else:
             clientsock.sendall(Socks5Forwarder.SOCKSVERSION + b"\xFF")
