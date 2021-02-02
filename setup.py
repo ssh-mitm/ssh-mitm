@@ -13,7 +13,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ssh-mitm',
-    version='0.3.21',
+    version='0.3.22',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
     description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
@@ -41,6 +41,8 @@ setup(
         'console_scripts': [
             'ssh-proxy-server = ssh_proxy_server.cli:main',
             'ssh-mitm = ssh_proxy_server.cli:main',
+            'tcp-proxy-server = tcp_proxy_server.cli:main',
+            'tcp-cert-pin = tcp_proxy_server.cli:certificate_hash_values'
         ],
         'ssh_interface': [
             'base = ssh_proxy_server.forwarders.ssh:SSHForwarder',

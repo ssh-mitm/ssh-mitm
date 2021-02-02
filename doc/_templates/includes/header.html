@@ -1,46 +1,29 @@
-{% if social.githubfork_ribbon %}
-    <a class="github-fork-ribbon" href="{{social.githubrepo}}" data-ribbon="Fork me on GitHub" title="Fork me on GitHub">Fork me on GitHub</a>
-{% endif %}
-
 <header class="header fixed-top">
-    <div class="branding docs-branding">
-        <div class="container-fluid position-relative py-2">
-            <div class="docs-logo-wrapper">
+    <div class="branding">
+        <div class="container-fluid position-relative">
+            <nav class="navbar navbar-expand-lg" >
                 <button id="docs-sidebar-toggler" class="docs-sidebar-toggler docs-sidebar-visible mr-2 d-xl-none" type="button">
                     <span></span>
                     <span></span>
                     <span></span>
                 </button>
                 <div class="site-logo">
-                    <a class="navbar-brand" href="index.html">
-                        <img class="logo-icon mr-2" src="_static/assets/images/coderdocs-logo.svg" alt="logo">
-                        <span class="logo-text">{{project}} <span class="text-alt">Docs</span></span>
-                    </a>
-                </div>
-            </div><!--//docs-logo-wrapper-->
-            <div class="docs-top-utilities d-flex justify-content-end align-items-center">
-
-
-                <div class="top-search-box d-none d-lg-flex {% if pagename == 'index' %}hiddensearch{% endif %}">
-                    <form class="search-form" action="search.html" method="get">
-                        <input type="text" placeholder="Search the docs..." name="q" class="form-control search-input">
-                        <input type="hidden" name="check_keywords" value="yes">
-                        <input type="hidden" name="area" value="default">
-                        <button type="submit" class="btn search-btn" value="Search"><i class="fas fa-search"></i></button>
-                    </form>
+                    <a class="navbar-brand" href="/"><img class="logo-icon mr-2" src="https://ssh-mitm.at/assets/images/site-logo.svg" alt="logo"><span class="logo-text">SSH-MITM <span class="text-alt">Docs</span></span></a>
                 </div>
 
-                <ul class="social-list list-inline mx-md-3 mx-lg-5 mb-0 d-none d-lg-flex">
-                    {% include 'includes/social.html' %}
-                </ul><!--//social-list-->
-                <!--
-                <a href="" class="btn btn-primary d-none d-lg-flex">
-                    <i class="fab fa-github"></i>
-                    Fork me on Github
-                </a>
-                -->
+                <button class="navbar-toggler collapsed" type="button" data-toggle="collapse" data-target="#navigation" aria-controls="navigation" aria-expanded="false" aria-label="Toggle navigation">
+                    <span> </span>
+                    <span> </span>
+                    <span> </span>
+                </button>
 
-            </div><!--//docs-top-utilities-->
+                <div class="collapse navbar-collapse py-3 py-lg-0" id="navigation">
+                    <ul class="navbar-nav ml-lg-auto">
+                        {% include 'includes/header_links.html' %}
+                    </ul>
+                </div>
+            </nav>
+
         </div><!--//container-->
     </div><!--//branding-->
 </header><!--//header-->

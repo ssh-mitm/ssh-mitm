@@ -1,13 +1,13 @@
-Installation of SSH-MITM
-========================
+Installation
+============
 
 This part of the documentation covers the installation of SSH-MITM.
 The first step to using any software package is getting it properly installed.
 
-$ python -m pip install ssh-mitm
---------------------------------
+Install with pip
+----------------
 
-To install SSH-MITM, simply run this simple command in your terminal of choice:
+To install SSH-MITM, simply run this command in your terminal of choice:
 
 .. code-block:: bash
     :linenos:
@@ -15,8 +15,8 @@ To install SSH-MITM, simply run this simple command in your terminal of choice:
     $ python -m pip install ssh-mitm
 
 
-Get the Source Code
--------------------
+Install from Source Code
+------------------------
 
 SSH-MITM is actively developed on GitHub, where the code is always available.
 
