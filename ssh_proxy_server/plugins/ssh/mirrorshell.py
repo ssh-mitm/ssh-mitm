@@ -46,13 +46,13 @@ class SSHMirrorForwarder(SSHForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--ssh-mirrorshell-net',
             dest='ssh_mirrorshell_net',
             default='127.0.0.1',
             help='local address/interface where injector sessions are served'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--ssh-mirrorshell-key',
             dest='ssh_mirrorshell_key'
         )

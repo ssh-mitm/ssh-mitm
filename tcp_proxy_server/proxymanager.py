@@ -2,7 +2,7 @@ import logging
 import sys
 import os
 
-from enhancements.modules import Module
+from enhancements.modules import BaseModule as BaseModule
 
 from tcp_proxy_server.chains import TcpProxyForwardChain, TcpProxyChain
 from tcp_proxy_server.exceptions import TcpProxyModuleError, CertificateMissingException
@@ -13,7 +13,7 @@ from tcp_proxy_server.forwarders import (
 from tcp_proxy_server.proxy import TcpProxy
 
 
-class TcpProxyManager(Module):
+class TcpProxyManager(BaseModule):
 
     DEFAULTFORWARDER = SimpleForwarder
 
@@ -28,56 +28,56 @@ class TcpProxyManager(Module):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '-li', '--listenip',
             dest='listen_ip',
             default='0.0.0.0',  # nosec
             help='IP address to listen for incoming data'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--ssl-certificate',
             dest='sslcertificate',
             help='use SSL with certificate'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--ssl-forward',
             dest='sslforward',
             default=False,
             action='store_true',
             help='connect to the forwarded server with ssl'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--ssl-pubkey-pin',
             dest='sslpubkeypin',
             help='set public key pin of remote host (SHA256)'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--no-ssl-verify',
             dest='nosslverify',
             default=False,
             action='store_true',
             help='disable ssl verification'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--socks-proxy',
             dest='socksproxy',
             default=None,
             help="connect to socks proxy"
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--socks-proxy-port',
             dest='socksproxyport',
             default=1080,
             type=int,
             help="socks proxy port (default 1080)"
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--socks-proxy-username',
             dest='socksproxyusername',
             default=None,
             help="username for socks proxy"
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--socks-proxy-password',
             dest='socksproxypassword',
             default=None,
@@ -141,7 +141,7 @@ class SingleProxyManager(TcpProxyManager):
     @classmethod
     def parser_arguments(cls):
         super().parser_arguments()
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '-lp',
             '--listenport',
             dest='listen_port',

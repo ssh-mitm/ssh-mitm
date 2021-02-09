@@ -16,7 +16,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
         def lstat(self, path):
             self.session.sftp_client_ready.wait()
-            args, _ = SFTPProxyReplaceHandler.PARSER.parse_known_args()
+            args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
             stat_remote = self.session.sftp_client.lstat(path)
             stat_replace = SFTPAttributes.from_stat(os.stat(args.sftp_replacement_file))
             stat_remote.st_size = stat_replace.st_size
@@ -29,7 +29,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
         def close(self):
             if not self.plugin.data_handled:
-                args, _ = SFTPProxyReplaceHandler.PARSER.parse_known_args()
+                args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
                 with open(args.sftp_replacement_file, "rb") as r:
                     self.writefile.write(r.read())
             super().close()
@@ -40,7 +40,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--sftp-replace',
             dest='sftp_replacement_file',
             required=True,

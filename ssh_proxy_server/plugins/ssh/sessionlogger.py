@@ -13,7 +13,7 @@ class SSHLogForwarder(SSHForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--ssh-log-dir',
             dest='ssh_log_dir',
             required=True,

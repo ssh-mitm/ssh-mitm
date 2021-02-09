@@ -8,7 +8,7 @@ from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin
 class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--sftp-storage',
             dest='sftp_storage_dir',
             required=True,

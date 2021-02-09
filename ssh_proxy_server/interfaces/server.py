@@ -1,10 +1,10 @@
 import logging
 
 import paramiko
-from enhancements.modules import Module
+from enhancements.modules import BaseModule
 
 
-class BaseServerInterface(paramiko.ServerInterface, Module):
+class BaseServerInterface(paramiko.ServerInterface, BaseModule):
 
     def __init__(self, session):
         super().__init__()
@@ -15,25 +15,25 @@ class ServerInterface(BaseServerInterface):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--disable-ssh',
             dest='disable_ssh',
             action='store_true',
             help='disable ssh'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--disable-scp',
             dest='disable_scp',
             action='store_true',
             help='disable scp'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--disable-password-auth',
             dest='disable_password_auth',
             action='store_true',
             help='disable password authentication'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--disable-pubkey-auth',
             dest='disable_pubkey_auth',
             action='store_true',

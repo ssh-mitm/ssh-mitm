@@ -12,7 +12,7 @@ class SCPStorageForwarder(SCPForwarder):
     """
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--scp-storage',
             dest='scp_storage_dir',
             required=True,

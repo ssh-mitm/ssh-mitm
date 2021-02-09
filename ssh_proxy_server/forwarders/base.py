@@ -1,9 +1,9 @@
 import logging
 
-from enhancements.modules import Module
+from enhancements.modules import BaseModule
 
 
-class BaseForwarder(Module):
+class BaseForwarder(BaseModule):
     """
     base class for all forwarders.
     """

@@ -5,10 +5,10 @@ from typing import (
     Optional
 )
 
-from enhancements.modules import Module
+from enhancements.modules import BaseModule
 
 
-class TcpProxyHandler(Module):
+class TcpProxyHandler(BaseModule):
 
     def process(self, isclient: bool, data: Optional[bytes]) -> Optional[bytes]:
         if not data:
@@ -39,7 +39,7 @@ class TcpProxySaveHandler(TcpProxyHandler):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--file',
             dest='filepath',
             help='filepath to store data'
@@ -55,7 +55,7 @@ class TcpProxyHexDump(TcpProxyHandler):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--hexwidth',
             dest='hexwidth',
             type=int,
@@ -86,14 +86,14 @@ class TcpProxyDropHandler(TcpProxyHandler):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--dropclient',
             dest='dropclient',
             default=False,
             action='store_true',
             help='drop client data'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--dropserver',
             dest='dropserver',
             default=False,
@@ -112,7 +112,7 @@ class TcpProxyWaitHandler(TcpProxyHandler):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--wait',
             dest='waitseconds',
             type=int,
