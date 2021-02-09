@@ -1,9 +1,9 @@
 import logging
 import paramiko
-from enhancements.modules import Module
+from enhancements.modules import BaseModule
 
 
-class SFTPHandlerBasePlugin(Module):
+class SFTPHandlerBasePlugin(BaseModule):
 
     def __init__(self, sftp, filename):
         super().__init__()

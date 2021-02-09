@@ -2,12 +2,12 @@ import logging
 import paramiko
 import os
 
-from enhancements.modules import Module
+from enhancements.modules import BaseModule
 
 from ssh_proxy_server.forwarders.sftp import SFTPBaseHandle
 
 
-class BaseSFTPServerInterface(paramiko.SFTPServerInterface, Module):
+class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):
 
     def __init__(self, authenticationinterface):
         super().__init__(authenticationinterface)

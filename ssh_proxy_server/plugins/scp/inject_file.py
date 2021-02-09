@@ -21,7 +21,7 @@ class SCPInjectFile(SCPForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--scp-inject',
             dest='scp_inject_file',
             required=True,

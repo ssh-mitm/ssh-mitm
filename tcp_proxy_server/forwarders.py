@@ -3,7 +3,7 @@ import sys
 from enum import Enum
 import socket
 
-from enhancements.modules import Module
+from enhancements.modules import BaseModule
 from tcp_proxy_server.exceptions import Socks5Error
 
 
@@ -15,7 +15,7 @@ class TcpProxyForwardAddress(object):
         self.socket = socket
 
 
-class TcpProxyForwarder(Module):
+class TcpProxyForwarder(BaseModule):
 
     def __init__(self, server):
         super().__init__()
@@ -39,14 +39,14 @@ class SimpleForwarder(TcpProxyForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '-ti',
             '--targetip',
             dest='target_ip',
             required=True,
             help='remote target IP'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '-tp',
             '--targetport',
             dest='target_port',
@@ -68,14 +68,14 @@ class SimpleOptionalForwarder(SimpleForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '-ti',
             '--targetip',
             dest='target_ip',
             default=None,
             help='remote target IP'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '-tp',
             '--targetport',
             dest='target_port',
@@ -99,14 +99,14 @@ class TProxyForwarder(TcpProxyForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '-ti',
             '--targetip',
             dest='target_ip',
             default=None,
             help='remote target IP'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '-tp',
             '--targetport',
             dest='target_port',
@@ -183,14 +183,14 @@ class Socks5Forwarder(TcpProxyForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--username',
             dest='username',
             default=None,
             required='--password' in sys.argv,
             help='username to authenticate'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--password',
             dest='password',
             default=None,

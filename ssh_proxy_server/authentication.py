@@ -1,6 +1,6 @@
 import logging
 
-from enhancements.modules import Module
+from enhancements.modules import BaseModule
 
 import paramiko
 from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
@@ -8,41 +8,41 @@ from ssh_proxy_server.clients.sftp import SFTPClient
 from ssh_proxy_server.exceptions import MissingHostException
 
 
-class Authenticator(Module):
+class Authenticator(BaseModule):
 
     REQUEST_AGENT = False
     REQUEST_AGENT_BREAKIN = False
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--remote-host',
             dest='remote_host',
             help='remote host to connect to (default 127.0.0.1)'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--remote-port',
             dest='remote_port',
             type=int,
             help='remote port to connect to (default 22)'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--auth-username',
             dest='auth_username',
             help='username for remote authentication'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--auth-password',
             dest='auth_password',
             help='password for remote authentication'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--hide-credentials',
             dest='auth_hide_credentials',
             action='store_true',
             help='do not log credentials (usefull for presentations)'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--forward-agent',
             dest='forward_agent',
             action='store_true',

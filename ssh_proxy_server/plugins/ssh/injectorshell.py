@@ -19,19 +19,19 @@ class SSHInjectableForwarder(SSHForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--ssh-injector-net',
             dest='ssh_injector_net',
             default='127.0.0.1',
             help='local address/interface where injector sessions are served'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--ssh-injector-enable-mirror',
             dest='ssh_injector_enable_mirror',
             action="store_true",
             help='disables host session mirroring for the injector shell'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--ssh-injectshell-key',
             dest='ssh_injectshell_key'
         )

@@ -7,14 +7,14 @@ import socket
 import base64
 import hashlib
 
-from enhancements.modules import Module
+from enhancements.modules import BaseModule
 
 from tcp_proxy_server import socks
 from tcp_proxy_server.forwarders import TcpProxyForwardAddress
 from tcp_proxy_server.exceptions import TcpProxyPubKeyPinError
 
 
-class TcpProxyChain(Module):
+class TcpProxyChain(BaseModule):
 
     def __init__(self, proxyserver, clientsock, clientaddr):
         super().__init__()
@@ -67,14 +67,14 @@ class TcpProxyForwardChain(TcpProxyChain):
 
     @classmethod
     def parser_arguments(cls):
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--close-after-send',
             dest='closeaftersend',
             action='store_true',
             default=False,
             help='close connection after sending data'
         )
-        cls.PARSER.add_argument(
+        cls.parser().add_argument(
             '--udp',
             dest='udp',
             action='store_true',
