@@ -28,7 +28,7 @@ def main():
 
     moduleloader.add_module(
         '--proxymanager',
-        dest='proxymanager',
+        dest='tcp_proxymanager',
         default=SingleProxyManager,
         help='ProxyManager to manage the Proxy',
         baseclass=TcpProxyManager
@@ -47,7 +47,7 @@ def main():
         logging.warning("TCPProxy does not support Socks5 with SSL!")
 
     try:
-        proxymanager = TcpProxyManager.get_instance(args.proxymanager)
+        proxymanager = TcpProxyManager.get_instance(args.tcp_proxymanager)
         proxymanager.start(args)
 
     except TcpProxyModuleError:

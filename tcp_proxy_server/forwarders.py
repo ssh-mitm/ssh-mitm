@@ -31,6 +31,7 @@ class TcpProxyForwarder(BaseModule):
 
 
 class SimpleForwarder(TcpProxyForwarder):
+    """forward data to a single remote server"""
 
     def __init__(self, server):
         super().__init__(server)
@@ -60,6 +61,9 @@ class SimpleForwarder(TcpProxyForwarder):
 
 
 class SimpleOptionalForwarder(SimpleForwarder):
+    """forwarder wich does not require remote address to be set with command line args
+    This forwarder should not be used as command line argument!
+    """
 
     def __init__(self, server):
         super().__init__(server)
@@ -90,6 +94,7 @@ class SimpleOptionalForwarder(SimpleForwarder):
 
 
 class TProxyForwarder(TcpProxyForwarder):
+    """support for TProxy from Linux Kernel"""
 
     def __init__(self, server):
         super().__init__(server)
@@ -126,6 +131,7 @@ class TProxyForwarder(TcpProxyForwarder):
 
 
 class Socks5Forwarder(TcpProxyForwarder):
+    """forwards the data to a socks5 server"""
 
     class Socks5Types(Enum):
 
@@ -317,6 +323,7 @@ class Socks5Forwarder(TcpProxyForwarder):
 
 
 class EchoForwarder(TcpProxyForwarder):
+    """send data back to the client (echo server)"""
 
     def get_address(self, clientsock, clientaddr):
         return TcpProxyForwardAddress(socket=clientsock)

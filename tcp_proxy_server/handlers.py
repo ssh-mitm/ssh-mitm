@@ -36,6 +36,7 @@ class TcpProxyHandler(BaseModule):
 
 
 class TcpProxySaveHandler(TcpProxyHandler):
+    """save raw data to a file"""
 
     @classmethod
     def parser_arguments(cls) -> None:
@@ -52,6 +53,7 @@ class TcpProxySaveHandler(TcpProxyHandler):
 
 
 class TcpProxyHexDump(TcpProxyHandler):
+    """print hex dump of transmitted data"""
 
     @classmethod
     def parser_arguments(cls) -> None:
@@ -83,6 +85,7 @@ class TcpProxyHexDump(TcpProxyHandler):
 
 
 class TcpProxyDropHandler(TcpProxyHandler):
+    """drop transferred data"""
 
     @classmethod
     def parser_arguments(cls) -> None:
@@ -109,6 +112,7 @@ class TcpProxyDropHandler(TcpProxyHandler):
 
 
 class TcpProxyWaitHandler(TcpProxyHandler):
+    """wait before sending data to remote"""
 
     @classmethod
     def parser_arguments(cls) -> None:
