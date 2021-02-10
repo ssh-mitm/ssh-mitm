@@ -13,7 +13,7 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 setup(
     name='ssh-mitm',
-    version='0.3.23',
+    version='0.3.24',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
     description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
@@ -74,7 +74,7 @@ setup(
 
     },
     install_requires=[
-        'enhancements>=0.2.0',
+        'enhancements>=0.2.1',
         'paramiko',
         'pytz'
     ]
