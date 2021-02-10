@@ -8,8 +8,7 @@ from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
 
 
 class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
-    """
-    Replaces a SFTP transmitted File during transit
+    """Replaces a SFTP transmitted File during transit
     """
 
     class SFTPInterface(SFTPProxyServerInterface):

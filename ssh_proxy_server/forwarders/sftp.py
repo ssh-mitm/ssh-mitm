@@ -26,6 +26,8 @@ class SFTPHandlerBasePlugin(BaseModule):
 
 
 class SFTPHandlerPlugin(SFTPHandlerBasePlugin):
+    """transfer files from/to remote sftp server
+    """
     pass
 
 

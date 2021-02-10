@@ -121,6 +121,8 @@ class SCPBaseForwarder(BaseForwarder):
 
 
 class SCPForwarder(SCPBaseForwarder):
+    """forwards a file from or to the remote server
+    """
 
     def __init__(self, session):
         super().__init__(session)

@@ -6,6 +6,8 @@ from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin
 
 
 class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
+    """Stores transferred files to the file system
+    """
     @classmethod
     def parser_arguments(cls):
         cls.parser().add_argument(

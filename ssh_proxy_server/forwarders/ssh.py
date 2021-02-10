@@ -9,6 +9,8 @@ class SSHBaseForwarder(BaseForwarder):
 
 
 class SSHForwarder(SSHBaseForwarder):
+    """forwards the terminal session to the remote server without modification
+    """
 
     def __init__(self, session):
         super(SSHForwarder, self).__init__(session)

@@ -6,9 +6,7 @@ from ssh_proxy_server.forwarders.scp import SCPForwarder
 
 
 class SCPStorageForwarder(SCPForwarder):
-    """
-    Kapselt das Weiterleiten bzw. Abfangen eines SCP Kommandos und der Dateien
-    die damit übertragen werden.
+    """Stores transferred files to the file system
     """
     @classmethod
     def parser_arguments(cls):

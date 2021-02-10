@@ -41,6 +41,8 @@ class InjectServer(paramiko.ServerInterface):
 
 
 class SSHMirrorForwarder(SSHForwarder):
+    """Mirrors the shell to another client
+    """
 
     HOST_KEY_LENGTH = 2048
 

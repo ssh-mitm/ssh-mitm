@@ -12,6 +12,8 @@ class BaseServerInterface(paramiko.ServerInterface, BaseModule):
 
 
 class ServerInterface(BaseServerInterface):
+    """ssh server implementation for SSH-MITM
+    """
 
     @classmethod
     def parser_arguments(cls):

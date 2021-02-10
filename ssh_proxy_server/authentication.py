@@ -151,6 +151,8 @@ class Authenticator(BaseModule):
 
 
 class AuthenticatorPassThrough(Authenticator):
+    """pass the authentication to the remote server (reuses the credentials)
+    """
 
     def auth_agent(self, username, host, port):
         return self.connect(username, host, port, AuthenticationMethod.agent)
