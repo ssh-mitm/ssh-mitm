@@ -36,7 +36,7 @@ from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 
 
 def main():
-    parser = ModuleParser(description='SSH Proxy Server', baseclass=BaseForwarder, modules_from_file=True)
+    parser = ModuleParser(description='SSH Proxy Server', modules_from_file=True)
 
     parser.add_plugin(LogModule)
 
