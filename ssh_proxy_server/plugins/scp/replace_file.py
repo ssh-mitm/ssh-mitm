@@ -3,6 +3,8 @@ from ssh_proxy_server.forwarders.scp import SCPForwarder
 
 
 class SCPReplaceFile(SCPForwarder):
+    """replace the file with another file
+    """
 
     @classmethod
     def parser_arguments(cls):

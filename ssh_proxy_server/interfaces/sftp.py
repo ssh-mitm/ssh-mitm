@@ -15,6 +15,8 @@ class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):
 
 
 class SFTPProxyServerInterface(BaseSFTPServerInterface):
+    """sftp subsystem implementation for SSH-MITM
+    """
 
     def chattr(self, path, attr):
         self.session.sftp_client_ready.wait()

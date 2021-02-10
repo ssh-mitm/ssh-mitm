@@ -10,6 +10,8 @@ from ssh_proxy_server.forwarders.ssh import SSHForwarder
 
 
 class SSHLogForwarder(SSHForwarder):
+    """ log terminal sessions to a file (scriptreplay compatible)
+    """
 
     @classmethod
     def parser_arguments(cls):

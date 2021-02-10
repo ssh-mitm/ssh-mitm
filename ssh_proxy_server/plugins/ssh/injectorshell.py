@@ -12,6 +12,8 @@ from ssh_proxy_server.plugins.ssh.mirrorshell import InjectServer
 
 
 class SSHInjectableForwarder(SSHForwarder):
+    """Mirrors the shell to another client, but try to hide the second shell
+    """
     # TODO: Add script injection support
     # TODO: complete stealth
 

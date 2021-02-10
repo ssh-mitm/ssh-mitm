@@ -5,8 +5,7 @@ from ssh_proxy_server.forwarders.scp import SCPForwarder
 
 
 class SCPInjectFile(SCPForwarder):
-    '''
-    Injecting an additional file during SCP transmission
+    '''Injecting an additional file during SCP transmission (CVE-2019-6111, CVE-2019-6110)
 
     This feature is based on a OpenSSH Client Vulnerability 'SSHtranger Things'
     that has been patched with version > OpenSSH 8.0p1
