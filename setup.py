@@ -21,7 +21,7 @@ def get_entry_points():
 
 setup(
     name='ssh-mitm',
-    version='0.3.24',
+    version='0.3.25',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
     description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
