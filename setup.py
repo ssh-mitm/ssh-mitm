@@ -11,9 +11,17 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = re.sub(r"## Give a Star.*?Thanks!", "", f.read(), 0, re.DOTALL)
 
 
+def get_entry_points():
+    from ssh_proxy_server.__entrypoints__ import entry_points as ssh_entry_points
+    from tcp_proxy_server.__entrypoints__ import entry_points as tcp_entry_points
+    return {
+        **ssh_entry_points,
+        **tcp_entry_points
+    }
+
 setup(
     name='ssh-mitm',
-    version='0.3.24',
+    version='0.3.25',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
     description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
@@ -38,40 +46,15 @@ setup(
         "Development Status :: 4 - Beta"
     ],
     entry_points={
-        'console_scripts': [
-            'ssh-proxy-server = ssh_proxy_server.cli:main',
-            'ssh-mitm = ssh_proxy_server.cli:main',
-            'tcp-proxy-server = tcp_proxy_server.cli:main',
-            'tcp-cert-pin = tcp_proxy_server.cli:certificate_hash_values'
-        ],
-        'ssh_interface': [
-            'base = ssh_proxy_server.forwarders.ssh:SSHForwarder',
-            'injectorshell = ssh_proxy_server.plugins.ssh.injectorshell:SSHInjectableForwarder',
-            'mirrorshell = ssh_proxy_server.plugins.ssh.mirrorshell:SSHMirrorForwarder',
-            'noshell = ssh_proxy_server.plugins.ssh.noshell:NoShellForwarder',
-            'sessionlogger = ssh_proxy_server.plugins.ssh.sessionlogger:SSHLogForwarder'
-        ],
-        'scp_interface': [
-            'base = ssh_proxy_server.forwarders.scp:SCPForwarder',
-            'inject_file = ssh_proxy_server.plugins.scp.inject_file:SCPInjectFile',
-            'replace_file = ssh_proxy_server.plugins.scp.replace_file:SCPReplaceFile',
-            'store_file = ssh_proxy_server.plugins.scp.store_file:SCPStorageForwarder'
-        ],
-        'sftp_interface': [
-            'base = ssh_proxy_server.interfaces.sftp:SFTPProxyServerInterface'
-        ],
-        'sftp_handler': [
-            'base = ssh_proxy_server.forwarders.sftp:SFTPHandlerPlugin',
-            'replace_file = ssh_proxy_server.plugins.sftp.replace_file:SFTPProxyReplaceHandler',
-            'store_file = ssh_proxy_server.plugins.sftp.store_file:SFTPHandlerStoragePlugin'
-        ],
-        'auth_interface': [
-            'base = ssh_proxy_server.interfaces.server:ServerInterface'
-        ],
-        'authenticator': [
-            'passthrough = ssh_proxy_server.authentication:AuthenticatorPassThrough'
-        ]
-
+        **{
+            'console_scripts': [
+                'ssh-proxy-server = ssh_proxy_server.cli:main',
+                'ssh-mitm = ssh_proxy_server.cli:main',
+                'tcp-proxy-server = tcp_proxy_server.cli:main',
+                'tcp-cert-pin = tcp_proxy_server.cli:certificate_hash_values'
+            ]
+        },
+        **get_entry_points()
     },
     install_requires=[
         'enhancements>=0.2.1',

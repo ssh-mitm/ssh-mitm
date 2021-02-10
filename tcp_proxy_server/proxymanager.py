@@ -20,7 +20,6 @@ class TcpProxyManager(BaseModule):
     def __init__(self):
         super().__init__()
         logging.info("Using proxy manager: %s", self.__class__.__name__)
-        logging.error(self.args)
         forwarder = self.args.forwarder
         if not forwarder:
             raise TcpProxyModuleError("Forwarder Module error")
@@ -133,6 +132,7 @@ class TcpProxyManager(BaseModule):
 
 
 class SingleProxyManager(TcpProxyManager):
+    """start a single proxy instance"""
 
     def __init__(self):
         super().__init__()

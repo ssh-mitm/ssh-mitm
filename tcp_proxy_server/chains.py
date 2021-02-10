@@ -64,6 +64,7 @@ class TcpProxyChain(BaseModule):
 
 
 class TcpProxyForwardChain(TcpProxyChain):
+    """creates socket and handle modules for transferred data"""
 
     @classmethod
     def parser_arguments(cls):
