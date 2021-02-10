@@ -62,14 +62,14 @@ def main():
         '--ssh-interface',
         dest='ssh_interface',
         default=SSHMirrorForwarder,
-        help='ProxyManager to manage the Proxy',
+        help='interface to handle terminal sessions',
         baseclass=SSHBaseForwarder
     )
     parser.add_module(
         '--scp-interface',
         dest='scp_interface',
         default=SCPForwarder,
-        help='ProxyManager to manage the Proxy',
+        help='interface to handle scp file transfers',
         baseclass=SCPBaseForwarder
     )
     parser.add_module(
