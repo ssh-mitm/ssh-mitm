@@ -80,7 +80,10 @@ class SSHProxyServer:
             except ValueError as err:
                 logging.error(str(err))
                 raise KeyGenerationError()
-            logging.warning("created temporary private key!")
+            message = "created temporary {} key".format(key_algorithm_class.__name__)
+            if key_algorithm_bits:
+                message += " with {} bit length".format(key_algorithm_bits)
+            logging.warning(message)
         else:
             if not os.path.isfile(self.key_file):
                 raise FileNotFoundError("host key '{}' file does not exist".format(self.key_file))
