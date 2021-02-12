@@ -47,13 +47,19 @@ class ServerInterface(BaseServerInterface):
             logging.warning('scp command not allowed!')
             return False
         if command.decode('utf8').startswith('scp'):
+            logging.debug("got scp command: %s", command.decode('utf8'))
             self.session.scp = True
             self.session.scp_command = command
             self.session.scp_channel = channel
             return True
 
         if not self.args.disable_ssh:
-            self.session.sshCommand = command
+            # we can use the scp forwarder for command executions
+            logging.info("got ssh command: %s", command.decode('utf8'))
+            self.session.scp = True
+            self.session.scp_command = command
+            self.session.scp_channel = channel
+            self.session.proxyserver.scp_interface(self.session).forward()
             return True
         logging.warning('ssh command not allowed!')
         return False
