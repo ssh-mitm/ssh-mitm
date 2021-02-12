@@ -70,7 +70,7 @@ def main():
         dest='host_key_length',
         default=2048,
         type=int,
-        help='host key length in bits (default 2048)'
+        help='host key length for dss and rsa (default 2048)'
     )
     parser.add_module(
         '--ssh-interface',
