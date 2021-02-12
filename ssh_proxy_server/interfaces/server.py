@@ -3,6 +3,8 @@ import logging
 import paramiko
 from enhancements.modules import BaseModule
 
+from ssh_proxy_server.forwarders.tunnel import ForwardClient, ForwardServer, Handler, Cleaner
+
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
 
@@ -14,6 +16,12 @@ class BaseServerInterface(paramiko.ServerInterface, BaseModule):
 class ServerInterface(BaseServerInterface):
     """ssh server implementation for SSH-MITM
     """
+
+    def __init__(self, session):
+        super().__init__(session)
+        self.forwards = {}
+        self.cleaner = Cleaner()
+        self.cleaner.start()
 
     @classmethod
     def parser_arguments(cls):
@@ -83,7 +91,7 @@ class ServerInterface(BaseServerInterface):
         )
         if not self.args.disable_ssh:
             self.session.ssh = True
-            self.session.sshPtyKArgs = {
+            self.session.ssh_pty_kwargs = {
                 'term': term,
                 'width': width,
                 'height': height,
@@ -132,23 +140,76 @@ class ServerInterface(BaseServerInterface):
         return super().check_channel_subsystem_request(channel, name)
 
     def check_port_forward_request(self, address, port):
+        """
+        Note that the if the client requested the port, we must handle it or
+        return false.
+        Only if it requested 0 as port we can open a random port (actually the
+        OS will tell us which port).
+        If it can't be opened, we just return false.
+        """
+        try:
+            f = ForwardServer(
+                (address, port), Handler, self.session.transport
+            )
+            f.start()
+        except Exception:
+            # "port can't be opened" included here
+            f.shutdown()
+            logging.exception("Could not start forward.")
+            return False
+
+        ourport = f.socket.getsockname()[1]
+
+        # Should never happen, but check it the same
+        if (port != 0) and (ourport != port):
+            f.shutdown()
+            logging.warning(
+                "Port mismatch: "
+            )
+            return False
         logging.info(
-            "check_port_forward_request: address=%s, port=%s",
-            address, port
+            "Forward for opened successfully."
         )
-        return True
+
+        self.forwards[(address, ourport)] = f
+
+        # Paramiko requires in the cases the client doesn't need it, too
+        return ourport
 
     def cancel_port_forward_request(self, address, port):
         logging.info(
             "cancel_port_forward_request: address=%s, port=%s",
             address, port
         )
+        username = self.session.transport.get_username()
+        logging.info(
+            "Cancel port forward request on %s:%i by %s.", address,
+            port, username, extra={'username': username}
+        )
+
+        try:
+            self.forwards[(address, port)].shutdown()
+            del self.forwards[(address, port)]
+        except Exception:
+            logging.exception("Could not stop forward.")
 
     def check_channel_direct_tcpip_request(self, chanid, origin, destination):
         logging.info(
             "channel_direct_tcpip_request: chanid=%s, origin=%s, destination=%s",
             chanid, origin, destination
         )
+        username = self.session.transport.get_username()
+        ex = {'username': username}
+
+        logging.debug("Setting direct connection from %s to %s for %s.", origin, destination, username, extra=ex)
+
+        try:
+            f = ForwardClient(destination, self.session.transport, chanid, logging, self.cleaner)
+            f.start()
+        except Exception:
+            logging.exception("Could not setup forward from %s to %s.", origin, destination, extra=ex)
+            return paramiko.OPEN_FAILED_CONNECT_FAILED
+
         return paramiko.OPEN_SUCCEEDED
 
     def check_channel_window_change_request(self, channel, width, height, pixelwidth, pixelheight):

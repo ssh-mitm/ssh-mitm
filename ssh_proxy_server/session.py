@@ -29,6 +29,7 @@ class Session:
         self.ssh = False
         self.ssh_channel = None
         self.ssh_client = None
+        self.ssh_pty_kwargs = None
 
         self.scp = False
         self.scp_channel = None

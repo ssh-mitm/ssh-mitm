@@ -23,6 +23,9 @@ entry_points = {
     'BaseServerInterface': [
         'base = ssh_proxy_server.interfaces.server:ServerInterface'
     ],
+    'BaseSSHProxyManager': [
+        'base = ssh_proxy_server.interfaces.server:SSHProxyManager'
+    ],
     'Authenticator': [
         'passthrough = ssh_proxy_server.authentication:AuthenticatorPassThrough'
     ]

@@ -7,7 +7,7 @@ import sys
 
 from paramiko import DSSKey, RSAKey, ECDSAKey
 
-from tcp_proxy_server.multisocket import (
+from ssh_proxy_server.multisocket import (
     create_server_sock,
     has_dual_stack,
     MultipleSocketsListener
@@ -32,8 +32,11 @@ class SSHProxyServer:
         sftp_handler=None,
         authentication_interface=None,
         authenticator=None,
-        transparent=False
+        transparent=False,
+        args=None
     ):
+        self.args = args
+
         self._threads = []
         self._hostkey = None
 

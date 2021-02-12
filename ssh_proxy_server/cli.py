@@ -14,7 +14,6 @@ from ssh_proxy_server.interfaces import (
     BaseServerInterface,
     ServerInterface
 )
-from ssh_proxy_server.forwarders.base import BaseForwarder
 from ssh_proxy_server.forwarders.scp import (
     SCPBaseForwarder,
     SCPForwarder
@@ -164,7 +163,8 @@ def main():
         sftp_handler=args.sftp_handler,
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator,
-        transparent=args.transparent
+        transparent=args.transparent,
+        args=args
     )
     if args.banner_name is not None:
         Transport._CLIENT_ID = args.banner_name

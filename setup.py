@@ -13,15 +13,14 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 def get_entry_points():
     from ssh_proxy_server.__entrypoints__ import entry_points as ssh_entry_points
-    from tcp_proxy_server.__entrypoints__ import entry_points as tcp_entry_points
     return {
-        **ssh_entry_points,
-        **tcp_entry_points
+        **ssh_entry_points
     }
+
 
 setup(
     name='ssh-mitm',
-    version='0.3.26',
+    version='0.4.0',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
     description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
@@ -49,9 +48,7 @@ setup(
         **{
             'console_scripts': [
                 'ssh-proxy-server = ssh_proxy_server.cli:main',
-                'ssh-mitm = ssh_proxy_server.cli:main',
-                'tcp-proxy-server = tcp_proxy_server.cli:main',
-                'tcp-cert-pin = tcp_proxy_server.cli:certificate_hash_values'
+                'ssh-mitm = ssh_proxy_server.cli:main'
             ]
         },
         **get_entry_points()
