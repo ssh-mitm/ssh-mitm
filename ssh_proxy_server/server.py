@@ -74,7 +74,6 @@ class SSHProxyServer:
         else:
             raise ValueError("host key algorithm '{}' not supported!".format(self.key_algorithm))
 
-
         if not self.key_file:
             try:
                 self._hostkey = key_algorithm_class.generate(bits=key_algorithm_bits)
