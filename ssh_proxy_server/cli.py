@@ -34,9 +34,11 @@ from ssh_proxy_server.interfaces.sftp import (
 
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 
+from tcp_proxy_server.handlers import TcpProxyHandler
+
 
 def main():
-    parser = ModuleParser(description='SSH Proxy Server', modules_from_file=True)
+    parser = ModuleParser(description='SSH Proxy Server', modules_from_file=True, baseclass=TcpProxyHandler)
 
     parser.add_plugin(LogModule)
 
@@ -164,7 +166,8 @@ def main():
         sftp_handler=args.sftp_handler,
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator,
-        transparent=args.transparent
+        transparent=args.transparent,
+        args=args
     )
     if args.banner_name is not None:
         Transport._CLIENT_ID = args.banner_name
