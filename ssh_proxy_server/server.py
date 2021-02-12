@@ -3,8 +3,9 @@ import os
 import select
 import time
 import threading
+import sys
 
-from paramiko import RSAKey
+from paramiko import DSSKey, RSAKey, ECDSAKey
 
 from tcp_proxy_server.multisocket import (
     create_server_sock,
@@ -15,14 +16,19 @@ from tcp_proxy_server.multisocket import (
 from ssh_proxy_server.session import Session
 
 
+class KeyGenerationError(Exception):
+    pass
+
+
 class SSHProxyServer:
-    HOST_KEY_LENGTH = 2048
     SELECT_TIMEOUT = 0.5
 
     def __init__(
         self,
         listen_port,
         key_file=None,
+        key_algorithm='rsa',
+        key_length=2048,
         ssh_interface=None,
         scp_interface=None,
         sftp_interface=None,
@@ -40,6 +46,8 @@ class SSHProxyServer:
         self.running = False
 
         self.key_file = key_file
+        self.key_algorithm = key_algorithm
+        self.key_length = key_length
 
         self.ssh_interface = ssh_interface
         self.scp_interface = scp_interface
@@ -50,19 +58,45 @@ class SSHProxyServer:
         self.authenticator = authenticator
         self.transparent = transparent
 
+        try:
+            self.generate_host_key()
+        except KeyGenerationError:
+            sys.exit(1)
+
+    def generate_host_key(self):
+        key_algorithm_class = None
+        key_algorithm_bits = None
+        if self.key_algorithm == 'dss':
+            key_algorithm_class = DSSKey
+            key_algorithm_bits = self.key_length
+        elif self.key_algorithm == 'rsa':
+            key_algorithm_class = RSAKey
+            key_algorithm_bits = self.key_length
+        elif self.key_algorithm == 'ecdsa':
+            key_algorithm_class = ECDSAKey
+        else:
+            raise ValueError("host key algorithm '{}' not supported!".format(self.key_algorithm))
+
+
+        if not self.key_file:
+            try:
+                self._hostkey = key_algorithm_class.generate(bits=key_algorithm_bits)
+            except ValueError as err:
+                logging.error(str(err))
+                raise KeyGenerationError()
+            logging.warning("created temporary private key!")
+        else:
+            if not os.path.isfile(self.key_file):
+                raise FileNotFoundError("host key '{}' file does not exist".format(self.key_file))
+            try:
+                self._hostkey = key_algorithm_class(filename=self.key_file)
+            except Exception:
+                logging.error('host key format not supported by selected algorithm "%s"!', self.key_algorithm)
+
     @property
     def host_key(self):
         if not self._hostkey:
-            if not self.key_file:
-                self._hostkey = RSAKey.generate(bits=self.HOST_KEY_LENGTH)
-                logging.warning("created temporary private key!")
-            else:
-                if not os.path.isfile(self.key_file):
-                    raise FileNotFoundError("host key '{}' file does not exist".format(self.key_file))
-                try:
-                    self._hostkey = RSAKey(filename=self.key_file)
-                except Exception:
-                    logging.error('only rsa key files are supported!')
+            self.generate_host_key()
         return self._hostkey
 
     def start(self):
