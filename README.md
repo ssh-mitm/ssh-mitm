@@ -11,6 +11,19 @@
 
 ![SSH-MITM example](https://ssh-mitm.at/img/mitm-example.png)
 
+## Features
+
+**NEW in 0.4.0: Port Forwarding**
+
+* Hijacking and logging of terminal sessions
+* SCP and SFTP
+    * store files
+    * replace files
+    * inject additional files
+* Agent Forwarding
+* Port Forwarding
+* Check and test clients against known vulnerabilities
+
 ## Give a Star! :star:
 If you like or are using this project to learn or start your solution, please give it a star. Thanks!
 
