@@ -83,7 +83,7 @@ class ServerInterface(BaseServerInterface):
         )
         if not self.args.disable_ssh:
             self.session.ssh = True
-            self.session.sshPtyKArgs = {
+            self.session.ssh_pty_kwargs = {
                 'term': term,
                 'width': width,
                 'height': height,

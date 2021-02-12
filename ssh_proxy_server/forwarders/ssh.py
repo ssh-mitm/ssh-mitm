@@ -18,8 +18,8 @@ class SSHForwarder(SSHBaseForwarder):
     def forward(self):
         time.sleep(0.1)
 
-        if self.session.sshPtyKArgs:
-            self.server_channel.get_pty(**self.session.sshPtyKArgs)
+        if self.session.ssh_pty_kwargs:
+            self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
         self.server_channel.invoke_shell()
 
         try:

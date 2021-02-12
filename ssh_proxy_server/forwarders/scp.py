@@ -17,6 +17,8 @@ class SCPBaseForwarder(BaseForwarder):
         return traffic
 
     def forward(self):
+        if self.session.ssh_pty_kwargs is not None:
+            self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
         self.server_channel.exec_command(self.session.scp_command)  # nosec
 
