@@ -9,10 +9,6 @@ from ssh_proxy_server.interfaces.server import ProxySFTPServer
 from ssh_proxy_server.plugins.session import cve202014145
 
 
-class NoAgentException(Exception):
-    pass
-
-
 class Session:
 
     CIPHERS = None
