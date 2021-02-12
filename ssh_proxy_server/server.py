@@ -14,10 +14,7 @@ from tcp_proxy_server.multisocket import (
 )
 
 from ssh_proxy_server.session import Session
-
-
-class KeyGenerationError(Exception):
-    pass
+from ssh_proxy_server.exceptions import KeyGenerationError
 
 
 class SSHProxyServer:

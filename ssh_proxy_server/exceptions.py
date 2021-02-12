@@ -8,3 +8,6 @@ class InvalidHostKey(Exception):
 
 class MissingHostException(Exception):
     pass
+
+class KeyGenerationError(Exception):
+    pass
