@@ -56,7 +56,21 @@ def main():
     parser.add_argument(
         '--host-key',
         dest='host_key',
-        help='rsa host key'
+        help='host key file'
+    )
+    parser.add_argument(
+        '--host-key-algorithm',
+        dest='host_key_algorithm',
+        default='rsa',
+        choices=['dss', 'rsa', 'ecdsa'],
+        help='host key algorithm (default rsa)'
+    )
+    parser.add_argument(
+        '--host-key-length',
+        dest='host_key_length',
+        default=2048,
+        type=int,
+        help='host key length for dss and rsa (default 2048)'
     )
     parser.add_module(
         '--ssh-interface',
@@ -142,6 +156,8 @@ def main():
     proxy = SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,
+        key_algorithm=args.host_key_algorithm,
+        key_length=args.host_key_length,
         ssh_interface=args.ssh_interface,
         scp_interface=args.scp_interface,
         sftp_interface=args.sftp_interface,
