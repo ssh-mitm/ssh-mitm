@@ -174,12 +174,12 @@ class ForwardClient(threading.Thread):
 
         cleaner.add_thread(self)
 
-    """
-    Waits for the SSH direct connection channel and start redirect.
-    After that it has handled its channel, it will return and the thread will
-    wait to be joined.
-    """
     def run(self):
+        """
+        Waits for the SSH direct connection channel and start redirect.
+        After that it has handled its channel, it will return and the thread will
+        wait to be joined.
+        """
         self.lock.acquire()
         self.active = True
         self.lock.release()
