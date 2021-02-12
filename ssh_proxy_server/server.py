@@ -7,7 +7,7 @@ import sys
 
 from paramiko import DSSKey, RSAKey, ECDSAKey
 
-from tcp_proxy_server.multisocket import (
+from ssh_proxy_server.multisocket import (
     create_server_sock,
     has_dual_stack,
     MultipleSocketsListener
