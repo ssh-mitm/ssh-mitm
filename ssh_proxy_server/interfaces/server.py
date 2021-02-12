@@ -1,7 +1,31 @@
+from argparse import Namespace
 import logging
+import multiprocessing
 
 import paramiko
+from paramiko import channel
 from enhancements.modules import BaseModule
+
+from tcp_proxy_server.proxymanager import TcpProxyManager
+from tcp_proxy_server.forwarders import TcpProxyForwarder, TcpProxyForwardAddress
+
+
+class SSHChannelForwarder(TcpProxyForwarder):
+    """send data back to the client (echo server)"""
+
+    def __init__(self, server, channel):
+        super().__init__(server)
+        self.channel = channel
+
+    def get_address(self, clientsock, clientaddr):
+        return TcpProxyForwardAddress(socket=channel)
+
+class BaseSSHProxyManager(TcpProxyManager):
+    pass
+
+
+class SSHProxyManager(BaseSSHProxyManager):
+    DEFAULTFORWARDER = SSHChannelForwarder
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
@@ -40,6 +64,13 @@ class ServerInterface(BaseServerInterface):
             dest='disable_pubkey_auth',
             action='store_true',
             help='disable public key authentication'
+        )
+        cls.add_module(
+            '--proxymanager',
+            dest='ssh_proxymanager',
+            default=SSHProxyManager,
+            help='ProxyManager to manage the Proxy',
+            baseclass=BaseSSHProxyManager
         )
 
     def check_channel_exec_request(self, channel, command):
@@ -132,11 +163,26 @@ class ServerInterface(BaseServerInterface):
         return super().check_channel_subsystem_request(channel, name)
 
     def check_port_forward_request(self, address, port):
+        def start_proxy(session):
+            proxymanager = self.session.proxyserver.args.ssh_proxymanager()
+            proxyargs = Namespace(**vars(session.proxyserver.args))
+            proxyargs.listen_port = port
+            proxyargs.forwarder = proxymanager.forwarder(None, )
+            proxyargs.forwarder.remoteaddress = ('127.0.0.1', 8000)
+
+            remote = "{}:{}".format(proxyargs.forwarder.remoteaddress[0], proxyargs.forwarder.remoteaddress[1])
+            proxy = proxymanager.get_proxy_instance(proxyargs)
+            proxy.start()
+            logging.debug("proxy to %s closed", remote)
+
         logging.info(
             "check_port_forward_request: address=%s, port=%s",
             address, port
         )
-        return True
+        logging.debug(self.session.proxyserver.args)
+        proxy_process = multiprocessing.Process(target=start_proxy, args=(self.session,))
+        proxy_process.start()
+        return port
 
     def cancel_port_forward_request(self, address, port):
         logging.info(

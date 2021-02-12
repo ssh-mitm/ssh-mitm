@@ -32,8 +32,11 @@ class SSHProxyServer:
         sftp_handler=None,
         authentication_interface=None,
         authenticator=None,
-        transparent=False
+        transparent=False,
+        args=None
     ):
+        self.args = args
+
         self._threads = []
         self._hostkey = None
 
