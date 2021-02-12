@@ -1,32 +1,26 @@
-# TunnelServern - A SSH Tunnel implementation for and based on Paramiko.
-#
-# Copyright (C) 2014 Pier Angelo Vendrame <vogliadifarniente@gmail.com>
-#
-# This file is based on some of Paramiko examples: demo_server.py, forward.py,
-# rforward.py.
-# Original copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
-#
-# This is free software; you can redistribute it and/or modify it under the
-# terms of the GNU Lesser General Public License as published by the Free
-# Software Foundation; either version 2.1 of the License, or (at your option)
-# any later version.
-#
-# Paramiko and TunnelServer are distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this software; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-
-import logging
-import socket
-import select
-import threading
-import socketserver
-
 """
+TunnelServern - A SSH Tunnel implementation for and based on Paramiko.
+
+Copyright (C) 2014 Pier Angelo Vendrame <vogliadifarniente@gmail.com>
+
+This file is based on some of Paramiko examples: demo_server.py, forward.py,
+rforward.py.
+Original copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
+
+This is free software; you can redistribute it and/or modify it under the
+terms of the GNU Lesser General Public License as published by the Free
+Software Foundation; either version 2.1 of the License, or (at your option)
+any later version.
+
+Paramiko and TunnelServer are distributed in the hope that it will be useful,
+but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
+or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
+for more details.
+
+You should have received a copy of the GNU Lesser General Public License
+along with this software; if not, write to the Free Software Foundation, Inc.,
+59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
+
 This is an implementation of the tunnel handler for a SSH server based on
 Paramiko.
 
@@ -41,6 +35,12 @@ Another note about terminology:
 You should use forward when the SSH Client wants to provide a service, whereas
 you should use direct to bypass firewall when connecting to another service.
 """
+
+import logging
+import socket
+import select
+import threading
+import socketserver
 
 
 class ForwardServer(socketserver.ThreadingTCPServer, threading.Thread):
@@ -263,7 +263,7 @@ class Cleaner(threading.Thread):
                         """
                         self.threads.remove(thread)
                     except Exception:
-                        pass
+                        logging.debug('unable to remove port forward thread')
                     self.lock.release()
 
             self.event.clear()

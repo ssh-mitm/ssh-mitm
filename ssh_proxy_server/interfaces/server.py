@@ -167,10 +167,9 @@ class ServerInterface(BaseServerInterface):
                 "Port mismatch: "
             )
             return False
-        else:
-            logging.info(
-                "Forward for opened successfully."
-            )
+        logging.info(
+            "Forward for opened successfully."
+        )
 
         self.forwards[(address, ourport)] = f
 
