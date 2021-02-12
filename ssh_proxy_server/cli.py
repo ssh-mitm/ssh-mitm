@@ -34,11 +34,9 @@ from ssh_proxy_server.interfaces.sftp import (
 
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 
-from tcp_proxy_server.handlers import TcpProxyHandler
-
 
 def main():
-    parser = ModuleParser(description='SSH Proxy Server', modules_from_file=True, baseclass=TcpProxyHandler)
+    parser = ModuleParser(description='SSH Proxy Server', modules_from_file=True)
 
     parser.add_plugin(LogModule)
 
