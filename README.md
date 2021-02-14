@@ -11,6 +11,11 @@
 
 ![SSH-MITM example](https://ssh-mitm.at/img/mitm-example.png)
 
+
+## Give a Star! :star:
+This keeps me motivated in developing this tool. You can also help me, if you are writing about SSH-MITM in your scientific papers. Thanks!
+
+
 ## Features
 
 **NEW in 0.4.0: Port Forwarding**
@@ -23,9 +28,6 @@
 * Agent Forwarding
 * Port Forwarding
 * Check and test clients against known vulnerabilities
-
-## Give a Star! :star:
-This keeps me motivated in developing this tool. You can also help me, if you are writing about SSH-MITM in your scientific papers. Thanks!
 
 ## Installation of SSH-MITM
 
