@@ -25,7 +25,7 @@
 * Check and test clients against known vulnerabilities
 
 ## Give a Star! :star:
-This keeps me motivated in developing this tool. Thanks!
+This keeps me motivated in developing this tool. You can also help me, if you are writing about SSH-MITM in your scientific papers. Thanks!
 
 ## Installation of SSH-MITM
 
