@@ -25,7 +25,7 @@
 * Check and test clients against known vulnerabilities
 
 ## Give a Star! :star:
-If you like or are using this project to learn or start your solution, please give it a star. Thanks!
+This keeps me motivated in developing this tool. Thanks!
 
 ## Installation of SSH-MITM
 
