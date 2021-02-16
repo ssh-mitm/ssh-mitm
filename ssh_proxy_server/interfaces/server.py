@@ -49,6 +49,12 @@ class ServerInterface(BaseServerInterface):
             action='store_true',
             help='disable public key authentication'
         )
+        cls.parser().add_argument(
+            '--enable-none-auth',
+            dest='enable_none_auth',
+            action='store_true',
+            help='enable "none" authentication'
+        )
 
     def check_channel_exec_request(self, channel, command):
         logging.debug("check_channel_exec_request: channel=%s, command=%s", channel, command.decode('utf8'))
@@ -106,14 +112,25 @@ class ServerInterface(BaseServerInterface):
     def get_allowed_auths(self, username):
         logging.debug("get_allowed_auths: username=%s", username)
         allowed_auths = []
+        if self.args.enable_none_auth:
+            allowed_auths.append('none')
         if not self.args.disable_pubkey_auth:
             allowed_auths.append('publickey')
         if not self.args.disable_password_auth:
             allowed_auths.append('password')
         if allowed_auths:
-            return ','.join(allowed_auths)
-        logging.warning('Allowed authentication is none!')
+            allowed_authentication_methods = ','.join(allowed_auths)
+            logging.debug("Allowed authentication methods: %s", allowed_authentication_methods)
+            return ','.join(allowed_authentication_methods)
+        logging.warning('Authentication is set to "none", but logins are disabled!')
         return 'none'
+
+    def check_auth_none(self, username):
+        logging.debug("check_auth_none: username=%s", username)
+        if self.args.enable_none_auth:
+            self.session.authenticator.authenticate(username, key=None)
+            return paramiko.AUTH_SUCCESSFUL
+        return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
         logging.debug("check_auth_publickey: username=%s, key=%s", username, key)
