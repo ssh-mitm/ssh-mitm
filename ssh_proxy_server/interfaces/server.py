@@ -51,6 +51,7 @@ class ServerInterface(BaseServerInterface):
         )
 
     def check_channel_exec_request(self, channel, command):
+        logging.debug("check_channel_exec_request: channel=%s, command=%s", channel, command.decode('utf8'))
         if self.args.disable_scp:
             logging.warning('scp command not allowed!')
             return False
@@ -73,11 +74,12 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def check_channel_forward_agent_request(self, channel):
+        logging.debug("check_channel_forward_agent_request: channel=%s", channel)
         self.session.agent_requested.set()
-        logging.debug("check_channel_forward_agent_request")
         return True
 
     def check_channel_shell_request(self, channel):
+        logging.debug("check_channel_shell_request: channel=%s", channel)
         if not self.args.disable_ssh:
             self.session.ssh = True
             self.session.ssh_channel = channel
@@ -86,8 +88,8 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
         logging.debug(
-            "check_channel_pty_request: term=%s, width=%s, height=%s, pixelwidth=%s, pixelheight=%s, modes=%s",
-            term, width, height, pixelwidth, pixelheight, modes
+            "check_channel_pty_request: channel=%s, term=%s, width=%s, height=%s, pixelwidth=%s, pixelheight=%s, modes=%s",
+            channel, term, width, height, pixelwidth, pixelheight, modes
         )
         if not self.args.disable_ssh:
             self.session.ssh = True
@@ -102,6 +104,7 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def get_allowed_auths(self, username):
+        logging.debug("get_allowed_auths: username=%s", username)
         allowed_auths = []
         if not self.args.disable_pubkey_auth:
             allowed_auths.append('publickey')
@@ -113,27 +116,32 @@ class ServerInterface(BaseServerInterface):
         return 'none'
 
     def check_auth_publickey(self, username, key):
+        logging.debug("check_auth_publickey: username=%s, key=%s", username, key)
         if self.args.disable_pubkey_auth:
-            logging.warning("Public key login attempt, but public key auth was disabled!")
+            logging.warning(
+                "Public key login attempt with user=%s and key=%s, but public key auth was disabled!",
+                username, key
+            )
             return paramiko.AUTH_FAILED
         return self.session.authenticator.authenticate(username, key=key)
 
     def check_auth_password(self, username, password):
+        logging.debug("check_auth_password: username=%s, password=%s", username, password)
         if self.args.disable_password_auth:
             logging.warning("Password login attempt, but password auth was disabled!")
             return paramiko.AUTH_FAILED
         return self.session.authenticator.authenticate(username, password=password)
 
     def check_channel_request(self, kind, chanid):
-        logging.debug("check_channel_request: %s , %s", kind, chanid)
+        logging.debug("check_channel_request: kind=%s , chanid=%s", kind, chanid)
         return paramiko.OPEN_SUCCEEDED
 
     def check_channel_env_request(self, channel, name, value):
-        logging.debug("check_channel_env_request: %s=%s", name, value)
+        logging.debug("check_channel_env_request: channel=%s, name=%s, value=%s", channel, name, value)
         return False
 
     def check_channel_subsystem_request(self, channel, name):
-        logging.debug("check_channel_subsystem_request: name=%s", name)
+        logging.debug("check_channel_subsystem_request: channel=%s, name=%s", channel, name)
         if name.upper() == 'SFTP':
             self.session.sftp = True
             self.session.sftp_channel = channel
@@ -147,6 +155,7 @@ class ServerInterface(BaseServerInterface):
         OS will tell us which port).
         If it can't be opened, we just return false.
         """
+        logging.info("check_port_forward_request: address=%s, port=%s", address, port)
         try:
             f = ForwardServer(
                 (address, port), Handler, self.session.transport
@@ -214,15 +223,15 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_window_change_request(self, channel, width, height, pixelwidth, pixelheight):
         logging.debug(
-            "check_channel_window_change_request: width=%s, height=%s, pixelwidth=%s, pixelheight=%s",
-            width, height, pixelwidth, pixelheight
+            "check_channel_window_change_request: channel=%s, width=%s, height=%s, pixelwidth=%s, pixelheight=%s",
+            channel, width, height, pixelwidth, pixelheight
         )
         return False
 
     def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):
-        logging.info(
-            "check_channel_x11_request: single_connection=%s, auth_protocol=%s, auth_cookie=%s, screen_number=%s",
-            single_connection, auth_protocol, auth_cookie, screen_number
+        logging.debug(
+            "check_channel_x11_request: channel=%s, single_connection=%s, auth_protocol=%s, auth_cookie=%s, screen_number=%s",
+            channel, single_connection, auth_protocol, auth_cookie, screen_number
         )
         return False
 
