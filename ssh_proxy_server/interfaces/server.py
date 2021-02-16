@@ -120,8 +120,7 @@ class ServerInterface(BaseServerInterface):
             allowed_auths.append('password')
         if allowed_auths:
             allowed_authentication_methods = ','.join(allowed_auths)
-            logging.debug("Allowed authentication methods: %s", allowed_authentication_methods)
-            return ','.join(allowed_authentication_methods)
+            return allowed_authentication_methods
         logging.warning('Authentication is set to "none", but logins are disabled!')
         return 'none'
 
