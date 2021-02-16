@@ -173,6 +173,7 @@ class ServerInterface(BaseServerInterface):
         If it can't be opened, we just return false.
         """
         logging.info("check_port_forward_request: address=%s, port=%s", address, port)
+        f = None
         try:
             f = ForwardServer(
                 (address, port), Handler, self.session.transport
@@ -180,7 +181,8 @@ class ServerInterface(BaseServerInterface):
             f.start()
         except Exception:
             # "port can't be opened" included here
-            f.shutdown()
+            if f is not None:
+                f.shutdown()
             logging.exception("Could not start forward.")
             return False
 
