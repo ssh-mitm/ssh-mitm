@@ -72,7 +72,7 @@ You will see the credentials in the log output.
 Getting the plain text credentials is only half the fun.
 When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
 
-    2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463. 
+    2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463.
                                     connect with: ssh -p 34463 127.0.0.1
 
 To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
@@ -86,11 +86,21 @@ Try to execute somme commands in the hijacked session or in the original session
 The output will be shown in both sessions.
 
 
+## Important note
+
+**SSH-MITM should not be used as a jump host!**
+
+It's intended to be used during security audits and not for separating networks.
+
+If you need a jump host with audit capabilities (for security compliences), you can find a
+[comparison of jump hosts](https://docs.ssh-mitm.at/alternatives.html) in SSH-MITM's documentation.
+
+
 ## Contributing
 
 <img src="https://ssh-mitm.at/assets/images/streamline-free/write-paper-ink.svg" align="left" width="128">
 
-**Pull requests are welcome.** 
+**Pull requests are welcome.**
 
 For major changes, please open an issue first to discuss what you would like to change.
 

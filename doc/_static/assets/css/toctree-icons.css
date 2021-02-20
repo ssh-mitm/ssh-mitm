@@ -25,5 +25,5 @@
 #docs-nav .toctree-l1:nth-child(5):before,
 #docs-cards .toctree-l1:nth-child(5) i:before {
     font-family: FontAwesome;
-    content: "\f796";
+    content: "\f505";
 }
