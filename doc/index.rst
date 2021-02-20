@@ -9,4 +9,4 @@ SSH-MITM Docs - Startseite
    quickstart
    advanced-usage
    ssh_vulnerabilities
-   alternatives
+   jumphosts

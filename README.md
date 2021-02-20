@@ -93,7 +93,7 @@ The output will be shown in both sessions.
 It's intended to be used during security audits and not for separating networks.
 
 If you need a jump host with audit capabilities (for security compliences), you can find a
-[comparison of jump hosts](https://docs.ssh-mitm.at/alternatives.html) in SSH-MITM's documentation.
+[comparison of jump hosts](https://docs.ssh-mitm.at/jumphosts.html) in SSH-MITM's documentation.
 
 
 ## Contributing
