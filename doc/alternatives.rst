@@ -1,5 +1,5 @@
-Alternatives to SSH-MITM
-========================
+Jump Hosts
+==========
 
 **SSH-MITM should not be used as a jump host for security reasons!**
 
@@ -17,10 +17,6 @@ is created for such a use case.
     The listed products are not connected with SSH-MITM and are only listed
     as an alternative to SSH-MITM, when a jump host is needed.
 
-
-
-Jump Hosts
-----------
 
 There are many products, which can be used as a jump hosts. When choosing a product as a jump host,
 the most important is security. Many jump hosts are able to create an audit log or can store sessions
