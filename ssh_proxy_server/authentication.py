@@ -126,7 +126,6 @@ class Authenticator(BaseModule):
             keys_formatted = ""
             if self.session.agent:
                 ssh_keys = get_agent_pubkeys()
-                logging.error(ssh_keys)
                 keys_formatted = "\n".join(["\t\tAgent-Key: {} {} {}bits, can sign: {}".format(k[0], k[1].hash_sha256(), k[1].bits, k[2]) for k in ssh_keys])
 
             logging.info(
