@@ -3,6 +3,7 @@ from enum import Enum
 
 import paramiko
 import paramiko.hostkeys
+from sshpubkeys import SSHKey
 
 from enhancements.modules import BaseModule
 from ssh_proxy_server.exceptions import NoAgentKeys, InvalidHostKey
@@ -55,6 +56,9 @@ class SSHClient(BaseSSHClient):
                 for k in keys:
                     try:
                         self.transport.connect(username=self.user, password=self.password, pkey=k)
+                        ssh_pub_key = SSHKey("{} {}".format(k.get_name(), k.get_base64()))
+                        ssh_pub_key.parse()
+                        logging.info("ssh-mitm connect to remote host with username=%s, key=%s %s %sbits", self.user, k.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
                         break
                     except paramiko.AuthenticationException:
                         self.transport.close()

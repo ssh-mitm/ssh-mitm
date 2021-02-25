@@ -1,8 +1,9 @@
 import logging
 
 from enhancements.modules import BaseModule
-
 import paramiko
+from sshpubkeys import SSHKey
+
 from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
 from ssh_proxy_server.clients.sftp import SFTPClient
 from ssh_proxy_server.exceptions import MissingHostException
@@ -111,7 +112,23 @@ class Authenticator(BaseModule):
         raise NotImplementedError("authentication must be implemented")
 
     def connect(self, user, host, port, method, password=None, key=None):
+        def get_agent_pubkeys():
+            keys = self.session.agent.get_keys()
+            keys_parsed = []
+            for k in keys:
+                ssh_pub_key = SSHKey("{} {}".format(k.get_name(), k.get_base64()))
+                ssh_pub_key.parse()
+                keys_parsed.append((k.get_name(), ssh_pub_key, k.can_sign()))
+            return keys_parsed
+
         if not self.args.auth_hide_credentials:
+            ssh_keys = None
+            keys_formatted = ""
+            if self.session.agent:
+                ssh_keys = get_agent_pubkeys()
+                logging.error(ssh_keys)
+                keys_formatted = "\n".join(["\t\tAgent-Key: {} {} {}bits, can sign: {}".format(k[0], k[1].hash_sha256(), k[1].bits, k[2]) for k in ssh_keys])
+
             logging.info(
                 "\n".join((
                     "Client connection established with parameters:",
@@ -120,14 +137,16 @@ class Authenticator(BaseModule):
                     "\tUsername: %s",
                     "\tPassword: %s",
                     "\tKey: %s",
-                    "\tAgent: %s"
+                    "\tAgent: %s",
+                    "%s"
                 )),
                 host,
                 port,
                 user,
                 password,
                 ('None' if key is None else 'not None'),
-                str(self.session.agent)
+                "available keys: {}".format(len(ssh_keys)) if ssh_keys else 'no agent',
+                keys_formatted
             )
 
         if not host:
@@ -162,6 +181,9 @@ class AuthenticatorPassThrough(Authenticator):
 
     def auth_publickey(self, username, host, port, key):
         if key.can_sign():
+            ssh_pub_key = SSHKey("{} {}".format(key.get_name(), key.get_base64()))
+            ssh_pub_key.parse()
+            logging.info("AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
             return self.connect(username, host, port, AuthenticationMethod.publickey, key=key)
         if self.REQUEST_AGENT:
             # Ein Publickey wird nur direkt von check_auth_publickey
