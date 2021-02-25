@@ -1,6 +1,8 @@
 import logging
 
 import paramiko
+from sshpubkeys import SSHKey
+
 from enhancements.modules import BaseModule
 
 from ssh_proxy_server.forwarders.tunnel import ForwardClient, ForwardServer, Handler, Cleaner
@@ -54,6 +56,11 @@ class ServerInterface(BaseServerInterface):
             dest='enable_none_auth',
             action='store_true',
             help='enable "none" authentication'
+        )
+        cls.parser().add_argument(
+            '--extra-auth-methods',
+            dest='extra_auth_methods',
+            help='extra authentication mehtod names'
         )
 
     def check_channel_exec_request(self, channel, command):
@@ -112,6 +119,8 @@ class ServerInterface(BaseServerInterface):
     def get_allowed_auths(self, username):
         logging.debug("get_allowed_auths: username=%s", username)
         allowed_auths = []
+        if self.args.extra_auth_methods:
+            allowed_auths.extend(self.args.extra_auth_methods.split(','))
         if self.args.enable_none_auth:
             allowed_auths.append('none')
         if not self.args.disable_pubkey_auth:
@@ -133,12 +142,11 @@ class ServerInterface(BaseServerInterface):
         return paramiko.AUTH_FAILED
 
     def check_auth_publickey(self, username, key):
-        logging.debug("check_auth_publickey: username=%s, key=%s", username, key)
+        ssh_pub_key = SSHKey("{} {}".format(key.get_name(), key.get_base64()))
+        ssh_pub_key.parse()
+        logging.info("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
         if self.args.disable_pubkey_auth:
-            logging.warning(
-                "Public key login attempt with user=%s and key=%s, but public key auth was disabled!",
-                username, key
-            )
+            logging.debug("Publickey login attempt, but publickey auth was disabled!")
             return paramiko.AUTH_FAILED
         return self.session.authenticator.authenticate(username, key=key)
 

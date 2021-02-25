@@ -56,6 +56,7 @@ setup(
     install_requires=[
         'enhancements>=0.2.1',
         'paramiko',
-        'pytz'
+        'pytz',
+        'sshpubkeys'
     ]
 )
