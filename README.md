@@ -40,10 +40,9 @@ To install SSH-MITM, simply run this simple command in your terminal of choice:
 
     $ pip install ssh-mitm
 
+If you want to install all supported plugins for ssh-mitm you can install them with:
 
-Plugins for SSH-MITM can be installed with pip. In most cases you only need to install the plugins, which will also install ssh-mitm as a dependency.
-
-* ssh-mitm-plugins (https://pypi.org/project/ssh-mitm-plugins)
+    $ pip install ssh-mitm[plugins]
 
 ## Quickstart
 
