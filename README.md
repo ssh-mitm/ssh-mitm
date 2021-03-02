@@ -28,6 +28,7 @@ This keeps me motivated in developing this tool. Thanks!
 * Agent Forwarding
 * Port Forwarding
 * Check and test clients against known vulnerabilities
+* Plugin support
 
 ## Installation of SSH-MITM
 
@@ -38,6 +39,11 @@ The first step to using any software package is getting it properly installed.
 To install SSH-MITM, simply run this simple command in your terminal of choice:
 
     $ pip install ssh-mitm
+
+
+Plugins for SSH-MITM can be installed with pip. In most cases you only need to install the plugins, which will also install ssh-mitm as a dependency.
+
+* ssh-mitm-plugins (https://pypi.org/project/ssh-mitm-plugins)
 
 ## Quickstart
 
