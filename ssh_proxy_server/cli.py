@@ -61,7 +61,7 @@ def main():
         '--host-key-algorithm',
         dest='host_key_algorithm',
         default='rsa',
-        choices=['dss', 'rsa', 'ecdsa'],
+        choices=['dss', 'rsa', 'ecdsa', 'ed25519'],
         help='host key algorithm (default rsa)'
     )
     parser.add_argument(
