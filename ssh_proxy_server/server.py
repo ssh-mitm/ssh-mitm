@@ -5,7 +5,7 @@ import time
 import threading
 import sys
 
-from paramiko import DSSKey, RSAKey, ECDSAKey
+from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key
 
 from ssh_proxy_server.multisocket import (
     create_server_sock,
@@ -74,6 +74,11 @@ class SSHProxyServer:
             key_algorithm_bits = self.key_length
         elif self.key_algorithm == 'ecdsa':
             key_algorithm_class = ECDSAKey
+        elif self.key_algorithm == 'ed25519':
+            key_algorithm_class = Ed25519Key
+            if not self.key_file:
+                logging.error("ed25519 requires a key file, please use also use --host-key parameter")
+                sys.exit(1)
         else:
             raise ValueError("host key algorithm '{}' not supported!".format(self.key_algorithm))
 
