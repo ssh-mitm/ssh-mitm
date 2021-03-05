@@ -6,7 +6,7 @@ from paramiko.ssh_exception import ChannelException
 
 from ssh_proxy_server.forwarders.agent import AgentProxy
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
-from ssh_proxy_server.plugins.session import cve202014145
+from ssh_proxy_server.plugins.session import key_negotiation
 
 
 class Session:
@@ -58,7 +58,7 @@ class Session:
     def transport(self):
         if not self._transport:
             self._transport = Transport(self.client_socket)
-            cve202014145.hookup_cve_2020_14145(self)
+            key_negotiation.handle_key_negotiation(self)
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
                     raise ValueError('ciphers must be a tuple')
