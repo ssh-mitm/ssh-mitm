@@ -51,7 +51,7 @@ DEFAULT_ALGORITMS = [
 ]
 
 
-def check_key_negotiation(client_version, server_key_algo_list, session):
+def check_key_negotiation(client_version, server_host_key_algorithms, session):
     if CLIENT_NAME in client_version:
         if isinstance(session.proxyserver.host_key, ECDSAKey):
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", CVE)
@@ -60,7 +60,7 @@ def check_key_negotiation(client_version, server_key_algo_list, session):
             logging.warning("%s: Remote OpenSSH Version > 8.3; CVE-2020-14145 might produce false positive!", CVE)
 
         for host_key_algo in DEFAULT_ALGORITMS:
-            if server_key_algo_list == host_key_algo:
+            if server_host_key_algorithms == host_key_algo:
                 logging.info("%s: Client connecting for the FIRST time!", CVE)
                 break
         else:
