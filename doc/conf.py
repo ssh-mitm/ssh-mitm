@@ -24,10 +24,13 @@ copyright = '{}, {}'.format(datetime.datetime.now().year, author)  # pylint: dis
 
 extensions = [
     'sphinx.ext.autosectionlabel',
+    'sphinx_sitemap',
 ]
 
 master_doc = 'index'
 html_add_permalinks = ''
+html_baseurl = 'https://docs.ssh-mitm.at/'
+autosectionlabel_maxdepth = 1
 
 # -- General configuration ---------------------------------------------------
 
