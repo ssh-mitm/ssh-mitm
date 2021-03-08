@@ -15,6 +15,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 import datetime
+import xml.etree.ElementTree as ET
 
 # -- Project information -----------------------------------------------------
 
@@ -30,7 +31,6 @@ extensions = [
 master_doc = 'index'
 html_add_permalinks = ''
 html_baseurl = 'https://docs.ssh-mitm.at/'
-sitemap_filename = "docssitemap.xml"
 autosectionlabel_maxdepth = 1
 html_extra_path = ['robots.txt']
 
@@ -90,3 +90,22 @@ html_context = {
         'linkedinurl': 'https://www.linkedin.com/in/manfred-kaiser'
     }
 }
+
+
+def create_sitemap(app, exception):
+    """Generates the sitemap.xml from the collected HTML page links"""
+    filename = app.outdir + "/sitemap-docs.xml"
+    print("Generating sitemap-docs.xml in %s" % filename)
+
+    root = ET.Element("urlset")
+    root.set("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
+
+    for link in app.sitemap_links:
+        url = ET.SubElement(root, "url")
+        ET.SubElement(url, "loc").text = html_baseurl + link
+
+    ET.ElementTree(root).write(filename)
+
+
+def setup(app):
+    app.connect('build-finished', create_sitemap)
