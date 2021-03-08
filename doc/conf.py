@@ -30,7 +30,9 @@ extensions = [
 master_doc = 'index'
 html_add_permalinks = ''
 html_baseurl = 'https://docs.ssh-mitm.at/'
+sitemap_filename = "docssitemap.xml"
 autosectionlabel_maxdepth = 1
+html_extra_path = ['robots.txt']
 
 # -- General configuration ---------------------------------------------------
 

@@ -1,0 +1,3 @@
+User-agent: *
+
+Sitemap: https://docs.ssh-mitm.at/docssitemap.xml
