@@ -16,10 +16,9 @@
 This keeps me motivated in developing this tool. Thanks!
 
 
-## NEW in 0.4.2 - 2021-03-05
+## NEW in 0.4.3 - 2021-03-09
 
-- CVE-2020-14002 (Putty information leak)
-- option to use ed25519 host keys
+- compatibility with dropbear ssh clients
 
 [Full Changelog](https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md)
 
