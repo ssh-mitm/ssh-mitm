@@ -20,7 +20,7 @@ def get_entry_points():
 
 setup(
     name='ssh-mitm',
-    version='0.4.2',
+    version='0.4.3',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
     description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
@@ -59,7 +59,7 @@ setup(
         'pytz',
         'sshpubkeys'
     ],
-    extras_require = {
+    extras_require={
         'plugins': [
             'ssh-mitm-plugins'
         ],
