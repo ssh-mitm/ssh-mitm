@@ -21,6 +21,8 @@ This keeps me motivated in developing this tool. Thanks!
 - CVE-2020-14002 (Putty information leak)
 - option to use ed25519 host keys
 
+[Full Changelog](https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md)
+
 
 ## Features
 

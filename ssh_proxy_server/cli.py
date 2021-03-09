@@ -31,6 +31,8 @@ from ssh_proxy_server.interfaces.sftp import (
     SFTPProxyServerInterface
 )
 
+
+from ssh_proxy_server.workarounds import dropbear
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 
 
@@ -137,8 +139,17 @@ def main():
         choices=['warning', 'info', 'debug'],
         help='set paramikos log level'
     )
+    parser.add_argument(
+        '--disable-workarounds',
+        dest='disable_workarounds',
+        action='store_true',
+        help='disable paramiko workarounds'
+    )
 
     args = parser.parse_args()
+
+    if not args.disable_workarounds:
+        Transport.run = dropbear.transport_run
 
     if args.paramiko_log_level == 'debug':
         logging.getLogger("paramiko").setLevel(logging.DEBUG)
