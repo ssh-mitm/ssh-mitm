@@ -10,8 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- option to use ed25519 host keys
 - implemented CVE-2020-14002 (Putty information leak)
+- option to use ed25519 host keys
 
 
 ## [0.4.1] - 2021-03-02

@@ -16,9 +16,13 @@
 This keeps me motivated in developing this tool. Thanks!
 
 
-## Features
+## NEW in 0.4.2 - 2021-03-05
 
-**NEW in 0.4.0: Port Forwarding**
+- CVE-2020-14002 (Putty information leak)
+- option to use ed25519 host keys
+
+
+## Features
 
 * Hijacking and logging of terminal sessions
 * SCP and SFTP
