@@ -26,7 +26,7 @@ class TunnelForwarder(threading.Thread, BaseTunnelForwarder):
 
     def tunnel(self, chunk_size=1024):
         """
-        Connect a socket and a SSH channel.
+        Connect direct-tcpip and a SSH channel.
         """
         while True:
             r, w, x = select.select([self.local_ch, self.remote_ch], [], [])

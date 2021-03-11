@@ -5,7 +5,7 @@ from sshpubkeys import SSHKey
 
 from enhancements.modules import BaseModule
 
-from ssh_proxy_server.forwarders.tunnel import ForwardClient, ForwardServer, Handler, Cleaner, ProxyTunnelForwarder
+from ssh_proxy_server.forwarders.tunnel import ForwardServer, Handler, Cleaner
 from ssh_proxy_server.plugins.tunnel import proxytunnel
 
 

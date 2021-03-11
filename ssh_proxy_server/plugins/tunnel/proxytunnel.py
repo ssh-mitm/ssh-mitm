@@ -9,6 +9,7 @@ class ProxyTunnelForwarder(TunnelForwarder):
     Open direct-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
     Then forward traffic between channels connecting to local and to remote through the ssh-mitm
         - supports Proxyjump (-W / -J) feature
+        - support client side port forwarding (-L)
     """
 
     def __init__(self, session, chanid, origin, destination):

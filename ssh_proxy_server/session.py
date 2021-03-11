@@ -49,10 +49,8 @@ class Session:
 
     @property
     def running(self):
-        # Using status of main channels to determine session status (-> releasability of resources)
-        # - often calculated, cpu heavy (?)
-        ch_active = all([not ch.closed for ch in filter(None, [self.ssh_channel, self.scp_channel, self.sftp_channel])])
-        return self.proxyserver.running and ch_active
+        # Using status of master channel to determine session status (-> releasability of resources)
+        return self.proxyserver.running and (not self.channel.closed if self.channel else True)
 
     @property
     def transport(self):
@@ -105,7 +103,7 @@ class Session:
         event = threading.Event()
         self.transport.start_server(
             event=event,
-            server=self.proxyserver.server_interface(self)
+            server=self.proxyserver.authentication_interface(self)
         )
 
         while not self.channel:
@@ -145,6 +143,9 @@ class Session:
                 while self.transport.is_active():
                     if self.transport.completion_event.wait(0.1):
                         break
+        for f in self.transport.server_object.forwarders:
+            f.close()
+            f.join()
         self.transport.close()
         logging.info("(%s) session closed", self)
 
