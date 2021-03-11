@@ -102,11 +102,11 @@ def main():
         baseclass=SFTPHandlerBasePlugin
     )
     parser.add_module(
-        '--server-interface',
-        dest='server_interface',
+        '--auth-interface',
+        dest='auth_interface',
         default=ServerInterface,
         baseclass=BaseServerInterface,
-        help='interface for the ssh server'
+        help='interface for authentication'
     )
     parser.add_module(
         '--authenticator',
@@ -172,7 +172,7 @@ def main():
         scp_interface=args.scp_interface,
         sftp_interface=args.sftp_interface,
         sftp_handler=args.sftp_handler,
-        server_interface=args.server_interface,
+        authentication_interface=args.auth_interface,
         authenticator=args.authenticator,
         transparent=args.transparent,
         args=args
