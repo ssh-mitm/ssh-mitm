@@ -246,6 +246,8 @@ class ProxyTunnelForwarder(ForwardClient):
 
         while self.active:
             if self.chanid in self.transport.channels_seen.keys():
+                # when the ssh-client is using the proxyjump feature (-W) no direct ssh-shell will be requested by the
+                # client and stdin and stdout is connected to the master channel
                 from_local = self.session.channel
                 break
             logging.debug(self.transport.channels_seen)
