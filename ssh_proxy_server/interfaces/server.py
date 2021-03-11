@@ -233,19 +233,17 @@ class ServerInterface(BaseServerInterface):
             logging.exception("Could not stop forward.")
 
     def check_channel_direct_tcpip_request(self, chanid, origin, destination):
-        # TODO: Make work
-        logging.info(
-            "channel_direct_tcpip_request: chanid=%s, origin=%s, destination=%s",
-            chanid, origin, destination
-        )
         username = self.session.transport.get_username()
         ex = {'username': username}
-
-        logging.debug("Setting direct connection from %s to %s for %s.", origin, destination, username, extra=ex)
+        logging.info(
+            "channel_direct_tcpip_request: chanid=%s, origin=%s, destination=%s, username=%s",
+            chanid, origin, destination, username
+        )
 
         try:
             f = proxytunnel.ProxyTunnelForwarder(self.session, chanid, origin, destination)
             self.forwarders.append(f)
+            # TODO: look at cleanup
         except Exception:
             logging.exception("Could not setup forward from %s to %s.", origin, destination, extra=ex)
             return paramiko.OPEN_FAILED_CONNECT_FAILED

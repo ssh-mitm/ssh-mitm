@@ -16,6 +16,7 @@ class ProxyTunnelForwarder(TunnelForwarder):
         self.chanid = chanid
         self.origin = origin
         self.destination = destination
+        logging.debug("Forwarding direct-tcpip request (%s -> %s) to remote", self.origin, self.destination)
         remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, self.origin)
         super(ProxyTunnelForwarder, self).__init__(None, remote_ch)
 
@@ -32,4 +33,3 @@ class ProxyTunnelForwarder(TunnelForwarder):
         if not self.local_ch:
             self.local_ch = self.session.transport.accept(5)
         super(ProxyTunnelForwarder, self).run()
-
