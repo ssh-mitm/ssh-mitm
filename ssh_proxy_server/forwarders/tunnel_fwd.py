@@ -27,22 +27,32 @@ class TunnelForwarder(threading.Thread, BaseTunnelForwarder):
     def tunnel(self, chunk_size=1024):
         """
         Connect a socket and a SSH channel.
-        TODO: Plugin/Interface compatibility can be inserted HERE (or one layer above)
         """
         while True:
             r, w, x = select.select([self.local_ch, self.remote_ch], [], [])
 
             if self.local_ch in r:
                 data = self.local_ch.recv(chunk_size)
+                data = self.handle_data_from_local(data)
                 if len(data) == 0:
                     break
                 self.remote_ch.send(data)
 
             if self.remote_ch in r:
                 data = self.remote_ch.recv(chunk_size)
+                data = self.handle_data_from_remote(data)
                 if len(data) == 0:
                     break
                 self.local_ch.send(data)
+
+    def handle_data(self, data):
+        return data
+
+    def handle_data_from_remote(self, data):
+        return self.handle_data(data)
+
+    def handle_data_from_local(self, data):
+        return self.handle_data(data)
 
     def close(self):
         close_channel(self.local_ch)
