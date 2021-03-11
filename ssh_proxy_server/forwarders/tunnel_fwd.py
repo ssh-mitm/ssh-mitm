@@ -55,13 +55,13 @@ class TunnelForwarder(threading.Thread, BaseTunnelForwarder):
         return self.handle_data(data)
 
     def close(self):
-        close_channel(self.local_ch)
-        close_channel(self.remote_ch)
+        self.close_channel(self.local_ch)
+        self.close_channel(self.remote_ch)
 
-def close_channel(channel):
-    channel.lock.acquire()
-    if not channel.closed:
-        channel.lock.release()
-        channel.close()
-    if channel.lock.locked():
-        channel.lock.release()
+    def close_channel(self, channel):
+        channel.lock.acquire()
+        if not channel.closed:
+            channel.lock.release()
+            channel.close()
+        if channel.lock.locked():
+            channel.lock.release()
