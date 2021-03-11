@@ -41,6 +41,8 @@ import select
 import threading
 import socketserver
 
+import paramiko
+
 
 class ForwardServer(socketserver.ThreadingTCPServer, threading.Thread):
     """
@@ -222,6 +224,43 @@ class ForwardClient(threading.Thread):
         if join:
             self.join()
 
+class ProxyTunnelForwarder(ForwardClient):
+    # TODO: Make a modular tunnel forwarder out of this whole file
+    """
+    Open direct_tcpip channel to remote and tell it to open a direct_tcpip channel to the destination
+    use tunnel(chan, chan) to do so
+    """
+
+    def __init__(self, transport, chanid, chan_remote, cleaner, session):
+        threading.Thread.__init__(self)
+        self.transport = transport
+        self.chanid = chanid
+        self.cleaner = cleaner
+        self.to_remote = chan_remote
+        self.session = session
+
+    def run(self):
+        self.lock.acquire()
+        self.active = True
+        self.lock.release()
+
+        while self.active:
+            from_local = self.transport.accept(5)
+            if from_local is None:
+                from_local = self.session.channel
+                logging.debug("Jumphost channel [%s]", from_local)
+                break
+
+        try:
+            tunnel(self.to_remote, from_local)
+        except Exception:
+            logging.exception("Tunnel exception with peer")
+
+        self.lock.acquire()
+        self.active = False
+        self.lock.release()
+
+        self.cleaner.set_event()
 
 class Cleaner(threading.Thread):
     """

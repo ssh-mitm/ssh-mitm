@@ -113,6 +113,7 @@ class Session:
             if not self.running:
                 self.transport.close()
                 return False
+        logging.debug("Opened master channel [%s]", self.channel)
 
         if not self.channel:
             logging.error('(%s) session error opening channel!', self)
@@ -146,7 +147,7 @@ class Session:
                     if self.transport.completion_event.wait(0.1):
                         break
         self.transport.close()
-        logging.debug("(%s) session closed", self)
+        logging.info("(%s) session closed", self)
 
     def __str__(self):
         return self.name

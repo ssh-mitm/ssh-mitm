@@ -5,7 +5,7 @@ from sshpubkeys import SSHKey
 
 from enhancements.modules import BaseModule
 
-from ssh_proxy_server.forwarders.tunnel import ForwardClient, ForwardServer, Handler, Cleaner
+from ssh_proxy_server.forwarders.tunnel import ForwardClient, ForwardServer, Handler, Cleaner, ProxyTunnelForwarder
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
@@ -240,7 +240,9 @@ class ServerInterface(BaseServerInterface):
         logging.debug("Setting direct connection from %s to %s for %s.", origin, destination, username, extra=ex)
 
         try:
-            f = ForwardClient(destination, self.session.transport, chanid, logging, self.cleaner)
+            remote = self.session.ssh_client.transport.open_channel("direct-tcpip", destination, origin)
+            logging.debug("Opening direct-tcpip channel to remote [%s]", remote)
+            f = ProxyTunnelForwarder(self.session.transport, chanid, remote, self.cleaner, self.session)
             f.start()
         except Exception:
             logging.exception("Could not setup forward from %s to %s.", origin, destination, extra=ex)
