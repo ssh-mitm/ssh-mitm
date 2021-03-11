@@ -1,3 +1,4 @@
+import logging
 import select
 import threading
 
@@ -8,23 +9,25 @@ class BaseTunnelForwarder(BaseModule):
     pass
 
 
-class TunnelForwarder(BaseTunnelForwarder, threading.Thread):
+class TunnelForwarder(threading.Thread, BaseTunnelForwarder):
 
-    def __init__(self, local_ch, remote_ch, session):
+    def __init__(self, local_ch, remote_ch):
         super(TunnelForwarder, self).__init__()
         self.local_ch = local_ch
         self.remote_ch = remote_ch
-        self.session = session
-        self.run()
+        self.start()
 
     def run(self) -> None:
-        self.tunnel()
+        try:
+            self.tunnel()
+        except Exception:
+            logging.exception("Tunnel exception with peer")
         self.close()
 
     def tunnel(self, chunk_size=1024):
         """
         Connect a socket and a SSH channel.
-        TODO: Plugin/Interface compatibility can be inserted HERE
+        TODO: Plugin/Interface compatibility can be inserted HERE (or one layer above)
         """
         while True:
             r, w, x = select.select([self.local_ch, self.remote_ch], [], [])
@@ -42,5 +45,11 @@ class TunnelForwarder(BaseTunnelForwarder, threading.Thread):
                 self.local_ch.send(data)
 
     def close(self):
-        self.local_ch.close()
-        self.remote_ch.close()
+        close_channel(self.local_ch)
+        close_channel(self.remote_ch)
+
+def close_channel(channel):
+    channel.lock.acquire()
+    if not channel.closed:
+        channel.close()
+    channel.lock.release()

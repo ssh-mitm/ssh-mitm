@@ -6,6 +6,7 @@ from sshpubkeys import SSHKey
 from enhancements.modules import BaseModule
 
 from ssh_proxy_server.forwarders.tunnel import ForwardClient, ForwardServer, Handler, Cleaner, ProxyTunnelForwarder
+from ssh_proxy_server.plugins.tunnel import proxytunnel
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
@@ -21,6 +22,7 @@ class ServerInterface(BaseServerInterface):
 
     def __init__(self, session):
         super().__init__(session)
+        self.forwarders = []
         self.forwards = {}
         self.cleaner = Cleaner()
         self.cleaner.start()
@@ -174,6 +176,7 @@ class ServerInterface(BaseServerInterface):
 
     def check_port_forward_request(self, address, port):
         """
+        TODO: Fix
         Note that the if the client requested the port, we must handle it or
         return false.
         Only if it requested 0 as port we can open a random port (actually the
@@ -230,6 +233,7 @@ class ServerInterface(BaseServerInterface):
             logging.exception("Could not stop forward.")
 
     def check_channel_direct_tcpip_request(self, chanid, origin, destination):
+        # TODO: Make work
         logging.info(
             "channel_direct_tcpip_request: chanid=%s, origin=%s, destination=%s",
             chanid, origin, destination
@@ -240,10 +244,8 @@ class ServerInterface(BaseServerInterface):
         logging.debug("Setting direct connection from %s to %s for %s.", origin, destination, username, extra=ex)
 
         try:
-            remote = self.session.ssh_client.transport.open_channel("direct-tcpip", destination, origin)
-            logging.debug("Opening direct-tcpip channel to remote [%s]", remote)
-            f = ProxyTunnelForwarder(self.session.transport, chanid, remote, self.cleaner, self.session)
-            f.start()
+            f = proxytunnel.ProxyTunnelForwarder(self.session, chanid, origin, destination)
+            self.forwarders.append(f)
         except Exception:
             logging.exception("Could not setup forward from %s to %s.", origin, destination, extra=ex)
             return paramiko.OPEN_FAILED_CONNECT_FAILED

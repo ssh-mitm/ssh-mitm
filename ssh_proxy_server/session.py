@@ -105,7 +105,7 @@ class Session:
         event = threading.Event()
         self.transport.start_server(
             event=event,
-            server=self.proxyserver.authentication_interface(self)
+            server=self.proxyserver.server_interface(self)
         )
 
         while not self.channel:

@@ -30,7 +30,7 @@ class SSHProxyServer:
         scp_interface=None,
         sftp_interface=None,
         sftp_handler=None,
-        authentication_interface=None,
+        server_interface=None,
         authenticator=None,
         transparent=False,
         args=None
@@ -53,8 +53,7 @@ class SSHProxyServer:
         self.scp_interface = scp_interface
         self.sftp_handler = sftp_handler
         self.sftp_interface = self.sftp_handler.get_interface() or sftp_interface
-        # Server Interface
-        self.authentication_interface = authentication_interface
+        self.server_interface = server_interface
         self.authenticator = authenticator
         self.transparent = transparent
 

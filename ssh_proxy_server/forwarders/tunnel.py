@@ -225,7 +225,6 @@ class ForwardClient(threading.Thread):
             self.join()
 
 class ProxyTunnelForwarder(ForwardClient):
-    # TODO: Make a modular tunnel forwarder out of this whole file
     """
     Open direct_tcpip channel to remote and tell it to open a direct_tcpip channel to the destination
     use tunnel(chan, chan) to do so
