@@ -224,49 +224,6 @@ class ForwardClient(threading.Thread):
         if join:
             self.join()
 
-class ProxyTunnelForwarder(ForwardClient):
-    """
-    Open direct_tcpip channel to remote and tell it to open a direct_tcpip channel to the destination
-    use tunnel(chan, chan) to do so
-    """
-
-    def __init__(self, transport, chanid, chan_remote, cleaner, session):
-        threading.Thread.__init__(self)
-        self.transport = transport
-        self.chanid = chanid
-        self.cleaner = cleaner
-        self.to_remote = chan_remote
-        self.session = session
-
-    def run(self):
-        self.lock.acquire()
-        self.active = True
-        self.lock.release()
-
-        while self.active:
-            if self.chanid in self.transport.channels_seen.keys():
-                # when the ssh-client is using the proxyjump feature (-W) no direct ssh-shell will be requested by the
-                # client and stdin and stdout is connected to the master channel
-                from_local = self.session.channel
-                break
-            logging.debug(self.transport.channels_seen)
-            from_local = self.transport.accept(10)
-            if from_local is None:
-                continue
-            if from_local.get_id() == self.chanid:
-                break
-
-        try:
-            tunnel(self.to_remote, from_local)
-        except Exception:
-            logging.exception("Tunnel exception with peer")
-
-        self.lock.acquire()
-        self.active = False
-        self.lock.release()
-
-        self.cleaner.set_event()
-
 class Cleaner(threading.Thread):
     """
     Cleans unused threads.

@@ -234,7 +234,6 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_direct_tcpip_request(self, chanid, origin, destination):
         username = self.session.transport.get_username()
-        ex = {'username': username}
         logging.info(
             "channel_direct_tcpip_request: chanid=%s, origin=%s, destination=%s, username=%s",
             chanid, origin, destination, username
@@ -245,7 +244,7 @@ class ServerInterface(BaseServerInterface):
             self.forwarders.append(f)
             # TODO: look at cleanup
         except Exception:
-            logging.exception("Could not setup forward from %s to %s.", origin, destination, extra=ex)
+            logging.exception("Could not setup forward from %s to %s.", origin, destination)
             return paramiko.OPEN_FAILED_CONNECT_FAILED
 
         return paramiko.OPEN_SUCCEEDED
