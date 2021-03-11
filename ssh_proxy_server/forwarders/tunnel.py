@@ -245,10 +245,14 @@ class ProxyTunnelForwarder(ForwardClient):
         self.lock.release()
 
         while self.active:
-            from_local = self.transport.accept(5)
-            if from_local is None:
+            if self.chanid in self.transport.channels_seen.keys():
                 from_local = self.session.channel
-                logging.debug("Jumphost channel [%s]", from_local)
+                break
+            logging.debug(self.transport.channels_seen)
+            from_local = self.transport.accept(10)
+            if from_local is None:
+                continue
+            if from_local.get_id() == self.chanid:
                 break
 
         try:
