@@ -49,6 +49,7 @@ class TunnelForwarder(threading.Thread, BaseTunnelForwarder):
         close_channel(self.remote_ch)
 
 def close_channel(channel):
+    # TODO: format all channel closes like this
     channel.lock.acquire()
     if not channel.closed:
         channel.close()

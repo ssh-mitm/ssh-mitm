@@ -6,8 +6,9 @@ from ssh_proxy_server.forwarders.tunnel_fwd import TunnelForwarder
 
 class ProxyTunnelForwarder(TunnelForwarder):
     """
-    Open direct_tcpip channel to remote and tell it to open a direct_tcpip channel to the destination
-    then forward traffic between these 2 channels on the ssh-mitm
+    Open direct-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
+    Then forward traffic between channels connecting to local and to remote through the ssh-mitm
+        - supports Proxyjump (-W / -J) feature
     """
 
     def __init__(self, session, chanid, origin, destination):
@@ -20,18 +21,15 @@ class ProxyTunnelForwarder(TunnelForwarder):
 
     def run(self) -> None:
         # Channel setup in thread start - so that transport thread can return to the session thread
-        local_ch = None
+        # Wait for master channel establishment
         while not self.session.transport.channels_seen:
-            time.sleep(0.3)
-        if self.chanid in self.session.transport.channels_seen.keys():
-            # when the ssh-client is using the proxyjump feature (-W) no direct ssh-shell will be requested by the
-            # client and stdin and stdout is connected to the master channel
-            local_ch = self.session.channel
-        logging.debug(self.session.transport.channels_seen)
-        if not local_ch:
-            local_ch = self.session.transport.accept(5)
-        self.local_ch = local_ch
-        logging.debug(local_ch)
+            time.sleep(0.1)
+        if self.chanid in self.session.transport.channels_seen.keys():  # chanid: 0
+            # Proxyjump (-W / -J) will use the already established master channel
+            # stdin and stdout of that channel have to be forwarded over to the ssh-client direct-tcpip channel
+            self.local_ch = self.session.channel
+            logging.debug("Proxyjump: forwarding traffic through master channel [chanid %s]", self.chanid)
+        if not self.local_ch:
+            self.local_ch = self.session.transport.accept(5)
         super(ProxyTunnelForwarder, self).run()
-        # TODO: Fix close (Jumphost RC)
 
