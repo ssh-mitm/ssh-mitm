@@ -52,8 +52,10 @@ class BaseTunnelForwarder(threading.Thread, BaseModule):
         return self.handle_data(data)
 
     def close(self):
-        self.close_channel(self.local_ch)
-        self.close_channel(self.remote_ch)
+        if self.local_ch:
+            self.close_channel(self.local_ch)
+        if self.remote_ch:
+            self.close_channel(self.remote_ch)
 
     def close_channel(self, channel):
         channel.lock.acquire()
@@ -66,11 +68,12 @@ class BaseTunnelForwarder(threading.Thread, BaseModule):
 
 class TunnelForwarder(BaseTunnelForwarder):
     """
-    TODO: Make a plugin that also opens a local port on the ssh-mitm over witch the server can send requests
-    Open direct-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
+    TODO: Make a plugin that also opens a local port on the ssh-mitm over witch the server can send requests (prob ServerInterface)
+    Open direct/forwarded-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
     Then forward traffic between channels connecting to local and to remote through the ssh-mitm
         - supports Proxyjump (-W / -J) feature
         - support client side port forwarding (-L)
+        - support remote side port forwarding (-R)
     """
 
     # mode 0 = -L; mode 1 = -R
@@ -83,7 +86,7 @@ class TunnelForwarder(BaseTunnelForwarder):
         self.origin = origin
         self.destination = destination
         self.mode = mode
-        if mode == self.LOCAL_FWD:
+        if self.mode == self.LOCAL_FWD:
             logging.debug("Forwarding direct-tcpip request (%s -> %s) to remote", self.origin, self.destination)
             remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, self.origin)
             super(TunnelForwarder, self).__init__(None, remote_ch)

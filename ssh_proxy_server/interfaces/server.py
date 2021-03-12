@@ -174,7 +174,6 @@ class ServerInterface(BaseServerInterface):
 
     def check_port_forward_request(self, address, port):
         """
-        TODO: Fix
         Note that the if the client requested the port, we must handle it or
         return false.
         Only if it requested 0 as port we can open a random port (actually the
@@ -183,18 +182,21 @@ class ServerInterface(BaseServerInterface):
         """
         class Handler:
 
-            def __init__(self, session):
+            def __init__(self, session, server_interface):
                 self.session = session
+                self.server_interface = server_interface
 
             def handler(self, channel, origin, destination):
-                logging.info(
-                    "handle back request:origin=%s, destination=%s,",
-                    origin, destination
-                )
-                TunnelForwarder(self.session, channel, origin, destination, TunnelForwarder.REMOTE_FWD)
+                logging.info("handle back request:origin=%s, destination=%s", origin, destination)
+                try:
+                    f = TunnelForwarder(self.session, channel, origin, destination, TunnelForwarder.REMOTE_FWD)
+                    self.server_interface.forwarders.append(f)
+                except paramiko.ssh_exception.ChannelException:
+                    channel.close()
+                    logging.error("Could not setup forward from %s to %s.", origin, destination)
+
         logging.info("check_port_forward_request: address=%s, port=%s", address, port)
-        handler = Handler(self.session)
-        return self.session.ssh_client.transport.request_port_forward(address, port, handler.handler)
+        return self.session.ssh_client.transport.request_port_forward(address, port, Handler(self.session,  self).handler)
 
     def cancel_port_forward_request(self, address, port):
         logging.info(
@@ -218,8 +220,8 @@ class ServerInterface(BaseServerInterface):
         try:
             f = TunnelForwarder(self.session, Channel(chanid), origin, destination, TunnelForwarder.LOCAL_FWD)
             self.forwarders.append(f)
-        except Exception:
-            logging.exception("Could not setup forward from %s to %s.", origin, destination)
+        except paramiko.ssh_exception.ChannelException:
+            logging.error("Could not setup forward from %s to %s.", origin, destination)
             return paramiko.OPEN_FAILED_CONNECT_FAILED
 
         return paramiko.OPEN_SUCCEEDED
