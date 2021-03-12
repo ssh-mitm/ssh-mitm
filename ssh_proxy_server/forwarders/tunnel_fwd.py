@@ -10,6 +10,7 @@ class BaseTunnelForwarder(BaseModule):
 
 
 class TunnelForwarder(threading.Thread, BaseTunnelForwarder):
+    # TODO: Make this BaseTunnelForwrader and Proxytunnel this
 
     def __init__(self, local_ch, remote_ch):
         super(TunnelForwarder, self).__init__()

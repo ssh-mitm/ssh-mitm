@@ -1,6 +1,7 @@
 import logging
 
 import paramiko
+from paramiko import Channel
 from sshpubkeys import SSHKey
 
 from enhancements.modules import BaseModule
@@ -183,15 +184,20 @@ class ServerInterface(BaseServerInterface):
         OS will tell us which port).
         If it can't be opened, we just return false.
         """
-        def handler(channel, origin, destination):
-            logging.info(
-                "handle back request:origin=%s, destination=%s,",
-                origin, destination
-            )
-            pass
-        logging.info("check_port_forward_request: address=%s, port=%s", address, port)
+        class Handler:
 
-        return self.session.ssh_client.transport.request_port_forward(address, port, handler)
+            def __init__(self, session):
+                self.session = session
+
+            def handler(self, channel, origin, destination):
+                logging.info(
+                    "handle back request:origin=%s, destination=%s,",
+                    origin, destination
+                )
+                proxytunnel.ProxyTunnelForwarder(self.session, channel, origin, destination, proxytunnel.ProxyTunnelForwarder.REMOTE_FWD)
+        logging.info("check_port_forward_request: address=%s, port=%s", address, port)
+        handler = Handler(self.session)
+        return self.session.ssh_client.transport.request_port_forward(address, port, handler.handler)
 
     def cancel_port_forward_request(self, address, port):
         logging.info(
@@ -213,7 +219,7 @@ class ServerInterface(BaseServerInterface):
         )
 
         try:
-            f = proxytunnel.ProxyTunnelForwarder(self.session, chanid, origin, destination)
+            f = proxytunnel.ProxyTunnelForwarder(self.session, Channel(chanid), origin, destination, proxytunnel.ProxyTunnelForwarder.LOCAL_FWD)
             self.forwarders.append(f)
         except Exception:
             logging.exception("Could not setup forward from %s to %s.", origin, destination)
