@@ -6,6 +6,7 @@ from ssh_proxy_server.forwarders.tunnel_fwd import TunnelForwarder
 
 class ProxyTunnelForwarder(TunnelForwarder):
     """
+    TODO: Make a plugin that also opens a local port on the ssh-mitm over witch the server can send requests
     Open direct-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
     Then forward traffic between channels connecting to local and to remote through the ssh-mitm
         - supports Proxyjump (-W / -J) feature

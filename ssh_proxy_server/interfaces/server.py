@@ -183,37 +183,15 @@ class ServerInterface(BaseServerInterface):
         OS will tell us which port).
         If it can't be opened, we just return false.
         """
+        def handler(channel, origin, destination):
+            logging.info(
+                "handle back request:origin=%s, destination=%s,",
+                origin, destination
+            )
+            pass
         logging.info("check_port_forward_request: address=%s, port=%s", address, port)
-        f = None
-        try:
-            f = ForwardServer(
-                (address, port), Handler, self.session.transport
-            )
-            f.start()
-        except Exception:
-            # "port can't be opened" included here
-            if f is not None:
-                f.shutdown()
-            logging.exception("Could not start forward.")
-            return False
 
-        ourport = f.socket.getsockname()[1]
-
-        # Should never happen, but check it the same
-        if (port != 0) and (ourport != port):
-            f.shutdown()
-            logging.warning(
-                "Port mismatch: "
-            )
-            return False
-        logging.info(
-            "Forward for opened successfully."
-        )
-
-        self.forwards[(address, ourport)] = f
-
-        # Paramiko requires in the cases the client doesn't need it, too
-        return ourport
+        return self.session.ssh_client.transport.request_port_forward(address, port, handler)
 
     def cancel_port_forward_request(self, address, port):
         logging.info(
@@ -225,12 +203,7 @@ class ServerInterface(BaseServerInterface):
             "Cancel port forward request on %s:%i by %s.", address,
             port, username, extra={'username': username}
         )
-
-        try:
-            self.forwards[(address, port)].shutdown()
-            del self.forwards[(address, port)]
-        except Exception:
-            logging.exception("Could not stop forward.")
+        self.session.ssh_client.transport.cancel_port_forward(address, port)
 
     def check_channel_direct_tcpip_request(self, chanid, origin, destination):
         username = self.session.transport.get_username()
@@ -242,7 +215,6 @@ class ServerInterface(BaseServerInterface):
         try:
             f = proxytunnel.ProxyTunnelForwarder(self.session, chanid, origin, destination)
             self.forwarders.append(f)
-            # TODO: look at cleanup
         except Exception:
             logging.exception("Could not setup forward from %s to %s.", origin, destination)
             return paramiko.OPEN_FAILED_CONNECT_FAILED
