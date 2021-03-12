@@ -1,277 +1,108 @@
-# TunnelServern - A SSH Tunnel implementation for and based on Paramiko.
-#
-# Copyright (C) 2014 Pier Angelo Vendrame <vogliadifarniente@gmail.com>
-#
-# This file is based on some of Paramiko examples: demo_server.py, forward.py,
-# rforward.py.
-# Original copyright (C) 2003-2007  Robey Pointer <robeypointer@gmail.com>
-#
-# This is free software; you can redistribute it and/or modify it under the
-# terms of the GNU Lesser General Public License as published by the Free
-# Software Foundation; either version 2.1 of the License, or (at your option)
-# any later version.
-#
-# Paramiko and TunnelServer are distributed in the hope that it will be useful,
-# but WITHOUT ANY WARRANTY; without even the implied warranty of MERCHANTABILITY
-# or FITNESS FOR A PARTICULAR PURPOSE. See the GNU Lesser General Public License
-# for more details.
-#
-# You should have received a copy of the GNU Lesser General Public License
-# along with this software; if not, write to the Free Software Foundation, Inc.,
-# 59 Temple Place, Suite 330, Boston, MA  02111-1307  USA.
-#
-# This is an implementation of the tunnel handler for a SSH server based on
-# Paramiko.
-#
-# Please note that this isn't a complete server: it won't accept any connection,
-# as standard Paramiko ServerInterface.
-# Furthermore it accepts shell requests, but it only sends a message which tells
-# that actually shell access is not premitted.
-#
-# Another note about terminology:
-# * forward is Third-Party --> SSH Server --> SSH Client (-R on OpenSSH client);
-# * direct is SSH Client --> SSH Server --> Third-Party (-L on OpenSSH client).
-# You should use forward when the SSH Client wants to provide a service, whereas
-# you should use direct to bypass firewall when connecting to another service.
-
-
 import logging
-import socket
 import select
 import threading
-import socketserver
+import time
 
-import paramiko
-
-
-class ForwardServer(socketserver.ThreadingTCPServer, threading.Thread):
-    """
-    When forwarding a port, we have to act as a server.
-    Therefore we use Python standard TCP Server and threads to listen for
-    connections to forward, which is what we do with this class.
-    """
-    daemon = True  # This is for Thread
-    daemon_threads = daemon  # This is for ThreadingTCPServer
-    allow_reuse_address = True
-
-    def __init__(self, server_address, RequestHandlerClass, transport, bind_and_activate=True):
-        """
-        Initializes the forwarder.
-        We actually save the parameters.
-        """
-        socketserver.ThreadingTCPServer.__init__(self, server_address, RequestHandlerClass, bind_and_activate)
-        threading.Thread.__init__(self)
-
-        # Save the original server address, otherwise OpenSSH will complain.
-        # We have some freedom on port, so make sure it is correct.
-        self.bind_address = (server_address[0], self.socket.getsockname()[1])
-
-        self.transport = transport
-
-    def run(self):
-        """
-        Start serving.
-        This method actually have been defined to comply threading.Thread.
-        """
-        self.serve_forever()
-
-    def shutdown(self, join=True):
-        """
-        Shutdowns the forwarding and by default join the thread.
-        """
-        socketserver.ThreadingTCPServer.shutdown(self)
-        if join:
-            self.join()
-
-    def __del__(self):
-        """
-        The destructor: makes sure the forwarding is closed.
-        """
-        self.shutdown()
+from enhancements.modules import BaseModule
 
 
-def tunnel(sock, chan, chunk_size=1024):
-    """
-    Connect a socket and a SSH channel.
-    """
-    while True:
-        r, w, x = select.select([sock, chan], [], [])
+class BaseTunnelForwarder(threading.Thread, BaseModule):
 
-        if sock in r:
-            data = sock.recv(chunk_size)
-            if len(data) == 0:
-                break
-            chan.send(data)
+    def __init__(self, local_ch, remote_ch):
+        super(BaseTunnelForwarder, self).__init__()
+        self.local_ch = local_ch
+        self.remote_ch = remote_ch
+        self.start()
 
-        if chan in r:
-            data = chan.recv(chunk_size)
-            if len(data) == 0:
-                break
-            sock.send(data)
-
-    chan.close()
-    sock.close()
-
-
-class Handler(socketserver.BaseRequestHandler):
-    """
-    Handler for Python standard SocketServer.
-    Note that we need our server class (i. e. ForwardServer), otherwise we don't
-    handle the request
-    """
-
-    def handle(self):
-        """
-        Handles a request.
-        """
-        if not isinstance(self.server, ForwardServer):
-            # We only want our server!
-            return False
-
-        transport = self.server.transport
-        peer = self.request.getpeername()
-        logging.debug(
-            "Forward request by peer %s, username: %s.", peer,
-            transport.get_username()
-        )
-
+    def run(self) -> None:
         try:
-            # bind_address is a custom variable, but if somebody else used this
-            # handler, an exception will be raised.
-            # The same if the SSH client denies the permission to open the channel.
-            chan = transport.open_forwarded_tcpip_channel(
-                self.client_address, self.server.bind_address
-            )
-            logging.debug("Opened channel %i.", chan.get_id())
+            self.tunnel()
         except Exception:
-            logging.exception("Could not open the new channel.")
+            logging.exception("Tunnel exception with peer")
+        self.close()
 
-        try:
-            logging.debug("Start tunnelling for %s.", peer)
-            tunnel(self.request, chan)
-            logging.debug("Tunnel for %s ended correctly.", peer)
-        except Exception:
-            logging.exception("An error occurred during tunneling for %s.", peer)
-
-
-class ForwardClient(threading.Thread):
-    """
-    This class handles the direct TCP-IP connection feature of SSH.
-    It implements a thread to do so, however it should be closed by a cleaner.
-    """
-
-    daemon = True
-    chanid = 0
-    active = False
-    lock = threading.Lock()
-    cleaner = None
-
-    def __init__(self, address, transport, chanid, logger, cleaner):
-        threading.Thread.__init__(self)
-
-        self.socket = socket.create_connection(address)
-        self.transport = transport
-        self.chanid = chanid
-        self.cleaner = cleaner
-
-        cleaner.add_thread(self)
-
-    def run(self):
+    def tunnel(self, chunk_size=1024):
         """
-        Waits for the SSH direct connection channel and start redirect.
-        After that it has handled its channel, it will return and the thread will
-        wait to be joined.
-        """
-        self.lock.acquire()
-        self.active = True
-        self.lock.release()
-
-        while self.active:
-            chan = self.transport.accept(10)
-            if chan is None:
-                continue
-            if chan.get_id() == self.chanid:
-                break
-
-        peer = self.socket.getpeername()
-        try:
-            tunnel(self.socket, chan)
-        except Exception:
-            logging.exception("Tunnel exception with peer %s.", peer)
-
-        self.lock.acquire()
-        self.active = False
-        self.lock.release()
-
-        self.cleaner.set_event()
-
-    def shutdown(self, join=True):
-        """
-        Shutdown the thread as soon as possible.
-        Note that if it is sending data, it will wait for the channel or to
-        socket to be closed, and it will block the caller!
-        By default this method joins the thread, too.
-        """
-        logging.debug(
-            "Shutting down ForwardClient for channel %i.",
-            self.chanid
-        )
-
-        self.lock.acquire()
-        self.active = False
-        self.lock.release()
-
-        if join:
-            self.join()
-
-class Cleaner(threading.Thread):
-    """
-    Cleans unused threads.
-    """
-    # The lock used to add and delete threads
-    lock = threading.Lock()
-
-    # The event to set to ask thread deletion
-    event = threading.Event()
-
-    # The threads to monitor
-    threads = []
-
-    # We run as a demon thread
-    daemon = True
-
-    def run(self):
-        """
-        Wait for an event to clean
+        Connect two SSH channels (socket like objects).
         """
         while True:
-            self.event.wait()
+            r, w, x = select.select([self.local_ch, self.remote_ch], [], [])
 
-            for thread in self.threads:
-                if not thread.active:
-                    thread.shutdown()
+            if self.local_ch in r:
+                data = self.local_ch.recv(chunk_size)
+                data = self.handle_data_from_local(data)
+                if len(data) == 0:
+                    break
+                self.remote_ch.send(data)
 
-                    self.lock.acquire()
-                    try:
-                        # It seems that it is removed afer the next connection...
-                        # Misteries of GC...
-                        self.threads.remove(thread)
-                    except Exception:
-                        logging.debug('unable to remove port forward thread')
-                    self.lock.release()
+            if self.remote_ch in r:
+                data = self.remote_ch.recv(chunk_size)
+                data = self.handle_data_from_remote(data)
+                if len(data) == 0:
+                    break
+                self.local_ch.send(data)
 
-            self.event.clear()
+    def handle_data(self, data):
+        return data
 
-    def add_thread(self, thread):
-        """
-        Add a thread to the threads list.
-        """
-        self.lock.acquire()
-        self.threads.append(thread)
-        self.lock.release()
+    def handle_data_from_remote(self, data):
+        return self.handle_data(data)
 
-    def set_event(self):
-        """
-        Ask for deletion by setting the event.
-        """
-        self.event.set()
+    def handle_data_from_local(self, data):
+        return self.handle_data(data)
+
+    def close(self):
+        self.close_channel(self.local_ch)
+        self.close_channel(self.remote_ch)
+
+    def close_channel(self, channel):
+        channel.lock.acquire()
+        if not channel.closed:
+            channel.lock.release()
+            channel.close()
+        if channel.lock.locked():
+            channel.lock.release()
+
+
+class TunnelForwarder(BaseTunnelForwarder):
+    """
+    TODO: Make a plugin that also opens a local port on the ssh-mitm over witch the server can send requests
+    Open direct-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
+    Then forward traffic between channels connecting to local and to remote through the ssh-mitm
+        - supports Proxyjump (-W / -J) feature
+        - support client side port forwarding (-L)
+    """
+
+    # mode 0 = -L; mode 1 = -R
+    LOCAL_FWD = 0
+    REMOTE_FWD = 1
+
+    def __init__(self, session, channel, origin, destination, mode):
+        self.session = session
+        self.channel = channel
+        self.origin = origin
+        self.destination = destination
+        self.mode = mode
+        if mode == self.LOCAL_FWD:
+            logging.debug("Forwarding direct-tcpip request (%s -> %s) to remote", self.origin, self.destination)
+            remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, self.origin)
+            super(TunnelForwarder, self).__init__(None, remote_ch)
+        elif mode == self.REMOTE_FWD:
+            logging.debug("Opening forwarded-tcpip channel (%s -> %s) to client", self.origin, self.destination)
+            local_ch = self.session.transport.open_channel("forwarded-tcpip", self.destination, self.origin)
+            super(TunnelForwarder, self).__init__(local_ch, channel)
+
+    def run(self) -> None:
+        # Channel setup in thread start - so that transport thread can return to the session thread
+        # Wait for master channel establishment
+        if self.mode == self.LOCAL_FWD:
+            while not self.session.transport.channels_seen:
+                time.sleep(0.1)
+            if self.channel.get_id() in self.session.transport.channels_seen.keys():  # chanid: 0
+                # Proxyjump (-W / -J) will use the already established master channel
+                # stdin and stdout of that channel have to be forwarded over to the ssh-client direct-tcpip channel
+                self.local_ch = self.session.channel
+                logging.debug("Proxyjump: forwarding traffic through master channel [chanid %s]", self.channel.get_id())
+            if not self.local_ch:
+                self.local_ch = self.session.transport.accept(5)
+        super(TunnelForwarder, self).run()

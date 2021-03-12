@@ -6,8 +6,7 @@ from sshpubkeys import SSHKey
 
 from enhancements.modules import BaseModule
 
-from ssh_proxy_server.forwarders.tunnel import ForwardServer, Handler, Cleaner
-from ssh_proxy_server.plugins.tunnel import proxytunnel
+from ssh_proxy_server.forwarders.tunnel import TunnelForwarder
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
@@ -25,8 +24,6 @@ class ServerInterface(BaseServerInterface):
         super().__init__(session)
         self.forwarders = []
         self.forwards = {}
-        self.cleaner = Cleaner()
-        self.cleaner.start()
 
     @classmethod
     def parser_arguments(cls):
@@ -194,7 +191,7 @@ class ServerInterface(BaseServerInterface):
                     "handle back request:origin=%s, destination=%s,",
                     origin, destination
                 )
-                proxytunnel.ProxyTunnelForwarder(self.session, channel, origin, destination, proxytunnel.ProxyTunnelForwarder.REMOTE_FWD)
+                TunnelForwarder(self.session, channel, origin, destination, TunnelForwarder.REMOTE_FWD)
         logging.info("check_port_forward_request: address=%s, port=%s", address, port)
         handler = Handler(self.session)
         return self.session.ssh_client.transport.request_port_forward(address, port, handler.handler)
@@ -219,7 +216,7 @@ class ServerInterface(BaseServerInterface):
         )
 
         try:
-            f = proxytunnel.ProxyTunnelForwarder(self.session, Channel(chanid), origin, destination, proxytunnel.ProxyTunnelForwarder.LOCAL_FWD)
+            f = TunnelForwarder(self.session, Channel(chanid), origin, destination, TunnelForwarder.LOCAL_FWD)
             self.forwarders.append(f)
         except Exception:
             logging.exception("Could not setup forward from %s to %s.", origin, destination)
