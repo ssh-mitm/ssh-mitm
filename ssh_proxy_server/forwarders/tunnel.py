@@ -53,12 +53,18 @@ class TunnelBaseForwarder(threading.Thread, BaseModule):
         return self.handle_data(data)
 
     def close(self):
+        """
+        Comparable with Channels and Sockets
+        """
         if self.local_ch:
             self.close_channel(self.local_ch)
         if self.remote_ch:
             self.close_channel(self.remote_ch)
 
     def close_channel(self, channel):
+        if not isinstance(channel, paramiko.Channel):
+            channel.close()
+            return
         channel.lock.acquire()
         if not channel.closed:
             channel.lock.release()
@@ -67,7 +73,7 @@ class TunnelBaseForwarder(threading.Thread, BaseModule):
             channel.lock.release()
 
 
-class ClientTunnelBaseForwarder(TunnelBaseForwarder):
+class ClientTunnelForwarder(TunnelBaseForwarder):
     """
     TODO: Make a plugin that also opens a local port on the ssh-mitm over which the server can send requests (prob ServerInterface)
     Open direct-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
@@ -82,7 +88,7 @@ class ClientTunnelBaseForwarder(TunnelBaseForwarder):
         self.destination = destination
         logging.debug("Forwarding direct-tcpip request (%s -> %s) to remote", self.origin, self.destination)
         remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, self.origin)
-        super(ClientTunnelBaseForwarder, self).__init__(None, remote_ch)
+        super(ClientTunnelForwarder, self).__init__(None, remote_ch)
 
     def run(self) -> None:
         # Channel setup in thread start - so that transport thread can return to the session thread
@@ -96,25 +102,30 @@ class ClientTunnelBaseForwarder(TunnelBaseForwarder):
             logging.debug("Proxyjump: forwarding traffic through master channel [chanid %s]", self.chanid)
         if not self.local_ch:
             self.local_ch = self.session.transport.accept(5)
-        super(ClientTunnelBaseForwarder, self).run()
+        super(ClientTunnelForwarder, self).run()
 
+class ServerTunnelBaseForwarder(BaseModule):
+    pass
 
-class ServerTunnelBaseForwarder(TunnelBaseForwarder):
+class ServerTunnelForwarder(ServerTunnelBaseForwarder):
     """
+    Handles Tunnel forwarding when the server is requesting a tunnel connection
     """
 
-    def __init__(self, session, server_interface):
+    def __init__(self, session, server_interface, destination):
+        super(ServerTunnelBaseForwarder, self).__init__()
         self.session = session
         self.server_interface = server_interface
+        self.destination = destination
 
     def handler(self, channel, origin, destination):
         try:
             logging.debug("Opening forwarded-tcpip channel (%s -> %s) to client", origin, destination)
-            super(ServerTunnelBaseForwarder, self).__init__(
+            f = TunnelBaseForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", destination, origin),
                 channel
             )
-            self.server_interface.forwarders.append(self)
+            self.server_interface.forwarders.append(f)
         except paramiko.ssh_exception.ChannelException:
             channel.close()
             logging.error("Could not setup forward from %s to %s.", origin, destination)

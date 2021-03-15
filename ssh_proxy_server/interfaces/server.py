@@ -1,13 +1,9 @@
 import logging
 
 import paramiko
-from paramiko import Channel
 from sshpubkeys import SSHKey
 
 from enhancements.modules import BaseModule
-
-from ssh_proxy_server.forwarders.tunnel import ClientTunnelBaseForwarder, TunnelBaseForwarder, ServerTunnelBaseForwarder
-
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
 
@@ -180,11 +176,15 @@ class ServerInterface(BaseServerInterface):
         OS will tell us which port).
         If it can't be opened, we just return false.
         """
+        logging.info(
+            "check_port_forward_request: address=%s, port=%s",
+            address, port
+        )
         try:
             return self.session.ssh_client.transport.request_port_forward(
                 address,
                 port,
-                ServerTunnelBaseForwarder(self.session, self).handler
+                self.session.proxyserver.server_tunnel_interface(self.session, self, (address, port)).handler
             )
         except paramiko.ssh_exception.SSHException:
             logging.info("TCP forwarding request denied")
@@ -210,7 +210,7 @@ class ServerInterface(BaseServerInterface):
         )
 
         try:
-            f = ClientTunnelBaseForwarder(self.session, chanid, origin, destination)
+            f = self.session.proxyserver.client_tunnel_interface(self.session, chanid, origin, destination)
             self.forwarders.append(f)
         except paramiko.ssh_exception.ChannelException:
             logging.error("Could not setup forward from %s to %s.", origin, destination)

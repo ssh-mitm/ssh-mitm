@@ -4,6 +4,8 @@ from enhancements.plugins import LogModule
 
 from paramiko import Transport
 
+from ssh_proxy_server.forwarders.tunnel import ServerTunnelBaseForwarder, ClientTunnelForwarder, ServerTunnelForwarder, \
+    TunnelBaseForwarder
 from ssh_proxy_server.server import SSHProxyServer
 
 from ssh_proxy_server.authentication import (
@@ -102,6 +104,20 @@ def main():
         baseclass=SFTPHandlerBasePlugin
     )
     parser.add_module(
+        '--server-tunnel',
+        dest='server_tunnel_interface',
+        default=ServerTunnelForwarder,
+        help='interface to handle tunnels from the server',
+        baseclass=ServerTunnelBaseForwarder
+    )
+    parser.add_module(
+        '--client-tunnel',
+        dest='client_tunnel_interface',
+        default=ClientTunnelForwarder,
+        help='interface to handle tunnels from the client',
+        baseclass=TunnelBaseForwarder
+    )
+    parser.add_module(
         '--auth-interface',
         dest='auth_interface',
         default=ServerInterface,
@@ -172,6 +188,8 @@ def main():
         scp_interface=args.scp_interface,
         sftp_interface=args.sftp_interface,
         sftp_handler=args.sftp_handler,
+        server_tunnel_interface=args.server_tunnel_interface,
+        client_tunnel_interface=args.client_tunnel_interface,
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator,
         transparent=args.transparent,
