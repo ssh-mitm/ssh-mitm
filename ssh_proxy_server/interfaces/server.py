@@ -6,7 +6,7 @@ from sshpubkeys import SSHKey
 
 from enhancements.modules import BaseModule
 
-from ssh_proxy_server.forwarders.tunnel import TunnelForwarder
+from ssh_proxy_server.forwarders.tunnel import ClientTunnelBaseForwarder, TunnelBaseForwarder, ServerTunnelBaseForwarder
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
@@ -180,23 +180,15 @@ class ServerInterface(BaseServerInterface):
         OS will tell us which port).
         If it can't be opened, we just return false.
         """
-        class Handler:
-
-            def __init__(self, session, server_interface):
-                self.session = session
-                self.server_interface = server_interface
-
-            def handler(self, channel, origin, destination):
-                logging.info("handle back request:origin=%s, destination=%s", origin, destination)
-                try:
-                    f = TunnelForwarder(self.session, channel, origin, destination, TunnelForwarder.REMOTE_FWD)
-                    self.server_interface.forwarders.append(f)
-                except paramiko.ssh_exception.ChannelException:
-                    channel.close()
-                    logging.error("Could not setup forward from %s to %s.", origin, destination)
-
-        logging.info("check_port_forward_request: address=%s, port=%s", address, port)
-        return self.session.ssh_client.transport.request_port_forward(address, port, Handler(self.session,  self).handler)
+        try:
+            return self.session.ssh_client.transport.request_port_forward(
+                address,
+                port,
+                ServerTunnelBaseForwarder(self.session, self).handler
+            )
+        except paramiko.ssh_exception.SSHException:
+            logging.info("TCP forwarding request denied")
+            return False
 
     def cancel_port_forward_request(self, address, port):
         logging.info(
@@ -218,7 +210,7 @@ class ServerInterface(BaseServerInterface):
         )
 
         try:
-            f = TunnelForwarder(self.session, Channel(chanid), origin, destination, TunnelForwarder.LOCAL_FWD)
+            f = ClientTunnelBaseForwarder(self.session, chanid, origin, destination)
             self.forwarders.append(f)
         except paramiko.ssh_exception.ChannelException:
             logging.error("Could not setup forward from %s to %s.", origin, destination)
