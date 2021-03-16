@@ -9,23 +9,24 @@ import paramiko
 from ssh_proxy_server.forwarders.tunnel import ServerTunnelForwarder, TunnelForwarder
 
 
-class InjectableServerTunnelForwarder(ServerTunnelForwarder):
+class InjectableClientTunnelForwarder:
     """
-    For each server port forwarding request open a local port to inject traffic into the port-forward
+    Serve out direct-tcpip connections over a session on local ports
     """
 
     @classmethod
     def parser_arguments(cls):
         cls.parser().add_argument(
-            '--tunnel-server-net',
+            '--tunnel-client-dest',
             dest='server_tunnel_net',
             default='127.0.0.1',
-            help='local address/interface where injector sessions are served'
+            help='direct-tcpip address/port combination to forward to (e.g. google.com:80)'
         )
 
+    """
+    Init should occur after master channel establishment
+    """
     def __init__(self, session, server_interface, destination):
-        super(InjectableServerTunnelForwarder, self).__init__(session, server_interface, destination)
-
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.injector_sock.bind((self.args.server_tunnel_net, 0))

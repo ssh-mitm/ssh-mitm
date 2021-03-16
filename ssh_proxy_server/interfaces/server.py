@@ -19,7 +19,6 @@ class ServerInterface(BaseServerInterface):
     def __init__(self, session):
         super().__init__(session)
         self.forwarders = []
-        self.forwards = {}
 
     @classmethod
     def parser_arguments(cls):

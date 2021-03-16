@@ -4,8 +4,6 @@ from enhancements.plugins import LogModule
 
 from paramiko import Transport
 
-from ssh_proxy_server.forwarders.tunnel import ServerTunnelBaseForwarder, ClientTunnelForwarder, ServerTunnelForwarder, \
-    TunnelBaseForwarder
 from ssh_proxy_server.server import SSHProxyServer
 
 from ssh_proxy_server.authentication import (
@@ -33,6 +31,12 @@ from ssh_proxy_server.interfaces.sftp import (
     SFTPProxyServerInterface
 )
 
+from ssh_proxy_server.forwarders.tunnel import (
+    ServerTunnelBaseForwarder,
+    ClientTunnelForwarder,
+    ServerTunnelForwarder,
+    ClientTunnelBaseForwarder
+)
 
 from ssh_proxy_server.workarounds import dropbear
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
@@ -115,7 +119,7 @@ def main():
         dest='client_tunnel_interface',
         default=ClientTunnelForwarder,
         help='interface to handle tunnels from the client',
-        baseclass=TunnelBaseForwarder
+        baseclass=ClientTunnelBaseForwarder
     )
     parser.add_module(
         '--auth-interface',

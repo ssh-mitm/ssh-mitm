@@ -7,10 +7,10 @@ import paramiko
 from enhancements.modules import BaseModule
 
 
-class TunnelBaseForwarder(threading.Thread, BaseModule):
+class TunnelForwarder(threading.Thread):
 
     def __init__(self, local_ch, remote_ch):
-        super(TunnelBaseForwarder, self).__init__()
+        super(TunnelForwarder, self).__init__()
         self.local_ch = local_ch
         self.remote_ch = remote_ch
         self.start()
@@ -72,8 +72,10 @@ class TunnelBaseForwarder(threading.Thread, BaseModule):
         if channel.lock.locked():
             channel.lock.release()
 
+class ClientTunnelBaseForwarder(BaseModule):
+    pass
 
-class ClientTunnelForwarder(TunnelBaseForwarder):
+class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
     """
     TODO: Make a plugin that also opens a local port on the ssh-mitm over which the server can send requests (prob ServerInterface)
     Open direct-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
@@ -118,10 +120,15 @@ class ServerTunnelForwarder(ServerTunnelBaseForwarder):
         self.server_interface = server_interface
         self.destination = destination
 
+    """
+    Actually just used to wrap data around a handler to parse to the transport.request_port_forward
+    -> that is why it does not inherit the TunnelBaseForwarder; it just uses it in the handler
+    """
+
     def handler(self, channel, origin, destination):
         try:
             logging.debug("Opening forwarded-tcpip channel (%s -> %s) to client", origin, destination)
-            f = TunnelBaseForwarder(
+            f = TunnelForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", destination, origin),
                 channel
             )
