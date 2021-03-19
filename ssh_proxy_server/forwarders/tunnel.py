@@ -112,6 +112,9 @@ class ServerTunnelBaseForwarder(BaseModule):
 class ServerTunnelForwarder(ServerTunnelBaseForwarder):
     """
     Handles Tunnel forwarding when the server is requesting a tunnel connection
+
+    Actually just used to wrap data around a handler to parse to the transport.request_port_forward
+    -> that is why it does not inherit the TunnelBaseForwarder; it just uses it in the handler
     """
 
     def __init__(self, session, server_interface, destination):
@@ -119,11 +122,6 @@ class ServerTunnelForwarder(ServerTunnelBaseForwarder):
         self.session = session
         self.server_interface = server_interface
         self.destination = destination
-
-    """
-    Actually just used to wrap data around a handler to parse to the transport.request_port_forward
-    -> that is why it does not inherit the TunnelBaseForwarder; it just uses it in the handler
-    """
 
     def handler(self, channel, origin, destination):
         try:
