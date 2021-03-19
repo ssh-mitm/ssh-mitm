@@ -26,6 +26,7 @@ class InjectableServerTunnelForwarder(ServerTunnelForwarder):
     def __init__(self, session, server_interface, destination):
         super(InjectableServerTunnelForwarder, self).__init__(session, server_interface, destination)
 
+        # TODO: Extract common tcp socket server
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.injector_sock.bind((self.args.server_tunnel_net, 0))
