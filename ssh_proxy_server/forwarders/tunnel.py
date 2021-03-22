@@ -72,8 +72,10 @@ class TunnelForwarder(threading.Thread):
         if channel.lock.locked():
             channel.lock.release()
 
+
 class ClientTunnelBaseForwarder(BaseModule):
     pass
+
 
 class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
     """
@@ -106,15 +108,17 @@ class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
             self.local_ch = self.session.transport.accept(5)
         super(ClientTunnelForwarder, self).run()
 
+
 class ServerTunnelBaseForwarder(BaseModule):
     pass
+
 
 class ServerTunnelForwarder(ServerTunnelBaseForwarder):
     """
     Handles Tunnel forwarding when the server is requesting a tunnel connection
 
     Actually just used to wrap data around a handler to parse to the transport.request_port_forward
-    -> that is why it does not inherit the TunnelBaseForwarder; it just uses it in the handler
+    -> that is why it does not inherit the TunnelForwarder; it just uses it in the handler
     """
 
     def __init__(self, session, server_interface, destination):

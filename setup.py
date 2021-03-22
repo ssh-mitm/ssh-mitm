@@ -23,7 +23,8 @@ setup(
     version='0.4.3',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
-    description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
+    description=
+    'ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
     long_description=long_description,
     long_description_content_type='text/markdown',
     keywords="ssh proxy mitm network security audit",
