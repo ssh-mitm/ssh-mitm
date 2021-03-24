@@ -2,21 +2,14 @@ import logging
 import re
 
 from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, ClientTunnelForwarder
-from ssh_proxy_server.interfaces import ServerInterface
 from ssh_proxy_server.plugins.session.tcpserver import TCPServerThread
 
 
 class InjectableClientTunnelForwarder(ClientTunnelForwarder):
     """
     Serve out direct-tcpip connections over a session on local ports
-    TODO: Pretty up code, look @ master channel not rdy, logging
+    TODO: Pretty up code, logging, add multiple targets
     """
-
-    class ClientTunnelServerInterface(ServerInterface):
-
-        def __init__(self, session):
-            super().__init__(session)
-            self.session.proxyserver.client_tunnel_interface.setup_injector(session)
 
     # Init should occur after master channel establishment
 
@@ -71,10 +64,3 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
             addr
         )
         TunnelForwarder(client, remote_ch)
-
-    @classmethod
-    def get_interface(cls):
-        return cls.ClientTunnelServerInterface
-
-
-

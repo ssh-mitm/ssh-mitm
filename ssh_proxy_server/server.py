@@ -58,7 +58,7 @@ class SSHProxyServer:
         self.server_tunnel_interface = server_tunnel_interface
         self.client_tunnel_interface = client_tunnel_interface
         # Server Interface
-        self.authentication_interface = self.client_tunnel_interface.get_interface() or authentication_interface
+        self.authentication_interface = authentication_interface
         self.authenticator = authenticator
         self.transparent = transparent
 

@@ -6,8 +6,6 @@ import time
 import paramiko
 from enhancements.modules import BaseModule
 
-from ssh_proxy_server.interfaces import ServerInterface
-
 
 class TunnelForwarder(threading.Thread):
 
@@ -108,10 +106,6 @@ class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
         if not self.local_ch:
             self.local_ch = self.session.transport.accept(5)
         super(ClientTunnelForwarder, self).run()
-
-    @classmethod
-    def get_interface(cls):
-        return ServerInterface
 
 
 class ServerTunnelBaseForwarder(BaseModule):

@@ -7,6 +7,7 @@ from paramiko.ssh_exception import ChannelException
 from ssh_proxy_server.forwarders.agent import AgentProxy
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
 from ssh_proxy_server.plugins.session import key_negotiation
+from ssh_proxy_server.plugins.tunnel.injectclienttunnel import InjectableClientTunnelForwarder
 
 
 class Session:
@@ -122,6 +123,10 @@ class Session:
 
         if not self.transport.is_active():
             return False
+
+        # Setup the InjectableClientTunnelForwarder (after master channel init)
+        if self.proxyserver.client_tunnel_interface is InjectableClientTunnelForwarder:
+            self.proxyserver.client_tunnel_interface.setup_injector(self)
 
         if not self._start_channels():
             return False
