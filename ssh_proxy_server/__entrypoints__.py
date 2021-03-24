@@ -24,7 +24,8 @@ entry_points = {
         'inject = ssh_proxy_server.plugins.tunnel.injectservertunnel:InjectableServerTunnelForwarder'
     ],
     'ClientTunnelBaseForwarder': [
-        'base = ssh_proxy_server.forwarders.tunnel:ClientTunnelForwarder'
+        'base = ssh_proxy_server.forwarders.tunnel:ClientTunnelForwarder',
+        'inject = ssh_proxy_server.plugins.tunnel.injectclienttunnel:InjectableClientTunnelForwarder'
     ],
     'BaseServerInterface': [
         'base = ssh_proxy_server.interfaces.server:ServerInterface'

@@ -6,6 +6,8 @@ import time
 import paramiko
 from enhancements.modules import BaseModule
 
+from ssh_proxy_server.interfaces import ServerInterface
+
 
 class TunnelForwarder(threading.Thread):
 
@@ -62,7 +64,7 @@ class TunnelForwarder(threading.Thread):
             self.close_channel(self.remote_ch)
 
     def close_channel(self, channel):
-        if not isinstance(channel, paramiko.Channel):
+        if not isinstance(channel, paramiko.Channel): # socket.socket
             channel.close()
             return
         channel.lock.acquire()
@@ -79,7 +81,6 @@ class ClientTunnelBaseForwarder(BaseModule):
 
 class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
     """
-    TODO: Make a plugin that also opens a local port on the ssh-mitm over which the server can send requests (prob ServerInterface)
     Open direct-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
     Then forward traffic between channels connecting to local and to remote through the ssh-mitm
         - implements Proxyjump (-W / -J) feature, client side port forwarding (-L)
@@ -107,6 +108,10 @@ class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
         if not self.local_ch:
             self.local_ch = self.session.transport.accept(5)
         super(ClientTunnelForwarder, self).run()
+
+    @classmethod
+    def get_interface(cls):
+        return ServerInterface
 
 
 class ServerTunnelBaseForwarder(BaseModule):

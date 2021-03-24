@@ -5,6 +5,7 @@ from sshpubkeys import SSHKey
 
 from enhancements.modules import BaseModule
 
+
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
 
     def __init__(self, session):
