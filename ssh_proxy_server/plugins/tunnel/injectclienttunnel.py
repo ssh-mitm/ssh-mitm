@@ -5,10 +5,20 @@ from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, ClientTunnelForw
 from ssh_proxy_server.plugins.session.tcpserver import TCPServerThread
 
 
+class ClientTunnelHandler:
+
+    def __init__(self, session, destination):
+        self.session = session
+        self.destination = destination
+
+    def handle_request(self, client, addr):
+        remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, addr)
+        TunnelForwarder(client, remote_ch)
+
+
 class InjectableClientTunnelForwarder(ClientTunnelForwarder):
     """
     Serve out direct-tcpip connections over a session on local ports
-    TODO: Pretty up code, logging, add multiple targets
     """
 
     # Init should occur after master channel establishment
@@ -18,8 +28,9 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
         cls.parser().add_argument(
             '--tunnel-client-dest',
             dest='client_tunnel_dest',
-            help='direct-tcpip address/port combination to forward to (e.g. google.com:80)',
-            required=True
+            help='multiple direct-tcpip address/port combination to forward to (e.g. google.com:80, youtube.com:80)',
+            required=True,
+            nargs='+'
         )
         cls.parser().add_argument(
             '--tunnel-client-net',
@@ -30,7 +41,7 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
 
     session = None
     args = None
-    tcpserver = None
+    tcpservers = []
 
     @classmethod
     def setup_injector(cls, session):
@@ -38,29 +49,28 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
         args, _ = parser_retval
         cls.session = session
         cls.args = args
-        if not re.compile('.*:\d{1,5}').match(cls.args.client_tunnel_dest):
-            logging.warning("--tunnel-client-dest does not match format host:port (e.g. google.com:80)")
-            return
-        cls.tcpserver = TCPServerThread(
-            cls.handle_request,
-            run_status=cls.session.running,
-            network=cls.args.client_tunnel_net
-        )
-        cls.tcpserver.start()
-        logging.info(
-            "created client tunnel injector for host {host} on port {port} to destination {dest}".format(
-                host=cls.tcpserver.network,
-                port=cls.tcpserver.port,
-                dest=cls.args.client_tunnel_dest
-            )
-        )
+        format = re.compile('.*:\d{1,5}')
 
-    @classmethod
-    def handle_request(cls, client, addr):
-        destnet, destport = cls.args.client_tunnel_dest.split(':')
-        remote_ch = cls.session.ssh_client.transport.open_channel(
-            "direct-tcpip",
-            (destnet, int(destport)),
-            addr
-        )
-        TunnelForwarder(client, remote_ch)
+        logging.debug(cls.args.client_tunnel_dest)
+        for target in cls.args.client_tunnel_dest:
+            logging.debug(target)
+            if not format.match(target):
+                logging.warning("--tunnel-client-dest %s does not match format host:port (e.g. google.com:80)", target)
+                break
+            destnet, destport = target.split(":")
+            t = TCPServerThread(
+                ClientTunnelHandler(session, (destnet, int(destport))).handle_request,
+                run_status=cls.session.running,
+                network=cls.args.client_tunnel_net
+            )
+            t.start()
+            cls.tcpservers.append(t)
+            logging.info(
+                "created client tunnel injector for host {host} on port {port} to destination {dest}".format(
+                    host=t.network,
+                    port=t.port,
+                    dest=target
+                )
+            )
+
+

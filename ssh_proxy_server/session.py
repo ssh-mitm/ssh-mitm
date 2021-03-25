@@ -24,6 +24,7 @@ class Session:
         self.client_socket = client_socket
         self.client_address = client_address
         self.name = "{fr}->{to}".format(fr=client_address, to=remoteaddr)
+        self.closed = False
 
         self.agent_requested = threading.Event()
 
@@ -51,7 +52,7 @@ class Session:
     @property
     def running(self):
         # Using status of master channel to determine session status (-> releasability of resources)
-        return self.proxyserver.running and (not self.channel.closed if self.channel else True)
+        return self.proxyserver.running and (not self.channel.closed if self.channel else True) and not self.closed
 
     @property
     def transport(self):
@@ -135,6 +136,7 @@ class Session:
         return True
 
     def close(self):
+        self.closed = True
         if self.agent:
             self.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
