@@ -7,8 +7,7 @@ from ssh_proxy_server.plugins.session.tcpserver import TCPServerThread
 
 
 class InjectableServerTunnelForwarder(ServerTunnelForwarder):
-    """
-    For each server port forwarding request open a local port to inject traffic into the port-forward
+    """For each server port forwarding request open a local port to inject traffic into the port-forward
 
     The Handler is still the same as the ServerTunnelForwarder, only a tcp server is added
 

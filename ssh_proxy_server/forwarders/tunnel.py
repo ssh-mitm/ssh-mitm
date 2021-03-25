@@ -78,9 +78,9 @@ class ClientTunnelBaseForwarder(BaseModule):
 
 
 class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
-    """
-    Open direct-tcpip channel to remote and tell it to open a direct-tcpip channel to the destination
-    Then forward traffic between channels connecting to local and to remote through the ssh-mitm
+    """Handles tunnel forwarding when the client is requesting a tunnel connection
+
+    Then forward traffic between direct-tcpip channels connecting to local and to remote through the ssh-mitm
         - implements Proxyjump (-W / -J) feature, client side port forwarding (-L)
     """
 
@@ -113,8 +113,7 @@ class ServerTunnelBaseForwarder(BaseModule):
 
 
 class ServerTunnelForwarder(ServerTunnelBaseForwarder):
-    """
-    Handles Tunnel forwarding when the server is requesting a tunnel connection
+    """Handles Tunnel forwarding when the server is requesting a tunnel connection
 
     Actually just used to wrap data around a handler to parse to the transport.request_port_forward
     -> that is why it does not inherit the TunnelForwarder; it just uses it in the handler

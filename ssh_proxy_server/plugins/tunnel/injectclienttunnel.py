@@ -1,27 +1,34 @@
 import logging
 import re
 
+import paramiko
+
 from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, ClientTunnelForwarder
 from ssh_proxy_server.plugins.session.tcpserver import TCPServerThread
 
 
 class ClientTunnelHandler:
+    """
+    Similar to the ServerTunnelForwarder
+    """
 
     def __init__(self, session, destination):
         self.session = session
         self.destination = destination
 
     def handle_request(self, client, addr):
-        remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, addr)
-        TunnelForwarder(client, remote_ch)
+        try:
+            logging.debug("Injecting direct-tcpip channel (%s -> %s) to client", addr, self.destination)
+            remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, addr)
+            TunnelForwarder(client, remote_ch)
+        except paramiko.ssh_exception.ChannelException:
+            client.close()
+            logging.error("Could not setup forward from %s to %s.", addr, self.destination)
 
 
 class InjectableClientTunnelForwarder(ClientTunnelForwarder):
+    """Serve out direct-tcpip connections over a session on local ports
     """
-    Serve out direct-tcpip connections over a session on local ports
-    """
-
-    # Init should occur after master channel establishment
 
     @classmethod
     def parser_arguments(cls):
@@ -43,6 +50,8 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
     args = None
     tcpservers = []
 
+    # Setup should occur after master channel establishment
+
     @classmethod
     def setup_injector(cls, session):
         parser_retval = cls.parser().parse_known_args(None, None)
@@ -51,9 +60,7 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
         cls.args = args
         form = re.compile('.*:\d{1,5}')
 
-        logging.debug(cls.args.client_tunnel_dest)
         for target in cls.args.client_tunnel_dest:
-            logging.debug(target)
             if not form.match(target):
                 logging.warning("--tunnel-client-dest %s does not match format host:port (e.g. google.com:80)", target)
                 break
@@ -66,9 +73,10 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
             t.start()
             cls.tcpservers.append(t)
             logging.info(
-                "created client tunnel injector for host {host} on port {port} to destination {dest}".format(
+                "{session} created client tunnel injector for host {host} on port {port} to destination {dest}".format(
                     host=t.network,
                     port=t.port,
-                    dest=target
+                    dest=target,
+                    session=session
                 )
             )
