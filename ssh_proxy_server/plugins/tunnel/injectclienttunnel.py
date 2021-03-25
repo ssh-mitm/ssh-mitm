@@ -49,12 +49,12 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
         args, _ = parser_retval
         cls.session = session
         cls.args = args
-        format = re.compile('.*:\d{1,5}')
+        form = re.compile('.*:\d{1,5}')
 
         logging.debug(cls.args.client_tunnel_dest)
         for target in cls.args.client_tunnel_dest:
             logging.debug(target)
-            if not format.match(target):
+            if not form.match(target):
                 logging.warning("--tunnel-client-dest %s does not match format host:port (e.g. google.com:80)", target)
                 break
             destnet, destport = target.split(":")
@@ -72,5 +72,3 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
                     dest=target
                 )
             )
-
-
