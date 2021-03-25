@@ -9,7 +9,7 @@
 
 **man in the middle (mitm) server for security audits supporting public key authentication, session hijacking and file manipulation**
 
-![SSH-MITM example](https://ssh-mitm.at/img/mitm-example.png)
+![SSH-MITM example](https://www.ssh-mitm.at/img/mitm-example.png)
 
 
 ## Give a Star! :star:
@@ -37,7 +37,7 @@ This keeps me motivated in developing this tool. Thanks!
 
 ## Installation of SSH-MITM
 
-<img src="https://ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" align="left" width="128">
+<img src="https://www.ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" align="left" width="128">
 
 The first step to using any software package is getting it properly installed.
 
@@ -51,7 +51,7 @@ If you want to install all supported plugins for ssh-mitm you can install them w
 
 ## Quickstart
 
-<img src="https://ssh-mitm.at/assets/images/streamline-free/programmer-male.svg" align="left" width="128">
+<img src="https://www.ssh-mitm.at/assets/images/streamline-free/programmer-male.svg" align="left" width="128">
 
 Starting an intercepting mitm-ssh server with password authentication and session hijacking is very simple.
 
@@ -77,7 +77,7 @@ You will see the credentials in the log output.
 
 ## Session hijacking
 
-<img src="https://ssh-mitm.at/assets/images/streamline-free/customer-service-woman.svg" align="left" width="128">
+<img src="https://www.ssh-mitm.at/assets/images/streamline-free/customer-service-woman.svg" align="left" width="128">
 
 Getting the plain text credentials is only half the fun.
 When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
@@ -108,7 +108,7 @@ If you need a jump host with audit capabilities (for security compliences), you 
 
 ## Contributing
 
-<img src="https://ssh-mitm.at/assets/images/streamline-free/write-paper-ink.svg" align="left" width="128">
+<img src="https://www.ssh-mitm.at/assets/images/streamline-free/write-paper-ink.svg" align="left" width="128">
 
 **Pull requests are welcome.**
 
