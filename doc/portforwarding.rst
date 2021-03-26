@@ -21,7 +21,8 @@ SSH allows remote and local port forwarding over an existing connection:
   ..
 
 .. note::
-  With ssh-mitm these features are seamlessly implemented so that no further configuration is needed.
+  With ssh-mitm standard ssh client port forwarding features are seamlessly implemented so that no further configuration
+  of the ssh-mit server is needed.
 
 
 Proxyjump
@@ -33,8 +34,8 @@ as a direct-tcpip channel to the jumphost (stdin and stdout are connected to the
 The jumphost will therefore not receive a formal shell-session channel request.
 
 
-Advanced: Injectable Forwarders
-================================
+Injectable Forwarders
+---------------------
 
 When using the *InjectableClientTunnelForwarder* and *InjectableServerTunnelForwarder* plugins of the ssh-mitm server
 one is able to use port forwarding of the session to make requests from the mitm server masquerading as the
@@ -58,7 +59,7 @@ correlate to a port forward request to a given destination.
 
   ..
 
-The *InjectableClientTunnelForwarder* can be used always, even if the ssh client is not even actively using the port
+The *InjectableClientTunnelForwarder* can be used **always**, even if the ssh client is not even actively using the port
 forwarding feature. Furthermore the ``--tunnel-client-dest`` parameter can receive a space-separated list of destination
 targets (e.g. google.com:80). The ssh-mitm server will then open a port for each destination.
 
