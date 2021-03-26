@@ -7,6 +7,7 @@ from paramiko.ssh_exception import ChannelException
 from ssh_proxy_server.forwarders.agent import AgentProxy
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
 from ssh_proxy_server.plugins.session import key_negotiation
+from ssh_proxy_server.plugins.tunnel.injectclienttunnel import InjectableClientTunnelForwarder
 
 
 class Session:
@@ -23,6 +24,7 @@ class Session:
         self.client_socket = client_socket
         self.client_address = client_address
         self.name = "{fr}->{to}".format(fr=client_address, to=remoteaddr)
+        self.closed = False
 
         self.agent_requested = threading.Event()
 
@@ -49,10 +51,8 @@ class Session:
 
     @property
     def running(self):
-        # Using status of main channels to determine session status (-> releasability of resources)
-        # - often calculated, cpu heavy (?)
-        ch_active = all([not ch.closed for ch in filter(None, [self.ssh_channel, self.scp_channel, self.sftp_channel])])
-        return self.proxyserver.running and ch_active
+        # Using status of master channel to determine session status (-> releasability of resources)
+        return self.proxyserver.running and (not self.channel.closed if self.channel else True) and not self.closed
 
     @property
     def transport(self):
@@ -125,6 +125,10 @@ class Session:
         if not self.transport.is_active():
             return False
 
+        # Setup the InjectableClientTunnelForwarder (after master channel init)
+        if self.proxyserver.client_tunnel_interface is InjectableClientTunnelForwarder:
+            self.proxyserver.client_tunnel_interface.setup_injector(self)
+
         if not self._start_channels():
             return False
 
@@ -132,6 +136,7 @@ class Session:
         return True
 
     def close(self):
+        self.closed = True
         if self.agent:
             self.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
@@ -145,8 +150,11 @@ class Session:
                 while self.transport.is_active():
                     if self.transport.completion_event.wait(0.1):
                         break
+        for f in self.transport.server_object.forwarders:
+            f.close()
+            f.join()
         self.transport.close()
-        logging.debug("(%s) session closed", self)
+        logging.info("(%s) session closed", self)
 
     def __str__(self):
         return self.name

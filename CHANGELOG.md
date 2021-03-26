@@ -6,6 +6,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## Added
+
+- support remote port forwarding (ssh -R)
+- support for proxyjump (ssh -W /-J) over the ssh-mitm server
+- remote tunnel injection feature
+
+## Changed
+
+- handling of local port forwarding (passes through the tcpip stream to the remote)
+
 ## [0.4.3] - 2021-03-09
 
 ### Added

@@ -24,7 +24,12 @@ class BaseForwarder(BaseModule):
         raise NotImplementedError
 
     def close_session(self, channel):
-        channel.close()
+        channel.lock.acquire()
+        if not channel.closed:
+            channel.lock.release()
+            channel.close()
+        if channel.lock.locked():
+            channel.lock.release()
 
     def _closed(self, channel):
         return channel.closed or channel.eof_received or channel.eof_sent or not channel.active
