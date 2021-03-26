@@ -27,3 +27,9 @@
     font-family: FontAwesome;
     content: "\f505";
 }
+
+#docs-nav .toctree-l1:nth-child(6):before,
+#docs-cards .toctree-l1:nth-child(6) i:before {
+    font-family: FontAwesome;
+    content: "\f542";
+}

@@ -75,7 +75,8 @@ page_descriptions = {
     'quickstart.html': 'Short guide to setup an intercepting ssh-mitm server with a single command',
     'advanced-usage.html': 'Guide how to setup a man in the middle server for advanced security audits in large networks and special use cases',
     'ssh_vulnerabilities.html': 'Explanation of vulnerabilities related to the ssh protocol',
-    'jumphosts.html': 'SSH-MITM should not be used as jump host. This page describes alternatives and security considerations when operating a jump host'
+    'jumphosts.html': 'SSH-MITM should not be used as jump host. This page describes alternatives and security considerations when operating a jump host',
+    'portforwarding.html': 'Introduction to port forwarding features of ssh-mitm'
 }
 
 html_context = {
