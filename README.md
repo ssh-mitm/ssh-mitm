@@ -16,9 +16,9 @@
 This keeps me motivated in developing this tool. Thanks!
 
 
-## NEW in 0.4.3 - 2021-03-09
+## NEW in 0.5.0 - 2021-03-26
 
-- compatibility with dropbear ssh clients
+- full support for port forwarding (local and remote) and ProxyJump Command
 
 [Full Changelog](https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md)
 
