@@ -8,6 +8,6 @@ SSH-MITM Docs - Startseite
    install
    quickstart
    advanced-usage
+   portforwarding
    ssh_vulnerabilities
    jumphosts
-   portforwarding

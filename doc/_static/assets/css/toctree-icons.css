@@ -19,17 +19,17 @@
 #docs-nav .toctree-l1:nth-child(4):before,
 #docs-cards .toctree-l1:nth-child(4) i:before {
     font-family: FontAwesome;
-    content: "\f714";
+    content: "\f542";
 }
 
 #docs-nav .toctree-l1:nth-child(5):before,
 #docs-cards .toctree-l1:nth-child(5) i:before {
     font-family: FontAwesome;
-    content: "\f505";
+    content: "\f714";
 }
 
 #docs-nav .toctree-l1:nth-child(6):before,
 #docs-cards .toctree-l1:nth-child(6) i:before {
     font-family: FontAwesome;
-    content: "\f542";
+    content: "\f505";
 }
