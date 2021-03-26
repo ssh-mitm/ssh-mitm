@@ -1,7 +1,6 @@
 entry_points = {
     'SSHBaseForwarder': [
         'base = ssh_proxy_server.forwarders.ssh:SSHForwarder',
-        'injectorshell = ssh_proxy_server.plugins.ssh.injectorshell:SSHInjectableForwarder',
         'mirrorshell = ssh_proxy_server.plugins.ssh.mirrorshell:SSHMirrorForwarder',
         'noshell = ssh_proxy_server.plugins.ssh.noshell:NoShellForwarder',
         'sessionlogger = ssh_proxy_server.plugins.ssh.sessionlogger:SSHLogForwarder'
@@ -19,6 +18,14 @@ entry_points = {
         'base = ssh_proxy_server.forwarders.sftp:SFTPHandlerPlugin',
         'replace_file = ssh_proxy_server.plugins.sftp.replace_file:SFTPProxyReplaceHandler',
         'store_file = ssh_proxy_server.plugins.sftp.store_file:SFTPHandlerStoragePlugin'
+    ],
+    'ServerTunnelBaseForwarder': [
+        'base = ssh_proxy_server.forwarders.tunnel:ServerTunnelForwarder',
+        'inject = ssh_proxy_server.plugins.tunnel.injectservertunnel:InjectableServerTunnelForwarder'
+    ],
+    'ClientTunnelBaseForwarder': [
+        'base = ssh_proxy_server.forwarders.tunnel:ClientTunnelForwarder',
+        'inject = ssh_proxy_server.plugins.tunnel.injectclienttunnel:InjectableClientTunnelForwarder'
     ],
     'BaseServerInterface': [
         'base = ssh_proxy_server.interfaces.server:ServerInterface'

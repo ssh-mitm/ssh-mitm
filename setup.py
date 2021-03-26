@@ -20,7 +20,7 @@ def get_entry_points():
 
 setup(
     name='ssh-mitm',
-    version='0.4.0',
+    version='0.5.0',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
     description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
@@ -28,7 +28,7 @@ setup(
     long_description_content_type='text/markdown',
     keywords="ssh proxy mitm network security audit",
     packages=find_packages(),
-    url="https://ssh-mitm.at",
+    url="https://www.ssh-mitm.at",
     project_urls={
         'Documentation': 'https://docs.ssh-mitm.at',
         'Source': 'https://github.com/ssh-mitm/ssh-mitm',
@@ -56,6 +56,12 @@ setup(
     install_requires=[
         'enhancements>=0.2.1',
         'paramiko',
-        'pytz'
-    ]
+        'pytz',
+        'sshpubkeys'
+    ],
+    extras_require={
+        'plugins': [
+            'ssh-mitm-plugins'
+        ],
+    }
 )

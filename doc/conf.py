@@ -15,6 +15,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 import datetime
+import xml.etree.ElementTree as ET
 
 # -- Project information -----------------------------------------------------
 
@@ -24,10 +25,14 @@ copyright = '{}, {}'.format(datetime.datetime.now().year, author)  # pylint: dis
 
 extensions = [
     'sphinx.ext.autosectionlabel',
+    'sphinx_sitemap',
 ]
 
 master_doc = 'index'
 html_add_permalinks = ''
+html_baseurl = 'https://docs.ssh-mitm.at/'
+autosectionlabel_maxdepth = 1
+html_extra_path = ['robots.txt']
 
 # -- General configuration ---------------------------------------------------
 
@@ -70,7 +75,8 @@ page_descriptions = {
     'quickstart.html': 'Short guide to setup an intercepting ssh-mitm server with a single command',
     'advanced-usage.html': 'Guide how to setup a man in the middle server for advanced security audits in large networks and special use cases',
     'ssh_vulnerabilities.html': 'Explanation of vulnerabilities related to the ssh protocol',
-    'jumphosts.html': 'SSH-MITM should not be used as jump host. This page describes alternatives and security considerations when operating a jump host'
+    'jumphosts.html': 'SSH-MITM should not be used as jump host. This page describes alternatives and security considerations when operating a jump host',
+    'portforwarding.html': 'Introduction to port forwarding features of ssh-mitm'
 }
 
 html_context = {
@@ -85,3 +91,22 @@ html_context = {
         'linkedinurl': 'https://www.linkedin.com/in/manfred-kaiser'
     }
 }
+
+
+def create_sitemap(app, exception):
+    """Generates the sitemap.xml from the collected HTML page links"""
+    filename = app.outdir + "/sitemap-docs.xml"
+    print("Generating sitemap-docs.xml in %s" % filename)
+
+    root = ET.Element("urlset")
+    root.set("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
+
+    for link in app.sitemap_links:
+        url = ET.SubElement(root, "url")
+        ET.SubElement(url, "loc").text = html_baseurl + link
+
+    ET.ElementTree(root).write(filename)
+
+
+def setup(app):
+    app.connect('build-finished', create_sitemap)

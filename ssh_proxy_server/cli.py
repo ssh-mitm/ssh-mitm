@@ -31,6 +31,14 @@ from ssh_proxy_server.interfaces.sftp import (
     SFTPProxyServerInterface
 )
 
+from ssh_proxy_server.forwarders.tunnel import (
+    ServerTunnelBaseForwarder,
+    ClientTunnelForwarder,
+    ServerTunnelForwarder,
+    ClientTunnelBaseForwarder
+)
+
+from ssh_proxy_server.workarounds import dropbear
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 
 
@@ -61,7 +69,7 @@ def main():
         '--host-key-algorithm',
         dest='host_key_algorithm',
         default='rsa',
-        choices=['dss', 'rsa', 'ecdsa'],
+        choices=['dss', 'rsa', 'ecdsa', 'ed25519'],
         help='host key algorithm (default rsa)'
     )
     parser.add_argument(
@@ -98,6 +106,20 @@ def main():
         default=SFTPHandlerPlugin,
         help='SFTP Handler to handle sftp file transfers',
         baseclass=SFTPHandlerBasePlugin
+    )
+    parser.add_module(
+        '--server-tunnel',
+        dest='server_tunnel_interface',
+        default=ServerTunnelForwarder,
+        help='interface to handle tunnels from the server',
+        baseclass=ServerTunnelBaseForwarder
+    )
+    parser.add_module(
+        '--client-tunnel',
+        dest='client_tunnel_interface',
+        default=ClientTunnelForwarder,
+        help='interface to handle tunnels from the client',
+        baseclass=ClientTunnelBaseForwarder
     )
     parser.add_module(
         '--auth-interface',
@@ -137,8 +159,17 @@ def main():
         choices=['warning', 'info', 'debug'],
         help='set paramikos log level'
     )
+    parser.add_argument(
+        '--disable-workarounds',
+        dest='disable_workarounds',
+        action='store_true',
+        help='disable paramiko workarounds'
+    )
 
     args = parser.parse_args()
+
+    if not args.disable_workarounds:
+        Transport.run = dropbear.transport_run
 
     if args.paramiko_log_level == 'debug':
         logging.getLogger("paramiko").setLevel(logging.DEBUG)
@@ -161,6 +192,8 @@ def main():
         scp_interface=args.scp_interface,
         sftp_interface=args.sftp_interface,
         sftp_handler=args.sftp_handler,
+        server_tunnel_interface=args.server_tunnel_interface,
+        client_tunnel_interface=args.client_tunnel_interface,
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator,
         transparent=args.transparent,
