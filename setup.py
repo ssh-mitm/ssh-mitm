@@ -20,11 +20,10 @@ def get_entry_points():
 
 setup(
     name='ssh-mitm',
-    version='0.4.3',
+    version='0.5.0',
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
-    description=
-    'ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
+    description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
     long_description=long_description,
     long_description_content_type='text/markdown',
     keywords="ssh proxy mitm network security audit",
