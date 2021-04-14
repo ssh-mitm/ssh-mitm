@@ -12,6 +12,11 @@
 ![SSH-MITM example](https://www.ssh-mitm.at/img/mitm-example.png)
 
 
+## Support Development
+
+If you want to support development, you can spend ether to my address: 0xeC6e9224623B6C1f4394882dA0Cf06793D5d1F83
+
+
 ## Give a Star! :star:
 This keeps me motivated in developing this tool. Thanks!
 
