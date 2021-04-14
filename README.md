@@ -14,7 +14,7 @@
 
 ## Support Development
 
-If you want to support development, you can spend some Ethereum to my address: 0xeC6e9224623B6C1f4394882dA0Cf06793D5d1F83
+If you want to support development, you can spend some Ethereum: 0xeC6e9224623B6C1f4394882dA0Cf06793D5d1F83
 
 
 ## Give a Star! :star:
