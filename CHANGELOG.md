@@ -6,6 +6,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.0] - 2021-03-26
 
+## Changed
+
+- sftp client is created only on sftp subsystem request
+
+
+## [0.5.0] - 2021-03-26
+
 ## Added
 
 - support remote port forwarding (ssh -R)
@@ -47,6 +54,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
+[0.5.0]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/ssh-mitm/ssh-mitm/compare/0.4.3...0.5.0
 [0.4.3]: https://github.com/ssh-mitm/ssh-mitm/compare/0.4.2...0.4.3
 [0.4.2]: https://github.com/ssh-mitm/ssh-mitm/compare/0.4.1...0.4.2
