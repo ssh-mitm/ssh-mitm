@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.1] - 2021-05-07
+
+## Added
+
+- added default algorithms for OpenSSH 8.5 and 8.6 ([CVE-202014145](https://docs.ssh-mitm.at/CVE-2020-14145.html))
+
 ## [0.5.0] - 2021-05-03
 
 ## Changed
@@ -54,7 +60,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[0.5.0]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.0...0.5.1
+[0.5.2]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.1...0.5.2
+[0.5.1]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/ssh-mitm/ssh-mitm/compare/0.4.3...0.5.0
 [0.4.3]: https://github.com/ssh-mitm/ssh-mitm/compare/0.4.2...0.4.3
 [0.4.2]: https://github.com/ssh-mitm/ssh-mitm/compare/0.4.1...0.4.2
