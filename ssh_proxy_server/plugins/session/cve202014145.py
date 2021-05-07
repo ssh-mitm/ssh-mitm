@@ -7,7 +7,7 @@ from paramiko import ECDSAKey
 CVE = 'CVE-2020-14145'
 CLIENT_NAME = 'openssh'
 DEFAULT_ALGORITMS = [
-    [  # client version: OpenSSH_8.6p1
+    [  # client version: OpenSSH_8.5p1 - OpenSSH_8.6p1
         'ssh-ed25519-cert-v01@openssh.com', 'ecdsa-sha2-nistp256-cert-v01@openssh.com', 
         'ecdsa-sha2-nistp384-cert-v01@openssh.com', 'ecdsa-sha2-nistp521-cert-v01@openssh.com', 
         'sk-ssh-ed25519-cert-v01@openssh.com', 'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com', 
