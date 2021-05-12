@@ -16,10 +16,9 @@
 This keeps me motivated in developing this tool. Thanks!
 
 
-## NEW in 0.5.3 - 2021-05-12
+## NEW in 0.5.4 - 2021-05-12
 
-- intercept git commands over ssh
-- Note: git must be invoked with ``GIT_SSH_COMMAND="ssh -A" git clone git@github.com:ssh-mitm/ssh-mitm-plugins.git`` when public key auth is used
+- [intercept git and rsync commands over ssh](https://docs.ssh-mitm.at/advanced-usage.html#debug-git-and-rsync)
 
 [Full Changelog](https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md)
 
