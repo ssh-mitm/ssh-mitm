@@ -16,9 +16,10 @@
 This keeps me motivated in developing this tool. Thanks!
 
 
-## NEW in 0.5.0 - 2021-03-26
+## NEW in 0.5.3 - 2021-05-12
 
-- full support for port forwarding (local and remote) and ProxyJump Command
+- intercept git commands over ssh
+- Note: git must be invoked with ``GIT_SSH_COMMAND="ssh -A" git clone git@github.com:ssh-mitm/ssh-mitm.git`` when public key auth is used
 
 [Full Changelog](https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md)
 
@@ -26,6 +27,7 @@ This keeps me motivated in developing this tool. Thanks!
 ## Features
 
 * Hijacking and logging of terminal sessions
+* support for ssh commands (e.g. git over ssh)
 * SCP and SFTP
     * store files
     * replace files

@@ -142,6 +142,9 @@ class SCPForwarder(SCPBaseForwarder):
         self.got_c_command = False
 
     def handle_command(self, traffic):
+        if not self.session.scp_command.startswith(b'scp'):
+            return traffic
+
         self.got_c_command = False
         command = traffic.decode('utf-8')
 

@@ -4,28 +4,37 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+
+## [0.5.3] - 2021-05-12
+
+### Fixed
+
+- fixed ssh command ``ssh -C <command>``
+- ssh command now compatible with git
+
+
 ## [0.5.2] - 2021-05-07
 
-## Added
+### Added
 
 - added default algorithms for OpenSSH 8.5 and 8.6 ([CVE-202014145](https://docs.ssh-mitm.at/CVE-2020-14145.html))
 
 ## [0.5.1] - 2021-05-03
 
-## Changed
+### Changed
 
 - sftp client is created only on sftp subsystem request
 
 
 ## [0.5.0] - 2021-03-26
 
-## Added
+### Added
 
 - support remote port forwarding (ssh -R)
 - support for proxyjump (ssh -W /-J) over the ssh-mitm server
 - remote tunnel injection feature
 
-## Changed
+### Changed
 
 - handling of local port forwarding (passes through the tcpip stream to the remote)
 
@@ -60,6 +69,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
+[0.5.2]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.2...0.5.3
 [0.5.2]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.1...0.5.2
 [0.5.1]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.0...0.5.1
 [0.5.0]: https://github.com/ssh-mitm/ssh-mitm/compare/0.4.3...0.5.0

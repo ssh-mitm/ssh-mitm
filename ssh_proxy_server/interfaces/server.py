@@ -78,7 +78,6 @@ class ServerInterface(BaseServerInterface):
             self.session.scp = True
             self.session.scp_command = command
             self.session.scp_channel = channel
-            self.session.proxyserver.scp_interface(self.session).forward()
             return True
         logging.warning('ssh command not allowed!')
         return False
