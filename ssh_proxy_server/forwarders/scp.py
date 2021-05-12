@@ -10,7 +10,7 @@ from ssh_proxy_server.forwarders.base import BaseForwarder
 
 class SCPBaseForwarder(BaseForwarder):
 
-    def handle_traffic(self, traffic):
+    def handle_traffic(self, traffic, isclient):
         return traffic
 
     def handle_error(self, traffic):
@@ -36,11 +36,11 @@ class SCPBaseForwarder(BaseForwarder):
                 # redirect stdout <-> stdin und stderr <-> stderr
                 if self.session.scp_channel.recv_ready():
                     buf = self.session.scp_channel.recv(self.BUF_LEN)
-                    buf = self.handle_traffic(buf)
+                    buf = self.handle_traffic(buf, isclient=True)
                     self.sendall(self.server_channel, buf, self.server_channel.send)
                 if self.server_channel.recv_ready():
                     buf = self.server_channel.recv(self.BUF_LEN)
-                    buf = self.handle_traffic(buf)
+                    buf = self.handle_traffic(buf, isclient=False)
                     self.sendall(self.session.scp_channel, buf, self.session.scp_channel.send)
                 if self.session.scp_channel.recv_stderr_ready():
                     buf = self.session.scp_channel.recv_stderr(self.BUF_LEN)
@@ -52,10 +52,12 @@ class SCPBaseForwarder(BaseForwarder):
                     self.sendall(self.session.scp_channel, buf, self.session.scp_channel.send_stderr)
 
                 if self._closed(self.session.scp_channel):
+                    logging.debug("client channel closed")
                     self.server_channel.close()
                     self.close_session(self.session.scp_channel, 0)
                     break
                 if self._closed(self.server_channel):
+                    logging.debug("server channel closed")
                     self.close_session(self.session.scp_channel, 0)
                     break
                 if self.server_channel.exit_status_ready():
@@ -142,9 +144,6 @@ class SCPForwarder(SCPBaseForwarder):
         self.got_c_command = False
 
     def handle_command(self, traffic):
-        if not self.session.scp_command.startswith(b'scp'):
-            return traffic
-
         self.got_c_command = False
         command = traffic.decode('utf-8')
 
@@ -177,7 +176,10 @@ class SCPForwarder(SCPBaseForwarder):
     def process_response(self, traffic):
         return traffic
 
-    def handle_traffic(self, traffic):
+    def handle_traffic(self, traffic, isclient):
+        if not self.session.scp_command.startswith(b'scp'):
+            return traffic
+
         # verarbeiten des cmd responses (OK 0x00, WARN 0x01, ERR 0x02)
         if self.await_response:
             self.await_response = False

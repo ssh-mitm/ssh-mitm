@@ -136,7 +136,6 @@ class Session:
         return True
 
     def close(self):
-        self.closed = True
         if self.agent:
             self.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
@@ -155,6 +154,7 @@ class Session:
             f.join()
         self.transport.close()
         logging.info("(%s) session closed", self)
+        self.closed = True
 
     def __str__(self):
         return self.name

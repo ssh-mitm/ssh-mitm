@@ -7,6 +7,7 @@ entry_points = {
     ],
     'SCPBaseForwarder': [
         'base = ssh_proxy_server.forwarders.scp:SCPForwarder',
+        'debug_traffic = ssh_proxy_server.plugins.scp.debug_traffic:SCPDebugForwarder',
         'inject_file = ssh_proxy_server.plugins.scp.inject_file:SCPInjectFile',
         'replace_file = ssh_proxy_server.plugins.scp.replace_file:SCPReplaceFile',
         'store_file = ssh_proxy_server.plugins.scp.store_file:SCPStorageForwarder'
