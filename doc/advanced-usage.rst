@@ -181,3 +181,52 @@ Now only the ssh proxy server needs to be started in transparent mode to be able
 
 By using the transparent mode, no remote host must be specified. If the ``--remote-host`` parameter is used,
 all incoming connections are redirected to the same remote host.
+
+
+Debug git and rsync
+-------------------
+
+Sometime it's interesting to debug ``git`` or ``rsync``.
+Starting with version 5.4, ssh-mitm is able to intercept ssh commands like git or rsync.
+
+Performing a ``git pull`` or ``rsync`` with a remote server only executes a remote ssh command and the file transfer is part of the communication.
+
+There is also a new plugin ``debug_traffic`` to debug the traffic of ssh commands.
+
+.. code-block:: bash
+
+    ssh-mitm --request-agent --scp-interface debug_traffic
+
+
+.. note::
+
+    SCP file transfers are executed as ssh command. This is the reason, why this plugin is implemented as a scp-interface plugin.
+
+
+Intercept git
+"""""""""""""
+
+In most cased, when git is used over ssh, public key authentication is used. The default git command does not have a forward agent parameter.
+
+To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` environemnt variable.
+
+.. code-block:: bash
+
+    # start the ssh server
+    ssh-mitm --remote-host github.com --request-agent --scp-interface debug_traffic
+
+    # invoke git commands
+    GIT_SSH_COMMAND="ssh -A" git clone ssh://git@127.0.0.1:10022/ssh-mitm/ssh-mitm.git
+
+
+Intercept rsync
+"""""""""""""""
+
+When ssh-mitm is used to intercept rsync, the port must be provided as a parameter to rsync. Also the agent can be forwarded, if needed.
+
+
+To sync a local directory with a remote directory, rsync can be executed with following parameters.
+
+.. code-block:: bash
+
+    rsync -r -e 'ssh -p 10022 -A' /local/folder/ user@127.0.0.1:/remote/folder/
