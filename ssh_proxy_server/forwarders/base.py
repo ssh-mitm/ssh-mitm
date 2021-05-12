@@ -32,4 +32,5 @@ class BaseForwarder(BaseModule):
             channel.lock.release()
 
     def _closed(self, channel):
-        return channel.closed or channel.eof_received or channel.eof_sent or not channel.active
+        #return channel.closed or channel.eof_received or channel.eof_sent or not channel.active
+        return channel.closed or not channel.active
