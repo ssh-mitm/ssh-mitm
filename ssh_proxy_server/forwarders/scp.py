@@ -52,10 +52,12 @@ class SCPBaseForwarder(BaseForwarder):
                     self.sendall(self.session.scp_channel, buf, self.session.scp_channel.send_stderr)
 
                 if self._closed(self.session.scp_channel):
+                    logging.debug("client channel closed")
                     self.server_channel.close()
                     self.close_session(self.session.scp_channel, 0)
                     break
                 if self._closed(self.server_channel):
+                    logging.debug("server channel closed")
                     self.close_session(self.session.scp_channel, 0)
                     break
                 if self.server_channel.exit_status_ready():
