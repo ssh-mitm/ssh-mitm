@@ -7,6 +7,7 @@ SSH Vurnabilities
    :maxdepth: 1
    :caption: CVE List
 
+   puttydos
    CVE-2021-28041
    CVE-2020-15778
    CVE-2020-14145
