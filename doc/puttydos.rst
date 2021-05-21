@@ -45,7 +45,6 @@ a simple command to repeatedly change the terminals title.
 Set window title from terminal:
 
 .. code-block:: bash
-    :linenos:
 
     $ PS1=''
     echo -ne "\033]0; NEW_TITLE \007"
@@ -53,7 +52,6 @@ Set window title from terminal:
 Thus, an working exploit would be:
 
 .. code-block:: bash
-    :linenos:
 
     $ PS1=''
     while :
