@@ -23,8 +23,8 @@ class SCPReplaceFile(SCPForwarder):
         self.file_stat = os.stat(self.args.scp_replacement_file)
         self.file_to_send = open(self.args.scp_replacement_file, 'rb')
 
-    def handle_command(self, traffic):
-        traffic = super().handle_command(traffic)
+    def handle_command(self, traffic, isclient):
+        traffic = super().handle_command(traffic, isclient)
         if not self.got_c_command:
             return traffic
 
