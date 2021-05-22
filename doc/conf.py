@@ -61,7 +61,7 @@ exclude_patterns = []
 html_static_path = ['_static']
 
 redirects = {
-     "puttydos": "CVE-2021-33500"
+     "puttydos": "CVE-2021-33500.html"
 }
 
 header = {
