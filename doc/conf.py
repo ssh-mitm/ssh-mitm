@@ -26,6 +26,7 @@ copyright = '{}, {}'.format(datetime.datetime.now().year, author)  # pylint: dis
 extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx_sitemap',
+    'sphinx_reredirects',
 ]
 
 master_doc = 'index'
@@ -58,6 +59,10 @@ exclude_patterns = []
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
 html_static_path = ['_static']
+
+redirects = {
+     "puttydos": "CVE-2021-33500"
+}
 
 header = {
     'title': 'SSH MITM SERVER & content inspection',
