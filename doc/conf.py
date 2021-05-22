@@ -30,7 +30,7 @@ extensions = [
 ]
 
 master_doc = 'index'
-html_add_permalinks = ''
+html_permalinks = False
 html_baseurl = 'https://docs.ssh-mitm.at/'
 autosectionlabel_maxdepth = 1
 html_extra_path = ['robots.txt']
