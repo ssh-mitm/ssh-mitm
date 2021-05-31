@@ -38,7 +38,7 @@ class SSHClient(BaseSSHClient):
     def connect(self):
         message = None
 
-        self.transport = paramiko.Transport("{}:{}".format(self.host, str(self.port)))
+        self.transport = paramiko.Transport((self.host, self.port))
         if self.CIPHERS:
             if not isinstance(self.CIPHERS, tuple):
                 raise ValueError('client ciphers must be a tuple')
@@ -62,7 +62,7 @@ class SSHClient(BaseSSHClient):
                         break
                     except paramiko.AuthenticationException:
                         self.transport.close()
-                        self.transport = paramiko.Transport("{}:{}".format(self.host, str(self.port)))
+                        self.transport = paramiko.Transport((self.host, self.port))
 
             else:
                 logging.error('authentication method "%s" not supported!', self.method.value)
