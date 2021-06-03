@@ -235,7 +235,7 @@ To sync a local directory with a remote directory, rsync can be executed with fo
 Further steps
 -------------
 
-SSH-MITM has some client exploits integrated, which can be used to audit various ssh clients like OpenSSH and PuTTy.
+SSH-MITM has some client exploits integrated, which can be used to audit various ssh clients like OpenSSH and PuTTY.
 
 .. toctree::
     :maxdepth: 1
