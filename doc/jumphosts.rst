@@ -9,7 +9,7 @@ When operating a jump host, security is one of the most important requirements.
 This can not be achieved with SSH-MITM, because it has vulnerabilities which are needed
 for exploiting clients and servers.
 
-If you need a jump host with audit capabilities for security compliences, you should a product, which
+If you need a jump host with audit capabilities for security compliances, you should a product, which
 is created for such a use case.
 
 .. note::
@@ -33,7 +33,7 @@ OpenSSH, Dropbear, ...
 The most simple Jump Host is a ssh server like OpenSSH or Dropbear. They are available in nearly all
 Linux distributions.
 
-In most scenarios, when they are used as jump host, they should only not or only restriced shell access.
+In most scenarios, when they are used as jump host, they should only not or only restricted shell access.
 When accessing servers behind the jump host, the recommended method is "ProxyJump".
 
 ContainerSSH

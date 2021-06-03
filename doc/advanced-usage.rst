@@ -208,7 +208,7 @@ Intercept git
 
 In most cased, when git is used over ssh, public key authentication is used. The default git command does not have a forward agent parameter.
 
-To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` environemnt variable.
+To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` environment variable.
 
 .. code-block:: bash
 
