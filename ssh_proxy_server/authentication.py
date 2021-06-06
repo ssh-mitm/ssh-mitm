@@ -74,6 +74,8 @@ class Authenticator(BaseModule):
         if key:
             self.session.key = key
 
+        logging.debug("got remote connection info -> host: %s, port: %s, user: %s", host, port, user)
+
         try:
             if self.session.agent:
                 return self.auth_agent(
