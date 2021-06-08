@@ -208,7 +208,7 @@ Intercept git
 
 In most cased, when git is used over ssh, public key authentication is used. The default git command does not have a forward agent parameter.
 
-To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` environemnt variable.
+To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` environment variable.
 
 .. code-block:: bash
 
@@ -235,7 +235,7 @@ To sync a local directory with a remote directory, rsync can be executed with fo
 Further steps
 -------------
 
-SSH-MITM has some client exploits integrated, which can be used to audit various ssh clients like OpenSSH and PuTTy.
+SSH-MITM has some client exploits integrated, which can be used to audit various ssh clients like OpenSSH and PuTTY.
 
 .. toctree::
     :maxdepth: 1

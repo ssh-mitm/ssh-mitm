@@ -16,9 +16,13 @@
 This keeps me motivated in developing this tool. Thanks!
 
 
-## NEW in 0.5.4 - 2021-05-12
+## SSH-MITM 0.5.5 available as AppImage - 2021-06-08
 
-- [intercept git and rsync commands over ssh](https://docs.ssh-mitm.at/advanced-usage.html#debug-git-and-rsync)
+Starting with version 0.5.5, SSH-MITM is available as AppImage. Just download it, make it executable and start it.
+
+    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/download/0.5.5/ssh-mitm-x86_64.AppImage
+    $ chmod +x ssh-mitm-x86_64.AppImage
+    $ ./ssh-mitm-x86_64.AppImage
 
 [Full Changelog](https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md)
 

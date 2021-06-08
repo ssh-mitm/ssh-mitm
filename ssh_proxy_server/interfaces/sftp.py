@@ -45,7 +45,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         try:
             self.session.sftp_client_ready.wait()
 
-            # Code aus dem StubSFTPServer der Paramiko Demo auf Github
+            # Code aus dem StubSFTPServer der Paramiko Demo auf GitHub
             if (flags & os.O_CREAT) and attr:
                 attr._flags &= ~attr.FLAG_PERMISSIONS
             if flags & os.O_WRONLY:

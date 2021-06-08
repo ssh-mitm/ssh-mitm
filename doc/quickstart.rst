@@ -51,7 +51,7 @@ Hijack a SSH terminal session
 Getting the plain text credentials is only half the fun.
 SSH-MITM proxy server is able to hijack a ssh session and allows you to interact with it.
 
-Let's get startet with hijacking the session.
+Let's get started with hijacking the session.
 
 When a client connects, the ssh-mitm proxy server starts a new server, where you can connect with another ssh client.
 This server is used to hijack the session.
