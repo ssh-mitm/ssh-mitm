@@ -121,7 +121,11 @@ def create_server_sock(
             if reuse_addr:
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             if transparent:
-                sock.setsockopt(socket.SOL_IP, socket.IP_TRANSPARENT, 1)
+                if hasattr(socket, 'IP_TRANSPARENT'):
+                    sock.setsockopt(socket.SOL_IP, socket.IP_TRANSPARENT, 1)
+                else:
+                    IP_TRANSPARENT = 19
+                    sock.setsockopt(socket.SOL_IP, IP_TRANSPARENT, 1)
             if af == AF_INET6:
                 if dual_stack:
                     # enable
