@@ -12,11 +12,11 @@
 ![SSH-MITM example](https://www.ssh-mitm.at/img/mitm-example.png)
 
 
-## SSH-MITM 0.5.6 is available as AppImage - 2021-06-08
+## SSH-MITM is available as AppImage - 2021-06-10
 
 SSH-MITM is available as AppImage. Just download it, make it executable and start it.
 
-    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/download/0.5.6/ssh-mitm-x86_64.AppImage
+    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
     $ chmod +x ssh-mitm-x86_64.AppImage
     $ ./ssh-mitm-x86_64.AppImage
 
