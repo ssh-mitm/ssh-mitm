@@ -40,6 +40,7 @@ from ssh_proxy_server.forwarders.tunnel import (
 
 from ssh_proxy_server.workarounds import dropbear
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
+from ssh_proxy_server.__version__ import version as ssh_mitm_version
 
 
 def main():
@@ -150,6 +151,7 @@ def main():
     parser.add_argument(
         '--banner-name',
         dest='banner_name',
+        default='SSHMITM_{}'.format(ssh_mitm_version),
         help='set a custom string as server banner'
     )
     parser.add_argument(
@@ -165,8 +167,17 @@ def main():
         action='store_true',
         help='disable paramiko workarounds'
     )
+    parser.add_argument(
+        '--version',
+        action='store_true',
+        help='show version'
+    )
 
     args = parser.parse_args()
+
+    if args.version:
+        print("SSH-MITM {}".format(ssh_mitm_version))
+        return
 
     if not args.disable_workarounds:
         Transport.run = dropbear.transport_run
@@ -183,6 +194,7 @@ def main():
         args.authenticator.REQUEST_AGENT = True
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
+    logging.info("starting SSH-MITM %s", ssh_mitm_version)
     proxy = SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,

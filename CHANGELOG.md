@@ -5,6 +5,21 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
+## [0.5.7] - 2021-06-10
+
+### Fixed
+
+- fixed "variable referenced before assignment" bug
+
+### Added
+
+- added '--version' cmd argument
+
+### Changed
+
+- Changed remote software name to 'SSHMITM_VERSIONSTRING'
+
+
 ## [0.5.6] - 2021-06-09
 
 ### Fixed
@@ -96,6 +111,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
+[0.5.7]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.6...0.5.7
 [0.5.6]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.5...0.5.6
 [0.5.5]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.4...0.5.5
 [0.5.4]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.3...0.5.4
