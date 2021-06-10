@@ -43,6 +43,7 @@ class Session:
         self.sftp_client_ready = threading.Event()
 
         self.username = ''
+        self.password = None
         self.socket_remote_address = remoteaddr
         self.remote_address = (None, None)
         self.key = None
