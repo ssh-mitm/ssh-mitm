@@ -47,7 +47,7 @@ class SCPInjectFile(SCPForwarder):
 
     def exploit(self):
         def wait_ok():
-            assert self.session.scp_channel.recv(1024) == b'\x00'
+            return self.session.scp_channel.recv(1024) == b'\x00'
 
         def send_ok():
             self.session.scp_channel.sendall(b'\x00')
@@ -63,9 +63,7 @@ class SCPInjectFile(SCPForwarder):
         )
         logging.debug("Sending command %s", command.strip())
         self.session.scp_channel.sendall(command)
-        try:
-            wait_ok()
-        except AssertionError:
+        if not wait_ok():
             logging.info("Client is not vulnerable to CVE-2019-6111")
             self.hide_tracks()
             return
