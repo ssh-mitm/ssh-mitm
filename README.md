@@ -12,13 +12,17 @@
 ![SSH-MITM example](https://www.ssh-mitm.at/img/mitm-example.png)
 
 
-## SSH-MITM is available as AppImage - 2021-06-10
+## SSH-MITM is available as AppImage and Snap - 2021-06-10
 
 SSH-MITM is available as AppImage. Just download it, make it executable and start it.
 
     $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
     $ chmod +x ssh-mitm-x86_64.AppImage
     $ ./ssh-mitm-x86_64.AppImage
+
+<a href="https://snapcraft.io/ssh-mitm">
+  <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
+</a>
 
 [Full Changelog](https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md)
 
