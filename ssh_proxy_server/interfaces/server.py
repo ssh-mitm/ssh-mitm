@@ -114,7 +114,7 @@ class ServerInterface(BaseServerInterface):
 
     def get_allowed_auths(self, username):
         logging.debug("get_allowed_auths: username=%s", username)
-        allowed_auths = []
+        allowed_auths = ['keyboard-interactive']
         if self.args.extra_auth_methods:
             allowed_auths.extend(self.args.extra_auth_methods.split(','))
         if self.args.enable_none_auth:
@@ -136,6 +136,17 @@ class ServerInterface(BaseServerInterface):
             self.session.authenticator.authenticate(username, key=None)
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
+
+    def check_auth_interactive(self, username, submethods):
+        self.session.username = username
+        iq = paramiko.server.InteractiveQuery()
+        iq.add_prompt("Test", True)
+        return iq
+
+    def check_auth_interactive_response(self, responses):
+        logging.error("keyboard-interactive")
+        self.session.authenticator.authenticate(self.session.username, key=None)
+        return paramiko.AUTH_SUCCESSFUL
 
     def check_auth_publickey(self, username, key):
         ssh_pub_key = SSHKey("{} {}".format(key.get_name(), key.get_base64()))
