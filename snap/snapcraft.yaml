@@ -13,10 +13,12 @@ parts:
   ssh-mitm:
     # See 'snapcraft plugins'
     plugin: python
-    source: .
+    python-packages:
+      - ssh-mitm
 apps:
   ssh-mitm:
     command: usr/bin/python3 $SNAP/bin/ssh-mitm
     plugs:
+      - home
       - network
       - network-bind
