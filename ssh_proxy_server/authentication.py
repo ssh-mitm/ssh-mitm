@@ -53,25 +53,31 @@ class Authenticator(BaseModule):
         super().__init__()
         self.session = session
 
-    def get_remote_host_credentials(self, username):
+    def get_remote_host_credentials(self, username, password=None, key=None):
         if self.session.proxyserver.transparent:
             return (
                 self.args.auth_username or username,
+                self.args.auth_password or password,
+                key,
                 self.args.remote_host or self.session.socket_remote_address[0],
                 self.args.remote_port or self.session.socket_remote_address[1]
             )
         return (
             self.args.auth_username or username,
+            self.args.auth_password or password,
+            key,
             self.args.remote_host or '127.0.0.1',
             self.args.remote_port or 22
         )
 
     def authenticate(self, username=None, password=None, key=None):
         if username:
-            user, host, port = self.get_remote_host_credentials(username)
-            self.session.username = user
-            self.session.remote_address = (host, port)
-        if key:
+            remote_credentials = self.get_remote_host_credentials(username, password, key)
+            self.session.username = remote_credentials[0]
+            self.session.password = remote_credentials[1]
+            self.session.key = remote_credentials[2]
+            self.session.remote_address = (remote_credentials[3], remote_credentials[4])
+        if key and not self.session.key:
             self.session.key = key
 
         try:
@@ -81,19 +87,19 @@ class Authenticator(BaseModule):
                     self.session.remote_address[0],
                     self.session.remote_address[1]
                 )
-            if password:
+            if self.session.password:
                 return self.auth_password(
                     self.session.username,
                     self.session.remote_address[0],
                     self.session.remote_address[1],
-                    self.args.auth_password or password
+                    self.session.password
                 )
-            if key:
+            if self.session.key:
                 return self.auth_publickey(
                     self.session.username,
                     self.session.remote_address[0],
                     self.session.remote_address[1],
-                    key
+                    self.session.key
                 )
         except MissingHostException:
             logging.error("no remote host")
