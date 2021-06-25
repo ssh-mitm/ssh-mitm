@@ -49,7 +49,17 @@ This keeps me motivated in developing this tool. Thanks!
 
 The first step to using any software package is getting it properly installed.
 
-To install SSH-MITM, simply run this simple command in your terminal of choice:
+To install **SSH-MITM**, simply run one of these commands in your terminal of choice:
+
+### Install as Snap
+
+    $ snap install ssh-mitm
+    
+### Install as Flatpack
+
+    $ flatpak install at.ssh_mitm.server
+    
+### Install as pip-package
 
     $ pip install ssh-mitm
 
