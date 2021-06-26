@@ -183,6 +183,17 @@ To sync a local directory with a remote directory, rsync can be executed with fo
 
     rsync -r -e 'ssh -p 10022 -A' /local/folder/ user@127.0.0.1:/remote/folder/
 
+## Further steps
+
+SSH-MITM has some client exploits integrated, which can be used to audit various ssh clients like OpenSSH and PuTTY.
+
+* [CVE-2021-33500](https://docs.ssh-mitm.at/CVE-2021-33500.html)
+* [CVE-2020-14145](https://docs.ssh-mitm.at/CVE-2020-14145.html)
+* [CVE-2020-14002](https://docs.ssh-mitm.at/CVE-2020-14002.html)
+* [CVE-2019-6111](https://docs.ssh-mitm.at/CVE-2019-6111.html)
+* [CVE-2019-6110](https://docs.ssh-mitm.at/CVE-2019-6110.html)
+* [CVE-2019-6109](https://docs.ssh-mitm.at/CVE-2019-6109.html)
+
 
 
 ## Contributing
