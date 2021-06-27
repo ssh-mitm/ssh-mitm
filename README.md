@@ -18,14 +18,15 @@ This keeps me motivated in developing this tool. Thanks!
 ## Features
 
 * Hijacking and logging of terminal sessions
-* support for ssh commands (e.g. git over ssh)
+* [Public key authentication](https://docs.ssh-mitm.at/advanced-usage.html#public-key-authentication)
+* Agent Forwarding
+* [support for ssh commands (e.g. git over ssh)](https://docs.ssh-mitm.at/advanced-usage.html#debug-git-and-rsync)
 * SCP and SFTP
     * store files
     * replace files
     * inject additional files
-* Agent Forwarding
-* Port Forwarding
-* Check and test clients against known vulnerabilities
+* {Port Forwarding](https://docs.ssh-mitm.at/portforwarding.html)
+* [Check and test clients against known vulnerabilities](https://docs.ssh-mitm.at/ssh_vulnerabilities.html)
 * Plugin support
 
 [Full Changelog](https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md)
