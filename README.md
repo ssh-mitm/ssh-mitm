@@ -23,7 +23,7 @@ This keeps me motivated in developing this tool. Thanks!
 * SCP and SFTP
     * store files
     * replace files
-    * inject additional files
+    * [inject additional files](https://docs.ssh-mitm.at/CVE-2019-6110.html)
 * [Port Forwarding](https://docs.ssh-mitm.at/portforwarding.html)
 * [Check and test clients against known vulnerabilities](https://docs.ssh-mitm.at/ssh_vulnerabilities.html)
 * Plugin support
