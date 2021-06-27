@@ -18,8 +18,7 @@ This keeps me motivated in developing this tool. Thanks!
 ## Features
 
 * Hijacking and logging of terminal sessions
-* [Public key authentication](https://docs.ssh-mitm.at/advanced-usage.html#public-key-authentication)
-* Agent Forwarding
+* [Public key authentication](https://docs.ssh-mitm.at/advanced-usage.html#public-key-authentication) and Agent Forwarding
 * [support for ssh commands (e.g. git over ssh)](https://docs.ssh-mitm.at/advanced-usage.html#debug-git-and-rsync)
 * SCP and SFTP
     * store files
