@@ -117,13 +117,11 @@ class ServerInterface(BaseServerInterface):
         allowed_auths = ['keyboard-interactive']
         if self.args.extra_auth_methods:
             allowed_auths.extend(self.args.extra_auth_methods.split(','))
-        if self.args.enable_none_auth:
-            allowed_auths.append('none')
         if not self.args.disable_pubkey_auth:
             allowed_auths.append('publickey')
         if not self.args.disable_password_auth:
             allowed_auths.append('password')
-        if allowed_auths:
+        if allowed_auths or self.args.enable_none_auth:
             allowed_authentication_methods = ','.join(allowed_auths)
             logging.debug("Allowed authentication methods: %s", allowed_authentication_methods)
             return allowed_authentication_methods
