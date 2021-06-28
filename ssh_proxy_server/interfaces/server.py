@@ -55,6 +55,18 @@ class ServerInterface(BaseServerInterface):
             help='enable "none" authentication'
         )
         cls.parser().add_argument(
+            '--enable-keyboard-interactive-auth',
+            dest='enable_keyboard_interactive_auth',
+            action='store_true',
+            help='enable "keyboard-interactive" authentication'
+        )
+        cls.parser().add_argument(
+            '--disable-keyboard-interactive-prompts',
+            dest='disable_keyboard_interactive_prompts',
+            action='store_true',
+            help='disable prompts for keyboard-interactive'
+        )
+        cls.parser().add_argument(
             '--extra-auth-methods',
             dest='extra_auth_methods',
             help='extra authentication mehtod names'
@@ -117,13 +129,13 @@ class ServerInterface(BaseServerInterface):
         allowed_auths = []
         if self.args.extra_auth_methods:
             allowed_auths.extend(self.args.extra_auth_methods.split(','))
-        if self.args.enable_none_auth:
-            allowed_auths.append('none')
+        if self.args.enable_keyboard_interactive_auth:
+            allowed_auths.append('keyboard-interactive')
         if not self.args.disable_pubkey_auth:
             allowed_auths.append('publickey')
         if not self.args.disable_password_auth:
             allowed_auths.append('password')
-        if allowed_auths:
+        if allowed_auths or self.args.enable_none_auth:
             allowed_authentication_methods = ','.join(allowed_auths)
             logging.debug("Allowed authentication methods: %s", allowed_authentication_methods)
             return allowed_authentication_methods
@@ -136,6 +148,25 @@ class ServerInterface(BaseServerInterface):
             self.session.authenticator.authenticate(username, key=None)
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
+
+    def check_auth_interactive(self, username, submethods):
+        logging.debug("check_auth_interactive: username=%s, submethods=%s", username, submethods)
+        if not self.args.enable_keyboard_interactive_auth:
+            return paramiko.AUTH_FAILED
+        self.session.username = username
+        iq = paramiko.server.InteractiveQuery()
+        if not self.args.disable_keyboard_interactive_prompts:
+            iq.add_prompt("Password (kb-interactive): ", False)
+        return iq
+
+    def check_auth_interactive_response(self, responses):
+        logging.debug("check_auth_interactive_response: responses=%s", responses)
+        if self.args.disable_keyboard_interactive_prompts:
+            self.session.authenticator.authenticate(self.session.username, key=None)
+            return paramiko.AUTH_SUCCESSFUL
+        if not responses:
+            return paramiko.AUTH_FAILED
+        return self.session.authenticator.authenticate(self.session.username, password=responses[0])
 
     def check_auth_publickey(self, username, key):
         ssh_pub_key = SSHKey("{} {}".format(key.get_name(), key.get_base64()))
