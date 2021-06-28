@@ -9,6 +9,9 @@ description: |
 grade: stable # must be 'stable' to release into candidate/stable channels
 confinement: strict # use 'strict' once you have the right plugs and slots
 
+architectures:
+  - build-on: [amd64]
+
 parts:
   ssh-mitm:
     # See 'snapcraft plugins'
@@ -18,5 +21,6 @@ apps:
   ssh-mitm:
     command: usr/bin/python3 $SNAP/bin/ssh-mitm
     plugs:
+      - home
       - network
       - network-bind
