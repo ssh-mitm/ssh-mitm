@@ -6,6 +6,7 @@ import threading
 import sys
 
 from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key
+from sshpubkeys import SSHKey
 
 from ssh_proxy_server.multisocket import (
     create_server_sock,
@@ -92,10 +93,6 @@ class SSHProxyServer:
             except ValueError as err:
                 logging.error(str(err))
                 raise KeyGenerationError()
-            message = "created temporary {} key".format(key_algorithm_class.__name__)
-            if key_algorithm_bits:
-                message += " with {} bit length".format(key_algorithm_bits)
-            logging.warning(message)
         else:
             if not os.path.isfile(self.key_file):
                 raise FileNotFoundError("host key '{}' file does not exist".format(self.key_file))
@@ -103,7 +100,24 @@ class SSHProxyServer:
                 self._hostkey = key_algorithm_class(filename=self.key_file)
             except Exception:
                 logging.error('host key format not supported by selected algorithm "%s"!', self.key_algorithm)
+                raise KeyGenerationError()
 
+                
+        ssh_pub_key = SSHKey("{} {}".format(self._hostkey.get_name(), self._hostkey.get_base64()))
+        ssh_pub_key.parse()
+        keygen_message = (
+            "{} {} key with {} bit length and fingerprints:\n"
+            "    {}\n"
+            "    {}"
+        ).format(
+            "loaded" if self.key_file else "generated temporary",
+            key_algorithm_class.__name__,
+            self._hostkey.get_bits(),
+            ssh_pub_key.hash_md5(),
+            ssh_pub_key.hash_sha256()
+        )
+        logging.info(keygen_message)
+        
     @property
     def host_key(self):
         if not self._hostkey:
