@@ -2,8 +2,9 @@
 name: SSH-MITM AppImage
 
 on:
-  release:
-    types: [created]
+  push:
+    tags:
+      - '*.*.*'
 
 jobs:
   build-appimage:
