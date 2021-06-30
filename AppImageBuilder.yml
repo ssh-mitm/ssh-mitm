@@ -3,7 +3,9 @@ script:
   # Remove any previous build
   - rm -rf AppDir  | true
   # Make usr and icons dirs
-  - mkdir -p AppDir/usr/src
+  - mkdir -p AppDir/usr/src AppDir/usr/share/icons/128x128/
+  - cp appimage/ssh-mitm.png AppDir/usr/share/icons/128x128/ssh-mitm.png
+  - python3 -m pip install -U pip
   # Install application dependencies
   - python3 -m pip install --ignore-installed --prefix=/usr --root=AppDir .
 
@@ -14,7 +16,7 @@ AppDir:
   app_info:
     id: at.ssh-mitm.server
     name: ssh-mitm
-    icon: utilities-terminal
+    icon: ssh-mitm
     version: 0.5.8
     # Set the python executable as entry point
     exec: usr/bin/python3
@@ -32,7 +34,6 @@ AppDir:
     exclude: []
 
   runtime:
-    version: "continuous"
     env:
       PATH: '${APPDIR}/usr/bin:${PATH}'
       # Set python home
@@ -40,7 +41,7 @@ AppDir:
       PYTHONHOME: '${APPDIR}/usr'
       # Path to the site-packages dir or other modules dirs
       # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
-      PYTHONPATH: '${APPDIR}/usr/lib/python3.8/site-packages'
+      PYTHONPATH: '${APPDIR}/usr/lib/python3.6/site-packages'
 
   test:
     fedora:
