@@ -28,4 +28,5 @@ jobs:
         with:
           token: ${{ secrets.DEPLOYTOKEN }}
           files: './*.AppImage*'
+          gzip: false
           allow_override: true
