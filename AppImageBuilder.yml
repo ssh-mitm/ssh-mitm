@@ -15,7 +15,6 @@ AppDir:
   app_info:
     id: at.ssh-mitm.server
     name: ssh-mitm
-    icon: utilities-terminal
     version: 0.5.8
     # Set the python executable as entry point
     exec: usr/bin/python3
