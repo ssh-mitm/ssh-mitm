@@ -32,7 +32,6 @@ AppDir:
     exclude: []
 
   runtime:
-    version: "continuous"
     env:
       PATH: '${APPDIR}/usr/bin:${PATH}'
       # Set python home
