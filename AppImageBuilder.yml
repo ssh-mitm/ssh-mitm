@@ -4,6 +4,7 @@ script:
   - rm -rf AppDir  | true
   # Make usr and icons dirs
   - mkdir -p AppDir/usr/src
+  - python3 -m pip install -U --ignore-installed --prefix=/usr --root=AppDir pip
   # Install application dependencies
   - python3 -m pip install --ignore-installed --prefix=/usr --root=AppDir .
 
