@@ -19,11 +19,7 @@ jobs:
           UPDATE_INFO: gh-releases-zsync|ssh-mitm|ssh-mitm|latest|*x86_64.AppImage.zsync
         with:
           recipe: AppImageBuilder.yml
-      - uses: actions/upload-artifact@v2
-        with:
-          name: AppImage
-          path: './*.AppImage*'
-      - name: Release
+      - name: Create AppImage Release
         uses: meeDamian/github-release@2.0
         with:
           token: ${{ secrets.DEPLOYTOKEN }}
