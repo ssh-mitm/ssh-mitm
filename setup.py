@@ -67,7 +67,8 @@ setup(
         'paramiko',
         'pytz',
         'sshpubkeys',
-        'pyyaml'
+        'pyyaml',
+        'packaging'
     ],
     extras_require={
         'plugins': [
