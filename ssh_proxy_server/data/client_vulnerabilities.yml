@@ -1,0 +1,32 @@
+putty:
+  CVE-2020-14002:
+    version_min: 0.68
+    version_max: 0.73
+  CVE-2021-33500:
+    version_min:
+    version_max: 0.74
+openssh:
+  CVE-2021-28041:
+    version_min: 8.2
+    version_max: 8.4
+  CVE-2020-15778:
+    version_max: 8.2
+  CVE-2020-14145:
+    version_min: 5.7
+    version_max: 8.6
+  CVE-2019-6111:
+    version_max: 7.9
+  CVE-2019-6110:
+    version_max: 7.9
+  CVE-2019-6109:
+    version_max: 7.9
+  CVE-2018-20685:
+    version_max: 7.9
+  CVE-2018-15919:
+    version_min: 5.9
+    version_max: 7.8
+  CVE-2018-15473:
+    version_max: 7.7
+dropbear:
+  CVE-2018-15599:
+    version_max: 2018.76

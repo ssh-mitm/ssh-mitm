@@ -1,0 +1,28 @@
+
+name: SSH-MITM AppImage
+
+on:
+  push:
+    tags:
+      - '*.*.*'
+
+jobs:
+  build-appimage:
+
+    runs-on: ubuntu-latest
+
+    steps:
+      - uses: actions/checkout@v2
+      - name: Build AppImage
+        uses: AppImageCrafters/build-appimage-action@master
+        env:
+          UPDATE_INFO: gh-releases-zsync|ssh-mitm|ssh-mitm|latest|*x86_64.AppImage.zsync
+        with:
+          recipe: AppImageBuilder.yml
+      - name: Create AppImage Release
+        uses: meeDamian/github-release@2.0
+        with:
+          token: ${{ secrets.DEPLOYTOKEN }}
+          files: './*.AppImage*'
+          gzip: false
+          allow_override: true

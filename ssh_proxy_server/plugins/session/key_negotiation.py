@@ -3,6 +3,7 @@ import logging
 from paramiko import Transport, common
 
 from ssh_proxy_server.plugins.session import cve202014002, cve202014145
+from ssh_proxy_server.plugins.session.clientaudit import audit_client
 
 
 def handle_key_negotiation(session):
@@ -43,6 +44,7 @@ def handle_key_negotiation(session):
         logging.debug("languages_server_to_client: %s", languages_server_to_client)
         logging.debug("first_kex_packet_follows: %s", first_kex_packet_follows)
 
+        audit_client(client_version)
         cve202014002.check_key_negotiation(client_version, server_host_key_algorithms, session)
         cve202014145.check_key_negotiation(client_version, server_host_key_algorithms, session)
 
