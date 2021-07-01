@@ -47,6 +47,11 @@ setup(
         "Topic :: System :: Networking",
         "Development Status :: 4 - Beta"
     ],
+    package_data={
+        'ssh_proxy_server': [
+            'data/*.*',
+        ]
+    },
     entry_points={
         **{
             'console_scripts': [
@@ -60,7 +65,8 @@ setup(
         'enhancements>=0.2.1',
         'paramiko',
         'pytz',
-        'sshpubkeys'
+        'sshpubkeys',
+        'pyyaml'
     ],
     extras_require={
         'plugins': [
