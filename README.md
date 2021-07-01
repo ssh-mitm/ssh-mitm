@@ -56,11 +56,7 @@ SSH-MITM is available as AppImage. Just download it, make it executable and star
     $ chmod +x ssh-mitm-x86_64.AppImage
     $ ./ssh-mitm-x86_64.AppImage
     
-    
-### Install as Flatpack
-
-    $ flatpak install at.ssh_mitm.server
-    
+   
 ### Install as pip-package
 
     $ pip install ssh-mitm
