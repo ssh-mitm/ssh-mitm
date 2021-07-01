@@ -9,7 +9,7 @@ import re
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
     long_description = re.sub(r"## Give a Star.*?Thanks!", "", f.read(), 0, re.DOTALL)
-    long_description = re.sub(r"To install \*\*SSH-MITM.*?flatpak install at.ssh_mitm.server", "", long_description, 0, re.DOTALL)
+    long_description = re.sub(r"To install \*\*SSH-MITM.*?### Install as pip-package", "", long_description, 0, re.DOTALL)
 
 def get_version():
     from ssh_proxy_server.__version__ import version

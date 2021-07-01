@@ -4,6 +4,12 @@ All notable changes to this project will be documented in this file.
 The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
+## [0.5.10] - 2021-07-01
+
+### Fixed
+
+- missing python packages for snap and flatpak
+
 
 ## [0.5.9] - 2021-07-01
 
@@ -132,6 +138,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
+[0.5.10]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.9...0.5.10
 [0.5.9]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.8...0.5.9
 [0.5.8]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.7...0.5.8
 [0.5.7]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.6...0.5.7
