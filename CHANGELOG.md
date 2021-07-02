@@ -153,7 +153,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.11...HEAD
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.11...develop
 [0.5.11]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.10...0.5.11
 [0.5.10]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.9...0.5.10
 [0.5.9]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.8...0.5.9
