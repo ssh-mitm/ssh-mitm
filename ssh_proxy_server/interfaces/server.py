@@ -190,7 +190,8 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_env_request(self, channel, name, value):
         logging.debug("check_channel_env_request: channel=%s, name=%s, value=%s", channel, name, value)
-        return False
+        self.session.env_requests[name] = value
+        return True
 
     def check_channel_subsystem_request(self, channel, name):
         logging.debug("check_channel_subsystem_request: channel=%s, name=%s", channel, name)
@@ -254,6 +255,9 @@ class ServerInterface(BaseServerInterface):
             "check_channel_window_change_request: channel=%s, width=%s, height=%s, pixelwidth=%s, pixelheight=%s",
             channel, width, height, pixelwidth, pixelheight
         )
+        if self.session.ssh_channel:
+            self.session.ssh_channel.resize_pty(width, height, pixelwidth, pixelheight)
+            return True
         return False
 
     def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):

@@ -50,6 +50,8 @@ class Session:
         self.agent = None
         self.authenticator = authenticator(self)
 
+        self.env_requests = {}
+
     @property
     def running(self):
         # Using status of master channel to determine session status (-> releasability of resources)

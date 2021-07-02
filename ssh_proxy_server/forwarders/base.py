@@ -20,6 +20,10 @@ class BaseForwarder(BaseModule):
         self.channel = None
         self.session = session
 
+        # pass environment variables from client to server
+        for env_name, env_value in self.session.env_requests.items():
+            self.server_channel.set_environment_variable(env_name, env_value)
+
     def forward(self):
         raise NotImplementedError
 
