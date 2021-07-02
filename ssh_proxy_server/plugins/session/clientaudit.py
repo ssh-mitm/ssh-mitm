@@ -70,6 +70,6 @@ def audit_client(client_version):
     elif 'openssh' in client_version:
         client = OpenSSH(client_version, vulnerability_list.get('openssh', {}))
     elif 'dropbear' in client_version:
-        client = Dropbear()
+        client = Dropbear(client_version, vulnerability_list.get('openssh', {}))
     if client:
         client.audit()
