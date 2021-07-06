@@ -2,7 +2,7 @@ import logging
 
 from paramiko import Transport, common
 
-from ssh_proxy_server.plugins.session import cve202014002, cve202014145, asyncssh
+from ssh_proxy_server.plugins.session import cve202014002, cve202014145, asyncssh, rubynetssh
 from ssh_proxy_server.plugins.session.clientaudit import audit_client
 
 
@@ -48,6 +48,7 @@ def handle_key_negotiation(session):
         cve202014002.check_key_negotiation(client_version, server_host_key_algorithms, session)
         cve202014145.check_key_negotiation(client_version, server_host_key_algorithms, session)
         asyncssh.check_key_negotiation(client_version, server_host_key_algorithms, session)
+        rubynetssh.check_key_negotiation(client_version, server_host_key_algorithms, session)
 
         m.rewind()
         # normal operation
