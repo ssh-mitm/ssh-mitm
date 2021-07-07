@@ -15,6 +15,9 @@ class SFTPClient(SSHClient):
 
     @classmethod
     def from_client(cls, ssh_client):
+        if ssh_client is None:
+            logging.error('error creating sftp client - no ssh client!')
+            return None
         if not ssh_client.connected and ssh_client.connect():
             logging.error('error creating sftp client!')
             return None
