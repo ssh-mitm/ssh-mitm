@@ -276,10 +276,14 @@ class ServerInterface(BaseServerInterface):
 class ProxySFTPServer(paramiko.SFTPServer):
     def start_subsystem(self, name, transport, channel):
         self.server.session.sftp_client = SFTPClient.from_client(self.server.session.ssh_client)
+        if not self.server.session.sftp_client:
+            return
         self.server.session.sftp_client.subsystem_count += 1
         super().start_subsystem(name, transport, channel)
 
     def finish_subsystem(self):
         super().finish_subsystem()
+        if not self.server.session.sftp_client:
+            return
         self.server.session.sftp_client.subsystem_count -= 1
         self.server.session.sftp_client.close()
