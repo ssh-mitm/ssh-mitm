@@ -7,7 +7,7 @@ from paramiko import ECDSAKey
 from ssh_proxy_server.plugins.session import cve202014002, cve202014145
 
 
-class SSHClient():
+class SSHClientAudit():
 
     CLIENT_NAME = None
     VERSION_REGEX = None
@@ -67,21 +67,21 @@ class SSHClient():
         pass
 
 
-class PuTTY(SSHClient):
+class PuTTY(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-putty_release_(0\.[0-9]+)'
     SERVER_HOST_KEY_ALGORITHMS = cve202014002.SERVER_HOST_KEY_ALGORITHMS
 
 
-class OpenSSH(SSHClient):
+class OpenSSH(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*'
     SERVER_HOST_KEY_ALGORITHMS = cve202014145.SERVER_HOST_KEY_ALGORITHMS
 
 
-class Dropbear(SSHClient):
+class Dropbear(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-dropbear_([0-9]+\.[0-9]+)'
 
 
-class AsyncSSH(SSHClient):
+class AsyncSSH(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-asyncssh_([0-9]+\.[0-9]+\.[0-9]+)'
     SERVER_HOST_KEY_ALGORITHMS = [
         [  # asyncssh 2.7.0
@@ -97,7 +97,7 @@ class AsyncSSH(SSHClient):
     ]
 
 
-class RubyNetSsh(SSHClient):
+class RubyNetSsh(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-ruby/net::ssh_([0-9]+\.[0-9]+\.[0-9]+)\s+.*'
     SERVER_HOST_KEY_ALGORITHMS = [
         [  # ruby/net::ssh_5.2.0 x86_64-linux-gnu

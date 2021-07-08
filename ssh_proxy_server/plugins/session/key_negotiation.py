@@ -5,7 +5,7 @@ import yaml
 from paramiko import Transport, common
 
 
-from ssh_proxy_server.plugins.session.clientaudit import SSHClient
+from ssh_proxy_server.plugins.session.clientaudit import SSHClientAudit
 
 
 class KeyNegotiationData:
@@ -53,7 +53,7 @@ class KeyNegotiationData:
         except Exception:
             logging.exception("Error loading vulnerability database")
             return
-        for client_cls in SSHClient.__subclasses__():
+        for client_cls in SSHClientAudit.__subclasses__():
             if client_cls.client_name() in client_version:
                 client = client_cls(self, vulnerability_list.get(client_cls.client_name(), {}))
 
