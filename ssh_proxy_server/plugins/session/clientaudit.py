@@ -1,22 +1,31 @@
 import re
 import logging
 from packaging import version
-import pkg_resources
-import yaml
+
+from paramiko import ECDSAKey
+
+from ssh_proxy_server.plugins.session import cve202014002, cve202014145
 
 
-class SSHClient():
+class SSHClientAudit():
 
+    CLIENT_NAME = None
     VERSION_REGEX = None
+    server_host_key_algorithms = None
+    SERVER_HOST_KEY_ALGORITHMS = None
 
-    def __init__(self, client_version, vulnerability_list) -> None:
-        self.client_version = client_version
+    def __init__(self, key_negotiation_data, vulnerability_list) -> None:
+        self.key_negotiation_data = key_negotiation_data
         self.vulnerability_list = vulnerability_list
+
+    @classmethod
+    def client_name(cls):
+        return cls.CLIENT_NAME or cls.__name__.lower()
 
     def get_version_string(self):
         if not self.VERSION_REGEX:
             return None
-        version_sring = re.match(self.VERSION_REGEX, self.client_version)
+        version_sring = re.match(self.VERSION_REGEX, self.key_negotiation_data.client_version.lower())
         if version_sring:
             return version_sring[1]
         return None
@@ -30,7 +39,7 @@ class SSHClient():
         except ValueError:
             return False
 
-    def audit(self):
+    def check_cves(self):
         found_cves = []
         for cve, description in self.vulnerability_list.items():
             version_min = description.get('version_min', "")
@@ -42,34 +51,63 @@ class SSHClient():
             cvelist = "\n".join(["    - {0}: https://docs.ssh.mitm.at/{0}.html".format(cve) for cve in found_cves])
             logging.info("possible vulnerabilities found!\n{}".format(cvelist))
 
+    def check_key_negotiation(self):
+        if not self.SERVER_HOST_KEY_ALGORITHMS:
+            return
+        if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
+            logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_name())
+        for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS:
+            if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
+                logging.info("%s: Client connecting for the FIRST time!", self.client_name())
+                break
+        else:
+            logging.info("%s: Client has a locally cached remote fingerprint!", self.client_name())
 
-class PuTTY(SSHClient):
+    def audit(self):
+        pass
+
+
+class PuTTY(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-putty_release_(0\.[0-9]+)'
+    SERVER_HOST_KEY_ALGORITHMS = cve202014002.SERVER_HOST_KEY_ALGORITHMS
 
 
-class OpenSSH(SSHClient):
+class OpenSSH(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*'
+    SERVER_HOST_KEY_ALGORITHMS = cve202014145.SERVER_HOST_KEY_ALGORITHMS
 
 
-class Dropbear(SSHClient):
+class Dropbear(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-dropbear_([0-9]+\.[0-9]+)'
 
 
-def audit_client(client_version):
-    client = None
-    vulnerability_list = None
-    try:
-        vulndb = pkg_resources.resource_filename('ssh_proxy_server', 'data/client_vulnerabilities.yml')
-        with open(vulndb) as file:
-            vulnerability_list = yaml.load(file, Loader=yaml.FullLoader)
-    except Exception:
-        logging.exception("Error loading vulnerability database")
-        return
-    if 'putty' in client_version:
-        client = PuTTY(client_version, vulnerability_list.get('putty', {}))
-    elif 'openssh' in client_version:
-        client = OpenSSH(client_version, vulnerability_list.get('openssh', {}))
-    elif 'dropbear' in client_version:
-        client = Dropbear(client_version, vulnerability_list.get('openssh', {}))
-    if client:
-        client.audit()
+class AsyncSSH(SSHClientAudit):
+    VERSION_REGEX = r'ssh-2.0-asyncssh_([0-9]+\.[0-9]+\.[0-9]+)'
+    SERVER_HOST_KEY_ALGORITHMS = [
+        [  # asyncssh 2.7.0
+            'sk-ssh-ed25519-cert-v01@openssh.com', 'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com',
+            'ssh-ed25519-cert-v01@openssh.com', 'ssh-ed448-cert-v01@openssh.com',
+            'ecdsa-sha2-nistp521-cert-v01@openssh.com', 'ecdsa-sha2-nistp384-cert-v01@openssh.com',
+            'ecdsa-sha2-nistp256-cert-v01@openssh.com', 'ecdsa-sha2-1.3.132.0.10-cert-v01@openssh.com',
+            'ssh-rsa-cert-v01@openssh.com', 'sk-ssh-ed25519@openssh.com', 'sk-ecdsa-sha2-nistp256@openssh.com',
+            'ssh-ed25519', 'ssh-ed448', 'ecdsa-sha2-nistp521', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp256',
+            'ecdsa-sha2-1.3.132.0.10', 'rsa-sha2-256', 'rsa-sha2-512', 'ssh-rsa-sha224@ssh.com', 'ssh-rsa-sha256@ssh.com',
+            'ssh-rsa-sha384@ssh.com', 'ssh-rsa-sha512@ssh.com', 'ssh-rsa'
+        ]
+    ]
+
+
+class RubyNetSsh(SSHClientAudit):
+    VERSION_REGEX = r'ssh-2.0-ruby/net::ssh_([0-9]+\.[0-9]+\.[0-9]+)\s+.*'
+    SERVER_HOST_KEY_ALGORITHMS = [
+        [  # ruby/net::ssh_5.2.0 x86_64-linux-gnu
+            'ssh-ed25519-cert-v01@openssh.com', 'ssh-ed25519', 'ecdsa-sha2-nistp521-cert-v01@openssh.com',
+            'ecdsa-sha2-nistp384-cert-v01@openssh.com', 'ecdsa-sha2-nistp256-cert-v01@openssh.com',
+            'ecdsa-sha2-nistp521', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp256', 'ssh-rsa-cert-v01@openssh.com',
+            'ssh-rsa-cert-v00@openssh.com', 'ssh-rsa', 'ssh-dss'
+        ]
+    ]
+
+    @classmethod
+    def client_name(cls):
+        return 'ruby/net::ssh'

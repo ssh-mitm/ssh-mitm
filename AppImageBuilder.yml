@@ -17,11 +17,11 @@ AppDir:
     id: at.ssh-mitm.server
     name: ssh-mitm
     icon: ssh-mitm
-    version: 0.5.11
+    version: 0.5.12
     # Set the python executable as entry point
     exec: usr/bin/python3
     # Set the application main script path as argument. Use '$@' to forward CLI parameters
-    exec_args: "-m ssh_proxy_server $@"
+    exec_args: "${APPDIR}/usr/bin/ssh-mitm $@"
 
   apt:
     arch: amd64
@@ -31,6 +31,7 @@ AppDir:
 
     include:
       - python3
+      - python3-pkg-resources
     exclude: []
 
   runtime:
@@ -41,7 +42,7 @@ AppDir:
       PYTHONHOME: '${APPDIR}/usr'
       # Path to the site-packages dir or other modules dirs
       # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
-      PYTHONPATH: '${APPDIR}/usr/lib/python3.6/site-packages'
+      PYTHONPATH: '${APPDIR}/usr/lib/python3.8/site-packages'
 
   test:
     fedora:
@@ -67,5 +68,6 @@ AppDir:
 
 AppImage:
   arch: x86_64
-  update-information: !ENV ${UPDATE_INFO}
+  file_name: ssh-mitm-x86_64.AppImage
+  update-information: gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync
   sign-key: None

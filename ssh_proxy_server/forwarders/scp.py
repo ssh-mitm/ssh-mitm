@@ -50,24 +50,27 @@ class SCPBaseForwarder(BaseForwarder):
                     buf = self.server_channel.recv_stderr(self.BUF_LEN)
                     buf = self.handle_error(buf)
                     self.sendall(self.session.scp_channel, buf, self.session.scp_channel.send_stderr)
+                if self.server_channel.exit_status_ready():
+                    status = self.server_channel.recv_exit_status()
+                    self.close_session(self.session.scp_channel, status)
+                    logging.debug("Command '%s' exited with code: %s", self.session.scp_command, status)
+                    break
+                if self.session.scp_channel.exit_status_ready():
+                    status = self.session.scp_channel.recv_exit_status()
+                    self.close_session(self.session.scp_channel, status)
+                    logging.debug("Command '%s' exited with code: %s", self.session.scp_command, status)
+                    break
 
                 if self._closed(self.session.scp_channel):
-                    logging.debug("client channel closed")
+                    logging.info("client channel closed")
                     self.server_channel.close()
                     self.close_session(self.session.scp_channel, 0)
                     break
                 if self._closed(self.server_channel):
-                    logging.debug("server channel closed")
+                    logging.info("server channel closed")
                     self.close_session(self.session.scp_channel, 0)
                     break
-                if self.server_channel.exit_status_ready():
-                    status = self.server_channel.recv_exit_status()
-                    self.close_session(self.session.scp_channel, status)
-                    break
-                if self.session.scp_channel.exit_status_ready():
-                    self.session.scp_channel.recv_exit_status()
-                    self.close_session(self.session.scp_channel, 0)
-                    break
+
                 time.sleep(0.1)
         except Exception:
             logging.exception('error processing scp command')
