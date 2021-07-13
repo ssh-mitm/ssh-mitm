@@ -5,11 +5,22 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased] - 2021-07-02
+## [Unreleased]
+
+
+## [0.5.12] - 2021-07-13
+
+### Fixed
+
+- handle subsystem errors in sftp server
+- ssh-mitm passes the return code of ssh commands to the client
+- fixed error in sftp client, when ssh client does not exist
 
 ### Added
 
 - pass env and window change requests to the server
+- added asyncssh key negotiation vulnerability check
+- added rubynetssh default key algorithms
 
 
 ## [0.5.11] - 2021-07-01
@@ -154,6 +165,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed pseudo terminal on exec command
 
 [Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.11...develop
+[0.5.12]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.11...0.5.12
 [0.5.11]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.10...0.5.11
 [0.5.10]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.9...0.5.10
 [0.5.9]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.8...0.5.9
