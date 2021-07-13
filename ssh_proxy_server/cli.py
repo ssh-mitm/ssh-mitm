@@ -1,4 +1,7 @@
 import logging
+import sys
+import os
+
 from enhancements.modules import ModuleParser
 from enhancements.plugins import LogModule
 
@@ -44,6 +47,12 @@ from ssh_proxy_server.__version__ import version as ssh_mitm_version
 
 
 def main():
+
+    if os.environ.get('APPIMAGE', None):
+        # if running as appimage, remove empty arguments
+        if len(sys.argv) == 2 and sys.argv[-1] == '':
+            sys.argv = sys.argv[:-1]
+
     parser = ModuleParser(description='SSH Proxy Server', modules_from_file=True)
 
     parser.add_plugin(LogModule)
