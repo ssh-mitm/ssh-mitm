@@ -68,5 +68,6 @@ AppDir:
 
 AppImage:
   arch: x86_64
-  update-information: gh-releases-zsync|ssh-mitm|ssh-mitm|latest|*x86_64.AppImage.zsync
+  file_name: ssh-mitm-x86_64.AppImage
+  update-information: gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync
   sign-key: None
