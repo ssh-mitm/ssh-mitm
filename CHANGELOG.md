@@ -5,7 +5,7 @@ The format is based on [Keep a Changelog](https://keepachangelog.com/en/1.0.0/),
 and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0.html).
 
 
-## [Unreleased]
+## [Unreleased] - DATE
 
 
 ## [0.5.12] - 2021-07-13
@@ -164,7 +164,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.11...develop
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.12...develop
 [0.5.12]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.11...0.5.12
 [0.5.11]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.10...0.5.11
 [0.5.10]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.9...0.5.10
