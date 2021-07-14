@@ -22,7 +22,19 @@ from ssh_proxy_server.workarounds import dropbear
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 from ssh_proxy_server.__version__ import version as ssh_mitm_version
 
-from gooey import Gooey, GooeyParser
+try:
+    from gooey import Gooey, GooeyParser
+except ImportError:
+    def Gooey(*args, **kwargs):
+        def wrapper(func):
+            if os.environ.get('APPIMAGE', None):
+                print("SSH-MITM GUI not available from an AppImage!")
+                print("Please install SSH-MITM with pip:\n   pip install ssh-mitm[gui]")
+                print("You can also install SSH-MITM as Snap:\n   snap install ssh-mitm")
+            else:
+                logging.error("Gooey not installed! Please install it with: pip install Gooey")
+            sys.exit(1)
+        return wrapper
 
 
 @Gooey(
@@ -31,14 +43,27 @@ from gooey import Gooey, GooeyParser
     tabbed_groups=True,
     optional_cols=1,
     default_size=(610, 590),
+    menu=[{
+        'name': 'Help',
+        'items': [
+            {
+                'type': 'Link',
+                'menuTitle': 'Documentation',
+                'url': 'https://docs.ssh-mitm.at'
+            },{
+                'type': 'AboutDialog',
+                'menuTitle': 'About',
+                'name': 'SSH-MITM',
+                'description': 'ssh man in the middle (ssh-mitm) server for security audits',
+                'version': ssh_mitm_version,
+                'website': 'https://www.ssh-mitm.at',
+                'developer': 'https://github.com/ssh-mitm/ssh-mitm',
+                'license': 'LGPL-3.0 License '
+            }
+        ]
+    }]
 )
 def main():
-
-    if os.environ.get('APPIMAGE', None):
-        # if running as appimage, remove empty arguments
-        if len(sys.argv) == 2 and sys.argv[-1] == '':
-            sys.argv = sys.argv[:-1]
-
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.INFO)
     logformatter = logging.Formatter('%(asctime)s [%(levelname)s]  %(message)s')
