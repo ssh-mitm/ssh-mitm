@@ -2,43 +2,20 @@ import logging
 import sys
 import os
 
-from enhancements.modules import ModuleParser
-from enhancements.plugins import LogModule
-
 from paramiko import Transport
 
 from ssh_proxy_server.server import SSHProxyServer
 
-from ssh_proxy_server.authentication import (
-    Authenticator,
-    AuthenticatorPassThrough
-)
-from ssh_proxy_server.interfaces import (
-    BaseServerInterface,
-    ServerInterface
-)
-from ssh_proxy_server.forwarders.scp import (
-    SCPBaseForwarder,
-    SCPForwarder
-)
-from ssh_proxy_server.forwarders.ssh import (
-    SSHBaseForwarder
-)
-from ssh_proxy_server.forwarders.sftp import (
-    SFTPHandlerBasePlugin,
-    SFTPHandlerPlugin
-)
+from ssh_proxy_server.authentication import AuthenticatorPassThrough
+from ssh_proxy_server.interfaces import ServerInterface
+from ssh_proxy_server.forwarders.scp import SCPForwarder
+from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin
 
-from ssh_proxy_server.interfaces.sftp import (
-    BaseSFTPServerInterface,
-    SFTPProxyServerInterface
-)
+from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
 
 from ssh_proxy_server.forwarders.tunnel import (
-    ServerTunnelBaseForwarder,
     ClientTunnelForwarder,
     ServerTunnelForwarder,
-    ClientTunnelBaseForwarder
 )
 
 from ssh_proxy_server.workarounds import dropbear
