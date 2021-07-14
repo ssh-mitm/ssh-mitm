@@ -57,7 +57,8 @@ setup(
         **{
             'console_scripts': [
                 'ssh-proxy-server = ssh_proxy_server.cli:main',
-                'ssh-mitm = ssh_proxy_server.cli:main'
+                'ssh-mitm = ssh_proxy_server.cli:main',
+                'ssh-mitm-gui = ssh_proxy_server.gui:main'
             ]
         },
         **get_entry_points()
