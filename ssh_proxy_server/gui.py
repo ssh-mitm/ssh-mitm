@@ -123,6 +123,36 @@ def main():
         help='host key length for dss and rsa (default 2048)'
     )
 
+    remotehostsettings = parser.add_argument_group("Remote Host")
+    remotehostsettings.add_argument(
+        '--remote-host',
+        dest='remote_host',
+        help='remote host to connect to (default 127.0.0.1)'
+    )
+    remotehostsettings.add_argument(
+        '--remote-port',
+        dest='remote_port',
+        type=int,
+        help='remote port to connect to (default 22)'
+    )
+    remotehostsettings.add_argument(
+        '--auth-username',
+        dest='auth_username',
+        help='username for remote authentication'
+    )
+    remotehostsettings.add_argument(
+        '--auth-password',
+        dest='auth_password',
+        help='password for remote authentication',
+        widget='PasswordField'
+    )
+    remotehostsettings.add_argument(
+        '--forward-agent',
+        dest='forward_agent',
+        action='store_true',
+        help='enables agent forwarding through the proxy'
+    )
+
     args = parser.parse_args()
 
     Transport._CLIENT_ID = args.banner_name
