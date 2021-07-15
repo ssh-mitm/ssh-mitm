@@ -8,7 +8,8 @@ class SCPReplaceFile(SCPForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.parser().add_argument(
+        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group.add_argument(
             '--scp-replace',
             dest='scp_replacement_file',
             required=True,

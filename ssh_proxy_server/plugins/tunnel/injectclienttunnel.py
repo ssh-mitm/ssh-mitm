@@ -32,14 +32,15 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.parser().add_argument(
+        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group.add_argument(
             '--tunnel-client-dest',
             dest='client_tunnel_dest',
             help='multiple direct-tcpip address/port combination to forward to (e.g. google.com:80, youtube.com:80)',
             required=True,
             nargs='+'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--tunnel-client-net',
             dest='client_tunnel_net',
             default='127.0.0.1',

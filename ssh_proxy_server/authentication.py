@@ -15,34 +15,38 @@ class Authenticator(BaseModule):
 
     @classmethod
     def parser_arguments(cls):
-        cls.parser().add_argument(
+        plugin_group = cls.parser().add_argument_group(
+            cls.__name__,
+            "options for remote authentication"
+        )
+        plugin_group.add_argument(
             '--remote-host',
             dest='remote_host',
             help='remote host to connect to (default 127.0.0.1)'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--remote-port',
             dest='remote_port',
             type=int,
             help='remote port to connect to (default 22)'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--auth-username',
             dest='auth_username',
             help='username for remote authentication'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--auth-password',
             dest='auth_password',
             help='password for remote authentication'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--hide-credentials',
             dest='auth_hide_credentials',
             action='store_true',
             help='do not log credentials (usefull for presentations)'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--forward-agent',
             dest='forward_agent',
             action='store_true',

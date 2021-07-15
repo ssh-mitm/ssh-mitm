@@ -15,7 +15,8 @@ class InjectableServerTunnelForwarder(ServerTunnelForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.parser().add_argument(
+        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group.add_argument(
             '--tunnel-server-net',
             dest='server_tunnel_net',
             default='127.0.0.1',

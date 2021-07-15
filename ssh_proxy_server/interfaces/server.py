@@ -24,49 +24,53 @@ class ServerInterface(BaseServerInterface):
 
     @classmethod
     def parser_arguments(cls):
-        cls.parser().add_argument(
+        plugin_group = cls.parser().add_argument_group(
+            cls.__name__,
+            "options for integrated ssh server"
+        )
+        plugin_group.add_argument(
             '--disable-ssh',
             dest='disable_ssh',
             action='store_true',
             help='disable ssh'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--disable-scp',
             dest='disable_scp',
             action='store_true',
             help='disable scp'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--disable-password-auth',
             dest='disable_password_auth',
             action='store_true',
             help='disable password authentication'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--disable-pubkey-auth',
             dest='disable_pubkey_auth',
             action='store_true',
             help='disable public key authentication'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--enable-none-auth',
             dest='enable_none_auth',
             action='store_true',
             help='enable "none" authentication'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--enable-keyboard-interactive-auth',
             dest='enable_keyboard_interactive_auth',
             action='store_true',
             help='enable "keyboard-interactive" authentication'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--disable-keyboard-interactive-prompts',
             dest='disable_keyboard_interactive_prompts',
             action='store_true',
             help='disable prompts for keyboard-interactive'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--extra-auth-methods',
             dest='extra_auth_methods',
             help='extra authentication mehtod names'

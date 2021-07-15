@@ -15,7 +15,8 @@ class SSHLogForwarder(SSHForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.parser().add_argument(
+        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group.add_argument(
             '--ssh-log-dir',
             dest='ssh_log_dir',
             required=True,

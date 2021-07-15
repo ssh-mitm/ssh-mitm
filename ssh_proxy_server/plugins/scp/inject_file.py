@@ -20,7 +20,11 @@ class SCPInjectFile(SCPForwarder):
 
     @classmethod
     def parser_arguments(cls):
-        cls.parser().add_argument(
+        plugin_group = cls.parser().add_argument_group(
+            cls.__name__,
+            "Example exploit for CVE-2019-6111, CVE-2019-6110"
+        )
+        plugin_group.add_argument(
             '--scp-inject',
             dest='scp_inject_file',
             required=True,
