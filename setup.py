@@ -72,6 +72,9 @@ setup(
         'packaging'
     ],
     extras_require={
+        'gui': [
+            'Gooey'
+        ],
         'plugins': [
             'ssh-mitm-plugins'
         ],
