@@ -170,7 +170,6 @@ class SSHProxyServer:
                             session.ssh_requested = False
                             self.ssh_interface(session).forward()
                         elif session.scp_requested and self.scp_interface:
-                            logging.error("got scp")
                             session.scp_requested = False
                             scp_interface = self.scp_interface(session)
                             thread = threading.Thread(target=scp_interface.forward)

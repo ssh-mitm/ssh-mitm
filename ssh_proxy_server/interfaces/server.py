@@ -196,7 +196,7 @@ class ServerInterface(BaseServerInterface):
     def check_channel_subsystem_request(self, channel, name):
         logging.debug("check_channel_subsystem_request: channel=%s, name=%s", channel, name)
         if name.lower() == 'sftp':
-            self.session.sftp = True
+            self.session.sftp_requested = True
             self.session.sftp_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 
