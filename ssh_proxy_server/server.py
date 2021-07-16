@@ -102,7 +102,7 @@ class SSHProxyServer:
                 logging.error('host key format not supported by selected algorithm "%s"!', self.key_algorithm)
                 raise KeyGenerationError()
 
-                
+
         ssh_pub_key = SSHKey("{} {}".format(self._hostkey.get_name(), self._hostkey.get_base64()))
         ssh_pub_key.parse()
         keygen_message = (
@@ -117,7 +117,7 @@ class SSHProxyServer:
             ssh_pub_key.hash_sha256()
         )
         logging.info(keygen_message)
-        
+
     @property
     def host_key(self):
         if not self._hostkey:
@@ -164,15 +164,18 @@ class SSHProxyServer:
         try:
             with Session(self, client, addr, self.authenticator, remoteaddr) as session:
                 if session.start():
-                    time.sleep(0.1)
-                    if session.ssh and self.ssh_interface:
-                        session.ssh = False
-                        self.ssh_interface(session).forward()
-                    elif session.scp and self.scp_interface:
-                        session.scp = False
-                        self.scp_interface(session).forward()
                     while session.running:
-                        time.sleep(1)
+                        time.sleep(0.1)
+                        if session.ssh_requested and self.ssh_interface:
+                            session.ssh_requested = False
+                            self.ssh_interface(session).forward()
+                        elif session.scp_requested and self.scp_interface:
+                            logging.error("got scp")
+                            session.scp_requested = False
+                            scp_interface = self.scp_interface(session)
+                            thread = threading.Thread(target=scp_interface.forward)
+                            thread.start()
+
                 else:
                     logging.warning("(%s) session not started", session)
                     self._threads.remove(threading.current_thread())

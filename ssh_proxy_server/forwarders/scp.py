@@ -17,6 +17,7 @@ class SCPBaseForwarder(BaseForwarder):
         return traffic
 
     def forward(self):
+        logging.info("start forwarder")
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
@@ -75,6 +76,7 @@ class SCPBaseForwarder(BaseForwarder):
         except Exception:
             logging.exception('error processing scp command')
             raise
+        logging.info("end forwarder")
 
     def sendall(self, channel, data, sendfunc):
         if not data:

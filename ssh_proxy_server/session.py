@@ -28,12 +28,12 @@ class Session:
 
         self.agent_requested = threading.Event()
 
-        self.ssh = False
+        self.ssh_requested = False
         self.ssh_channel = None
         self.ssh_client = None
         self.ssh_pty_kwargs = None
 
-        self.scp = False
+        self.scp_requested = False
         self.scp_channel = None
         self.scp_command = ''
 
@@ -96,7 +96,7 @@ class Session:
             return False
 
         # Connect method end
-        if not self.scp and not self.ssh and not self.sftp:
+        if not self.scp_requested and not self.ssh_requested and not self.sftp:
             if self.transport.is_active():
                 self.transport.close()
                 return False
