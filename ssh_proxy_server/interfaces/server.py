@@ -83,7 +83,7 @@ class ServerInterface(BaseServerInterface):
             return False
         if command.decode('utf8').startswith('scp'):
             logging.debug("got scp command: %s", command.decode('utf8'))
-            self.session.scp = True
+            self.session.scp_requested = True
             self.session.scp_command = command
             self.session.scp_channel = channel
             return True
@@ -91,7 +91,7 @@ class ServerInterface(BaseServerInterface):
         if not self.args.disable_ssh:
             # we can use the scp forwarder for command executions
             logging.info("got ssh command: %s", command.decode('utf8'))
-            self.session.scp = True
+            self.session.scp_requested = True
             self.session.scp_command = command
             self.session.scp_channel = channel
             return True
@@ -106,7 +106,7 @@ class ServerInterface(BaseServerInterface):
     def check_channel_shell_request(self, channel):
         logging.debug("check_channel_shell_request: channel=%s", channel)
         if not self.args.disable_ssh:
-            self.session.ssh = True
+            self.session.ssh_requested = True
             self.session.ssh_channel = channel
             return True
         return False
@@ -117,7 +117,7 @@ class ServerInterface(BaseServerInterface):
             channel, term, width, height, pixelwidth, pixelheight, modes
         )
         if not self.args.disable_ssh:
-            self.session.ssh = True
+            self.session.ssh_requested = True
             self.session.ssh_pty_kwargs = {
                 'term': term,
                 'width': width,
@@ -200,7 +200,7 @@ class ServerInterface(BaseServerInterface):
     def check_channel_subsystem_request(self, channel, name):
         logging.debug("check_channel_subsystem_request: channel=%s, name=%s", channel, name)
         if name.lower() == 'sftp':
-            self.session.sftp = True
+            self.session.sftp_requested = True
             self.session.sftp_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 

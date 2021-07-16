@@ -50,25 +50,30 @@ class SCPBaseForwarder(BaseForwarder):
                     buf = self.server_channel.recv_stderr(self.BUF_LEN)
                     buf = self.handle_error(buf)
                     self.sendall(self.session.scp_channel, buf, self.session.scp_channel.send_stderr)
+
                 if self.server_channel.exit_status_ready():
                     status = self.server_channel.recv_exit_status()
-                    self.close_session(self.session.scp_channel, status)
-                    logging.debug("Command '%s' exited with code: %s", self.session.scp_command, status)
+                    self.session.scp_channel.send_exit_status(status)
+                    self.close_session(self.session.scp_channel)
+                    logging.info(
+                        "remote command '%s' exited with code: %s",
+                        self.session.scp_command, status
+                    )
                     break
                 if self.session.scp_channel.exit_status_ready():
                     status = self.session.scp_channel.recv_exit_status()
-                    self.close_session(self.session.scp_channel, status)
-                    logging.debug("Command '%s' exited with code: %s", self.session.scp_command, status)
+                    #self.server_channel.send_exit_status(status)
+                    self.close_session(self.session.scp_channel)
                     break
 
                 if self._closed(self.session.scp_channel):
                     logging.info("client channel closed")
                     self.server_channel.close()
-                    self.close_session(self.session.scp_channel, 0)
+                    self.close_session(self.session.scp_channel)
                     break
                 if self._closed(self.server_channel):
                     logging.info("server channel closed")
-                    self.close_session(self.session.scp_channel, 0)
+                    self.close_session(self.session.scp_channel)
                     break
 
                 time.sleep(0.1)
@@ -90,19 +95,10 @@ class SCPBaseForwarder(BaseForwarder):
             sent += newsent
         return sent
 
-    def close_session(self, channel, status=0):
+    def close_session(self, channel):
         # pylint: disable=protected-access
         if channel.closed:
             return
-
-        if not channel.exit_status_ready():
-            message = Message()
-            message.add_byte(cMSG_CHANNEL_REQUEST)
-            message.add_int(channel.remote_chanid)
-            message.add_string("exit-status")
-            message.add_boolean(False)
-            message.add_int(status)
-            channel.transport._send_user_message(message)
 
         if not channel.eof_received:
             message = Message()

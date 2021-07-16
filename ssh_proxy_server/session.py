@@ -28,16 +28,16 @@ class Session:
 
         self.agent_requested = threading.Event()
 
-        self.ssh = False
+        self.ssh_requested = False
         self.ssh_channel = None
         self.ssh_client = None
         self.ssh_pty_kwargs = None
 
-        self.scp = False
+        self.scp_requested = False
         self.scp_channel = None
         self.scp_command = ''
 
-        self.sftp = False
+        self.sftp_requested = False
         self.sftp_channel = None
         self.sftp_client = None
         self.sftp_client_ready = threading.Event()
@@ -54,8 +54,13 @@ class Session:
 
     @property
     def running(self):
-        # Using status of master channel to determine session status (-> releasability of resources)
-        return self.proxyserver.running and (not self.channel.closed if self.channel else True) and not self.closed
+        session_channel_open = not self.channel.closed if self.channel else False
+        ssh_channel_open = not self.ssh_channel.closed if self.ssh_channel else False
+        scp_channel_open = not self.scp_channel.closed if self.scp_channel else False
+        open_channel_exists = session_channel_open or ssh_channel_open or scp_channel_open
+
+        return_value = self.proxyserver.running and open_channel_exists and not self.closed
+        return return_value
 
     @property
     def transport(self):
@@ -96,7 +101,7 @@ class Session:
             return False
 
         # Connect method end
-        if not self.scp and not self.ssh and not self.sftp:
+        if not self.scp_requested and not self.ssh_requested and not self.sftp_requested:
             if self.transport.is_active():
                 self.transport.close()
                 return False
@@ -166,4 +171,5 @@ class Session:
         return self
 
     def __exit__(self, value_type, value, traceback):
+        logging.debug("(%s) session exited", self)
         self.close()
