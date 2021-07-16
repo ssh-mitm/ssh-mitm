@@ -9,6 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [0.5.13] - 2021-07-16
 
+## Changed
+
+- reorganized command line arguments - plugin args are now grouped
+
 ## Fixed
 
 - fixed closing session when open channels exist
