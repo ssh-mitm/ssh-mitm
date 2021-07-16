@@ -54,7 +54,7 @@ class Session:
 
     @property
     def running(self):
-        session_channel_open = not self.channel.closed if self.channel else False
+        session_channel_open = not self.channel.closed if self.channel else True
         ssh_channel_open = not self.ssh_channel.closed if self.ssh_channel else False
         scp_channel_open = not self.scp_channel.closed if self.scp_channel else False
         open_channel_exists = session_channel_open or ssh_channel_open or scp_channel_open
