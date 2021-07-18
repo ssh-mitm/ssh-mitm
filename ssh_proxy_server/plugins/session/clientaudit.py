@@ -48,8 +48,8 @@ class SSHClientAudit():
                 found_cves.append(cve)
 
         if found_cves:
-            cvelist = "\n".join(["    - {0}: https://docs.ssh.mitm.at/{0}.html".format(cve) for cve in found_cves])
-            logging.info("possible vulnerabilities found!\n{}".format(cvelist))
+            cvelist = "\n".join(["    :warning: {0}: https://docs.ssh.mitm.at/{0}.html".format(cve) for cve in found_cves])
+            logging.info("[yellow][bold] possible vulnerabilities found![/bold]\n{}".format(cvelist), extra={"markup": True})
 
     def check_key_negotiation(self):
         if not self.SERVER_HOST_KEY_ALGORITHMS:
@@ -58,10 +58,10 @@ class SSHClientAudit():
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_name())
         for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
-                logging.info("%s: Client connecting for the FIRST time!", self.client_name())
+                logging.info("[green]%s: Client connecting for the first time or using default key order![/green]", self.client_name(), extra={"markup": True})
                 break
         else:
-            logging.info("%s: Client has a locally cached remote fingerprint!", self.client_name())
+            logging.info("[yellow]%s: Client has a locally cached remote fingerprint!", self.client_name(), extra={"markup": True})
 
     def audit(self):
         pass

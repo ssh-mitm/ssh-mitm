@@ -7,6 +7,10 @@ from enhancements.plugins import LogModule
 
 from paramiko import Transport
 
+from rich.logging import RichHandler
+from rich.highlighter import NullHighlighter
+
+from ssh_proxy_server.console import sshconsole
 from ssh_proxy_server.server import SSHProxyServer
 
 from ssh_proxy_server.authentication import (
@@ -55,8 +59,14 @@ def main():
 
     parser = ModuleParser(description='SSH Proxy Server', modules_from_file=True)
 
-    parser.add_plugin(LogModule)
-
+    parser.add_argument(
+        '-d',
+        '--debug',
+        dest='debug',
+        default=False,
+        action='store_true',
+        help='More verbose output of status information'
+    )
     parser.add_argument(
         '--listen-port',
         dest='listen_port',
@@ -184,6 +194,18 @@ def main():
 
     args = parser.parse_args()
 
+    FORMAT = "%(message)s"
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
+    root_logger.handlers.clear()
+    root_logger.addHandler(RichHandler(
+        highlighter=NullHighlighter(),
+        markup=False,
+        rich_tracebacks=True,
+        enable_link_path=args.debug,
+        show_path=args.debug
+    ))
+
     if args.version:
         print("SSH-MITM {}".format(ssh_mitm_version))
         return
@@ -203,7 +225,7 @@ def main():
         args.authenticator.REQUEST_AGENT = True
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
-    logging.info("starting SSH-MITM %s", ssh_mitm_version)
+    sshconsole.rule("[bold red]SSH-MITM {}".format(ssh_mitm_version))
     proxy = SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,

@@ -129,33 +129,30 @@ class Authenticator(BaseModule):
                 ssh_pub_key.parse()
                 keys_parsed.append((k.get_name(), ssh_pub_key, k.can_sign()))
             return keys_parsed
+        
+        if self.args.auth_hide_credentials:
+            display_password = '*******'
+        else:
+            display_password = "{}".format(password)
 
-        if not self.args.auth_hide_credentials:
-            ssh_keys = None
-            keys_formatted = ""
-            if self.session.agent:
-                ssh_keys = get_agent_pubkeys()
-                keys_formatted = "\n".join(["\t\tAgent-Key: {} {} {}bits, can sign: {}".format(k[0], k[1].hash_sha256(), k[1].bits, k[2]) for k in ssh_keys])
+        ssh_keys = None
+        keys_formatted = ""
+        if self.session.agent:
+            ssh_keys = get_agent_pubkeys()
+            keys_formatted = "\n".join(["\t\tAgent-Key: {} {} {}bits, can sign: {}".format(k[0], k[1].hash_sha256(), k[1].bits, k[2]) for k in ssh_keys])
 
-            logging.info(
-                "\n".join((
-                    "Client connection established with parameters:",
-                    "\tRemote Address: %s",
-                    "\tPort: %s",
-                    "\tUsername: %s",
-                    "\tPassword: %s",
-                    "\tKey: %s",
-                    "\tAgent: %s",
-                    "%s"
-                )),
-                host,
-                port,
-                user,
-                password,
-                ('None' if key is None else 'not None'),
-                "available keys: {}".format(len(ssh_keys)) if ssh_keys else 'no agent',
-                keys_formatted
-            )
+        logging.info(
+            "\n".join((
+                "Client connection established with parameters:",
+                "\tRemote Address: {}".format(host),
+                "\tPort: {}".format(port),
+                "\tUsername: {}".format(user),
+                "\tPassword: {}".format(display_password),
+                "\tKey: {}".format('None' if key is None else 'not None'),
+                "\tAgent: {}".format("available keys: {}".format(len(ssh_keys)) if ssh_keys else 'no agent'),
+                "{}".format(keys_formatted)
+            ))
+        )
 
         if not host:
             raise MissingHostException()

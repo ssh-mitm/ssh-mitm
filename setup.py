@@ -68,7 +68,8 @@ setup(
         'pytz',
         'sshpubkeys',
         'pyyaml',
-        'packaging'
+        'packaging',
+        'rich'
     ],
     extras_require={
         'plugins': [

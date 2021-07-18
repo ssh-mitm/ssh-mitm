@@ -4,6 +4,7 @@ import pkg_resources
 import yaml
 from paramiko import Transport, common
 
+from rich.markup import escape
 
 from ssh_proxy_server.plugins.session.clientaudit import SSHClientAudit
 
@@ -28,9 +29,9 @@ class KeyNegotiationData:
         m.rewind()
 
     def show_debug_info(self):
-        logging.info("connected client version: %s", self.client_version)
+        logging.info("yellow]connected client version: %s", escape(self.client_version))
         logging.debug("cookie: %s", self.cookie)
-        logging.debug("kex_algorithms: %s", self.kex_algorithms)
+        logging.debug("kex_algorithms: %s", escape(str(self.kex_algorithms)))
         logging.debug("server_host_key_algorithms: %s", self.server_host_key_algorithms)
         logging.debug("encryption_algorithms_client_to_server: %s", self.encryption_algorithms_client_to_server)
         logging.debug("encryption_algorithms_server_to_client: %s", self.encryption_algorithms_server_to_client)

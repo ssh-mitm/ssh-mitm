@@ -79,10 +79,11 @@ class SSHMirrorForwarder(SSHForwarder):
     def injector_connect(self):
         inject_host, inject_port = self.injector_sock.getsockname()
         logging.info(
-            "created mirrorshell on port {port}. connect with: ssh -p {port} {host}".format(
+            "[blue]created mirrorshell on port {port}. connect with: [bold]ssh -p {port} {host}".format(
                 host=inject_host,
                 port=inject_port
-            )
+            ), 
+            extra={"markup": True}
         )
         try:
             while self.session.running:

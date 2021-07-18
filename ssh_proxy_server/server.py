@@ -14,6 +14,7 @@ from ssh_proxy_server.multisocket import (
     MultipleSocketsListener
 )
 
+
 from ssh_proxy_server.session import Session
 from ssh_proxy_server.exceptions import KeyGenerationError
 
@@ -155,7 +156,7 @@ class SSHProxyServer:
         except KeyboardInterrupt:
             self.running = False
         finally:
-            logging.info("Shutting down server ...")
+            logging.info("[red]Shutting down server ...", extra={"markup": True})
             sock.close()
             for thread in self._threads[:]:
                 thread.join()
