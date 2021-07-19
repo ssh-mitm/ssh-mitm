@@ -224,7 +224,7 @@ def main():
         args.authenticator.REQUEST_AGENT = True
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
-    sshconsole.rule("[bold red]SSH-MITM {}".format(ssh_mitm_version))
+    sshconsole.rule("[bold red]SSH-MITM {}".format(ssh_mitm_version), style="red")
     proxy = SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,

@@ -129,7 +129,7 @@ class Authenticator(BaseModule):
                 ssh_pub_key.parse()
                 keys_parsed.append((k.get_name(), ssh_pub_key, k.can_sign()))
             return keys_parsed
-        
+
         if self.args.auth_hide_credentials:
             display_password = '*******'
         else:
@@ -141,22 +141,11 @@ class Authenticator(BaseModule):
             ssh_keys = get_agent_pubkeys()
             keys_formatted = "\n".join(["\t\tAgent-Key: {} {} {}bits, can sign: {}".format(k[0], k[1].hash_sha256(), k[1].bits, k[2]) for k in ssh_keys])
 
-        logging.info(
-            "\n".join((
-                "Client connection established with parameters:",
-                "\tRemote Address: {}".format(host),
-                "\tPort: {}".format(port),
-                "\tUsername: {}".format(user),
-                "\tPassword: {}".format(display_password),
-                "\tKey: {}".format('None' if key is None else 'not None'),
-                "\tAgent: {}".format("available keys: {}".format(len(ssh_keys)) if ssh_keys else 'no agent'),
-                "{}".format(keys_formatted)
-            ))
-        )
-
         if not host:
             raise MissingHostException()
 
+        auth_status = paramiko.AUTH_FAILED
+        auth_status_logmessage = "[red]Remote authentication failed"
         sshclient = SSHClient(
             host,
             port,
@@ -168,9 +157,25 @@ class Authenticator(BaseModule):
         )
         if sshclient.connect():
             self.session.ssh_client = sshclient
-            return paramiko.AUTH_SUCCESSFUL
-        logging.warning('connection failed!')
-        return paramiko.AUTH_FAILED
+            auth_status = paramiko.AUTH_SUCCESSFUL
+            auth_status_logmessage = "[green]Remote authentication succeeded"
+
+        logging.info(
+            auth_status_logmessage,
+            extra={"markup": True}
+        )
+        logging.info(
+            "\n".join((
+                "\tRemote Address: {}".format(host),
+                "\tPort: {}".format(port),
+                "\tUsername: {}".format(user),
+                "\tPassword: {}".format(display_password),
+                "\tKey: {}".format('None' if key is None else 'not None'),
+                "\tAgent: {}".format("available keys: {}".format(len(ssh_keys)) if ssh_keys else 'no agent'),
+                "{}".format(keys_formatted)
+            ))
+        )
+        return auth_status
 
 
 class AuthenticatorPassThrough(Authenticator):
