@@ -154,6 +154,8 @@ class SSHProxyServer:
                     thread.start()
                     self._threads.append(thread)
         except KeyboardInterrupt:
+            sys.stdout.write('\b\b\r')
+            sys.stdout.flush()
             self.running = False
         finally:
             logging.info("[red]Shutting down server ...", extra={"markup": True})
