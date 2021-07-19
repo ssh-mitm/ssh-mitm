@@ -3,7 +3,6 @@ import sys
 import os
 
 from enhancements.modules import ModuleParser
-from enhancements.plugins import LogModule
 
 from paramiko import Transport
 
@@ -50,14 +49,12 @@ from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 from ssh_proxy_server.__version__ import version as ssh_mitm_version
 
 
-def main():
-
-    if os.environ.get('APPIMAGE', None):
-        # if running as appimage, remove empty arguments
-        if len(sys.argv) == 2 and sys.argv[-1] == '':
-            sys.argv = sys.argv[:-1]
-
-    parser = ModuleParser(description='SSH Proxy Server', modules_from_file=True)
+def get_parser():
+    parser = ModuleParser(
+        description='SSH Proxy Server',
+        version="SSH-MITM {}".format(ssh_mitm_version),
+        modules_from_file=True
+    )
 
     parser.add_argument(
         '-d',
@@ -186,12 +183,18 @@ def main():
         action='store_true',
         help='disable paramiko workarounds'
     )
-    parser.add_argument(
-        '--version',
-        action='store_true',
-        help='show version'
-    )
 
+    return parser
+
+
+def main():
+
+    if os.environ.get('APPIMAGE', None):
+        # if running as appimage, remove empty arguments
+        if len(sys.argv) == 2 and sys.argv[-1] == '':
+            sys.argv = sys.argv[:-1]
+
+    parser = get_parser()
     args = parser.parse_args()
 
     FORMAT = "%(message)s"
@@ -205,10 +208,6 @@ def main():
         enable_link_path=args.debug,
         show_path=args.debug
     ))
-
-    if args.version:
-        print("SSH-MITM {}".format(ssh_mitm_version))
-        return
 
     if not args.disable_workarounds:
         Transport.run = dropbear.transport_run
