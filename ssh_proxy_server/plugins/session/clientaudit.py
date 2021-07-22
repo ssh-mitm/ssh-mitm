@@ -67,9 +67,19 @@ class SSHClientAudit():
         pass
 
 
-class PuTTY(SSHClientAudit):
+class PuTTY_Release(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-putty_release_(0\.[0-9]+)'
     SERVER_HOST_KEY_ALGORITHMS = cve202014002.SERVER_HOST_KEY_ALGORITHMS
+
+
+class PuTTYFileZilla(SSHClientAudit):
+    VERSION_REGEX = r'ssh-2.0-puttyfilezilla_([0-9]+\.[0-9]+\.[0-9]+)'
+    SERVER_HOST_KEY_ALGORITHMS = cve202014002.SERVER_HOST_KEY_ALGORITHMS
+
+
+class WinSCP(SSHClientAudit):
+    VERSION_REGEX = r'ssh-2.0-winscp_release_([0-9]+\.[0-9]+\.[0-9]+)'
+    SERVER_HOST_KEY_ALGORITHMS = cve202014145.SERVER_HOST_KEY_ALGORITHMS
 
 
 class OpenSSH(SSHClientAudit):
