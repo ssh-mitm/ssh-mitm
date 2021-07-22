@@ -1,4 +1,4 @@
-putty:
+putty_release:
   CVE-2020-14002:
     version_min: 0.68
     version_max: 0.73
