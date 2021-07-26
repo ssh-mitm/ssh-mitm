@@ -44,12 +44,18 @@ class SSHClientAudit():
         for cve, description in self.vulnerability_list.items():
             version_min = description.get('version_min', "")
             version_max = description.get('version_max', "")
+            ssh_mitm_docs = description.get('docs', False)
             if self.between_versions(version_min, version_max):
-                found_cves.append(cve)
+                found_cves.append((cve, ssh_mitm_docs))
 
         if found_cves:
-            cvelist = "\n".join(["    :warning: {0}: https://docs.ssh.mitm.at/{0}.html".format(cve) for cve in found_cves])
-            logging.info("[yellow][bold] possible vulnerabilities found![/bold]\n{}".format(cvelist), extra={"markup": True})
+            cvelist = []
+            for cve in found_cves:
+                if cve[1]:
+                    cvelist.append("    :warning: {0}: https://docs.ssh.mitm.at/{0}.html".format(cve[0]))
+                else:
+                    cvelist.append("    :warning: {0}: https://nvd.nist.gov/vuln/detail/{0}".format(cve[0]))
+            logging.info("[yellow bold] possible vulnerabilities found![/]\n{}".format("\n".join(cvelist)), extra={"markup": True})
 
     def check_key_negotiation(self):
         if not self.SERVER_HOST_KEY_ALGORITHMS:

@@ -1,32 +1,82 @@
 putty_release:
-  CVE-2020-14002:
-    version_min: 0.68
-    version_max: 0.73
   CVE-2021-33500:
     version_min:
     version_max: 0.74
+    cvss: 5.0
+    docs: true
+  CVE-2020-14002:
+    version_min: 0.68
+    version_max: 0.73
+    cvss: 4.3
+    docs: true
 openssh:
   CVE-2021-28041:
     version_min: 8.2
     version_max: 8.4
+    cvss: 4.6
+    docs: true
   CVE-2020-15778:
     version_max: 8.2
+    cvss: 6.8
+    docs: true
   CVE-2020-14145:
     version_min: 5.7
     version_max: 8.6
+    cvss: 4.3
+    docs: true
+  CVE-2020-12062:
+    version_min: 8.2
+    version_max: 8.2
+    cvss: 5.0
+  CVE-2019-16905:
+    version_min: 7.7
+    version_max: 8.0
+    cvss: 4.4
   CVE-2019-6111:
     version_max: 7.9
+    cvss: 5.8
+    docs: true
   CVE-2019-6110:
     version_max: 7.9
+    cvss: 4.0
+    docs: true
   CVE-2019-6109:
     version_max: 7.9
+    cvss: 4.0
+    docs: true
   CVE-2018-20685:
     version_max: 7.9
+    cvss: 2.6
+    docs: true
   CVE-2018-15919:
     version_min: 5.9
     version_max: 7.8
+    cvss: 5.0
+    docs: true
   CVE-2018-15473:
     version_max: 7.7
+    cvss: 5.0
+    docs: true
+  CVE-2017-15906:
+    version_max: 7.5
+    cvss: 5.0
+  CVE-2016-10708:
+    version_max: 7.3
+    cvss: 5.0
+  CVE-2016-10012:
+    version_max: 7.3
+    cvss: 7.2
+  CVE-2016-10011:
+    version_max: 7.3
+    cvss: 2.1
+  CVE-2016-10010:
+    version_max: 7.3
+    cvss: 6.9
+  CVE-2016-10009:
+    version_max: 7.3
+    cvss: 7.5
 dropbear:
   CVE-2018-15599:
     version_max: 2018.76
+    cvss: 5.0
+    docs: true
