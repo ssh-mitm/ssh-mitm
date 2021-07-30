@@ -4,7 +4,7 @@ script:
   - rm -rf AppDir  | true
   # Make usr and icons dirs
   - mkdir -p AppDir/usr/src AppDir/usr/share/icons/128x128/
-  - cp appimage/ssh-mitm.png AppDir/usr/share/icons/128x128/ssh-mitm.png
+  - cp snap/gui/ssh-mitm.png AppDir/usr/share/icons/128x128/ssh-mitm.png
   - python3 -m pip install -U pip
   # Install application dependencies
   - python3 -m pip install --ignore-installed --prefix=/usr --root=AppDir .
