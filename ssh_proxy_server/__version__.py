@@ -2,7 +2,7 @@ import logging
 import requests
 from packaging import version as p_version
 
-version = '0.5.12'
+version = '0.5.13'
 
 
 def check_version():
