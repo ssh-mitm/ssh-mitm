@@ -46,7 +46,7 @@ from ssh_proxy_server.forwarders.tunnel import (
 
 from ssh_proxy_server.workarounds import dropbear
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
-from ssh_proxy_server.__version__ import version as ssh_mitm_version
+from ssh_proxy_server.__version__ import version as ssh_mitm_version, check_version
 
 
 def get_parser():
@@ -183,6 +183,12 @@ def get_parser():
         action='store_true',
         help='disable paramiko workarounds'
     )
+    parser.add_argument(
+        '--disable-version-check',
+        dest='disable_version_check',
+        action='store_true',
+        help='disable version check'
+    )
 
     return parser
 
@@ -225,6 +231,15 @@ def main():
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
     sshconsole.rule("[bold red]SSH-MITM {}".format(ssh_mitm_version), style="red")
+    if not args.disable_version_check:
+        latest_version = check_version()
+        if latest_version:
+            logging.info(
+                "[yellow]:information: ssh-mitm version %s is available", 
+                latest_version,
+                extra={'markup': True}
+            )
+
     proxy = SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,

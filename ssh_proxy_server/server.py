@@ -158,7 +158,7 @@ class SSHProxyServer:
             sys.stdout.flush()
             self.running = False
         finally:
-            logging.info("[red]Shutting down server ...", extra={"markup": True})
+            logging.info("[red]:exclamation: Shutting down server ...", extra={"markup": True})
             sock.close()
             for thread in self._threads[:]:
                 thread.join()
