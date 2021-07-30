@@ -70,6 +70,7 @@ setup(
         'sshpubkeys',
         'pyyaml',
         'packaging',
+        'colored',
         'rich',
         'requests'
     ],

@@ -43,6 +43,8 @@ except ImportError:
     tabbed_groups=True,
     optional_cols=1,
     default_size=(610, 590),
+    richtext_controls=True,
+    clear_before_run=True,
     menu=[{
         'name': 'Help',
         'items': [
@@ -64,11 +66,7 @@ except ImportError:
     }]
 )
 def main():
-    root_logger = logging.getLogger()
-    root_logger.setLevel(logging.INFO)
-    logformatter = logging.Formatter('%(asctime)s [%(levelname)s]  %(message)s')
-    for handler in root_logger.handlers:
-        handler.setFormatter(logformatter)
+    logging.basicConfig(format='%(message)s', level=logging.INFO)
     logging.getLogger("paramiko").setLevel(logging.WARNING)
 
 

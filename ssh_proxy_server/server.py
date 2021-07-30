@@ -5,6 +5,8 @@ import time
 import threading
 import sys
 
+from colored import stylize, attr, fg
+
 from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key
 from sshpubkeys import SSHKey
 
@@ -13,8 +15,6 @@ from ssh_proxy_server.multisocket import (
     has_dual_stack,
     MultipleSocketsListener
 )
-
-
 from ssh_proxy_server.session import Session
 from ssh_proxy_server.exceptions import KeyGenerationError
 
@@ -114,8 +114,8 @@ class SSHProxyServer:
             "loaded" if self.key_file else "generated temporary",
             key_algorithm_class.__name__,
             self._hostkey.get_bits(),
-            ssh_pub_key.hash_md5(),
-            ssh_pub_key.hash_sha256()
+            stylize(ssh_pub_key.hash_md5(), fg('blue') + attr('bold')),
+            stylize(ssh_pub_key.hash_sha256(), fg('blue') + attr('bold')) 
         )
         logging.info(keygen_message)
 
