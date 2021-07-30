@@ -69,7 +69,8 @@ setup(
         'sshpubkeys',
         'pyyaml',
         'packaging',
-        'rich'
+        'rich',
+        'requests'
     ],
     extras_require={
         'plugins': [

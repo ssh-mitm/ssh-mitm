@@ -46,7 +46,8 @@ from ssh_proxy_server.forwarders.tunnel import (
 
 from ssh_proxy_server.workarounds import dropbear
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
-from ssh_proxy_server.__version__ import version as ssh_mitm_version, check_version
+from ssh_proxy_server.__version__ import version as ssh_mitm_version
+from ssh_proxy_server.update import check_version
 
 
 def get_parser():
