@@ -51,14 +51,14 @@ class SSHLogForwarder(SSHForwarder):
         timecomponent = str(time.time()).split('.')[0]
 
         fileIn = tempfile.NamedTemporaryFile(
-            prefix='ssh_in_{}_'.format(timecomponent),
+            prefix=f'ssh_in_{timecomponent}_',
             suffix='.log',
             dir=self.logdir,
             delete=False
         )
 
         fileOut = tempfile.NamedTemporaryFile(
-            prefix='ssh_out_{}_'.format(timecomponent),
+            prefix=f'ssh_out_{timecomponent}_',
             suffix='.log',
             dir=self.logdir,
             delete=False
@@ -73,7 +73,7 @@ class SSHLogForwarder(SSHForwarder):
         fileOut.flush()
 
         timeingfile = tempfile.NamedTemporaryFile(
-            prefix='ssh_time_{}_'.format(timecomponent),
+            prefix=f'ssh_time_{timecomponent}_',
             suffix='.log',
             dir=self.logdir,
             delete=False
@@ -113,5 +113,5 @@ class SSHLogForwarder(SSHForwarder):
         oldtime = self.timestamp
         self.timestamp = datetime.datetime.now()
         diff = self.timestamp - oldtime
-        self.timeingfile.write("{}.{} {}\n".format(diff.seconds, diff.microseconds, len(text)).encode())
+        self.timeingfile.write(f"{diff.seconds}.{diff.microseconds} {len(text)}\n".encode())
         self.timeingfile.flush()

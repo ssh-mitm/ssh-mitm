@@ -1,10 +1,12 @@
 import logging
+from colored.colored import stylize, fg, attr
 
 import pkg_resources
 import yaml
 from paramiko import Transport, common
 
 from rich.markup import escape
+from rich._emoji_codes import EMOJI
 
 from ssh_proxy_server.plugins.session.clientaudit import SSHClientAudit
 
@@ -29,7 +31,9 @@ class KeyNegotiationData:
         m.rewind()
 
     def show_debug_info(self):
-        logging.info("yellow]connected client version: %s", escape(self.client_version))
+        logging.info(
+            f"{EMOJI['information']} connected client version: {stylize(self.client_version, fg('green') + attr('bold'))}"
+        )
         logging.debug("cookie: %s", self.cookie)
         logging.debug("kex_algorithms: %s", escape(str(self.kex_algorithms)))
         logging.debug("server_host_key_algorithms: %s", self.server_host_key_algorithms)

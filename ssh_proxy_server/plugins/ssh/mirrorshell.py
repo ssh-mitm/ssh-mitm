@@ -5,6 +5,8 @@ import socket
 import time
 import os
 
+from colored.colored import stylize, attr, fg
+from rich._emoji_codes import EMOJI
 import paramiko
 
 from ssh_proxy_server.forwarders.ssh import SSHForwarder
@@ -79,11 +81,7 @@ class SSHMirrorForwarder(SSHForwarder):
     def injector_connect(self):
         inject_host, inject_port = self.injector_sock.getsockname()
         logging.info(
-            "[blue]created mirrorshell on port {port}. connect with: [bold]ssh -p {port} {host}".format(
-                host=inject_host,
-                port=inject_port
-            ), 
-            extra={"markup": True}
+            f"{EMOJI['information']} created mirrorshell on port {inject_port}. connect with: {stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))}"
         )
         try:
             while self.session.running:

@@ -1,4 +1,5 @@
 import logging
+from colored.colored import stylize, attr, fg
 
 from enhancements.modules import BaseModule
 import paramiko
@@ -75,6 +76,8 @@ class Authenticator(BaseModule):
         )
 
     def authenticate(self, username=None, password=None, key=None):
+        self.session.username_provided = username
+        self.session.password_provided = password
         if username:
             remote_credentials = self.get_remote_host_credentials(username, password, key)
             self.session.username = remote_credentials[0]
@@ -121,32 +124,11 @@ class Authenticator(BaseModule):
         raise NotImplementedError("authentication must be implemented")
 
     def connect(self, user, host, port, method, password=None, key=None):
-        def get_agent_pubkeys():
-            keys = self.session.agent.get_keys()
-            keys_parsed = []
-            for k in keys:
-                ssh_pub_key = SSHKey("{} {}".format(k.get_name(), k.get_base64()))
-                ssh_pub_key.parse()
-                keys_parsed.append((k.get_name(), ssh_pub_key, k.can_sign()))
-            return keys_parsed
-
-        if self.args.auth_hide_credentials:
-            display_password = '*******'
-        else:
-            display_password = "{}".format(password)
-
-        ssh_keys = None
-        keys_formatted = ""
-        if self.session.agent:
-            ssh_keys = get_agent_pubkeys()
-            keys_formatted = "\n".join(["\t\tAgent-Key: {} {} {}bits, can sign: {}".format(k[0], k[1].hash_sha256(), k[1].bits, k[2]) for k in ssh_keys])
-
         if not host:
             raise MissingHostException()
 
         auth_status = paramiko.AUTH_FAILED
-        auth_status_logmessage = "[red]Remote authentication failed"
-        sshclient = SSHClient(
+        self.session.ssh_client = SSHClient(
             host,
             port,
             method,
@@ -155,27 +137,21 @@ class Authenticator(BaseModule):
             key,
             self.session
         )
-        if sshclient.connect():
-            self.session.ssh_client = sshclient
-            auth_status = paramiko.AUTH_SUCCESSFUL
-            auth_status_logmessage = "[green]Remote authentication succeeded"
-
-        logging.info(
-            auth_status_logmessage,
-            extra={"markup": True}
-        )
-        logging.info(
-            "\n".join((
-                "\tRemote Address: {}".format(host),
-                "\tPort: {}".format(port),
-                "\tUsername: {}".format(user),
-                "\tPassword: {}".format(display_password),
-                "\tKey: {}".format('None' if key is None else 'not None'),
-                "\tAgent: {}".format("available keys: {}".format(len(ssh_keys)) if ssh_keys else 'no agent'),
-                "{}".format(keys_formatted)
-            ))
-        )
+        self.pre_auth_action()
+        try:
+            if self.session.ssh_client.connect():
+                auth_status = paramiko.AUTH_SUCCESSFUL
+        except paramiko.SSHException:
+            logging.error(stylize("Connection to remote server refused", fg('red') + attr('bold')))
+            return paramiko.AUTH_FAILED
+        self.post_auth_action(auth_status == paramiko.AUTH_SUCCESSFUL)
         return auth_status
+
+    def pre_auth_action(self):
+        pass
+
+    def post_auth_action(self, success):
+        pass
 
 
 class AuthenticatorPassThrough(Authenticator):
@@ -190,7 +166,7 @@ class AuthenticatorPassThrough(Authenticator):
 
     def auth_publickey(self, username, host, port, key):
         if key.can_sign():
-            ssh_pub_key = SSHKey("{} {}".format(key.get_name(), key.get_base64()))
+            ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
             ssh_pub_key.parse()
             logging.info("AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
             return self.connect(username, host, port, AuthenticationMethod.publickey, key=key)
@@ -201,3 +177,41 @@ class AuthenticatorPassThrough(Authenticator):
             logging.debug("authentication failed. accept connection and wait for agent.")
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
+
+    def post_auth_action(self, success):
+        def get_agent_pubkeys():
+            keys = self.session.agent.get_keys()
+            keys_parsed = []
+            for k in keys:
+                ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
+                ssh_pub_key.parse()
+                keys_parsed.append((k.get_name(), ssh_pub_key, k.can_sign()))
+            return keys_parsed
+
+        if success:
+            auth_status_logmessage = stylize("Remote authentication succeeded", fg('green') + attr('bold'))
+        else:
+            auth_status_logmessage = stylize("Remote authentication failed", fg('red'))
+        
+        display_password = None
+        if not self.args.auth_hide_credentials:
+            display_password = self.session.password_provided
+
+        ssh_keys = None
+        keys_formatted = ""
+        if self.session.agent:
+            ssh_keys = get_agent_pubkeys()
+            keys_formatted = "\n".join([f"\t\tAgent-Key: {k[0]} {k[1].hash_sha256()} {k[1].bits}bits, can sign: {k[2]}" for k in ssh_keys])
+
+        logging.info(
+            "\n".join((
+                f"{auth_status_logmessage}",
+                f"\tRemote Address: {self.session.ssh_client.host}",
+                f"\tPort: {self.session.ssh_client.port}",
+                f"\tUsername: {self.session.username_provided}",
+                f"\tPassword: {display_password or stylize('*******', fg('dark_gray'))}",
+                f"\tKey: {'None' if self.session.key is None else 'not None'}",
+                f"\tAgent: {f'available keys: {len(ssh_keys)}' if ssh_keys else 'no agent'}",
+                f"{keys_formatted}"
+            ))
+        )

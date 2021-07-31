@@ -1,8 +1,10 @@
 import re
 import logging
+from colored.colored import attr, stylize, fg
 from packaging import version
 
 from paramiko import ECDSAKey
+from rich._emoji_codes import EMOJI
 
 from ssh_proxy_server.plugins.session import cve202014002, cve202014145
 
@@ -52,10 +54,15 @@ class SSHClientAudit():
             cvelist = []
             for cve in found_cves:
                 if cve[1]:
-                    cvelist.append("    :warning: {0}: https://docs.ssh.mitm.at/{0}.html".format(cve[0]))
+                    cvelist.append("    {0}: https://docs.ssh.mitm.at/{0}.html".format(cve[0]))
                 else:
-                    cvelist.append("    :warning: {0}: https://nvd.nist.gov/vuln/detail/{0}".format(cve[0]))
-            logging.info("[yellow bold] possible vulnerabilities found![/]\n{}".format("\n".join(cvelist)), extra={"markup": True})
+                    cvelist.append("    {0}: https://nvd.nist.gov/vuln/detail/{0}".format(cve[0]))
+            logging.info(
+                    "".join([
+                        stylize(EMOJI['warning'] + " possible vulnerabilities found!\n", fg('yellow') + attr('bold')),
+                        "\n".join(cvelist), fg('yellow')
+                    ])
+            )
 
     def check_key_negotiation(self):
         if not self.SERVER_HOST_KEY_ALGORITHMS:

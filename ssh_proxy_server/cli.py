@@ -53,7 +53,7 @@ from ssh_proxy_server.update import check_version
 def get_parser():
     parser = ModuleParser(
         description='SSH Proxy Server',
-        version="SSH-MITM {}".format(ssh_mitm_version),
+        version=f"SSH-MITM {ssh_mitm_version}",
         modules_from_file=True
     )
 
@@ -168,7 +168,7 @@ def get_parser():
     parser.add_argument(
         '--banner-name',
         dest='banner_name',
-        default='SSHMITM_{}'.format(ssh_mitm_version),
+        default=f'SSHMITM_{ssh_mitm_version}',
         help='set a custom string as server banner'
     )
     parser.add_argument(
@@ -231,7 +231,7 @@ def main():
         args.authenticator.REQUEST_AGENT = True
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
-    sshconsole.rule("[bold red]SSH-MITM {}".format(ssh_mitm_version), style="red")
+    sshconsole.rule(f"[bold red]SSH-MITM {ssh_mitm_version}", style="red")
     if not args.disable_version_check:
         latest_version = check_version()
         if latest_version:

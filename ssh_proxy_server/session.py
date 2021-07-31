@@ -23,7 +23,7 @@ class Session:
         self.proxyserver = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
-        self.name = "{fr}->{to}".format(fr=client_address, to=remoteaddr)
+        self.name = f"{client_address}->{remoteaddr}"
         self.closed = False
 
         self.agent_requested = threading.Event()
@@ -43,7 +43,9 @@ class Session:
         self.sftp_client_ready = threading.Event()
 
         self.username = ''
+        self.username_provided = None
         self.password = None
+        self.password_provided = None
         self.socket_remote_address = remoteaddr
         self.remote_address = (None, None)
         self.key = None
@@ -161,7 +163,7 @@ class Session:
             f.close()
             f.join()
         self.transport.close()
-        logging.info("(%s) session closed", self)
+        logging.info(f"({self}) session closed")
         self.closed = True
 
     def __str__(self):

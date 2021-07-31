@@ -38,7 +38,7 @@ except ImportError:
 
 
 @Gooey(
-    program_name='SSH-MITM {}'.format(ssh_mitm_version),
+    program_name=f'SSH-MITM {ssh_mitm_version}',
     program_description='ssh man in the middle (ssh-mitm) server for security audits',
     tabbed_groups=True,
     optional_cols=1,
@@ -77,7 +77,7 @@ def main():
         '--banner-name',
         metavar='SSH banner',
         dest='banner_name',
-        default='SSHMITM_{}'.format(ssh_mitm_version),
+        default=f'SSHMITM_{ssh_mitm_version}',
         help='set a custom string as server banner'
     )
     basicsettings.add_argument(
@@ -135,13 +135,15 @@ def main():
     )
     remotehostsettings.add_argument(
         '--auth-username',
+        metavar='auth username (optional)',
         dest='auth_username',
-        help='username for remote authentication'
+        help='use a different username for remote authentication'
     )
     remotehostsettings.add_argument(
         '--auth-password',
+        metavar='auth password (optional)',
         dest='auth_password',
-        help='password for remote authentication',
+        help='use a different password for remote authentication',
         widget='PasswordField'
     )
     remotehostsettings.add_argument(

@@ -173,7 +173,7 @@ class ServerInterface(BaseServerInterface):
         return self.session.authenticator.authenticate(self.session.username, password=responses[0])
 
     def check_auth_publickey(self, username, key):
-        ssh_pub_key = SSHKey("{} {}".format(key.get_name(), key.get_base64()))
+        ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
         logging.info("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
         if self.args.disable_pubkey_auth:

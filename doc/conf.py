@@ -21,7 +21,7 @@ import xml.etree.ElementTree as ET
 
 project = 'SSH-MITM'
 author = 'SSH-MITM Dev-Team'
-copyright = '{}, {}'.format(datetime.datetime.now().year, author)  # pylint: disable=redefined-builtin
+copyright = f'{datetime.datetime.now().year}, {author}'  # pylint: disable=redefined-builtin
 
 extensions = [
     'sphinx.ext.autosectionlabel',
