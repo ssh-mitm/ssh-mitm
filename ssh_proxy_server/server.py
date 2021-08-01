@@ -118,7 +118,25 @@ class SSHProxyServer:
             self.generate_host_key()
         return self._hostkey
 
+    @staticmethod
+    def _clean_environment():
+        for env_var in [
+            'SSH_ASKPASS',
+            'SSH_AUTH_SOCK',
+            'SSH_CLIENT',
+            'SSH_CONNECTION',
+            'SSH_ORIGINAL_COMMAND',
+            'SSH_TTY'
+        ]:
+            try:
+                del os.environ[env_var]
+                logging.debug(f"removed {env_var} from environment")
+            except KeyError:
+                pass
+
     def start(self):
+        self._clean_environment()
+            
         sock = create_server_sock(
             (self.listen_address, self.listen_port),
             transparent=self.transparent
