@@ -63,9 +63,7 @@ class KeyNegotiationData:
                 client = client_cls(self, vulnerability_list.get(client_cls.client_name(), {}))
 
         if client:
-            client.check_cves()
-            client.check_key_negotiation()
-            client.audit()
+            client.run_audit()
 
 
 def handle_key_negotiation(session):
