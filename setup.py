@@ -1,8 +1,6 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-
-# read the contents of your README file
 from os import path
 import re
 
