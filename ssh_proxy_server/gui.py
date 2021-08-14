@@ -153,6 +153,35 @@ def main():
         help='enables agent forwarding through the proxy'
     )
 
+    logsettings = parser.add_argument_group("Logging")
+    logsettings.add_argument(
+        '--session-log-dir',
+        metavar='terminal session logdir (optional)',
+        dest='ssh_log_dir',
+        help='directory to store ssh session logs',
+        widget="DirChooser"
+    )
+    logsettings.add_argument(
+        '--store-ssh-session',
+        metavar='save terminal session log',
+        dest='store_ssh_session',
+        action='store_true',
+        help='this options stores terminal sessions in a scriptreplay compatible format'
+    )
+    logsettings.add_argument(
+        '--store-scp-files',
+        metavar='store SCP file transfers',
+        dest='store_scp_files',
+        action='store_true',
+        help='store files from scp'
+    )
+    logsettings.add_argument(
+        '--store-sftp-files',
+        dest='store SFTP file transfers',
+        action='store_true',
+        help='store files from sftp'
+    )
+
     args = parser.parse_args()
 
     Transport._CLIENT_ID = args.banner_name

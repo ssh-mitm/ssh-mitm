@@ -55,11 +55,6 @@ class SSHMirrorForwarder(SSHForwarder):
     def parser_arguments(cls):
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
-            '--ssh-log-dir',
-            dest='ssh_log_dir',
-            help='directory to store ssh session logs'
-        )
-        plugin_group.add_argument(
             '--ssh-mirrorshell-net',
             dest='ssh_mirrorshell_net',
             default='127.0.0.1',
@@ -69,11 +64,15 @@ class SSHMirrorForwarder(SSHForwarder):
             '--ssh-mirrorshell-key',
             dest='ssh_mirrorshell_key'
         )
+        plugin_group.add_argument(
+            '--store-ssh-session',
+            dest='store_ssh_session',
+            action='store_true',
+            help='store ssh session in scriptreplay format'
+        )
 
     def __init__(self, session):
         super().__init__(session)
-        if self.args.ssh_log_dir:
-            self.args.ssh_log_dir = os.path.expanduser(self.args.ssh_log_dir)
         if self.args.ssh_mirrorshell_key:
             self.args.ssh_mirrorshell_key = os.path.expanduser(self.args.ssh_mirrorshell_key)
 
@@ -94,13 +93,12 @@ class SSHMirrorForwarder(SSHForwarder):
         self.conn_thread.start()
 
     def _initFiles(self):
-        if not self.args.ssh_log_dir:
+        if not self.session.session_log_dir or not self.args.store_ssh_session:
             return
         try:
             self.logdir = os.path.join(
-                self.args.ssh_log_dir,
-                "{}_{}@{}".format(
-                    str(time.time()).split('.')[0],
+                self.session.session_log_dir,
+                "terminal_{}@{}".format(
                     self.session.username,
                     self.session.remote_address[0]
                 )

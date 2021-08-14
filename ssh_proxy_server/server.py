@@ -16,6 +16,16 @@ from ssh_proxy_server.multisocket import (
     MultipleSocketsListener
 )
 from ssh_proxy_server.session import Session
+from ssh_proxy_server.forwarders.ssh import SSHForwarder
+from ssh_proxy_server.forwarders.scp import SCPForwarder
+from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin
+from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
+from ssh_proxy_server.forwarders.tunnel import (
+    ClientTunnelForwarder,
+    ServerTunnelForwarder
+)
+from ssh_proxy_server.authentication import AuthenticatorPassThrough
+from ssh_proxy_server.interfaces import ServerInterface
 from ssh_proxy_server.exceptions import KeyGenerationError
 
 
@@ -25,18 +35,20 @@ class SSHProxyServer:
     def __init__(
         self,
         listen_port,
+        *,
         key_file=None,
         key_algorithm='rsa',
         key_length=2048,
-        ssh_interface=None,
-        scp_interface=None,
-        sftp_interface=None,
-        sftp_handler=None,
-        server_tunnel_interface=None,
-        client_tunnel_interface=None,
-        authentication_interface=None,
-        authenticator=None,
+        ssh_interface=SSHForwarder,
+        scp_interface=SCPForwarder,
+        sftp_interface=SFTPProxyServerInterface,
+        sftp_handler=SFTPHandlerPlugin,
+        server_tunnel_interface=ServerTunnelForwarder,
+        client_tunnel_interface=ClientTunnelForwarder,
+        authentication_interface=ServerInterface,
+        authenticator=AuthenticatorPassThrough,
         transparent=False,
+        session_class=Session,
         args=None
     ):
         self.args = args
@@ -63,6 +75,7 @@ class SSHProxyServer:
         self.authentication_interface = authentication_interface
         self.authenticator = authenticator
         self.transparent = transparent
+        self.session_class = session_class
 
         try:
             self.generate_host_key()
@@ -136,7 +149,6 @@ class SSHProxyServer:
 
     def start(self):
         self._clean_environment()
-            
         sock = create_server_sock(
             (self.listen_address, self.listen_port),
             transparent=self.transparent
@@ -176,7 +188,7 @@ class SSHProxyServer:
 
     def create_session(self, client, addr, remoteaddr):
         try:
-            with Session(self, client, addr, self.authenticator, remoteaddr) as session:
+            with self.session_class(self, client, addr, self.authenticator, remoteaddr) as session:
                 if session.start():
                     while session.running:
                         time.sleep(0.1)

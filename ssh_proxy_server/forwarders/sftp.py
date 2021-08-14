@@ -32,8 +32,9 @@ class SFTPHandlerPlugin(SFTPHandlerBasePlugin):
 
 class SFTPBaseHandle(paramiko.SFTPHandle):
 
-    def __init__(self, plugin, filename, flags=0):
+    def __init__(self, session, plugin, filename, flags=0):
         super().__init__(flags)
+        self.session = session
         self.plugin = plugin(self, filename)
         self.writefile = None
         self.readfile = None

@@ -1,5 +1,12 @@
 import logging
 import threading
+from uuid import uuid4
+import os
+
+from enhancements.modules import BaseModule
+
+from colored.colored import stylize, fg, attr
+from rich._emoji_codes import EMOJI
 
 from paramiko import Transport, AUTH_SUCCESSFUL
 from paramiko.ssh_exception import ChannelException
@@ -10,12 +17,26 @@ from ssh_proxy_server.plugins.session import key_negotiation
 from ssh_proxy_server.plugins.tunnel.injectclienttunnel import InjectableClientTunnelForwarder
 
 
-class Session:
+class BaseSession(BaseModule):
+    pass
+
+
+class Session(BaseSession):
 
     CIPHERS = None
 
-    def __init__(self, proxyserver, client_socket, client_address, authenticator, remoteaddr):
+    @classmethod
+    def parser_arguments(cls):
+        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group.add_argument(
+            '--session-log-dir',
+            dest='session_log_dir',
+            help='directory to store ssh session logs'
+        )
 
+    def __init__(self, proxyserver, client_socket, client_address, authenticator, remoteaddr):
+        super().__init__()
+        self.sessionid = uuid4()
         self._transport = None
 
         self.channel = None
@@ -53,6 +74,16 @@ class Session:
         self.authenticator = authenticator(self)
 
         self.env_requests = {}
+        self.session_log_dir = self.get_session_log_dir()
+
+    def get_session_log_dir(self):
+        if not self.args.session_log_dir:
+            return None
+        session_log_dir = os.path.expanduser(self.args.session_log_dir)
+        return os.path.join(
+            session_log_dir,
+            str(self.sessionid)
+        )
 
     @property
     def running(self):
@@ -142,7 +173,7 @@ class Session:
         if not self._start_channels():
             return False
 
-        logging.debug("(%s) session started", self)
+        logging.info(f"{EMOJI['information']} session started: {stylize(self.sessionid, fg('light_blue') + attr('bold'))}")
         return True
 
     def close(self):
