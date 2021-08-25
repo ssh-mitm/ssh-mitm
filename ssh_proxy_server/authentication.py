@@ -1,4 +1,5 @@
 import logging
+import os
 from colored.colored import stylize, attr, fg
 
 from enhancements.modules import BaseModule
@@ -180,19 +181,31 @@ class AuthenticatorPassThrough(Authenticator):
 
     def post_auth_action(self, success):
         def get_agent_pubkeys():
+            pubkeyfile_path = None
+
             keys = self.session.agent.get_keys()
             keys_parsed = []
             for k in keys:
                 ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
                 ssh_pub_key.parse()
-                keys_parsed.append((k.get_name(), ssh_pub_key, k.can_sign()))
+                keys_parsed.append((k.get_name(), ssh_pub_key, k.can_sign(), k.get_base64()))
+
+            if self.session.session_log_dir:
+                os.makedirs(self.session.session_log_dir, exist_ok=True)
+                pubkeyfile_path = os.path.join(self.session.session_log_dir, 'publickeys')
+                with open(pubkeyfile_path, 'a+') as pubkeyfile:
+                    pubkeyfile.write("".join([
+                        f"{k[0]} {k[3]} saved-from-agent\n"
+                        for k in keys_parsed
+                    ]))
+
             return keys_parsed
 
         if success:
             auth_status_logmessage = stylize("Remote authentication succeeded", fg('green') + attr('bold'))
         else:
             auth_status_logmessage = stylize("Remote authentication failed", fg('red'))
-        
+
         display_password = None
         if not self.args.auth_hide_credentials:
             display_password = self.session.password_provided
