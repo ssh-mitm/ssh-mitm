@@ -1,4 +1,4 @@
-SSH-MITM Docs - Startseite
+SSH-MITM Docs - Main Page
 ==========================
 
 .. toctree::
