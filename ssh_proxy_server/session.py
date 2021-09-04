@@ -37,6 +37,7 @@ class Session(BaseSession):
     def __init__(self, proxyserver, client_socket, client_address, authenticator, remoteaddr):
         super().__init__()
         self.sessionid = uuid4()
+        logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} created")
         self._transport = None
 
         self.channel = None

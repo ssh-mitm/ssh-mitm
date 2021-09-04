@@ -19,7 +19,7 @@ class Vulnerability:
     @property
     def url(self):
         if self.indocs:
-            return f"https://docs.ssh.mitm.at/{self.cve}.html" 
+            return f"https://docs.ssh.mitm.at/{self.cve}.html"
         return f"https://nvd.nist.gov/vuln/detail/{self.cve}"
 
 
@@ -28,7 +28,7 @@ class SSHClientAudit():
     CLIENT_NAME = None
     VERSION_REGEX = None
     SERVER_HOST_KEY_ALGORITHMS = None
-    SERVER_HOST_KEY_ALGORITHMS_CVE = None  
+    SERVER_HOST_KEY_ALGORITHMS_CVE = None
 
     def __init__(self, key_negotiation_data, vulnerability_list) -> None:
         self.key_negotiation_data = key_negotiation_data
@@ -105,7 +105,7 @@ class SSHClientAudit():
                 vulnerabilities[k].extend(v)
             else:
                 vulnerabilities[k].append(v)
-        
+
         self.check_cves(vulnerabilities)
         logging.info(
             "".join([
