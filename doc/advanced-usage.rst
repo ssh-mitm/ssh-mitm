@@ -1,9 +1,9 @@
 Advanced usage
 ==============
 
-SSH-MITM proxy server is capable of advanced man in the middle attacks and
-can be used in scenarios, where the remote host is not known or a single
-remote host is not sufficient or public key authentication is usded.
+SSH-MITM proxy server is capable of advanced man-in-the-middle attacks. It
+can be used in scenarios where the remote host is not known or a single
+remote host is not sufficient or public key authentication is used.
 
 Public key authentication
 -------------------------
@@ -11,13 +11,13 @@ Public key authentication
 Public key authentication is a way of logging into an SSH/SFTP account
 using a cryptographic key rather than a password.
 
-The advantage is, that no confidential data needs to be sent to the remote host which can
-be intercepted by a man in the middle attack.
+The advantage is that no confidential data (which could
+be intercepted by a man-in-the-middle attack) needs to be sent to the remote host.
 
 Due to this design concept, SSH-MITM proxy server is not able to reuse the data provided
 during authentication.
 
-It you need to intercept a client with public key authentication, there are some options.
+If you need to intercept a client with public key authentication, there are some options.
 
 
 Request ssh agent for authentication
@@ -28,13 +28,13 @@ against another remote host.
 
 SSH-MITM proxy server is able to request the agent from the client and use
 it for remote authentication. By using this feature, a SSH-MITM proxy server is able
-to do a full man in the middle attack.
+to do a full man-in-the-middle attack.
 
-Since OpenSSH 8.4 the commands scp and sftp are supporting agent forwarding.
-Older releases or other implementations, does not support agent forwarding for
+Since OpenSSH 8.4 the commands scp and sftp support agent forwarding.
+Older releases or other implementations do not support agent forwarding for
 file transfers.
 
-Using agent forwarding, SSH-MITM proxy server must be started with ``--request-agent``.
+To use agent forwarding, SSH-MITM proxy server must be started with ``--request-agent``.
 
 .. code-block:: none
     :linenos:
@@ -50,8 +50,8 @@ The client must be started with agent forwarding enabled.
 
 .. note::
 
-    If the client does not forward the agent, but SSH-MITM server requested the agent,
-    the client will get a break in attempt.
+    If the client does not forward the agent, but SSH-MITM proxy server requested the agent,
+    the client will warn of a break in attempt.
 
     .. code-block:: none
 
@@ -59,7 +59,7 @@ The client must be started with agent forwarding enabled.
         Warning: this is probably a break-in attempt by a malicious server.
 
 
-Using ssh agent forwarding comes with some security risks and should not be used,
+Using ssh agent forwarding comes with some security risks and should not be used
 when the integrity of a machine is not trusted. (https://tools.ietf.org/html/draft-ietf-secsh-agent-02)
 
 .. code-block:: none
@@ -78,7 +78,7 @@ when the integrity of a machine is not trusted. (https://tools.ietf.org/html/dra
     of logging and access control.  This access control may utilize
     information about the path through which the connection was received (as
     collected with SSH_AGENT_FORWARDING_NOTICE messages; however, the path
-    is reliable only up to and including the first unreliable machine.).
+    is reliable only up to and including the first unreliable machine).
     Implementations should also allow restricting the operations that can be
     performed with keys - e.g., limiting them to challenge-response only.
 
@@ -102,7 +102,7 @@ when the integrity of a machine is not trusted. (https://tools.ietf.org/html/dra
 Currently, SSH-MITM only uses the forwarded agent for remote authentication,
 but does not allow to rewrite the ``SSH_AGENT_FORWARDING_NOTICE`` message.
 
-If a client uses an agent, which displays a warning, when the client is accessed, the original notice will be shown.
+If a client uses an agent which displays a warning when the client is accessed, the original notice will be shown.
 
 
 Redirect session to a honey pot
@@ -111,7 +111,7 @@ Redirect session to a honey pot
 If agent forwarding is not possible, the SSH-MITM proxy server can accept the
 public key authentication request and redirect the session to a honey pot.
 
-When the client sends a command, which requires a password to enter (like sudo),
+When the client sends a command which requires a password to enter (like sudo),
 those passwords can be used for further attacks.
 
 SSH-MITM does not support reusing entered passwords for remote authentication,
@@ -128,7 +128,7 @@ Transparent proxying often involves "intercepting" traffic on a router. When red
 to a local socket, the destination address will be rewritten to the routers address.
 
 To intercept ssh connections on a network, this is not acceptable. By using TProxy from the
-Linux Kernel, SSH-MITM proxy server can intercept ssh connections, without loosing the
+Linux Kernel, SSH-MITM proxy server can intercept ssh connections without losing the
 destination address.
 
 .. note::
@@ -163,7 +163,7 @@ To setup SSH-MITM in transparent mode, the system has to be prepared.
 
 .. note::
 
-    To process the packets locally further routing needs to take place:
+    To process the packets locally, further routing needs to take place:
 
     .. code-block:: none
 
@@ -186,7 +186,7 @@ all incoming connections are redirected to the same remote host.
 Debug git and rsync
 -------------------
 
-Sometime it's interesting to debug ``git`` or ``rsync``.
+Sometimes it's interesting to debug ``git`` or ``rsync``.
 Starting with version 5.4, ssh-mitm is able to intercept ssh commands like git or rsync.
 
 Performing a ``git pull`` or ``rsync`` with a remote server only executes a remote ssh command and the file transfer is part of the communication.
@@ -200,7 +200,7 @@ There is also a new plugin ``debug_traffic`` to debug the traffic of ssh command
 
 .. note::
 
-    SCP file transfers are executed as ssh command. This is the reason, why this plugin is implemented as a scp-interface plugin.
+    SCP file transfers are executed as ssh command. This is the reason why the ``debug_traffic`` plugin is implemented as a scp-interface plugin.
 
 
 Intercept git
