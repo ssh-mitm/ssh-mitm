@@ -1,7 +1,7 @@
 Advanced usage
 ==============
 
-SSH-MITM proxy server is capable of advanced man-in-the-middle attacks. It
+SSH-MITM is capable of advanced man-in-the-middle attacks. It
 can be used in scenarios where the remote host is not known or a single
 remote host is not sufficient or public key authentication is used.
 
@@ -14,7 +14,7 @@ using a cryptographic key rather than a password.
 The advantage is that no confidential data (which could
 be intercepted by a man-in-the-middle attack) needs to be sent to the remote host.
 
-Due to this design concept, SSH-MITM proxy server is not able to reuse the data provided
+Due to this design concept, SSH-MITM is not able to reuse the data provided
 during authentication.
 
 If you need to intercept a client with public key authentication, there are some options.
@@ -26,15 +26,15 @@ Request ssh agent for authentication
 SSH supports agent forwarding, which allows a remote host to authenticate
 against another remote host.
 
-SSH-MITM proxy server is able to request the agent from the client and use
-it for remote authentication. By using this feature, a SSH-MITM proxy server is able
+SSH-MITM is able to request the agent from the client and use
+it for remote authentication. By using this feature, SSH-MITM is able
 to do a full man-in-the-middle attack.
 
 Since OpenSSH 8.4 the commands scp and sftp support agent forwarding.
 Older releases or other implementations do not support agent forwarding for
 file transfers.
 
-To use agent forwarding, SSH-MITM proxy server must be started with ``--request-agent``.
+To use agent forwarding, SSH-MITM must be started with ``--request-agent``.
 
 .. code-block:: none
     :linenos:
@@ -50,7 +50,7 @@ The client must be started with agent forwarding enabled.
 
 .. note::
 
-    If the client does not forward the agent, but SSH-MITM proxy server requested the agent,
+    If the client does not forward the agent, but SSH-MITM requested the agent,
     the client will warn of a break in attempt.
 
     .. code-block:: none
@@ -108,7 +108,7 @@ If a client uses an agent which displays a warning when the client is accessed, 
 Redirect session to a honey pot
 """""""""""""""""""""""""""""""
 
-If agent forwarding is not possible, the SSH-MITM proxy server can accept the
+If agent forwarding is not possible, SSH-MITM can accept the
 public key authentication request and redirect the session to a honey pot.
 
 When the client sends a command which requires a password to enter (like sudo),
@@ -121,14 +121,14 @@ but this feature could be implemented as a plugin.
 Transparent proxy
 -----------------
 
-To intercept ssh sessions, where the destination is not known, ssh-mitm proxy server can run
+To intercept ssh sessions, where the destination is not known, SSH-MITM can run
 in transparent mode, which uses the TProxy kernel feature from Linux.
 
 Transparent proxying often involves "intercepting" traffic on a router. When redirecting packets
 to a local socket, the destination address will be rewritten to the routers address.
 
 To intercept ssh connections on a network, this is not acceptable. By using TProxy from the
-Linux Kernel, SSH-MITM proxy server can intercept ssh connections without losing the
+Linux Kernel, SSH-MITM can intercept ssh connections without losing the
 destination address.
 
 .. note::
@@ -187,7 +187,7 @@ Debug git and rsync
 -------------------
 
 Sometimes it's interesting to debug ``git`` or ``rsync``.
-Starting with version 5.4, ssh-mitm is able to intercept ssh commands like git or rsync.
+Starting with version 5.4, SSH-MITM is able to intercept ssh commands like git or rsync.
 
 Performing a ``git pull`` or ``rsync`` with a remote server only executes a remote ssh command and the file transfer is part of the communication.
 
@@ -222,7 +222,7 @@ To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` 
 Intercept rsync
 """""""""""""""
 
-When ssh-mitm is used to intercept rsync, the port must be provided as a parameter to rsync. Also the agent can be forwarded, if needed.
+When SSH-MITM is used to intercept rsync, the port must be provided as a parameter to rsync. Also the agent can be forwarded, if needed.
 
 
 To sync a local directory with a remote directory, rsync can be executed with following parameters.
