@@ -78,7 +78,7 @@ when the integrity of a machine is not trusted. (https://tools.ietf.org/html/dra
     of logging and access control.  This access control may utilize
     information about the path through which the connection was received (as
     collected with SSH_AGENT_FORWARDING_NOTICE messages; however, the path
-    is reliable only up to and including the first unreliable machine).
+    is reliable only up to and including the first unreliable machine.).
     Implementations should also allow restricting the operations that can be
     performed with keys - e.g., limiting them to challenge-response only.
 
