@@ -29,6 +29,11 @@ apps:
       - home
       - network
       - network-bind
+  audit:
+    command: usr/bin/python3 $SNAP/bin/ssh-mitm-audit
+    plugs:
+      - home
+      - network
   gui:
     command: usr/bin/python3 $SNAP/bin/ssh-mitm-gui
     plugs:
