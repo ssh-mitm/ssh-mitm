@@ -51,7 +51,13 @@ class ServerInterface(BaseServerInterface):
             '--disable-pubkey-auth',
             dest='disable_pubkey_auth',
             action='store_true',
-            help='disable public key authentication'
+            help='disable public key authentication (not RFC-4252 conform)'
+        )
+        plugin_group.add_argument(
+            '--disallow-pubkey-auth',
+            dest='disallow_pubkey_auth',
+            action='store_true',
+            help='disallowes public key authentication'
         )
         plugin_group.add_argument(
             '--enable-none-auth',
@@ -184,6 +190,8 @@ class ServerInterface(BaseServerInterface):
                     pubkeyfile.write(f"{key.get_name()} {key.get_base64()} saved-from-auth-publickey\n")
         if self.args.disable_pubkey_auth:
             logging.debug("Publickey login attempt, but publickey auth was disabled!")
+            return paramiko.AUTH_FAILED
+        if self.args.disallow_pubkey_auth:
             return paramiko.AUTH_FAILED
         return self.session.authenticator.authenticate(username, key=key)
 

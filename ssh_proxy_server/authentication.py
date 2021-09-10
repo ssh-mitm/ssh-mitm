@@ -1,5 +1,6 @@
 import logging
 import os
+import socket
 from colored.colored import stylize, attr, fg
 
 from enhancements.modules import BaseModule
@@ -8,6 +9,53 @@ from sshpubkeys import SSHKey
 
 from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
 from ssh_proxy_server.exceptions import MissingHostException
+
+
+def probe_host(hostname_or_ip, port, username, public_key):
+
+    def valid(self, msg):
+        self.auth_event.set()
+        self.authenticated = True
+
+    def parse_service_accept(self, m):
+        # https://tools.ietf.org/html/rfc4252#section-7
+        service = m.get_text()
+        if not (service == "ssh-userauth" and self.auth_method == "publickey"):
+            return self._parse_service_accept(m)
+        m = paramiko.message.Message()
+        m.add_byte(paramiko.common.cMSG_USERAUTH_REQUEST)
+        m.add_string(self.username)
+        m.add_string("ssh-connection")
+        m.add_string(self.auth_method)
+        m.add_boolean(False)
+        m.add_string(self.private_key.public_blob.key_type)
+        m.add_string(self.private_key.public_blob.key_blob)
+        self.transport._send_message(m)
+
+    valid_key = False
+    try:
+        client_handler_table = paramiko.auth_handler.AuthHandler._client_handler_table
+        client_handler_table[paramiko.common.MSG_USERAUTH_INFO_REQUEST] = valid
+        client_handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = parse_service_accept
+
+        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        sock.connect((hostname_or_ip, port))
+        transport = paramiko.transport.Transport(sock)
+        transport.start_client()
+
+        # For compatibility with paramiko, we need to generate a random private key and replace
+        # the public key with our data.
+        key = paramiko.RSAKey.generate(2048)
+        #key.public_blob =
+        key.public_blob = public_key
+        transport.auth_publickey(username, key)
+        valid_key = True
+    except paramiko.ssh_exception.AuthenticationException:
+        pass
+    finally:
+        client_handler_table[paramiko.common.MSG_USERAUTH_INFO_REQUEST] = paramiko.auth_handler.AuthHandler._parse_userauth_info_request
+        client_handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = paramiko.auth_handler.AuthHandler._parse_service_accept
+    return valid_key
 
 
 class Authenticator(BaseModule):
@@ -166,17 +214,19 @@ class AuthenticatorPassThrough(Authenticator):
         return self.connect(username, host, port, AuthenticationMethod.password, password=password)
 
     def auth_publickey(self, username, host, port, key):
+        ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
+        ssh_pub_key.parse()
         if key.can_sign():
-            ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
-            ssh_pub_key.parse()
-            logging.info("AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
+            logging.debug("AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
             return self.connect(username, host, port, AuthenticationMethod.publickey, key=key)
         if self.REQUEST_AGENT:
             # Ein Publickey wird nur direkt von check_auth_publickey
             # übergeben. In dem Fall müssen wir den Client authentifizieren,
             # damit wir auf den Agent warten können!
-            logging.debug("authentication failed. accept connection and wait for agent.")
-            return paramiko.AUTH_SUCCESSFUL
+            publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
+            if probe_host(host, port, username, publickey):
+                logging.info(f"Found valid key for host {host}:{port} username={username}, key={key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
+                return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
     def post_auth_action(self, success):
