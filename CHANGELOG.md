@@ -7,13 +7,38 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- publickey authentication uses the same key as the destination server
+- bumpversion config file
+- hide strg+c when shutting down server
+
+
+### Changed
+
+- terminal logging changed to rich
+- added terminal logging to mirror shell
+- use same session log directory for all plugins
+- use same icon for appimage and snap
+
+### Added
+
+- updated vulnerability database
+- added command to probe for known public keys
+- save public keys to a file
+- added simple gui
+- added audit command
+- added version check
+
+
+
 ## [0.5.13] - 2021-07-16
 
-## Changed
+### Changed
 
 - reorganized command line arguments - plugin args are now grouped
 
-## Fixed
+### Fixed
 
 - fixed closing session when open channels exist
 

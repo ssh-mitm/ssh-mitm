@@ -18,7 +18,9 @@ This keeps me motivated in developing this tool. Thanks!
 ## Features
 
 * Hijacking and logging of terminal sessions
-* [Public key authentication](https://docs.ssh-mitm.at/advanced-usage.html#public-key-authentication) and Agent Forwarding
+* [Public key authentication](https://docs.ssh-mitm.at/advanced-usage.html#public-key-authentication)
+    * use same publickey as the destination server
+    * supports agent forwarding
 * [support for ssh commands (e.g. git over ssh)](https://docs.ssh-mitm.at/advanced-usage.html#debug-git-and-rsync)
 * SCP and SFTP
     * store files
@@ -47,7 +49,7 @@ There are different options to install ssh-mitm on your system. So you have the 
 <a href="https://snapcraft.io/ssh-mitm">
   <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
 </a>
-    
+
 ### Install as AppImage
 
 SSH-MITM is available as AppImage. Just download it, make it executable and start it.
@@ -55,8 +57,8 @@ SSH-MITM is available as AppImage. Just download it, make it executable and star
     $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
     $ chmod +x ssh-mitm-x86_64.AppImage
     $ ./ssh-mitm-x86_64.AppImage
-    
-   
+
+
 ### Install as pip-package
 
     $ pip install ssh-mitm
@@ -82,13 +84,11 @@ The ssh-mitm server is listening on port 10022.
 
 You will see the credentials in the log output.
 
-    2021-01-01 11:38:26,098 [INFO]  Client connection established with parameters:
-        Remote Address: 192.168.0.x
-        Port: 22
+    INFO     Remote authentication succeeded
+        Remote Address: 127.0.0.1:22
         Username: user
         Password: supersecret
-        Key: None
-        Agent: None
+        Agent: no agent
 
 
 ## Session hijacking
@@ -98,8 +98,7 @@ You will see the credentials in the log output.
 Getting the plain text credentials is only half the fun.
 When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
 
-    2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463.
-                                    connect with: ssh -p 34463 127.0.0.1
+    INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
 
 To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
 
@@ -111,29 +110,13 @@ Try to execute somme commands in the hijacked session or in the original session
 
 The output will be shown in both sessions.
 
-## Advanced usage
+## Public key authentication
 
-SSH-MITM proxy server is capable of advanced man in the middle attacks and can be used in scenarios, where the remote host is not known or a single remote host is not sufficient or public key authentication is usded.
+SSH-MITM is able to intercept connections with publickey authentication, but this requires a forwarded agent. If no agent is forwarded it's possible to redirect the traffic to a different host.
 
-### Public key authentication
+When a client uses publickey authentication SSH-MITM uses the same key as the remote host for authentication. If the user os not allowed to login to the remote server with publickey authentication, SSH-MITM falls back to password authentication.
 
-Public key authentication is a way of logging into an SSH/SFTP account using a cryptographic key rather than a password.
-
-The advantage is, that no confidential data needs to be sent to the remote host which can be intercepted by a man in the middle attack.
-
-Due to this design concept, SSH-MITM proxy server is not able to reuse the data provided during authentication.
-
-It you need to intercept a client with public key authentication, there are some options.
-
-#### Request ssh agent for authentication
-
-SSH supports agent forwarding, which allows a remote host to authenticate against another remote host.
-
-SSH-MITM proxy server is able to request the agent from the client and use it for remote authentication. By using this feature, a SSH-MITM proxy server is able to do a full man in the middle attack.
-
-Since OpenSSH 8.4 the commands scp and sftp are supporting agent forwarding. Older releases or other implementations, does not support agent forwarding for file transfers.
-
-Using agent forwarding, SSH-MITM proxy server must be started with --request-agent.
+Using agent forwarding, SSH-MITM must be started with --request-agent.
 
     $ ssh-mitm --request-agent --remote-host 192.168.0.x
 
@@ -144,42 +127,9 @@ The client must be started with agent forwarding enabled.
 **Using ssh agent forwarding comes with some security risks and should not be used, when the integrity of a machine is not trusted.** (https://tools.ietf.org/html/draft-ietf-secsh-agent-02)
 
 
-#### Redirect session to a honey pot
-
-If agent forwarding is not possible, the SSH-MITM proxy server can accept the public key authentication request and redirect the session to a honey pot.
-
-When the client sends a command, which requires a password to enter (like sudo), those passwords can be used for further attacks.
-
-SSH-MITM does not support reusing entered passwords for remote authentication, but this feature could be implemented as a plugin.
-
-### Debug git and rsync
-
-Sometime it’s interesting to debug git or rsync. Starting with version 5.4, ssh-mitm is able to intercept ssh commands like git or rsync.
-
-Performing a git pull or rsync with a remote server execute a remote ssh command and the file transfer is part of the communication.
-
-    ssh-mitm --request-agent --scp-interface debug_traffic
-
-#### Intercept git
-
-In most cased, when git is used over ssh, public key authentication is used. The default git command does not have a forward agent parameter.
-
-To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` environment variable.
-
-    # start the ssh server
-    ssh-mitm --remote-host github.com --request-agent --scp-interface debug_traffic
-    # invoke git commands
-    GIT_SSH_COMMAND="ssh -A" git clone ssh://git@127.0.0.1:10022/ssh-mitm/ssh-mitm.git
-
-#### Intercept rsync
-
-When ssh-mitm is used to intercept rsync, the port must be provided as a parameter to rsync. Also the agent can be forwarded, if needed.
-
-To sync a local directory with a remote directory, rsync can be executed with following parameters.
-
-    rsync -r -e 'ssh -p 10022 -A' /local/folder/ user@127.0.0.1:/remote/folder/
-
 ## Further steps
+
+Other use cases are described in the documentation under [Advanced useage](https://docs.ssh-mitm.at/advanced-usage.html)
 
 SSH-MITM has some client exploits integrated, which can be used to audit various ssh clients like OpenSSH and PuTTY.
 

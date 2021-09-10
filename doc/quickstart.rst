@@ -36,13 +36,11 @@ You will see the credentials in the log output.
 
 .. code-block:: none
 
-    2021-01-01 11:38:26,098 [INFO]  Client connection established with parameters:
-        Remote Address: 192.168.0.x
-        Port: 22
+    INFO     Remote authentication succeeded
+        Remote Address: 127.0.0.1:22
         Username: user
         Password: supersecret
-        Key: None
-        Agent: None
+        Agent: no agent
 
 
 Hijack a SSH terminal session
@@ -58,7 +56,7 @@ This server is used to hijack the session.
 
 .. code-block:: none
 
-    2021-01-01 11:42:43,699 [INFO]  created injector shell on port 34463. connect with: ssh -p 34463 127.0.0.1
+    INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
 
 To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
 
