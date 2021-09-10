@@ -107,15 +107,17 @@ class SSHClientAudit():
                 vulnerabilities[k].append(v)
 
         self.check_cves(vulnerabilities)
-        logging.info(
-            "".join([
-                stylize(EMOJI['warning'] + " client audit tests:\n", fg('yellow') + attr('bold')),
-                "\n".join([f"  * {v}" for v in vulnerabilities.get(None, [])])
-            ])
-        )
+        client_audits = vulnerabilities.get(None, [])
+        if client_audits:
+            logging.info(
+                "".join([
+                    stylize(EMOJI['warning'] + " client audit tests:\n", fg('yellow') + attr('bold')),
+                    "\n".join([f"  * {v}" for v in client_audits])
+                ])
+            )
 
     def audit(self):
-        return {None: 'test'}
+        return {None: []}
 
 
 class PuTTY_Release(SSHClientAudit):
