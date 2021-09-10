@@ -124,9 +124,10 @@ class Authenticator(BaseModule):
             self.args.remote_port or 22
         )
 
-    def authenticate(self, username=None, password=None, key=None):
-        self.session.username_provided = username
-        self.session.password_provided = password
+    def authenticate(self, username=None, password=None, key=None, store_credentials=True):
+        if store_credentials:
+            self.session.username_provided = username
+            self.session.password_provided = password
         if username:
             remote_credentials = self.get_remote_host_credentials(username, password, key)
             self.session.username = remote_credentials[0]
@@ -225,7 +226,7 @@ class AuthenticatorPassThrough(Authenticator):
             # damit wir auf den Agent warten können!
             publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
             if probe_host(host, port, username, publickey):
-                logging.info(f"Found valid key for host {host}:{port} username={username}, key={key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
+                logging.debug(f"Found valid key for host {host}:{port} username={username}, key={key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
                 return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
@@ -251,30 +252,35 @@ class AuthenticatorPassThrough(Authenticator):
 
             return keys_parsed
 
-        if success:
-            auth_status_logmessage = stylize("Remote authentication succeeded", fg('green') + attr('bold'))
-        else:
-            auth_status_logmessage = stylize("Remote authentication failed", fg('red'))
 
-        display_password = None
-        if not self.args.auth_hide_credentials:
-            display_password = self.session.password_provided
+        logmessage = []
+        if success:
+            logmessage.append(stylize("Remote authentication succeeded", fg('green') + attr('bold')))
+        else:
+            logmessage.append(stylize("Remote authentication failed", fg('red')))
+
+        logmessage.append(f"\tRemote Address: {self.session.ssh_client.host}:{self.session.ssh_client.port}")
+        logmessage.append(f"\tUsername: {self.session.username_provided}")
+
+        if self.session.password_provided:
+            display_password = None
+            if not self.args.auth_hide_credentials:
+                display_password = self.session.password_provided
+            logmessage.append(f"\tPassword: {display_password or stylize('*******', fg('dark_gray'))}")
+
+        if self.session.key is not None:
+            ssh_pub_key = SSHKey(f"{self.session.key.get_name()} {self.session.key.get_base64()}")
+            ssh_pub_key.parse()
+            logmessage.append(f"\tLogin-Key: {self.session.key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
 
         ssh_keys = None
-        keys_formatted = ""
         if self.session.agent:
             ssh_keys = get_agent_pubkeys()
-            keys_formatted = "\n".join([f"\t\tAgent-Key: {k[0]} {k[1].hash_sha256()} {k[1].bits}bits, can sign: {k[2]}" for k in ssh_keys])
 
-        logging.info(
-            "\n".join((
-                f"{auth_status_logmessage}",
-                f"\tRemote Address: {self.session.ssh_client.host}",
-                f"\tPort: {self.session.ssh_client.port}",
-                f"\tUsername: {self.session.username_provided}",
-                f"\tPassword: {display_password or stylize('*******', fg('dark_gray'))}",
-                f"\tKey: {'None' if self.session.key is None else 'not None'}",
-                f"\tAgent: {f'available keys: {len(ssh_keys)}' if ssh_keys else 'no agent'}",
-                f"{keys_formatted}"
+        logmessage.append(f"\tAgent: {f'available keys: {len(ssh_keys)}' if ssh_keys else 'no agent'}")
+        if ssh_keys is not None:
+            logmessage.append("\n".join(
+                [f"\t\tAgent-Key: {k[0]} {k[1].hash_sha256()} {k[1].bits}bits, can sign: {k[2]}" for k in ssh_keys]
             ))
-        )
+
+        logging.info("\n".join(logmessage))

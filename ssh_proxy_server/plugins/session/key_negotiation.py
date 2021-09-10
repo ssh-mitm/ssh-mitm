@@ -54,7 +54,7 @@ class KeyNegotiationData:
         try:
             vulndb = pkg_resources.resource_filename('ssh_proxy_server', 'data/client_vulnerabilities.yml')
             with open(vulndb) as file:
-                vulnerability_list = yaml.load(file, Loader=yaml.FullLoader)
+                vulnerability_list = yaml.safe_load(file)
         except Exception:
             logging.exception("Error loading vulnerability database")
             return

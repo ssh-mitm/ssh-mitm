@@ -35,5 +35,5 @@ apps:
       - home
       - network
       - network-bind
-    extensions: 
+    extensions:
       - gnome-3-34

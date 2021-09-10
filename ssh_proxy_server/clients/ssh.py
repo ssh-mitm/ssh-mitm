@@ -58,7 +58,7 @@ class SSHClient(BaseSSHClient):
                         self.transport.connect(username=self.user, password=self.password, pkey=k)
                         ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
                         ssh_pub_key.parse()
-                        logging.info("ssh-mitm connect to remote host with username=%s, key=%s %s %sbits", self.user, k.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
+                        logging.debug("ssh-mitm connected to remote host with username=%s, key=%s %s %sbits", self.user, k.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
                         break
                     except paramiko.AuthenticationException:
                         self.transport.close()

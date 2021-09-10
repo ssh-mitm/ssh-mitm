@@ -182,7 +182,7 @@ class ServerInterface(BaseServerInterface):
     def check_auth_publickey(self, username, key):
         ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
-        logging.info("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
+        logging.debug("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
         if self.session.session_log_dir:
                 os.makedirs(self.session.session_log_dir, exist_ok=True)
                 pubkeyfile_path = os.path.join(self.session.session_log_dir, 'publickeys')
