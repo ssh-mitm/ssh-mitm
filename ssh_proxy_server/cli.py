@@ -181,10 +181,10 @@ def get_parser():
         help='disable paramiko workarounds'
     )
     parser.add_argument(
-        '--disable-version-check',
-        dest='disable_version_check',
+        '--check-version',
+        dest='check_version',
         action='store_true',
-        help='disable version check'
+        help='checks if a new version is available'
     )
     parser.add_module(
         '--session-class',
@@ -219,6 +219,16 @@ def main():
         show_path=args.debug
     ))
 
+    if args.check_version:
+        latest_version = check_version()
+        if latest_version:
+            logging.info(
+                "[yellow]:information: ssh-mitm version %s is available",
+                latest_version,
+                extra={'markup': True}
+            )
+        sys.exit(0)
+
     if not args.disable_workarounds:
         Transport.run = dropbear.transport_run
 
@@ -235,14 +245,6 @@ def main():
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
     sshconsole.rule(f"[bold red]SSH-MITM {ssh_mitm_version}", style="red")
-    if not args.disable_version_check:
-        latest_version = check_version()
-        if latest_version:
-            logging.info(
-                "[yellow]:information: ssh-mitm version %s is available",
-                latest_version,
-                extra={'markup': True}
-            )
 
     proxy = SSHProxyServer(
         args.listen_port,

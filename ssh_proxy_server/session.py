@@ -130,7 +130,7 @@ class Session(BaseSession):
             logging.error('no ssh agent forwarded')
             return False
 
-        if self.authenticator.authenticate() != AUTH_SUCCESSFUL:
+        if self.authenticator.authenticate(store_credentials=False) != AUTH_SUCCESSFUL:
             logging.error('Permission denied (publickey)')
             return False
 
