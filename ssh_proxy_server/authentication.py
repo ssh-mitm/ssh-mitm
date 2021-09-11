@@ -1,7 +1,9 @@
 import logging
 import os
+import sys
 import socket
 from colored.colored import stylize, attr, fg
+from rich._emoji_codes import EMOJI
 
 from enhancements.modules import BaseModule
 import paramiko
@@ -89,6 +91,39 @@ class Authenticator(BaseModule):
             dest='auth_password',
             help='password for remote authentication'
         )
+
+        plugin_group.add_argument(
+            '--enable-auth-fallback',
+            dest='enable_auth_fallback',
+            action='store_true',
+            help='fallback to a honeypot, if authentication failed'
+        )
+        plugin_group.add_argument(
+            '--fallback-username',
+            dest='fallback_username',
+            required='--enable-auth-fallback' in sys.argv,
+            help='fallback username for the honeypot'
+        )
+        plugin_group.add_argument(
+            '--fallback-password',
+            dest='fallback_password',
+            required='--enable-auth-fallback' in sys.argv,
+            help='fallback password for the honeypot'
+        )
+        plugin_group.add_argument(
+            '--fallback-host',
+            dest='fallback_host',
+            required='--enable-auth-fallback' in sys.argv,
+            help='fallback host for the honey ot'
+        )
+        plugin_group.add_argument(
+            '--fallback-port',
+            dest='fallback_port',
+            type=int,
+            default=22,
+            help='fallback port for the honeypot (22)'
+        )
+
         plugin_group.add_argument(
             '--hide-credentials',
             dest='auth_hide_credentials',
@@ -177,6 +212,31 @@ class Authenticator(BaseModule):
 
     def auth_publickey(self, username, host, port, key):
         raise NotImplementedError("authentication must be implemented")
+
+    def auth_fallback(self):
+        if not self.args.enable_auth_fallback:
+            logging.error("\n".join([
+                stylize(EMOJI['exclamation'] + " ssh agent not forwarded. Login to remote host not possible with publickey authentication.", fg('red') + attr('bold')),
+                stylize(EMOJI['information'] + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.", fg('yellow') + attr('bold'))
+            ]))
+            return paramiko.AUTH_FAILED
+
+        auth_status = self.connect(
+            user=self.args.fallback_username,
+            password=self.args.fallback_password,
+            host=self.args.fallback_host,
+            port=self.args.fallback_port,
+            method=AuthenticationMethod.password
+        )
+        if auth_status == paramiko.AUTH_SUCCESSFUL:
+            logging.warning(
+                stylize(EMOJI['warning'] + " publickey authentication failed - no agent forwarded - connecting to honeypot!", fg('yellow') + attr('bold')),
+            )
+        else:
+            logging.error(
+                stylize(EMOJI['exclamation'] + " Authentication against honeypot failed!", fg('red') + attr('bold')),
+            )
+        return auth_status
 
     def connect(self, user, host, port, method, password=None, key=None):
         if not host:

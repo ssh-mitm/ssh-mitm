@@ -96,6 +96,12 @@ def main():
         type=int,
         help='remote port to connect to (default 22)'
     )
+    remotehostsettings.add_argument(
+            '--hide-credentials',
+            dest='auth_hide_credentials',
+            action='store_true',
+            help='do not log credentials (usefull for presentations)'
+        )
 
     hostkeysettings = parser.add_argument_group("Server host key")
     hostkeysettings.add_argument(
@@ -151,26 +157,39 @@ def main():
         help='store files from sftp'
     )
 
-    optionalsettings = parser.add_argument_group("Optional")
-    optionalsettings.add_argument(
-        '--auth-username',
-        metavar='auth username (optional)',
-        dest='auth_username',
-        help='use a different username for remote authentication'
+    honeypotsettings = parser.add_argument_group("Honeypot")
+    honeypotsettings.add_argument(
+        '--enable-auth-fallback',
+        metavar='Enable Honeypot',
+        dest='enable_auth_fallback',
+        action='store_true',
+        help='fallback to a honeypot, if authentication failed'
     )
-    optionalsettings.add_argument(
-        '--auth-password',
-        metavar='auth password (optional)',
-        dest='auth_password',
-        help='use a different password for remote authentication',
-        widget='PasswordField'
+    honeypotsettings.add_argument(
+        '--fallback-username',
+        dest='fallback_username',
+        required='--enable-auth-fallback' in sys.argv,
+        help='fallback username for the honeypot'
     )
-    optionalsettings.add_argument(
-            '--hide-credentials',
-            dest='auth_hide_credentials',
-            action='store_true',
-            help='do not log credentials (usefull for presentations)'
-        )
+    honeypotsettings.add_argument(
+        '--fallback-password',
+        dest='fallback_password',
+        required='--enable-auth-fallback' in sys.argv,
+        help='fallback password for the honeypot'
+    )
+    honeypotsettings.add_argument(
+        '--fallback-host',
+        dest='fallback_host',
+        required='--enable-auth-fallback' in sys.argv,
+        help='fallback host for the honey ot'
+    )
+    honeypotsettings.add_argument(
+        '--fallback-port',
+        dest='fallback_port',
+        type=int,
+        default=22,
+        help='fallback port for the honeypot (22)'
+    )
 
     args = parser.parse_args()
 

@@ -127,11 +127,7 @@ class Session(BaseSession):
                 return False
         # Connect method start
         if not self.agent:
-            logging.error("\n".join([
-                stylize(EMOJI['exclamation'] + " ssh agent not forwarded. Login to remote host not possible with publickey authentication.", fg('red') + attr('bold')),
-                stylize(EMOJI['information'] + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.", fg('yellow') + attr('bold'))
-            ]))
-            return False
+            return self.authenticator.auth_fallback() == AUTH_SUCCESSFUL
 
         if self.authenticator.authenticate(store_credentials=False) != AUTH_SUCCESSFUL:
             logging.error('Permission denied (publickey)')
