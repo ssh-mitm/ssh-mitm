@@ -187,9 +187,6 @@ def main():
     Transport._CLIENT_ID = args.banner_name
     Transport.run = dropbear.transport_run
 
-    authenticator = AuthenticatorPassThrough
-    authenticator.REQUEST_AGENT = args.request_agent
-
     SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,
@@ -202,7 +199,7 @@ def main():
         server_tunnel_interface=ServerTunnelForwarder,
         client_tunnel_interface=ClientTunnelForwarder,
         authentication_interface=ServerInterface,
-        authenticator=authenticator,
+        authenticator=AuthenticatorPassThrough,
         transparent=False,
         args=args
     ).start()

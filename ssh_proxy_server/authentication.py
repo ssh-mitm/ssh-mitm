@@ -60,7 +60,6 @@ def probe_host(hostname_or_ip, port, username, public_key):
 
 class Authenticator(BaseModule):
 
-    REQUEST_AGENT = False
     REQUEST_AGENT_BREAKIN = False
 
     @classmethod
@@ -220,14 +219,13 @@ class AuthenticatorPassThrough(Authenticator):
         if key.can_sign():
             logging.debug("AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
             return self.connect(username, host, port, AuthenticationMethod.publickey, key=key)
-        if self.REQUEST_AGENT:
-            # Ein Publickey wird nur direkt von check_auth_publickey
-            # übergeben. In dem Fall müssen wir den Client authentifizieren,
-            # damit wir auf den Agent warten können!
-            publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
-            if probe_host(host, port, username, publickey):
-                logging.debug(f"Found valid key for host {host}:{port} username={username}, key={key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
-                return paramiko.AUTH_SUCCESSFUL
+        # Ein Publickey wird nur direkt von check_auth_publickey
+        # übergeben. In dem Fall müssen wir den Client authentifizieren,
+        # damit wir auf den Agent warten können!
+        publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
+        if probe_host(host, port, username, publickey):
+            logging.debug(f"Found valid key for host {host}:{port} username={username}, key={key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
+            return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
     def post_auth_action(self, success):

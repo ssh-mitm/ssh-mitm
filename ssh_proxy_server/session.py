@@ -116,7 +116,7 @@ class Session(BaseSession):
             self.sftp_client_ready.set()
             return True
 
-        if not self.agent and (self.authenticator.REQUEST_AGENT or self.authenticator.REQUEST_AGENT_BREAKIN):
+        if not self.agent or self.authenticator.REQUEST_AGENT_BREAKIN:
             try:
                 if self.agent_requested.wait(1) or self.authenticator.REQUEST_AGENT_BREAKIN:
                     self.agent = AgentProxy(self.transport)

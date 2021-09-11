@@ -239,9 +239,7 @@ def main():
     else:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
-    args.authenticator.REQUEST_AGENT = args.request_agent
     if args.request_agent_breakin:
-        args.authenticator.REQUEST_AGENT = True
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
     sshconsole.rule(f"[bold red]SSH-MITM {ssh_mitm_version}", style="red")
