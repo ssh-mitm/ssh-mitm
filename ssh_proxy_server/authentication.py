@@ -95,6 +95,18 @@ class Authenticator(BaseModule):
             action='store_true',
             help='do not log credentials (usefull for presentations)'
         )
+        plugin_group.add_argument(
+            '--disallow-publickey-auth',
+            dest='disallow_publickey_auth',
+            action='store_true',
+            help='disallow public key authentication but still checks if publickey authentication would be possible'
+        )
+        plugin_group.add_argument(
+            '--accept-first-publickey',
+            dest='accept_first_publickey',
+            action='store_true',
+            help='accepts the first key - does not check if user is allowed to login with publickey authentication'
+        )
 
     def __init__(self, session):
         super().__init__()
@@ -213,13 +225,19 @@ class AuthenticatorPassThrough(Authenticator):
         if key.can_sign():
             logging.debug("AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
             return self.connect(username, host, port, AuthenticationMethod.publickey, key=key)
+        if self.args.accept_first_publickey:
+            logging.debug('host probing disabled - first key accepted')
+            if self.args.disallow_publickey_auth:
+                logging.debug('ignoring argument --disallow-publickey-auth, first key still accepted')
+            return paramiko.AUTH_SUCCESSFUL
         # Ein Publickey wird nur direkt von check_auth_publickey
         # übergeben. In dem Fall müssen wir den Client authentifizieren,
         # damit wir auf den Agent warten können!
         publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
         if probe_host(host, port, username, publickey):
             logging.debug(f"Found valid key for host {host}:{port} username={username}, key={key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
-            return paramiko.AUTH_SUCCESSFUL
+            if not self.args.disallow_publickey_auth:
+                return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
     def post_auth_action(self, success):
