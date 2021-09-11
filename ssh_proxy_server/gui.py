@@ -8,8 +8,8 @@ from ssh_proxy_server.server import SSHProxyServer
 
 from ssh_proxy_server.authentication import AuthenticatorPassThrough
 from ssh_proxy_server.interfaces import ServerInterface
-from ssh_proxy_server.forwarders.scp import SCPForwarder
-from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin
+from ssh_proxy_server.plugins.scp.store_file import SCPStorageForwarder
+from ssh_proxy_server.plugins.sftp.store_file import SFTPHandlerStoragePlugin
 
 from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
 
@@ -165,6 +165,12 @@ def main():
         help='use a different password for remote authentication',
         widget='PasswordField'
     )
+    optionalsettings.add_argument(
+            '--hide-credentials',
+            dest='auth_hide_credentials',
+            action='store_true',
+            help='do not log credentials (usefull for presentations)'
+        )
 
     args = parser.parse_args()
 
@@ -176,9 +182,9 @@ def main():
         key_algorithm=args.host_key_algorithm,
         key_length=args.host_key_length,
         ssh_interface=SSHMirrorForwarder,
-        scp_interface=SCPForwarder,
+        scp_interface=SCPStorageForwarder,
         sftp_interface=SFTPProxyServerInterface,
-        sftp_handler=SFTPHandlerPlugin,
+        sftp_handler=SFTPHandlerStoragePlugin,
         server_tunnel_interface=ServerTunnelForwarder,
         client_tunnel_interface=ClientTunnelForwarder,
         authentication_interface=ServerInterface,
