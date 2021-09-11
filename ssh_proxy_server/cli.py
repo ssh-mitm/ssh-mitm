@@ -9,6 +9,7 @@ from paramiko import Transport
 
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
+from rich import print as rich_print
 
 from ssh_proxy_server.console import sshconsole
 from ssh_proxy_server.server import SSHProxyServer
@@ -236,7 +237,11 @@ def main():
     if args.request_agent_breakin:
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
-    sshconsole.rule(f"[bold red]SSH-MITM {ssh_mitm_version}", style="red")
+    sshconsole.rule(f"[bold blue]SSH-MITM - ssh audits made simple", style="blue")
+    rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
+    rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
+    rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
+    sshconsole.rule(style="blue")
 
     proxy = SSHProxyServer(
         args.listen_port,

@@ -39,7 +39,7 @@ except ImportError:
 
 @Gooey(
     program_name=f'SSH-MITM {ssh_mitm_version}',
-    program_description='ssh man in the middle (ssh-mitm) server for security audits',
+    program_description='ssh audits made simple',
     tabbed_groups=True,
     optional_cols=1,
     default_size=(610, 590),
@@ -53,10 +53,14 @@ except ImportError:
                 'menuTitle': 'Documentation',
                 'url': 'https://docs.ssh-mitm.at'
             },{
+                'type': 'Link',
+                'menuTitle': 'Report an issue',
+                'url': 'https://github.com/ssh-mitm/ssh-mitm/issues'
+            },{
                 'type': 'AboutDialog',
                 'menuTitle': 'About',
                 'name': 'SSH-MITM',
-                'description': 'ssh man in the middle (ssh-mitm) server for security audits',
+                'description': 'ssh audits made simple',
                 'version': ssh_mitm_version,
                 'website': 'https://www.ssh-mitm.at',
                 'developer': 'https://github.com/ssh-mitm/ssh-mitm',
