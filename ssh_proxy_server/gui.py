@@ -76,21 +76,25 @@ def main():
 
     parser = GooeyParser(description='SSH Proxy Server')
 
-    basicsettings = parser.add_argument_group("Basic settings")
-    basicsettings.add_argument(
-        '--banner-name',
-        metavar='SSH banner',
-        dest='banner_name',
-        default=f'SSHMITM_{ssh_mitm_version}',
-        help='set a custom string as server banner'
-    )
-    basicsettings.add_argument(
+    remotehostsettings = parser.add_argument_group("Connection settings")
+    remotehostsettings.add_argument(
         '--listen-port',
         metavar='listen port',
         dest='listen_port',
         default=10022,
         type=int,
-        help='listen port'
+        help='listen port (default 10022)'
+    )
+    remotehostsettings.add_argument(
+        '--remote-host',
+        dest='remote_host',
+        help='remote host to connect to (default 127.0.0.1)'
+    )
+    remotehostsettings.add_argument(
+        '--remote-port',
+        dest='remote_port',
+        type=int,
+        help='remote port to connect to (default 22)'
     )
 
     hostkeysettings = parser.add_argument_group("Server host key")
@@ -98,7 +102,7 @@ def main():
         '--host-key',
         metavar='host key file (optional)',
         dest='host_key',
-        help='host key file',
+        help='host key file, if not provided temorary key will be generated',
         widget="FileChooser"
     )
     hostkeysettings.add_argument(
@@ -116,32 +120,6 @@ def main():
         default=2048,
         type=int,
         help='host key length for dss and rsa (default 2048)'
-    )
-
-    remotehostsettings = parser.add_argument_group("Remote Host")
-    remotehostsettings.add_argument(
-        '--remote-host',
-        dest='remote_host',
-        help='remote host to connect to (default 127.0.0.1)'
-    )
-    remotehostsettings.add_argument(
-        '--remote-port',
-        dest='remote_port',
-        type=int,
-        help='remote port to connect to (default 22)'
-    )
-    remotehostsettings.add_argument(
-        '--auth-username',
-        metavar='auth username (optional)',
-        dest='auth_username',
-        help='use a different username for remote authentication'
-    )
-    remotehostsettings.add_argument(
-        '--auth-password',
-        metavar='auth password (optional)',
-        dest='auth_password',
-        help='use a different password for remote authentication',
-        widget='PasswordField'
     )
 
     logsettings = parser.add_argument_group("Logging")
@@ -173,9 +151,23 @@ def main():
         help='store files from sftp'
     )
 
+    optionalsettings = parser.add_argument_group("Optional")
+    optionalsettings.add_argument(
+        '--auth-username',
+        metavar='auth username (optional)',
+        dest='auth_username',
+        help='use a different username for remote authentication'
+    )
+    optionalsettings.add_argument(
+        '--auth-password',
+        metavar='auth password (optional)',
+        dest='auth_password',
+        help='use a different password for remote authentication',
+        widget='PasswordField'
+    )
+
     args = parser.parse_args()
 
-    Transport._CLIENT_ID = args.banner_name
     Transport.run = dropbear.transport_run
 
     SSHProxyServer(
