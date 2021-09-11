@@ -14,8 +14,7 @@ class BaseForwarder(BaseModule):
     def __init__(self, session):
         super().__init__()
         self.server_channel = session.ssh_client.transport.open_session()
-        if session.authenticator.args.forward_agent:
-            logging.info("Forwarding agent to remote")
+        if session.agent is not None:
             session.agent.forward_agent(self.server_channel)
         self.channel = None
         self.session = session

@@ -95,12 +95,6 @@ class Authenticator(BaseModule):
             action='store_true',
             help='do not log credentials (usefull for presentations)'
         )
-        plugin_group.add_argument(
-            '--forward-agent',
-            dest='forward_agent',
-            action='store_true',
-            help='enables agent forwarding through the proxy'
-        )
 
     def __init__(self, session):
         super().__init__()

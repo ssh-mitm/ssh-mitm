@@ -146,12 +146,6 @@ def main():
         help='use a different password for remote authentication',
         widget='PasswordField'
     )
-    remotehostsettings.add_argument(
-        '--forward-agent',
-        dest='forward_agent',
-        action='store_true',
-        help='enables agent forwarding through the proxy'
-    )
 
     logsettings = parser.add_argument_group("Logging")
     logsettings.add_argument(
