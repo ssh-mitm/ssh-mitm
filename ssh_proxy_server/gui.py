@@ -88,13 +88,6 @@ def main():
         type=int,
         help='listen port'
     )
-    basicsettings.add_argument(
-        '--request-agent',
-        metavar='request agent',
-        dest='request_agent',
-        action='store_true',
-        help='request agent for public key authentication'
-    )
 
     hostkeysettings = parser.add_argument_group("Server host key")
     hostkeysettings.add_argument(

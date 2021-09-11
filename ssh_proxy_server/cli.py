@@ -150,12 +150,6 @@ def get_parser():
         help='module for user authentication'
     )
     parser.add_argument(
-        '--request-agent',
-        dest='request_agent',
-        action='store_true',
-        help='request agent for public key authentication'
-    )
-    parser.add_argument(
         '--request-agent-breakin',
         dest='request_agent_breakin',
         action='store_true',
