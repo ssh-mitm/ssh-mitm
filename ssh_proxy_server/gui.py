@@ -42,7 +42,7 @@ except ImportError:
     program_description='ssh audits made simple',
     tabbed_groups=True,
     optional_cols=1,
-    default_size=(610, 590),
+    default_size=(550, 650),
     richtext_controls=True,
     clear_before_run=True,
     menu=[{
@@ -88,17 +88,22 @@ def main():
     remotehostsettings.add_argument(
         '--remote-host',
         dest='remote_host',
+        default='127.0.0.1',
+        metavar='remote host',
         help='remote host to connect to (default 127.0.0.1)'
     )
     remotehostsettings.add_argument(
         '--remote-port',
         dest='remote_port',
+        metavar='remote port',
+        default=22,
         type=int,
         help='remote port to connect to (default 22)'
     )
     remotehostsettings.add_argument(
             '--hide-credentials',
             dest='auth_hide_credentials',
+            metavar='hide credentials',
             action='store_true',
             help='do not log credentials (usefull for presentations)'
         )
@@ -157,38 +162,52 @@ def main():
         help='store files from sftp'
     )
 
-    honeypotsettings = parser.add_argument_group("Honeypot")
+    honeypotsettings = parser.add_argument_group(
+        "Honeypot",
+        description="\n".join([
+            'Optional settings to fallback to a honeypot if publickey authentication failed.',
+            'This happens, when no agent was forwarded from the client.',
+            'When not enabled, SSH-MITM closes the connection.',
+            '',
+            'SSH-MITM is able to check if a user is allowed to login to a remote host,',
+            'but due to a missing forwarded agent, authentication to the remote host is not possible.'
+        ])
+    )
     honeypotsettings.add_argument(
         '--enable-auth-fallback',
-        metavar='Enable Honeypot',
+        metavar='Enable Honeypot (optional)',
         dest='enable_auth_fallback',
         action='store_true',
-        help='fallback to a honeypot, if authentication failed'
-    )
-    honeypotsettings.add_argument(
-        '--fallback-username',
-        dest='fallback_username',
-        required='--enable-auth-fallback' in sys.argv,
-        help='fallback username for the honeypot'
-    )
-    honeypotsettings.add_argument(
-        '--fallback-password',
-        dest='fallback_password',
-        required='--enable-auth-fallback' in sys.argv,
-        help='fallback password for the honeypot'
+        help='fallback to a honeypot when publickey authentication failed'
     )
     honeypotsettings.add_argument(
         '--fallback-host',
         dest='fallback_host',
+        metavar='Honeypot-Host',
         required='--enable-auth-fallback' in sys.argv,
-        help='fallback host for the honey ot'
+        help='fallback host for the honey'
     )
     honeypotsettings.add_argument(
         '--fallback-port',
         dest='fallback_port',
+        metavar='Honeypot-Port',
         type=int,
         default=22,
-        help='fallback port for the honeypot (22)'
+        help='fallback port for the honeypot (default: 22)'
+    )
+    honeypotsettings.add_argument(
+        '--fallback-username',
+        dest='fallback_username',
+        metavar='Honeypot-Username',
+        required='--enable-auth-fallback' in sys.argv,
+        help='username, which is used to to login to the honeypot'
+    )
+    honeypotsettings.add_argument(
+        '--fallback-password',
+        dest='fallback_password',
+        metavar='Honeypot-Password',
+        required='--enable-auth-fallback' in sys.argv,
+        help='password, which is used to to login to the honeypot'
     )
 
     args = parser.parse_args()
