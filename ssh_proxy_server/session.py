@@ -194,7 +194,8 @@ class Session(BaseSession):
             f.close()
             f.join()
         self.transport.close()
-        logging.info(f"({self}) session closed")
+        logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} closed")
+        logging.debug(f"({self}) session closed")
         self.closed = True
 
     def __str__(self):

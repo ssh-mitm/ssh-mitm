@@ -207,7 +207,7 @@ class SSHProxyServer:
                 if len(readable) == 1 and readable[0] is sock:
                     client, addr = sock.accept()
                     remoteaddr = client.getsockname()
-                    logging.info(f'incoming connection from {str(addr)} to {remoteaddr}')
+                    logging.debug(f'incoming connection from {str(addr)} to {remoteaddr}')
 
                     thread = threading.Thread(target=self.create_session, args=(client, addr, remoteaddr))
                     thread.start()
