@@ -138,21 +138,21 @@ class Authenticator(BaseModule):
         if self.args.remote_host:
             if ':' in self.args.remote_host:
                 remote_host = self.args.remote_host[:self.args.remote_host.rfind(':')]
-                remote_port = self.args.remote_host[self.args.remote_host.rfind(':') + 1:]
+                remote_port = int(self.args.remote_host[self.args.remote_host.rfind(':') + 1:])
         if self.session.proxyserver.transparent:
             return (
                 self.args.auth_username or username,
                 self.args.auth_password or password,
                 key,
                 remote_host or self.session.socket_remote_address[0],
-                int(remote_port) or self.session.socket_remote_address[1]
+                remote_port or self.session.socket_remote_address[1]
             )
         return (
             self.args.auth_username or username,
             self.args.auth_password or password,
             key,
             remote_host or '127.0.0.1',
-            int(remote_port) or 22
+            remote_port or 22
         )
 
     def authenticate(self, username=None, password=None, key=None, store_credentials=True):
