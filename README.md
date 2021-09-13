@@ -3,8 +3,8 @@
   <a href="https://www.ssh-mitm.at">
     <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://www.ssh-mitm.at/img/ssh-mitm-password.png" >
   </a>
-  <p align="center">ssh man-in-the-middle (ssh-mitm) server for security audits supporting<br> <b>public key authentication</b>, <b>session hijacking</b> and <b>file manipulation</b></p>
-  <p align="center"> 
+  <p align="center">ssh man-in-the-middle (ssh-mitm) server for security audits supporting<br> <b>publickey authentication</b>, <b>session hijacking</b> and <b>file manipulation</b></p>
+  <p align="center">
    <a href="https://snapcraft.io/ssh-mitm">
      <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
    </a>
@@ -32,7 +32,7 @@
 [![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm?color=%23434ee6)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 
-**SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis. 
+**SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
 
 Password and **publickey authentication** are supported and SSH-MITM is able to detect, if a user is able to login with publickey authentication on the remote server. This allows SSH-MITM to acccept the same key as the destination server. If publickey authentication is not possible, the authentication will fall back to password-authentication.
 
@@ -41,7 +41,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 ## Features
 
-* public key authentication
+* publickey authentication
    * accept same key as destination server
 * hijacking and logging of terminal sessions
 * store and replace files during SCP/SFTP file transferes
@@ -58,7 +58,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
     # install ssh-mitm as snap package
     $ sudo snap install ssh-mitm
-    
+
     # install ssh-mitm as python pip package
     $ pip install ssh-mitm
 

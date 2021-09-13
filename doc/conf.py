@@ -66,7 +66,7 @@ redirects = {
 
 header = {
     'title': 'SSH-MITM - ssh audits made simple',
-    'summary': 'man-in-the-middle (mitm) server for security audits supporting public key authentication, session hijacking and file manipulation'
+    'summary': 'man-in-the-middle (mitm) server for security audits supporting publickey authentication, session hijacking and file manipulation'
 }
 
 footer = {

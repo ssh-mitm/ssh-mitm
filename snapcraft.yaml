@@ -4,7 +4,7 @@ version: '0.6.0' # just for humans, typically '1.2+git' or '1.3.2'
 summary: ssh mitm server for security audits # 79 char long summary
 description: |
   ssh mitm server for security audits supporting
-  public key authentication, session hijacking and file manipulation
+  publickey authentication, session hijacking and file manipulation
 
 grade: stable # must be 'stable' to release into candidate/stable channels
 confinement: strict # use 'strict' once you have the right plugs and slots
