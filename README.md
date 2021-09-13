@@ -47,7 +47,6 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 * store and replace files during SCP/SFTP file transferes
 * port porwarding
 * audit clients against known vulnerabilities
-* support for honeypots
 * plugin support
 
 
