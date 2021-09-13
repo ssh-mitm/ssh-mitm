@@ -127,7 +127,7 @@ class Session(BaseSession):
                 return False
         # Connect method start
         if not self.agent:
-            return self.authenticator.auth_fallback() == AUTH_SUCCESSFUL
+            return self.authenticator.auth_fallback(self.username_provided) == AUTH_SUCCESSFUL
 
         if self.authenticator.authenticate(store_credentials=False) != AUTH_SUCCESSFUL:
             logging.error('Permission denied (publickey)')

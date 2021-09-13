@@ -1,7 +1,9 @@
+import argparse
 import logging
 import os
 import sys
 import socket
+import re
 from colored.colored import stylize, attr, fg
 from rich._emoji_codes import EMOJI
 
@@ -60,6 +62,18 @@ def probe_host(hostname_or_ip, port, username, public_key):
     return valid_key
 
 
+def validate_remote_host(remote_host):
+    if re.match(r"^[\w.]+(:[0-9]+)?$", remote_host):
+        return remote_host
+    raise argparse.ArgumentTypeError('remot host must be in format hostname:port')
+
+
+def validate_honeypot(remote_host):
+    if re.match(r"^[\S]+:[\S]+@[\w.]+(:[0-9]+)?$", remote_host):
+        return remote_host
+    raise argparse.ArgumentTypeError('honeypot address must be in format username_password@hostname:port')
+
+
 class Authenticator(BaseModule):
 
     REQUEST_AGENT_BREAKIN = False
@@ -73,13 +87,8 @@ class Authenticator(BaseModule):
         plugin_group.add_argument(
             '--remote-host',
             dest='remote_host',
-            help='remote host to connect to (default 127.0.0.1)'
-        )
-        plugin_group.add_argument(
-            '--remote-port',
-            dest='remote_port',
-            type=int,
-            help='remote port to connect to (default 22)'
+            type=validate_remote_host,
+            help='remote host to connect to (default 127.0.0.1:22)'
         )
         plugin_group.add_argument(
             '--auth-username',
@@ -93,35 +102,11 @@ class Authenticator(BaseModule):
         )
 
         plugin_group.add_argument(
-            '--enable-auth-fallback',
-            dest='enable_auth_fallback',
-            action='store_true',
-            help='fallback to a honeypot, if authentication failed'
-        )
-        plugin_group.add_argument(
-            '--fallback-username',
-            dest='fallback_username',
-            required='--enable-auth-fallback' in sys.argv,
-            help='fallback username for the honeypot'
-        )
-        plugin_group.add_argument(
-            '--fallback-password',
-            dest='fallback_password',
-            required='--enable-auth-fallback' in sys.argv,
-            help='fallback password for the honeypot'
-        )
-        plugin_group.add_argument(
             '--fallback-host',
             dest='fallback_host',
             required='--enable-auth-fallback' in sys.argv,
-            help='fallback host for the honey ot'
-        )
-        plugin_group.add_argument(
-            '--fallback-port',
-            dest='fallback_port',
-            type=int,
-            default=22,
-            help='fallback port for the honeypot (22)'
+            type=validate_honeypot,
+            help='fallback host for the honeypot (format username:password@hostname:port)'
         )
 
         plugin_group.add_argument(
@@ -148,20 +133,26 @@ class Authenticator(BaseModule):
         self.session = session
 
     def get_remote_host_credentials(self, username, password=None, key=None):
+        remote_host = None
+        remote_port = None
+        if self.args.remote_host:
+            if ':' in self.args.remote_host:
+                remote_host = self.args.remote_host[:self.args.remote_host.rfind(':')]
+                remote_port = self.args.remote_host[self.args.remote_host.rfind(':') + 1:]
         if self.session.proxyserver.transparent:
             return (
                 self.args.auth_username or username,
                 self.args.auth_password or password,
                 key,
-                self.args.remote_host or self.session.socket_remote_address[0],
-                self.args.remote_port or self.session.socket_remote_address[1]
+                remote_host or self.session.socket_remote_address[0],
+                int(remote_port) or self.session.socket_remote_address[1]
             )
         return (
             self.args.auth_username or username,
             self.args.auth_password or password,
             key,
-            self.args.remote_host or '127.0.0.1',
-            self.args.remote_port or 22
+            remote_host or '127.0.0.1',
+            int(remote_port) or 22
         )
 
     def authenticate(self, username=None, password=None, key=None, store_credentials=True):
@@ -213,19 +204,40 @@ class Authenticator(BaseModule):
     def auth_publickey(self, username, host, port, key):
         raise NotImplementedError("authentication must be implemented")
 
-    def auth_fallback(self):
-        if not self.args.enable_auth_fallback:
+    def auth_fallback(self, username):
+        def parse_host(connectionurl):
+            username = None
+            password = None
+            hostname = None
+            port = 22
+            if '@' in connectionurl:
+                username = connectionurl[:connectionurl.rfind('@')]
+                print(username)
+                if ':' in username:
+                    password = username[username.rfind(':') + 1:]
+                    username = username[:username.rfind(':')]
+                hostname = connectionurl[connectionurl.rfind('@') + 1:]
+            if ':' in hostname:
+                port = int(hostname[hostname.rfind(':') + 1:])
+                hostname = hostname[:hostname.rfind(':')]
+            return username, password, hostname, port
+
+        if not self.args.fallback_host:
             logging.error("\n".join([
                 stylize(EMOJI['exclamation'] + " ssh agent not forwarded. Login to remote host not possible with publickey authentication.", fg('red') + attr('bold')),
                 stylize(EMOJI['information'] + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.", fg('yellow') + attr('bold'))
             ]))
             return paramiko.AUTH_FAILED
-
+        try:
+            fallback_username, fallback_password, fallback_host, fallback_port = parse_host(self.args.fallback_host)
+        except Exception:
+            logging.error(stylize(EMOJI['exclamation'] + " failed to parse connection string for honeypot - publickey authentication failed", fg('red') + attr('bold')))
+            return paramiko.AUTH_FAILED
         auth_status = self.connect(
-            user=self.args.fallback_username,
-            password=self.args.fallback_password,
-            host=self.args.fallback_host,
-            port=self.args.fallback_port,
+            user=fallback_username or username,
+            password=fallback_password,
+            host=fallback_host,
+            port=int(fallback_port),
             method=AuthenticationMethod.password
         )
         if auth_status == paramiko.AUTH_SUCCESSFUL:

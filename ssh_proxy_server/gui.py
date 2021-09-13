@@ -6,7 +6,11 @@ from paramiko import Transport
 
 from ssh_proxy_server.server import SSHProxyServer
 
-from ssh_proxy_server.authentication import AuthenticatorPassThrough
+from ssh_proxy_server.authentication import (
+    AuthenticatorPassThrough,
+    validate_remote_host,
+    validate_honeypot
+)
 from ssh_proxy_server.interfaces import ServerInterface
 from ssh_proxy_server.plugins.scp.store_file import SCPStorageForwarder
 from ssh_proxy_server.plugins.sftp.store_file import SFTPHandlerStoragePlugin
@@ -42,7 +46,7 @@ except ImportError:
     program_description='ssh audits made simple',
     tabbed_groups=True,
     optional_cols=1,
-    default_size=(550, 650),
+    default_size=(550, 670),
     richtext_controls=True,
     clear_before_run=True,
     menu=[{
@@ -88,17 +92,17 @@ def main():
     remotehostsettings.add_argument(
         '--remote-host',
         dest='remote_host',
-        default='127.0.0.1',
-        metavar='remote host',
-        help='remote host to connect to (default 127.0.0.1)'
+        default='127.0.0.1:22',
+        type=validate_remote_host,
+        metavar='remote host and port',
+        help='remote host to connect to (default 127.0.0.1:22)'
     )
     remotehostsettings.add_argument(
-        '--remote-port',
-        dest='remote_port',
-        metavar='remote port',
-        default=22,
-        type=int,
-        help='remote port to connect to (default 22)'
+        '--host-key',
+        metavar='host key file (optional)',
+        dest='host_key',
+        help='host key file, if not provided temorary key will be generated',
+        widget="FileChooser"
     )
     remotehostsettings.add_argument(
             '--hide-credentials',
@@ -107,31 +111,6 @@ def main():
             action='store_true',
             help='do not log credentials (usefull for presentations)'
         )
-
-    hostkeysettings = parser.add_argument_group("Server host key")
-    hostkeysettings.add_argument(
-        '--host-key',
-        metavar='host key file (optional)',
-        dest='host_key',
-        help='host key file, if not provided temorary key will be generated',
-        widget="FileChooser"
-    )
-    hostkeysettings.add_argument(
-        '--host-key-algorithm',
-        metavar='type of host key',
-        dest='host_key_algorithm',
-        default='rsa',
-        choices=['dss', 'rsa', 'ecdsa', 'ed25519'],
-        help='host key algorithm (default rsa)'
-    )
-    hostkeysettings.add_argument(
-        '--host-key-length',
-        metavar='host key length',
-        dest='host_key_length',
-        default=2048,
-        type=int,
-        help='host key length for dss and rsa (default 2048)'
-    )
 
     logsettings = parser.add_argument_group("Logging")
     logsettings.add_argument(
@@ -165,49 +144,18 @@ def main():
     honeypotsettings = parser.add_argument_group(
         "Honeypot",
         description="\n".join([
-            'Optional settings to fallback to a honeypot if publickey authentication failed.',
-            'This happens, when no agent was forwarded from the client.',
-            'When not enabled, SSH-MITM closes the connection.',
-            '',
-            'SSH-MITM is able to check if a user is allowed to login to a remote host,',
-            'but due to a missing forwarded agent, authentication to the remote host is not possible.'
+            'SSH-MITM is able to check if a user is allowed to login with public key',
+            'authentication to a remote host, but due to a missing forwarded agent,',
+            'authentication to the remote host is not possible.',
+            'Those connections can be redirected to a honeypot.'
         ])
-    )
-    honeypotsettings.add_argument(
-        '--enable-auth-fallback',
-        metavar='Enable Honeypot (optional)',
-        dest='enable_auth_fallback',
-        action='store_true',
-        help='fallback to a honeypot when publickey authentication failed'
     )
     honeypotsettings.add_argument(
         '--fallback-host',
         dest='fallback_host',
-        metavar='Honeypot-Host',
-        required='--enable-auth-fallback' in sys.argv,
-        help='fallback host for the honey'
-    )
-    honeypotsettings.add_argument(
-        '--fallback-port',
-        dest='fallback_port',
-        metavar='Honeypot-Port',
-        type=int,
-        default=22,
-        help='fallback port for the honeypot (default: 22)'
-    )
-    honeypotsettings.add_argument(
-        '--fallback-username',
-        dest='fallback_username',
-        metavar='Honeypot-Username',
-        required='--enable-auth-fallback' in sys.argv,
-        help='username, which is used to to login to the honeypot'
-    )
-    honeypotsettings.add_argument(
-        '--fallback-password',
-        dest='fallback_password',
-        metavar='Honeypot-Password',
-        required='--enable-auth-fallback' in sys.argv,
-        help='password, which is used to to login to the honeypot'
+        type=validate_honeypot,
+        metavar='Honeypot-Host (optional)',
+        help='format: username:password@hostname:port'
     )
 
     args = parser.parse_args()
@@ -217,8 +165,6 @@ def main():
     SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,
-        key_algorithm=args.host_key_algorithm,
-        key_length=args.host_key_length,
         ssh_interface=SSHMirrorForwarder,
         scp_interface=SCPStorageForwarder,
         sftp_interface=SFTPProxyServerInterface,
