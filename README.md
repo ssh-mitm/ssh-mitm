@@ -70,8 +70,7 @@ To start SSH-MITM, all you have to do is run this command in your terminal of ch
 
     $ ssh-mitm --remote-host 192.168.0.x
 
-Now let's try to connect to the ssh-mitm server.
-The ssh-mitm server is listening on port 10022.
+Now let's try to connect. SSH-MITM is listening on port 10022.
 
     $ ssh -p 10022 testuser@proxyserver
 
