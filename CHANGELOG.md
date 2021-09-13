@@ -7,14 +7,19 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## [0.6.0] - 2021-09-10
+## [0.6.0] - 2021-09-13
 
-### Fixed
+### Added
 
 - publickey authentication uses the same key as the destination server
-- bumpversion config file
-- hide strg+c when shutting down server
-
+- check if publickey authentication is possible
+- updated vulnerability database
+- added command to probe for known public keys
+- save public keys to a file
+- added simple gui
+- added audit command
+- added version check
+- autodetect host key type
 
 ### Changed
 
@@ -22,15 +27,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added terminal logging to mirror shell
 - use same session log directory for all plugins
 - use same icon for appimage and snap
+- renamed cli argument '--disable-pubkey-auth' to '--disable-publickey-auth'
+- removed arguments to request and forward agent (added autodetect of forwarded agent)
 
-### Added
+### Fixed
 
-- updated vulnerability database
-- added command to probe for known public keys
-- save public keys to a file
-- added simple gui
-- added audit command
-- added version check
+- bumpversion config file
+- hide strg+c when shutting down server
 
 
 
