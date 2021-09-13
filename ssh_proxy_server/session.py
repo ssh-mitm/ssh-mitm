@@ -116,7 +116,7 @@ class Session(BaseSession):
             self.sftp_client_ready.set()
             return True
 
-        if not self.agent and (self.authenticator.REQUEST_AGENT or self.authenticator.REQUEST_AGENT_BREAKIN):
+        if not self.agent or self.authenticator.REQUEST_AGENT_BREAKIN:
             try:
                 if self.agent_requested.wait(1) or self.authenticator.REQUEST_AGENT_BREAKIN:
                     self.agent = AgentProxy(self.transport)
@@ -127,8 +127,7 @@ class Session(BaseSession):
                 return False
         # Connect method start
         if not self.agent:
-            logging.error('no ssh agent forwarded')
-            return False
+            return self.authenticator.auth_fallback(self.username_provided) == AUTH_SUCCESSFUL
 
         if self.authenticator.authenticate(store_credentials=False) != AUTH_SUCCESSFUL:
             logging.error('Permission denied (publickey)')

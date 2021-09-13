@@ -6,10 +6,14 @@ from paramiko import Transport
 
 from ssh_proxy_server.server import SSHProxyServer
 
-from ssh_proxy_server.authentication import AuthenticatorPassThrough
+from ssh_proxy_server.authentication import (
+    AuthenticatorPassThrough,
+    validate_remote_host,
+    validate_honeypot
+)
 from ssh_proxy_server.interfaces import ServerInterface
-from ssh_proxy_server.forwarders.scp import SCPForwarder
-from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin
+from ssh_proxy_server.plugins.scp.store_file import SCPStorageForwarder
+from ssh_proxy_server.plugins.sftp.store_file import SFTPHandlerStoragePlugin
 
 from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
 
@@ -39,10 +43,10 @@ except ImportError:
 
 @Gooey(
     program_name=f'SSH-MITM {ssh_mitm_version}',
-    program_description='ssh man in the middle (ssh-mitm) server for security audits',
+    program_description='ssh audits made simple',
     tabbed_groups=True,
     optional_cols=1,
-    default_size=(610, 590),
+    default_size=(550, 670),
     richtext_controls=True,
     clear_before_run=True,
     menu=[{
@@ -53,10 +57,14 @@ except ImportError:
                 'menuTitle': 'Documentation',
                 'url': 'https://docs.ssh-mitm.at'
             },{
+                'type': 'Link',
+                'menuTitle': 'Report an issue',
+                'url': 'https://github.com/ssh-mitm/ssh-mitm/issues'
+            },{
                 'type': 'AboutDialog',
                 'menuTitle': 'About',
                 'name': 'SSH-MITM',
-                'description': 'ssh man in the middle (ssh-mitm) server for security audits',
+                'description': 'ssh audits made simple',
                 'version': ssh_mitm_version,
                 'website': 'https://www.ssh-mitm.at',
                 'developer': 'https://github.com/ssh-mitm/ssh-mitm',
@@ -72,86 +80,37 @@ def main():
 
     parser = GooeyParser(description='SSH Proxy Server')
 
-    basicsettings = parser.add_argument_group("Basic settings")
-    basicsettings.add_argument(
-        '--banner-name',
-        metavar='SSH banner',
-        dest='banner_name',
-        default=f'SSHMITM_{ssh_mitm_version}',
-        help='set a custom string as server banner'
-    )
-    basicsettings.add_argument(
+    remotehostsettings = parser.add_argument_group("Connection settings")
+    remotehostsettings.add_argument(
         '--listen-port',
         metavar='listen port',
         dest='listen_port',
         default=10022,
         type=int,
-        help='listen port'
+        help='listen port (default 10022)'
     )
-    basicsettings.add_argument(
-        '--request-agent',
-        metavar='request agent',
-        dest='request_agent',
-        action='store_true',
-        help='request agent for public key authentication'
-    )
-
-    hostkeysettings = parser.add_argument_group("Server host key")
-    hostkeysettings.add_argument(
-        '--host-key',
-        metavar='host key file (optional)',
-        dest='host_key',
-        help='host key file',
-        widget="FileChooser"
-    )
-    hostkeysettings.add_argument(
-        '--host-key-algorithm',
-        metavar='type of host key',
-        dest='host_key_algorithm',
-        default='rsa',
-        choices=['dss', 'rsa', 'ecdsa', 'ed25519'],
-        help='host key algorithm (default rsa)'
-    )
-    hostkeysettings.add_argument(
-        '--host-key-length',
-        metavar='host key length',
-        dest='host_key_length',
-        default=2048,
-        type=int,
-        help='host key length for dss and rsa (default 2048)'
-    )
-
-    remotehostsettings = parser.add_argument_group("Remote Host")
     remotehostsettings.add_argument(
         '--remote-host',
         dest='remote_host',
-        help='remote host to connect to (default 127.0.0.1)'
+        default='127.0.0.1:22',
+        type=validate_remote_host,
+        metavar='remote host and port',
+        help='remote host to connect to (default 127.0.0.1:22)'
     )
     remotehostsettings.add_argument(
-        '--remote-port',
-        dest='remote_port',
-        type=int,
-        help='remote port to connect to (default 22)'
+        '--host-key',
+        metavar='host key file (optional)',
+        dest='host_key',
+        help='host key file, if not provided a temorary key will be generated',
+        widget="FileChooser"
     )
     remotehostsettings.add_argument(
-        '--auth-username',
-        metavar='auth username (optional)',
-        dest='auth_username',
-        help='use a different username for remote authentication'
-    )
-    remotehostsettings.add_argument(
-        '--auth-password',
-        metavar='auth password (optional)',
-        dest='auth_password',
-        help='use a different password for remote authentication',
-        widget='PasswordField'
-    )
-    remotehostsettings.add_argument(
-        '--forward-agent',
-        dest='forward_agent',
-        action='store_true',
-        help='enables agent forwarding through the proxy'
-    )
+            '--hide-credentials',
+            dest='auth_hide_credentials',
+            metavar='hide credentials',
+            action='store_true',
+            help='do not log credentials (usefull for presentations)'
+        )
 
     logsettings = parser.add_argument_group("Logging")
     logsettings.add_argument(
@@ -182,27 +141,38 @@ def main():
         help='store files from sftp'
     )
 
+    honeypotsettings = parser.add_argument_group(
+        "Honeypot",
+        description="\n".join([
+            'SSH-MITM is able to check if a user is allowed to login with public key',
+            'authentication to a remote host, but due to a missing forwarded agent,',
+            'authentication to the remote host is not possible.',
+            'Those connections can be redirected to a honeypot.'
+        ])
+    )
+    honeypotsettings.add_argument(
+        '--fallback-host',
+        dest='fallback_host',
+        type=validate_honeypot,
+        metavar='Honeypot-Host (optional)',
+        help='format: username:password@hostname:port'
+    )
+
     args = parser.parse_args()
 
-    Transport._CLIENT_ID = args.banner_name
     Transport.run = dropbear.transport_run
-
-    authenticator = AuthenticatorPassThrough
-    authenticator.REQUEST_AGENT = args.request_agent
 
     SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,
-        key_algorithm=args.host_key_algorithm,
-        key_length=args.host_key_length,
         ssh_interface=SSHMirrorForwarder,
-        scp_interface=SCPForwarder,
+        scp_interface=SCPStorageForwarder,
         sftp_interface=SFTPProxyServerInterface,
-        sftp_handler=SFTPHandlerPlugin,
+        sftp_handler=SFTPHandlerStoragePlugin,
         server_tunnel_interface=ServerTunnelForwarder,
         client_tunnel_interface=ClientTunnelForwarder,
         authentication_interface=ServerInterface,
-        authenticator=authenticator,
+        authenticator=AuthenticatorPassThrough,
         transparent=False,
         args=args
     ).start()
