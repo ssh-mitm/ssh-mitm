@@ -48,7 +48,7 @@ class ServerInterface(BaseServerInterface):
             help='disable password authentication'
         )
         plugin_group.add_argument(
-            '--disable-pubkey-auth',
+            '--disable-publickey-auth',
             dest='disable_pubkey_auth',
             action='store_true',
             help='disable public key authentication (not RFC-4252 conform)'
