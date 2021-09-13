@@ -54,9 +54,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 <img src="https://www.ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" align="left" width="128">
 
-The first step to using any software package is getting it properly installed.
-
-**SSH-MITM** can be installed as a [Ubuntu Snap](https://snapcraft.io/ssh-mitm), [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest) or [PIP-Package](https://pypi.org/project/ssh-mitm/).
+**SSH-MITM** can be installed as a [Ubuntu Snap](https://snapcraft.io/ssh-mitm), [PIP-Package](https://pypi.org/project/ssh-mitm/) or [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest)
 
     # install ssh-mitm as snap package
     $ sudo snap install ssh-mitm
@@ -68,9 +66,7 @@ The first step to using any software package is getting it properly installed.
 
 <img src="https://www.ssh-mitm.at/assets/images/streamline-free/programmer-male.svg" align="left" width="128">
 
-Starting an intercepting mitm-ssh server with password authentication and session hijacking is very simple.
-
-All you have to do is run this command in your terminal of choice.
+To start SSH-MITM, all you have to do is run this command in your terminal of choice.
 
     $ ssh-mitm --remote-host 192.168.0.x
 
@@ -97,11 +93,9 @@ When a client connects, the ssh-mitm starts a new server, which is used for sess
 
     INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
 
-To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
+To hijack the session, you can use your favorite ssh client.
 
     $ ssh -p 34463 127.0.0.1
-
-After you are connected, your session will only be updated with new responses, but you are able to execute commands.
 
 Try to execute somme commands in the hijacked session or in the original session.
 
