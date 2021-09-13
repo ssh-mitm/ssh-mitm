@@ -74,10 +74,5 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
             t.start()
             cls.tcpservers.append(t)
             logging.info(
-                "{session} created client tunnel injector for host {host} on port {port} to destination {dest}".format(
-                    host=t.network,
-                    port=t.port,
-                    dest=target,
-                    session=session
-                )
+                f"{session} created client tunnel injector for host {t.network} on port {t.port} to destination {target}"
             )

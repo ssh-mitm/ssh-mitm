@@ -1,12 +1,17 @@
+import argparse
 import logging
 import sys
 import os
 
 from enhancements.modules import ModuleParser
-from enhancements.plugins import LogModule
 
 from paramiko import Transport
 
+from rich.logging import RichHandler
+from rich.highlighter import NullHighlighter
+from rich import print as rich_print
+
+from ssh_proxy_server.console import sshconsole
 from ssh_proxy_server.server import SSHProxyServer
 
 from ssh_proxy_server.authentication import (
@@ -17,17 +22,9 @@ from ssh_proxy_server.interfaces import (
     BaseServerInterface,
     ServerInterface
 )
-from ssh_proxy_server.forwarders.scp import (
-    SCPBaseForwarder,
-    SCPForwarder
-)
-from ssh_proxy_server.forwarders.ssh import (
-    SSHBaseForwarder
-)
-from ssh_proxy_server.forwarders.sftp import (
-    SFTPHandlerBasePlugin,
-    SFTPHandlerPlugin
-)
+from ssh_proxy_server.forwarders.scp import SCPBaseForwarder
+from ssh_proxy_server.forwarders.ssh import SSHBaseForwarder
+from ssh_proxy_server.forwarders.sftp import SFTPHandlerBasePlugin
 
 from ssh_proxy_server.interfaces.sftp import (
     BaseSFTPServerInterface,
@@ -43,20 +40,28 @@ from ssh_proxy_server.forwarders.tunnel import (
 
 from ssh_proxy_server.workarounds import dropbear
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
+from ssh_proxy_server.plugins.scp.store_file import SCPStorageForwarder
+from ssh_proxy_server.plugins.sftp.store_file import SFTPHandlerStoragePlugin
 from ssh_proxy_server.__version__ import version as ssh_mitm_version
+from ssh_proxy_server.update import check_version
+from ssh_proxy_server.session import BaseSession, Session
 
 
-def main():
+def get_parser():
+    parser = ModuleParser(
+        description='SSH Proxy Server',
+        version=f"SSH-MITM {ssh_mitm_version}",
+        modules_from_file=True
+    )
 
-    if os.environ.get('APPIMAGE', None):
-        # if running as appimage, remove empty arguments
-        if len(sys.argv) == 2 and sys.argv[-1] == '':
-            sys.argv = sys.argv[:-1]
-
-    parser = ModuleParser(description='SSH Proxy Server', modules_from_file=True)
-
-    parser.add_plugin(LogModule)
-
+    parser.add_argument(
+        '-d',
+        '--debug',
+        dest='debug',
+        default=False,
+        action='store_true',
+        help='More verbose output of status information'
+    )
     parser.add_argument(
         '--listen-port',
         dest='listen_port',
@@ -99,7 +104,7 @@ def main():
     parser.add_module(
         '--scp-interface',
         dest='scp_interface',
-        default=SCPForwarder,
+        default=SCPStorageForwarder,
         help='interface to handle scp file transfers',
         baseclass=SCPBaseForwarder
     )
@@ -113,7 +118,7 @@ def main():
     parser.add_module(
         '--sftp-handler',
         dest='sftp_handler',
-        default=SFTPHandlerPlugin,
+        default=SFTPHandlerStoragePlugin,
         help='SFTP Handler to handle sftp file transfers',
         baseclass=SFTPHandlerBasePlugin
     )
@@ -146,12 +151,6 @@ def main():
         help='module for user authentication'
     )
     parser.add_argument(
-        '--request-agent',
-        dest='request_agent',
-        action='store_true',
-        help='request agent for public key authentication'
-    )
-    parser.add_argument(
         '--request-agent-breakin',
         dest='request_agent_breakin',
         action='store_true',
@@ -160,7 +159,7 @@ def main():
     parser.add_argument(
         '--banner-name',
         dest='banner_name',
-        default='SSHMITM_{}'.format(ssh_mitm_version),
+        default=f'SSHMITM_{ssh_mitm_version}',
         help='set a custom string as server banner'
     )
     parser.add_argument(
@@ -177,16 +176,53 @@ def main():
         help='disable paramiko workarounds'
     )
     parser.add_argument(
-        '--version',
+        '--check-version',
+        dest='check_version',
         action='store_true',
-        help='show version'
+        help='checks if a new version is available'
+    )
+    parser.add_module(
+        '--session-class',
+        dest='session_class',
+        default=Session,
+        baseclass=BaseSession,
+        help=argparse.SUPPRESS
     )
 
+    return parser
+
+
+def main():
+
+    if os.environ.get('APPIMAGE', None):
+        # if running as appimage, remove empty arguments
+        if len(sys.argv) == 2 and sys.argv[-1] == '':
+            sys.argv = sys.argv[:-1]
+
+    parser = get_parser()
     args = parser.parse_args()
 
-    if args.version:
-        print("SSH-MITM {}".format(ssh_mitm_version))
-        return
+    FORMAT = "%(message)s"
+    root_logger = logging.getLogger()
+    root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
+    root_logger.handlers.clear()
+    root_logger.addHandler(RichHandler(
+        highlighter=NullHighlighter(),
+        markup=False,
+        rich_tracebacks=True,
+        enable_link_path=args.debug,
+        show_path=args.debug
+    ))
+
+    if args.check_version:
+        latest_version = check_version()
+        if latest_version:
+            logging.info(
+                "[yellow]:information: ssh-mitm version %s is available",
+                latest_version,
+                extra={'markup': True}
+            )
+        sys.exit(0)
 
     if not args.disable_workarounds:
         Transport.run = dropbear.transport_run
@@ -198,12 +234,15 @@ def main():
     else:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
-    args.authenticator.REQUEST_AGENT = args.request_agent
     if args.request_agent_breakin:
-        args.authenticator.REQUEST_AGENT = True
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
-    logging.info("starting SSH-MITM %s", ssh_mitm_version)
+    sshconsole.rule(f"[bold blue]SSH-MITM - ssh audits made simple", style="blue")
+    rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
+    rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
+    rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
+    sshconsole.rule(style="blue")
+
     proxy = SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,

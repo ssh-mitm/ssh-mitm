@@ -1,5 +1,12 @@
 import logging
 import threading
+from uuid import uuid4
+import os
+
+from enhancements.modules import BaseModule
+
+from colored.colored import stylize, fg, attr
+from rich._emoji_codes import EMOJI
 
 from paramiko import Transport, AUTH_SUCCESSFUL
 from paramiko.ssh_exception import ChannelException
@@ -10,12 +17,27 @@ from ssh_proxy_server.plugins.session import key_negotiation
 from ssh_proxy_server.plugins.tunnel.injectclienttunnel import InjectableClientTunnelForwarder
 
 
-class Session:
+class BaseSession(BaseModule):
+    pass
+
+
+class Session(BaseSession):
 
     CIPHERS = None
 
-    def __init__(self, proxyserver, client_socket, client_address, authenticator, remoteaddr):
+    @classmethod
+    def parser_arguments(cls):
+        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group.add_argument(
+            '--session-log-dir',
+            dest='session_log_dir',
+            help='directory to store ssh session logs'
+        )
 
+    def __init__(self, proxyserver, client_socket, client_address, authenticator, remoteaddr):
+        super().__init__()
+        self.sessionid = uuid4()
+        logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} created")
         self._transport = None
 
         self.channel = None
@@ -23,7 +45,7 @@ class Session:
         self.proxyserver = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
-        self.name = "{fr}->{to}".format(fr=client_address, to=remoteaddr)
+        self.name = f"{client_address}->{remoteaddr}"
         self.closed = False
 
         self.agent_requested = threading.Event()
@@ -43,7 +65,9 @@ class Session:
         self.sftp_client_ready = threading.Event()
 
         self.username = ''
+        self.username_provided = None
         self.password = None
+        self.password_provided = None
         self.socket_remote_address = remoteaddr
         self.remote_address = (None, None)
         self.key = None
@@ -51,6 +75,16 @@ class Session:
         self.authenticator = authenticator(self)
 
         self.env_requests = {}
+        self.session_log_dir = self.get_session_log_dir()
+
+    def get_session_log_dir(self):
+        if not self.args.session_log_dir:
+            return None
+        session_log_dir = os.path.expanduser(self.args.session_log_dir)
+        return os.path.join(
+            session_log_dir,
+            str(self.sessionid)
+        )
 
     @property
     def running(self):
@@ -82,7 +116,7 @@ class Session:
             self.sftp_client_ready.set()
             return True
 
-        if not self.agent and (self.authenticator.REQUEST_AGENT or self.authenticator.REQUEST_AGENT_BREAKIN):
+        if not self.agent or self.authenticator.REQUEST_AGENT_BREAKIN:
             try:
                 if self.agent_requested.wait(1) or self.authenticator.REQUEST_AGENT_BREAKIN:
                     self.agent = AgentProxy(self.transport)
@@ -93,10 +127,9 @@ class Session:
                 return False
         # Connect method start
         if not self.agent:
-            logging.error('no ssh agent forwarded')
-            return False
+            return self.authenticator.auth_fallback(self.username_provided) == AUTH_SUCCESSFUL
 
-        if self.authenticator.authenticate() != AUTH_SUCCESSFUL:
+        if self.authenticator.authenticate(store_credentials=False) != AUTH_SUCCESSFUL:
             logging.error('Permission denied (publickey)')
             return False
 
@@ -140,7 +173,7 @@ class Session:
         if not self._start_channels():
             return False
 
-        logging.debug("(%s) session started", self)
+        logging.info(f"{EMOJI['information']} session started: {stylize(self.sessionid, fg('light_blue') + attr('bold'))}")
         return True
 
     def close(self):
@@ -161,7 +194,8 @@ class Session:
             f.close()
             f.join()
         self.transport.close()
-        logging.info("(%s) session closed", self)
+        logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} closed")
+        logging.debug(f"({self}) session closed")
         self.closed = True
 
     def __str__(self):

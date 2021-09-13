@@ -56,9 +56,9 @@ class SSHClient(BaseSSHClient):
                 for k in keys:
                     try:
                         self.transport.connect(username=self.user, password=self.password, pkey=k)
-                        ssh_pub_key = SSHKey("{} {}".format(k.get_name(), k.get_base64()))
+                        ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
                         ssh_pub_key.parse()
-                        logging.info("ssh-mitm connect to remote host with username=%s, key=%s %s %sbits", self.user, k.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
+                        logging.debug("ssh-mitm connected to remote host with username=%s, key=%s %s %sbits", self.user, k.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
                         break
                     except paramiko.AuthenticationException:
                         self.transport.close()
@@ -69,7 +69,7 @@ class SSHClient(BaseSSHClient):
                 return False
 
             remotekey = self.transport.get_remote_server_key()
-            if not self.check_host_key("{}:{}".format(self.host, self.port), remotekey.get_name(), remotekey):
+            if not self.check_host_key(f"{self.host}:{self.port}", remotekey.get_name(), remotekey):
                 raise InvalidHostKey()
             self.connected = True
             return True
@@ -81,7 +81,7 @@ class SSHClient(BaseSSHClient):
         except InvalidHostKey:
             message = "Hostkey is invalid"
 
-        userstring = "{}:{}@{}:{}".format(self.user, self.password, self.host, self.port)
+        userstring = f"{self.user}:{self.password}@{self.host}:{self.port}"
         logging.debug('Authentication failed: %s, User: %s, Message: %s', self.method.value, userstring, message or "")
 
         return False

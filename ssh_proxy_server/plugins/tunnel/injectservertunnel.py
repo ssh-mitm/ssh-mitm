@@ -31,11 +31,7 @@ class InjectableServerTunnelForwarder(ServerTunnelForwarder):
             run_status=self.session.running
         )
         logging.info(
-            "created server tunnel injector for host {host} on port {port} to destination {dest}".format(
-                host=self.tcpserver.network,
-                port=self.tcpserver.port,
-                dest=self.destination
-            )
+            f"created server tunnel injector for host {self.tcpserver.network} on port {self.tcpserver.port} to destination {self.destination}"
         )
         self.tcpserver.start()
 

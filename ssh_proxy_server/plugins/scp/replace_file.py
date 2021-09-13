@@ -30,12 +30,7 @@ class SCPReplaceFile(SCPForwarder):
             return traffic
 
         self.bytes_remaining = self.file_size = self.file_stat.st_size
-        traffic = "{}{} {} {}\n".format(
-            self.file_command,
-            self.file_mode,
-            self.file_size,
-            self.file_name
-        )
+        traffic = f"{self.file_command}{self.file_mode} {self.file_size} {self.file_name}\n"
         return traffic.encode("UTF-8")
 
     def process_data(self, traffic):

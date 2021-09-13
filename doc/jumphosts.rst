@@ -1,4 +1,4 @@
-Jump Hosts
+Jump hosts
 ==========
 
 **SSH-MITM should not be used as a jump host for security reasons!**
@@ -9,7 +9,7 @@ When operating a jump host, security is one of the most important requirements.
 This can not be achieved with SSH-MITM, because it has vulnerabilities which are needed
 for exploiting clients and servers.
 
-If you need a jump host with audit capabilities for security compliances, you should a product, which
+If you need a jump host with audit capabilities for security compliances, you should use a product which
 is created for such a use case.
 
 .. note::
@@ -19,21 +19,21 @@ is created for such a use case.
 
 
 There are many products, which can be used as a jump hosts. When choosing a product as a jump host,
-the most important is security. Many jump hosts are able to create an audit log or can store sessions
-for compliance reasons. Also authentication passthrough are required.
+the most important consideration is security. Many jump hosts are able to create an audit log or can store sessions
+for compliance reasons. Also, authentication passthrough is required.
 
 When compared with SSH-MITM, they share many features, but the use case is different.
-For example, passwords should not be logged on a jump host or a forwarded agent should not be accessible, even by administrators.
+For example, passwords should not be logged on a jump host and a forwarded agent should not be accessible, even by administrators.
 
-**Note:** Some descriptions are taken from the product websites or github repos.
+**Note:** Some descriptions are taken/adapted from the product websites or github repos.
 
 OpenSSH, Dropbear, ...
 """"""""""""""""""""""
 
-The most simple Jump Host is a ssh server like OpenSSH or Dropbear. They are available in nearly all
+The most simple jump host is a ssh server like OpenSSH or Dropbear. They are available in nearly all
 Linux distributions.
 
-In most scenarios, when they are used as jump host, they should only not or only restricted shell access.
+In most scenarios, when they are used as jump host, they should have no (or restricted) shell access.
 When accessing servers behind the jump host, the recommended method is "ProxyJump".
 
 ContainerSSH

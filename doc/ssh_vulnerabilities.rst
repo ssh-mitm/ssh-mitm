@@ -7,6 +7,7 @@ SSH Vurnabilities
    :maxdepth: 1
    :caption: CVE List
 
+   CVE-2021-36370
    CVE-2021-33500
    CVE-2021-28041
    CVE-2020-15778

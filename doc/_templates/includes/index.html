@@ -18,7 +18,7 @@
 <!------------------------------------------------------------------------>
 
 {% set theTocTree = toctree()
-    | replace('<p class="caption"><span class="caption-text">Contents:</span></p>', "")
+    | replace('Contents:', "")
     | replace("</a>", "")
     | replace(" href=\"", "></a>")
     | replace("</li>", "</li>;")

@@ -1,10 +1,15 @@
+import datetime
 import logging
 import select
 import threading
 import socket
 import time
 import os
+import tempfile
+import pytz
 
+from colored.colored import stylize, attr, fg
+from rich._emoji_codes import EMOJI
 import paramiko
 
 from ssh_proxy_server.forwarders.ssh import SSHForwarder
@@ -55,15 +60,26 @@ class SSHMirrorForwarder(SSHForwarder):
             default='127.0.0.1',
             help='local address/interface where injector sessions are served'
         )
-        cls.parser().add_argument(
+        plugin_group.add_argument(
             '--ssh-mirrorshell-key',
             dest='ssh_mirrorshell_key'
+        )
+        plugin_group.add_argument(
+            '--store-ssh-session',
+            dest='store_ssh_session',
+            action='store_true',
+            help='store ssh session in scriptreplay format'
         )
 
     def __init__(self, session):
         super().__init__(session)
         if self.args.ssh_mirrorshell_key:
             self.args.ssh_mirrorshell_key = os.path.expanduser(self.args.ssh_mirrorshell_key)
+
+        self.logdir = None
+        self.timestamp = None
+        self.fileIn, self.fileOut, self.timeingfile = None, None, None
+        self._initFiles()
 
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -76,13 +92,63 @@ class SSHMirrorForwarder(SSHForwarder):
         self.conn_thread = threading.Thread(target=self.injector_connect)
         self.conn_thread.start()
 
+    def _initFiles(self):
+        if not self.session.session_log_dir or not self.args.store_ssh_session:
+            return
+        try:
+            self.logdir = os.path.join(
+                self.session.session_log_dir,
+                "terminal_{}@{}".format(
+                    self.session.username,
+                    self.session.remote_address[0]
+                )
+            )
+
+            os.makedirs(self.logdir, exist_ok=True)
+            timecomponent = str(time.time()).split('.')[0]
+
+            self.fileIn = tempfile.NamedTemporaryFile(
+                prefix=f'ssh_in_{timecomponent}_',
+                suffix='.log',
+                dir=self.logdir,
+                delete=False
+            )
+            self.fileOut = tempfile.NamedTemporaryFile(
+                prefix=f'ssh_out_{timecomponent}_',
+                suffix='.log',
+                dir=self.logdir,
+                delete=False
+            )
+            self.fileOut.write(
+                "Session started on {}\n".format(
+                    datetime.datetime.utcnow().replace(
+                        tzinfo=pytz.utc
+                    ).strftime("%a %d %b %Y %H:%M:%S %Z")
+                ).encode()
+            )
+            self.fileOut.flush()
+            self.timeingfile = tempfile.NamedTemporaryFile(
+                prefix=f'ssh_time_{timecomponent}_',
+                suffix='.log',
+                dir=self.logdir,
+                delete=False
+            )
+        except Exception:
+            logging.exception("Error file init")
+
+    def write_timingfile(self, text):
+        if not self.timestamp:
+            self.timestamp = datetime.datetime.now()
+        oldtime = self.timestamp
+        self.timestamp = datetime.datetime.now()
+        diff = self.timestamp - oldtime
+        self.timeingfile.write(f"{diff.seconds}.{diff.microseconds} {len(text)}\n".encode())
+        self.timeingfile.flush()
+
     def injector_connect(self):
         inject_host, inject_port = self.injector_sock.getsockname()
         logging.info(
-            "created mirrorshell on port {port}. connect with: ssh -p {port} {host}".format(
-                host=inject_host,
-                port=inject_port
-            )
+            f"{EMOJI['information']} created mirrorshell on port {inject_port}. connect with: {stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))}"
         )
         try:
             while self.session.running:
@@ -123,10 +189,28 @@ class SSHMirrorForwarder(SSHForwarder):
         if self.inject_server:
             self.inject_server.injector_channel.get_transport().close()
         self.conn_thread.join()
+        if self.logdir:
+            self.timeingfile.close()
+            self.fileOut.close()
+            self.fileIn.close()
+
+    def forward_stdin(self):
+        if self.session.ssh_channel.recv_ready():
+            buf = self.session.ssh_channel.recv(self.BUF_LEN)
+            if self.logdir:
+                self.fileIn.write(buf)
+                self.fileIn.flush()
+            buf = self.stdin(buf)
+            self.server_channel.sendall(buf)
 
     def forward_stdout(self):
         if self.server_channel.recv_ready():
             buf = self.server_channel.recv(self.BUF_LEN)
+            if self.logdir:
+                self.fileOut.write(buf)
+                self.fileOut.flush()
+                self.write_timingfile(buf)
+            buf = self.stdout(buf)
             self.session.ssh_channel.sendall(buf)
             if self.inject_server is not None:
                 self.inject_server.injector_channel.sendall(buf)
@@ -134,6 +218,11 @@ class SSHMirrorForwarder(SSHForwarder):
     def forward_stderr(self):
         if self.server_channel.recv_stderr_ready():
             buf = self.server_channel.recv_stderr(self.BUF_LEN)
+            if self.logdir:
+                self.fileOut.write(buf)
+                self.fileOut.flush()
+                self.write_timingfile(buf)
+            buf = self.stderr(buf)
             self.session.ssh_channel.sendall_stderr(buf)
             if self.inject_server is not None:
                 self.inject_server.injector_channel.sendall(buf)

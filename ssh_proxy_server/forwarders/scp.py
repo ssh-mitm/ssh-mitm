@@ -26,8 +26,8 @@ class SCPBaseForwarder(BaseForwarder):
         if self.session.scp_command.decode('utf8').startswith('scp'):
             if not self.session.scp_command.find(b' -t ') != -1 and not self.session.scp_command.find(b' -f ') != -1:
                 logging.debug("[chan %d] Initiating SCP remote to remote", self.session.scp_channel.get_id())
-                if not self.session.authenticator.args.forward_agent:
-                    logging.warning("[chan %d] SCP remote to remote needs --forward-agent enabled", self.session.scp_channel.get_id())
+                if self.session.agent is None:
+                    logging.warning("[chan %d] SCP remote to remote needs a forwarded agent", self.session.scp_channel.get_id())
                 while not self._closed(self.server_channel):
                     time.sleep(1)
 

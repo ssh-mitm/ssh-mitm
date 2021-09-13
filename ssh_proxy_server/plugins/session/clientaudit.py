@@ -1,18 +1,34 @@
 import re
 import logging
+from collections import defaultdict
+from colored.colored import attr, stylize, fg
 from packaging import version
 
 from paramiko import ECDSAKey
+from rich._emoji_codes import EMOJI
 
 from ssh_proxy_server.plugins.session import cve202014002, cve202014145
+
+class Vulnerability:
+
+    def __init__(self, cve, indocs=False) -> None:
+        self.cve = cve
+        self.indocs = indocs
+        self.messages = []
+
+    @property
+    def url(self):
+        if self.indocs:
+            return f"https://docs.ssh.mitm.at/{self.cve}.html"
+        return f"https://nvd.nist.gov/vuln/detail/{self.cve}"
 
 
 class SSHClientAudit():
 
     CLIENT_NAME = None
     VERSION_REGEX = None
-    server_host_key_algorithms = None
     SERVER_HOST_KEY_ALGORITHMS = None
+    SERVER_HOST_KEY_ALGORITHMS_CVE = None
 
     def __init__(self, key_negotiation_data, vulnerability_list) -> None:
         self.key_negotiation_data = key_negotiation_data
@@ -39,42 +55,89 @@ class SSHClientAudit():
         except ValueError:
             return False
 
-    def check_cves(self):
-        found_cves = []
+    def check_cves(self, vulnerabilities):
+        cvelist = defaultdict(dict)
         for cve, description in self.vulnerability_list.items():
             version_min = description.get('version_min', "")
             version_max = description.get('version_max', "")
+            indocs = description.get('docs', False)
             if self.between_versions(version_min, version_max):
-                found_cves.append(cve)
+                cvelist[cve] = Vulnerability(cve, indocs)
 
-        if found_cves:
-            cvelist = "\n".join(["    - {0}: https://docs.ssh.mitm.at/{0}.html".format(cve) for cve in found_cves])
-            logging.info("possible vulnerabilities found!\n{}".format(cvelist))
+
+        cvemessagelist = []
+        if cvelist:
+            for e in cvelist.values():
+                cvemessagelist.append(f"  * {e.cve}: {e.url}")
+                if e.cve in vulnerabilities.keys():
+                    cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
+
+        logging.info(
+                "".join([
+                    stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
+                    "\n".join(cvemessagelist)
+                ])
+        )
 
     def check_key_negotiation(self):
         if not self.SERVER_HOST_KEY_ALGORITHMS:
-            return
+            return {}
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_name())
         for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
-                logging.info("%s: Client connecting for the FIRST time!", self.client_name())
+                message = stylize(f"client connecting for the first time or using default key order!", fg('green'))
                 break
         else:
-            logging.info("%s: Client has a locally cached remote fingerprint!", self.client_name())
+            message = stylize(f"client has a locally cached remote fingerprint!", fg('yellow'))
+        return {self.SERVER_HOST_KEY_ALGORITHMS_CVE: message}
+
+    def run_audit(self):
+        vulnerabilities = defaultdict(list)
+        for k, v in self.check_key_negotiation().items():
+            if isinstance(v, list):
+                vulnerabilities[k].extend(v)
+            else:
+                vulnerabilities[k].append(v)
+
+        for k, v in self.audit().items():
+            if isinstance(v, list):
+                vulnerabilities[k].extend(v)
+            else:
+                vulnerabilities[k].append(v)
+
+        self.check_cves(vulnerabilities)
+        client_audits = vulnerabilities.get(None, [])
+        if client_audits:
+            logging.info(
+                "".join([
+                    stylize(EMOJI['warning'] + " client audit tests:\n", fg('yellow') + attr('bold')),
+                    "\n".join([f"  * {v}" for v in client_audits])
+                ])
+            )
 
     def audit(self):
-        pass
+        return {None: []}
 
 
-class PuTTY(SSHClientAudit):
+class PuTTY_Release(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-putty_release_(0\.[0-9]+)'
     SERVER_HOST_KEY_ALGORITHMS = cve202014002.SERVER_HOST_KEY_ALGORITHMS
+    SERVER_HOST_KEY_ALGORITHMS_CVE = cve202014002.CVE
+
+
+class PuTTYFileZilla(PuTTY_Release):
+    VERSION_REGEX = r'ssh-2.0-puttyfilezilla_([0-9]+\.[0-9]+\.[0-9]+)'
+
+
+class WinSCP(PuTTY_Release):
+    VERSION_REGEX = r'ssh-2.0-winscp_release_([0-9]+\.[0-9]+\.[0-9]+)'
 
 
 class OpenSSH(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*'
     SERVER_HOST_KEY_ALGORITHMS = cve202014145.SERVER_HOST_KEY_ALGORITHMS
+    SERVER_HOST_KEY_ALGORITHMS_CVE = cve202014145.CVE
 
 
 class Dropbear(SSHClientAudit):

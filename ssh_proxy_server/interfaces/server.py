@@ -1,4 +1,5 @@
 import logging
+import os
 
 import paramiko
 from sshpubkeys import SSHKey
@@ -47,10 +48,10 @@ class ServerInterface(BaseServerInterface):
             help='disable password authentication'
         )
         plugin_group.add_argument(
-            '--disable-pubkey-auth',
+            '--disable-publickey-auth',
             dest='disable_pubkey_auth',
             action='store_true',
-            help='disable public key authentication'
+            help='disable public key authentication (not RFC-4252 conform)'
         )
         plugin_group.add_argument(
             '--enable-none-auth',
@@ -101,6 +102,7 @@ class ServerInterface(BaseServerInterface):
     def check_channel_forward_agent_request(self, channel):
         logging.debug("check_channel_forward_agent_request: channel=%s", channel)
         self.session.agent_requested.set()
+        self.session.authenticator.REQUEST_AGENT = True
         return True
 
     def check_channel_shell_request(self, channel):
@@ -173,9 +175,14 @@ class ServerInterface(BaseServerInterface):
         return self.session.authenticator.authenticate(self.session.username, password=responses[0])
 
     def check_auth_publickey(self, username, key):
-        ssh_pub_key = SSHKey("{} {}".format(key.get_name(), key.get_base64()))
+        ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
-        logging.info("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
+        logging.debug("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
+        if self.session.session_log_dir:
+                os.makedirs(self.session.session_log_dir, exist_ok=True)
+                pubkeyfile_path = os.path.join(self.session.session_log_dir, 'publickeys')
+                with open(pubkeyfile_path, 'a+') as pubkeyfile:
+                    pubkeyfile.write(f"{key.get_name()} {key.get_base64()} saved-from-auth-publickey\n")
         if self.args.disable_pubkey_auth:
             logging.debug("Publickey login attempt, but publickey auth was disabled!")
             return paramiko.AUTH_FAILED

@@ -2,8 +2,7 @@ entry_points = {
     'SSHBaseForwarder': [
         'base = ssh_proxy_server.forwarders.ssh:SSHForwarder',
         'mirrorshell = ssh_proxy_server.plugins.ssh.mirrorshell:SSHMirrorForwarder',
-        'noshell = ssh_proxy_server.plugins.ssh.noshell:NoShellForwarder',
-        'sessionlogger = ssh_proxy_server.plugins.ssh.sessionlogger:SSHLogForwarder'
+        'noshell = ssh_proxy_server.plugins.ssh.noshell:NoShellForwarder'
     ],
     'SCPBaseForwarder': [
         'base = ssh_proxy_server.forwarders.scp:SCPForwarder',

@@ -1,9 +1,12 @@
 import logging
+from colored.colored import stylize, fg, attr
 
 import pkg_resources
 import yaml
 from paramiko import Transport, common
 
+from rich.markup import escape
+from rich._emoji_codes import EMOJI
 
 from ssh_proxy_server.plugins.session.clientaudit import SSHClientAudit
 
@@ -28,9 +31,11 @@ class KeyNegotiationData:
         m.rewind()
 
     def show_debug_info(self):
-        logging.info("connected client version: %s", self.client_version)
+        logging.info(
+            f"{EMOJI['information']} connected client version: {stylize(self.client_version, fg('green') + attr('bold'))}"
+        )
         logging.debug("cookie: %s", self.cookie)
-        logging.debug("kex_algorithms: %s", self.kex_algorithms)
+        logging.debug("kex_algorithms: %s", escape(str(self.kex_algorithms)))
         logging.debug("server_host_key_algorithms: %s", self.server_host_key_algorithms)
         logging.debug("encryption_algorithms_client_to_server: %s", self.encryption_algorithms_client_to_server)
         logging.debug("encryption_algorithms_server_to_client: %s", self.encryption_algorithms_server_to_client)
@@ -49,7 +54,7 @@ class KeyNegotiationData:
         try:
             vulndb = pkg_resources.resource_filename('ssh_proxy_server', 'data/client_vulnerabilities.yml')
             with open(vulndb) as file:
-                vulnerability_list = yaml.load(file, Loader=yaml.FullLoader)
+                vulnerability_list = yaml.safe_load(file)
         except Exception:
             logging.exception("Error loading vulnerability database")
             return
@@ -58,9 +63,7 @@ class KeyNegotiationData:
                 client = client_cls(self, vulnerability_list.get(client_cls.client_name(), {}))
 
         if client:
-            client.check_cves()
-            client.check_key_negotiation()
-            client.audit()
+            client.run_audit()
 
 
 def handle_key_negotiation(session):

@@ -7,13 +7,43 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.0] - 2021-09-13
+
+### Added
+
+- publickey authentication uses the same key as the destination server
+- check if publickey authentication is possible
+- updated vulnerability database
+- added command to probe for known public keys
+- save public keys to a file
+- added simple gui
+- added audit command
+- added version check
+- autodetect host key type
+
+### Changed
+
+- terminal logging changed to rich
+- added terminal logging to mirror shell
+- use same session log directory for all plugins
+- use same icon for appimage and snap
+- renamed cli argument '--disable-pubkey-auth' to '--disable-publickey-auth'
+- removed arguments to request and forward agent (added autodetect of forwarded agent)
+
+### Fixed
+
+- bumpversion config file
+- hide strg+c when shutting down server
+
+
+
 ## [0.5.13] - 2021-07-16
 
-## Changed
+### Changed
 
 - reorganized command line arguments - plugin args are now grouped
 
-## Fixed
+### Fixed
 
 - fixed closing session when open channels exist
 
@@ -173,7 +203,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.13...develop
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/0.6.0...develop
+[0.6.0]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.13...0.6.0
 [0.5.13]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.12...0.5.13
 [0.5.12]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.11...0.5.12
 [0.5.11]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.10...0.5.11

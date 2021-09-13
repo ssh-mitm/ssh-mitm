@@ -3,43 +3,40 @@ Advanced usage
 
 SSH-MITM is capable of advanced man-in-the-middle attacks. It
 can be used in scenarios where the remote host is not known or a single
-remote host is not sufficient or public key authentication is used.
+remote host is not sufficient.
 
-Public key authentication
+
+Publickey authentication
 -------------------------
 
-Public key authentication is a way of logging into an SSH/SFTP account
-using a cryptographic key rather than a password.
+**Publickey authentication** is supported and SSH-MITM is able to detect, if a user is able
+to login with publickey authentication on the remote server. This allows SSH-MITM to acccept
+the same key as the destination server.
 
-The advantage is that no confidential data (which could
-be intercepted by a man-in-the-middle attack) needs to be sent to the remote host.
-
-Due to this design concept, SSH-MITM is not able to reuse the data provided
-during authentication.
-
-If you need to intercept a client with public key authentication, there are some options.
+If publickey authentication is not possible, the
+authentication will fall back to password-authentication.
 
 
-Request ssh agent for authentication
-""""""""""""""""""""""""""""""""""""
+Agent forwarding
+""""""""""""""""
 
 SSH supports agent forwarding, which allows a remote host to authenticate
 against another remote host.
 
 SSH-MITM is able to request the agent from the client and use
-it for remote authentication. By using this feature, SSH-MITM is able
-to do a full man-in-the-middle attack.
+it for remote authentication. By using this feature, it's possible
+to do a full man-in-the-middle attack when publickey authentication is used.
 
 Since OpenSSH 8.4 the commands scp and sftp support agent forwarding.
 Older releases or other implementations do not support agent forwarding for
 file transfers.
 
-To use agent forwarding, SSH-MITM must be started with ``--request-agent``.
+Publickey authentication in SSH-MITM is enabled by default. All you have to do is to start the server:
 
 .. code-block:: none
     :linenos:
 
-    $ ssh-mitm --request-agent --remote-host 192.168.0.x
+    $ ssh-mitm --remote-host 192.168.0.x
 
 The client must be started with agent forwarding enabled.
 
@@ -48,15 +45,6 @@ The client must be started with agent forwarding enabled.
 
     $ ssh -A -p 10022 user@proxyserver
 
-.. note::
-
-    If the client does not forward the agent, but SSH-MITM requested the agent,
-    the client will warn of a break in attempt.
-
-    .. code-block:: none
-
-        Warning: ssh server tried agent forwarding.
-        Warning: this is probably a break-in attempt by a malicious server.
 
 
 Using ssh agent forwarding comes with some security risks and should not be used
@@ -105,17 +93,22 @@ but does not allow to rewrite the ``SSH_AGENT_FORWARDING_NOTICE`` message.
 If a client uses an agent which displays a warning when the client is accessed, the original notice will be shown.
 
 
-Redirect session to a honey pot
-"""""""""""""""""""""""""""""""
+Redirect session to a honeypot
+""""""""""""""""""""""""""""""
 
 If agent forwarding is not possible, SSH-MITM can accept the
-public key authentication request and redirect the session to a honey pot.
+publickey authentication request and redirect the session to a honeypot.
 
 When the client sends a command which requires a password to enter (like sudo),
 those passwords can be used for further attacks.
 
-SSH-MITM does not support reusing entered passwords for remote authentication,
-but this feature could be implemented as a plugin.
+.. code-block:: none
+    :linenos:
+
+    ssh-mitm --fallback-host username:password@hostname:port
+
+Connections are only redirected to the honeypot if no agent was forwarded after publickey authentication.
+All other connections are forwarded to the destination server and a full man in the middle attack is possible.
 
 
 Transparent proxy
@@ -195,7 +188,7 @@ There is also a new plugin ``debug_traffic`` to debug the traffic of ssh command
 
 .. code-block:: bash
 
-    ssh-mitm --request-agent --scp-interface debug_traffic
+    ssh-mitm --scp-interface debug_traffic
 
 
 .. note::
@@ -206,14 +199,14 @@ There is also a new plugin ``debug_traffic`` to debug the traffic of ssh command
 Intercept git
 """""""""""""
 
-In most cased, when git is used over ssh, public key authentication is used. The default git command does not have a forward agent parameter.
+In most cased, when git is used over ssh, publickey authentication is used. The default git command does not have a forward agent parameter.
 
 To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` environment variable.
 
 .. code-block:: bash
 
     # start the ssh server
-    ssh-mitm --remote-host github.com --request-agent --scp-interface debug_traffic
+    ssh-mitm --remote-host github.com --scp-interface debug_traffic
 
     # invoke git commands
     GIT_SSH_COMMAND="ssh -A" git clone ssh://git@127.0.0.1:10022/ssh-mitm/ssh-mitm.git

@@ -1,15 +1,12 @@
 # -*- coding: utf-8 -*-
 
 from setuptools import setup, find_packages
-
-# read the contents of your README file
 from os import path
 import re
 
 this_directory = path.abspath(path.dirname(__file__))
 with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
-    long_description = re.sub(r"## Give a Star.*?Thanks!", "", f.read(), 0, re.DOTALL)
-    long_description = re.sub(r"To install \*\*SSH-MITM.*?### Install as pip-package", "", long_description, 0, re.DOTALL)
+    long_description = f.read()
 
 def get_version():
     from ssh_proxy_server.__version__ import version
@@ -27,7 +24,7 @@ setup(
     version=get_version(),
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
-    description='ssh mitm server for security audits supporting public key authentication, session hijacking and file manipulation',
+    description='ssh mitm server for security audits supporting publickey authentication, session hijacking and file manipulation',
     long_description=long_description,
     long_description_content_type='text/markdown',
     keywords="ssh proxy mitm network security audit",
@@ -57,20 +54,28 @@ setup(
         **{
             'console_scripts': [
                 'ssh-proxy-server = ssh_proxy_server.cli:main',
-                'ssh-mitm = ssh_proxy_server.cli:main'
+                'ssh-mitm = ssh_proxy_server.cli:main',
+                'ssh-mitm-gui = ssh_proxy_server.gui:main',
+                'ssh-mitm-audit = ssh_proxy_server.audit.cli:main'
             ]
         },
         **get_entry_points()
     },
     install_requires=[
-        'enhancements>=0.2.1',
+        'enhancements>=0.2.7',
         'paramiko',
         'pytz',
         'sshpubkeys',
         'pyyaml',
-        'packaging'
+        'packaging',
+        'colored',
+        'rich',
+        'requests'
     ],
     extras_require={
+        'gui': [
+            'Gooey'
+        ],
         'plugins': [
             'ssh-mitm-plugins'
         ],
