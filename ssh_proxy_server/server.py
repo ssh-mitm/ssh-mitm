@@ -1,3 +1,4 @@
+from binascii import hexlify
 import logging
 import os
 import select
@@ -8,6 +9,7 @@ import sys
 from colored import stylize, attr, fg
 
 from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key
+from paramiko.ssh_exception import SSHException
 from sshpubkeys import SSHKey
 
 from ssh_proxy_server.multisocket import (
@@ -110,10 +112,17 @@ class SSHProxyServer:
         else:
             if not os.path.isfile(self.key_file):
                 raise FileNotFoundError(f"host key '{self.key_file}' file does not exist")
-            try:
-                self._hostkey = key_algorithm_class(filename=self.key_file)
-            except Exception:
-                logging.error('host key format not supported by selected algorithm "%s"!', self.key_algorithm)
+            for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
+                try:
+                    key = self._key_from_filepath(
+                        self.key_file, pkey_class, None
+                    )
+                    self._hostkey = key
+                    break
+                except SSHException:
+                    pass
+            else:
+                logging.error('host key format not supported!')
                 raise KeyGenerationError()
 
 
@@ -124,6 +133,33 @@ class SSHProxyServer:
             f"    {stylize(ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold'))}\n"
             f"    {stylize(ssh_pub_key.hash_sha256(),fg('light_blue') + attr('bold'))}"
         ))
+
+    def _key_from_filepath(self, filename, klass, password):
+        """
+        Attempt to derive a `.PKey` from given string path ``filename``:
+        - If ``filename`` appears to be a cert, the matching private key is
+          loaded.
+        - Otherwise, the filename is assumed to be a private key, and the
+          matching public cert will be loaded if it exists.
+        """
+        cert_suffix = "-cert.pub"
+        # Assume privkey, not cert, by default
+        if filename.endswith(cert_suffix):
+            key_path = filename[: -len(cert_suffix)]
+            cert_path = filename
+        else:
+            key_path = filename
+            cert_path = filename + cert_suffix
+        # Blindly try the key path; if no private key, nothing will work.
+        key = klass.from_private_key_file(key_path, password)
+        # TODO: change this to 'Loading' instead of 'Trying' sometime; probably
+        # when #387 is released, since this is a critical log message users are
+        # likely testing/filtering for (bah.)
+        hexlify(key.get_fingerprint())
+        # Attempt to load cert if it exists.
+        if os.path.isfile(cert_path):
+            key.load_certificate(cert_path)
+        return key
 
     @property
     def host_key(self):

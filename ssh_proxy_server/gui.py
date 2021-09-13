@@ -101,7 +101,7 @@ def main():
         '--host-key',
         metavar='host key file (optional)',
         dest='host_key',
-        help='host key file, if not provided temorary key will be generated',
+        help='host key file, if not provided a temorary key will be generated',
         widget="FileChooser"
     )
     remotehostsettings.add_argument(
