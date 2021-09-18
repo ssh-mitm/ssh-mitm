@@ -9,4 +9,3 @@ SSH-MITM Docs - Main Page
    advanced-usage
    portforwarding
    ssh_vulnerabilities
-   jumphosts
