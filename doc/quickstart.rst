@@ -1,25 +1,69 @@
 Quickstart
 ==========
 
-Eager to get started? This page gives a good introduction in how to get started with SSH-MITM.
+Introduction
+------------
 
-First, make sure that:
+**SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
 
-* SSH-MITM is :ref:`installed <Installation>`
-* SSH-MITM is up-to-date
+Password and publickey authentication are supported and SSH-MITM is able to detect, if a user is able to
+login with publickey authentication on the remote server. This allows SSH-MITM to acccept the same key as
+the destination server. If publickey authentication is not possible, the authentication will fall
+back to password-authentication.
 
-Let’s get started with some simple examples.
+When publickey authentication is possible, a forwarded agent is needed to login to the remote server.
+In cases, when no agent was forwarded, SSH-MITM can rediredt the session to a honeypot.
 
+.. raw:: html
+
+    <p align="center">
+    <a href="https://www.ssh-mitm.at/img/ssh-mitm-password.png">
+        <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://www.ssh-mitm.at/img/ssh-mitm-password.png" width="650" >
+    </a>
+    <p align="center">ssh man-in-the-middle (ssh-mitm) server for security audits supporting<br> <b>publickey authentication</b>, <b>session hijacking</b> and <b>file manipulation</b></p>
+    <p align="center">
+    <a href="https://snapcraft.io/ssh-mitm">
+        <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
+    </a>
+    <br />
+    <br />
+
+    </p>
+    </p>
+
+Installation
+------------
+
+This part of the documentation covers the installation of SSH-MITM.
+The first step to using any software package is getting it properly installed.
+
+To install SSH-MITM, simply run one of those commands in your terminal of choice:
+
+Install as snap
+"""""""""""""""
+
+.. code-block:: bash
+
+    sudo snap install ssh-mitm
+
+
+Install with pip
+""""""""""""""""
+
+.. code-block:: bash
+
+    $ python -m pip install ssh-mitm
 
 Start ssh-mitm proxy server
 ---------------------------
+
+Let’s get started with some simple examples.
 
 Starting an intercepting mitm-ssh server with password authentication is very simple.
 
 All you have to do is run this command in your terminal of choice.
 
 .. code-block:: bash
-    :linenos:
 
     $ ssh-mitm --remote-host 192.168.0.x
 
@@ -27,7 +71,6 @@ Now let's try to connect to the ssh-mitm server.
 The ssh-mitm server is listening on port 10022.
 
 .. code-block:: bash
-    :linenos:
 
     $ ssh -p 10022 user@proxyserver
 
@@ -61,7 +104,6 @@ This server is used to hijack the session.
 To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
 
 .. code-block:: bash
-    :linenos:
 
     $ ssh -p 34463 127.0.0.1
 
@@ -70,3 +112,18 @@ After you are connected, your session will only be updated with new responses, b
 Try to execute somme commands in the hijacked session or in the original session.
 
 The output will be shown in both sessions.
+
+
+Publickey authentication
+------------------------
+
+SSH-MITM is able to verify, if a user is able to login with publickey authentication on the remote server.
+If publickey authentication is not possible, SSH-MITM falls back to password authentication.
+This step does not require a forwarded agent.
+
+For a full login on the remote server agent forwarding is still required. When no agent was forwarded,
+SSH-MITM can redirect the connection to a honeypot.
+
+.. code-block:: bash
+
+    ssh-mitm --fallback-host username:password@hostname:port

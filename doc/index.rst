@@ -5,7 +5,6 @@ SSH-MITM Docs - Main Page
    :maxdepth: 2
    :caption: Contents:
 
-   install
    quickstart
    advanced-usage
    portforwarding
