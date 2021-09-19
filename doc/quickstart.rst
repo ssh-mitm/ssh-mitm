@@ -41,7 +41,7 @@ Install as snap
 
 .. code-block:: bash
 
-    sudo snap install ssh-mitm
+    $ sudo snap install ssh-mitm
 
 
 Install with pip
@@ -69,7 +69,7 @@ The ssh-mitm server is listening on port 10022.
 
 .. code-block:: bash
 
-    $ ssh -p 10022 user@proxyserver
+    $ ssh -p 10022 testuser@proxyserver
 
 You will see the credentials in the log output.
 
@@ -78,8 +78,8 @@ You will see the credentials in the log output.
 
     INFO     Remote authentication succeeded
         Remote Address: 127.0.0.1:22
-        Username: user
-        Password: supersecret
+        Username: testuser
+        Password: secret
         Agent: no agent
 
 
@@ -123,4 +123,4 @@ SSH-MITM can redirect the connection to a honeypot.
 
 .. code-block:: bash
 
-    ssh-mitm --fallback-host username:password@hostname:port
+    $ ssh-mitm --fallback-host username:password@hostname:port
