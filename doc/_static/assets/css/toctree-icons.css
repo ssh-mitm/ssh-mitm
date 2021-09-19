@@ -1,29 +1,41 @@
+/* Quickstart */
 #docs-nav .toctree-l1:nth-child(1):before,
 #docs-cards .toctree-l1:nth-child(1) i:before {
     font-family: FontAwesome;
     content: "\f135";
 }
 
+/* SSH fingerprints */
 #docs-nav .toctree-l1:nth-child(2):before,
 #docs-cards .toctree-l1:nth-child(2) i:before {
     font-family: FontAwesome;
     content: "\f577";
 }
 
+/* Authentication */
 #docs-nav .toctree-l1:nth-child(3):before,
 #docs-cards .toctree-l1:nth-child(3) i:before {
+    font-family: FontAwesome;
+    content: "\f502";
+}
+
+/* Advanced usage */
+#docs-nav .toctree-l1:nth-child(4):before,
+#docs-cards .toctree-l1:nth-child(4) i:before {
     font-family: FontAwesome;
     content: "\f0e8";
 }
 
-#docs-nav .toctree-l1:nth-child(4):before,
-#docs-cards .toctree-l1:nth-child(4) i:before {
+/* Port Forwarding */
+#docs-nav .toctree-l1:nth-child(5):before,
+#docs-cards .toctree-l1:nth-child(5) i:before {
     font-family: FontAwesome;
     content: "\f542";
 }
 
-#docs-nav .toctree-l1:nth-child(5):before,
-#docs-cards .toctree-l1:nth-child(5) i:before {
+/* SSH Vurnabilities */
+#docs-nav .toctree-l1:nth-child(6):before,
+#docs-cards .toctree-l1:nth-child(6) i:before {
     font-family: FontAwesome;
     content: "\f714";
 }
