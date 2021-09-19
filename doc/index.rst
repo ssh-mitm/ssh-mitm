@@ -6,6 +6,7 @@ SSH-MITM Docs - Main Page
    :caption: Contents:
 
    quickstart
+   fingerprint
    advanced-usage
    portforwarding
    ssh_vulnerabilities

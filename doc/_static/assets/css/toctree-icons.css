@@ -7,17 +7,23 @@
 #docs-nav .toctree-l1:nth-child(2):before,
 #docs-cards .toctree-l1:nth-child(2) i:before {
     font-family: FontAwesome;
-    content: "\f0e8";
+    content: "\f577";
 }
 
 #docs-nav .toctree-l1:nth-child(3):before,
 #docs-cards .toctree-l1:nth-child(3) i:before {
     font-family: FontAwesome;
-    content: "\f542";
+    content: "\f0e8";
 }
 
 #docs-nav .toctree-l1:nth-child(4):before,
 #docs-cards .toctree-l1:nth-child(4) i:before {
+    font-family: FontAwesome;
+    content: "\f542";
+}
+
+#docs-nav .toctree-l1:nth-child(5):before,
+#docs-cards .toctree-l1:nth-child(5) i:before {
     font-family: FontAwesome;
     content: "\f714";
 }

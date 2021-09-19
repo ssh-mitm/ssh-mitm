@@ -1,9 +1,6 @@
 Quickstart
 ==========
 
-Introduction
-------------
-
 **SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
 
 Password and publickey authentication are supported and SSH-MITM is able to detect, if a user is able to
