@@ -95,7 +95,8 @@ html_context = {
         'githubrepo': 'https://github.com/ssh-mitm/ssh-mitm',
         'pypiurl': 'https://pypi.org/project/ssh-mitm/',
         'linkedinurl': 'https://www.linkedin.com/in/manfred-kaiser'
-    }
+    },
+    'built_timestamp': int(datetime.datetime.now().timestamp())
 }
 
 
