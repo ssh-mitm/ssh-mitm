@@ -27,9 +27,69 @@ In cases, when no agent was forwarded, SSH-MITM can rediredt the session to a ho
 
     </p>
     </p>
+    <section class="how-section py-5">
+        <div class="container">
+            <div class="row">
+                <div class="item col-12 col-md-4">
+                    <div class="icon-holder">
+                        <img src="https://www.ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" alt="">
+                        <div class="arrow-holder d-none d-lg-inline-block"></div>
+                    </div><!--//icon-holder-->
+                    <div class="desc p-3">
+                        <h5><span class="step-count mr-2">1</span>Install SSH-MITM</h5>
+                        <p>
+                            To install SSH-MITM, simply run this command in your terminal of choice:<br/>
+                            <code>
+                                $ sudo snap install ssh-mitm
+                            </code>
+                        </p>
+                        <p><a href="https://snapcraft.io/ssh-mitm">
+                            <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
+                        </a></p>
+                    </div><!--//desc-->
+                </div><!--//item-->
+                <div class="item col-12 col-md-4">
+                    <div class="icon-holder">
+                        <img src="https://www.ssh-mitm.at/assets/images/streamline-free/programmer-male.svg" alt="">
+                        <div class="arrow-holder d-none d-lg-inline-block"></div>
+                    </div><!--//icon-holder-->
+                    <div class="desc p-3">
+                        <h5><span class="step-count mr-2">2</span>Connect to the network</h5>
+                        <p>
+                            To start an intercepting mitm-ssh server on Port 10022,
+                            all you have to do is run a single command.<br/>
+                            <code>$ ssh-mitm --remote-host 192.168.0.x</code>
+                        </p>
+                        <p>
+                            Now let's try to connect to the ssh-mitm server.<br/>
+                            <code>$ ssh -p 10022 user@proxyserver</code>
+                        </p>
+                    </div><!--//desc-->
+                </div><!--//item-->
+                <div class="item col-12 col-md-4">
+                    <div class="icon-holder">
+                        <img src="https://www.ssh-mitm.at/assets/images/streamline-free/customer-service-woman.svg" alt="">
+                    </div><!--//icon-holder-->
+                    <div class="desc p-3">
+                        <h5><span class="step-count mr-2">3</span>Hijack SSH sessions</h5>
+                        <p>
+                            When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.<br/>
+                            <code>[INFO]  created injector shell on port 34463</code>
+                        </p><p>
+                            To hijack this session, you can use your favorite ssh client.
+                            All you have to do is to connect to the hijacked session.<br/>
+                            <code>$ ssh -p 34463 127.0.0.1</code>
+                        </p>
+                    </div><!--//desc-->
+                </div><!--//item-->
+            </div><!--//row-->
+        </div><!--//container-->
+    </section><!--//how-section-->
 
-Installation
-------------
+
+
+Alternative installation methods
+--------------------------------
 
 This part of the documentation covers the installation of SSH-MITM.
 The first step to using any software package is getting it properly installed.
@@ -51,8 +111,17 @@ Install with pip
 
     $ python -m pip install ssh-mitm
 
-Start ssh-mitm proxy server
----------------------------
+Install as AppImage
+"""""""""""""""""""
+
+.. code-block:: bash
+
+    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    $ chmod +x ssh-mitm*.AppImage
+
+
+Start SSH-MITM
+--------------
 
 Let’s get started with some simple examples.
 

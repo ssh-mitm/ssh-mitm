@@ -77,12 +77,14 @@ footer = {
 }
 
 page_descriptions = {
-    'install.html': 'SSH-MITM is easy to install with Python and PIP',
     'quickstart.html': 'Short guide to setup an intercepting SSH-MITM server with a single command',
+    'fingerprint.html': 'Description of host fingerprints and how to detect if a client already knows a host fingerprint',
+    'authentication.html': 'SSH authentication methods explained and how to use them during audits',
+    'sshagent.html': 'SSH agent and agent forwarding explained and security considerations discussed',
+    'filetransfer.html': 'Description of the SCP/SFTP protocols and how to manipulate files during audits',
+    'portforwarding.html': 'Introduction to port forwarding features of SSH-MITM',
     'advanced-usage.html': 'Guide on how to setup a SSH-MITM server for advanced security audits in large networks and special use cases',
     'ssh_vulnerabilities.html': 'Explanation of vulnerabilities related to the ssh protocol',
-    'jumphosts.html': 'SSH-MITM should not be used as jump host. This page describes alternatives and security considerations when operating a jump host',
-    'portforwarding.html': 'Introduction to port forwarding features of SSH-MITM'
 }
 
 html_context = {

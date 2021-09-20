@@ -8,6 +8,8 @@ SSH-MITM Docs - Main Page
    quickstart
    fingerprint
    authentication
-   advanced-usage
+   sshagent
+   filetransfer
    portforwarding
+   advanced-usage
    ssh_vulnerabilities

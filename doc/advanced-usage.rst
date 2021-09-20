@@ -1,5 +1,5 @@
-Advanced usage
-==============
+Advanced usage cases
+====================
 
 SSH-MITM is capable of advanced man-in-the-middle attacks. It
 can be used in scenarios where the remote host is not known or a single
