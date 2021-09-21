@@ -7,6 +7,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [0.6.1] - 2021-09-21
+
+### Fixed
+
+- missing environment variable in snap file
+- fixed ssh-mitm-audit command
+
 ## [0.6.0] - 2021-09-13
 
 ### Added
@@ -203,7 +210,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/0.6.0...develop
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/0.6.1...develop
+[0.6.1]: https://github.com/ssh-mitm/ssh-mitm/compare/0.6.0...0.6.1
 [0.6.0]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.13...0.6.0
 [0.5.13]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.12...0.5.13
 [0.5.12]: https://github.com/ssh-mitm/ssh-mitm/compare/0.5.11...0.5.12
