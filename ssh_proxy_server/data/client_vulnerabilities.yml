@@ -1,4 +1,8 @@
 putty_release:
+  CVE-2021-36367:
+    version_max: 0.71
+    cvss: N/A
+    docs: true
   CVE-2021-33500:
     version_min:
     version_max: 0.74
@@ -10,6 +14,14 @@ putty_release:
     cvss: 4.3
     docs: true
 openssh:
+  CVE-2016-20012:
+    version_max: 8.7
+    cvss: N/A
+    docs: true
+  CVE-2021-36368:
+    version_max: 8.7
+    cvss: N/A
+    docs: true
   CVE-2021-28041:
     version_min: 8.2
     version_max: 8.4
@@ -76,6 +88,10 @@ openssh:
     version_max: 7.3
     cvss: 7.5
 dropbear:
+  CVE-2021-36369:
+    version_max: 2020.81
+    cvss: N/A
+    docs: true
   CVE-2018-15599:
     version_max: 2018.76
     cvss: 5.0

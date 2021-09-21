@@ -1,0 +1,146 @@
+
+table.docutils,
+.rst-content table.field-list,
+.wy-table {
+	border-collapse: collapse;
+	border-spacing: 0;
+	empty-cells: show;
+	margin-bottom: 24px
+}
+
+table.docutils caption,
+.rst-content table.field-list caption,
+.wy-table caption {
+	color: #000;
+	font: italic 85%/1 arial, sans-serif;
+	padding: 1em 0;
+	text-align: center
+}
+
+table.docutils td,
+table.docutils th,
+.rst-content table.field-list td,
+.rst-content table.field-list th,
+.wy-table td,
+.wy-table th {
+	font-size: 90%;
+	margin: 0;
+	overflow: visible;
+	padding: 8px 16px
+}
+
+table.docutils td:first-child,
+table.docutils th:first-child,
+.rst-content table.field-list td:first-child,
+.rst-content table.field-list th:first-child,
+.wy-table td:first-child,
+.wy-table th:first-child {
+	border-left-width: 0
+}
+
+table.docutils thead,
+.rst-content table.field-list thead,
+.wy-table thead {
+	color: #000;
+	text-align: left;
+	vertical-align: bottom;
+	white-space: nowrap
+}
+
+table.docutils thead th,
+.rst-content table.field-list thead th,
+.wy-table thead th {
+	font-weight: 700;
+	border-bottom: 2px solid #e1e4e5
+}
+
+table.docutils td,
+.rst-content table.field-list td,
+.wy-table td {
+	background-color: transparent;
+	vertical-align: middle
+}
+
+table.docutils td p,
+.rst-content table.field-list td p,
+.wy-table td p {
+	line-height: 18px
+}
+
+table.docutils td p:last-child,
+.rst-content table.field-list td p:last-child,
+.wy-table td p:last-child {
+	margin-bottom: 0
+}
+
+table.docutils .wy-table-cell-min,
+.rst-content table.field-list .wy-table-cell-min,
+.wy-table .wy-table-cell-min {
+	width: 1%;
+	padding-right: 0
+}
+
+table.docutils .wy-table-cell-min input[type=checkbox],
+.rst-content table.field-list .wy-table-cell-min input[type=checkbox],
+.wy-table .wy-table-cell-min input[type=checkbox] {
+	margin: 0
+}
+
+.wy-table-secondary {
+	color: grey;
+	font-size: 90%
+}
+
+.wy-table-tertiary {
+	color: grey;
+	font-size: 80%
+}
+
+table.docutils:not(.field-list) tr:nth-child(2n-1) td,
+.wy-table-backed,
+.wy-table-odd td,
+.wy-table-striped tr:nth-child(2n-1) td {
+	background-color: #f3f6f6
+}
+
+table.docutils,
+.wy-table-bordered-all {
+	border: 1px solid #e1e4e5
+}
+
+table.docutils td,
+.wy-table-bordered-all td {
+	border-bottom: 1px solid #e1e4e5;
+	border-left: 1px solid #e1e4e5
+}
+
+table.docutils tbody>tr:last-child td,
+.wy-table-bordered-all tbody>tr:last-child td {
+	border-bottom-width: 0
+}
+
+table.docutils th {
+	border-color: #e1e4e5
+}
+
+
+table.docutils td .last,
+table.docutils td .last>:last-child {
+	margin-bottom: 0
+}
+
+table.docutils th {
+	border-color: #e1e4e5
+}
+
+
+table.docutils th {
+	border: 1px solid #e1e4e5
+}
+
+table.docutils td>p,
+table.docutils th>p {
+	line-height: 1rem;
+	margin-bottom: 0;
+	font-size: .9rem
+}
