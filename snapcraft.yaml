@@ -25,17 +25,23 @@ parts:
 apps:
   ssh-mitm:
     command: usr/bin/python3 $SNAP/bin/ssh-mitm
+    environment:
+      PYTHONIOENCODING: utf-8
     plugs:
       - home
       - network
       - network-bind
   audit:
     command: usr/bin/python3 $SNAP/bin/ssh-mitm-audit
+    environment:
+      PYTHONIOENCODING: utf-8
     plugs:
       - home
       - network
   gui:
     command: usr/bin/python3 $SNAP/bin/ssh-mitm-gui
+    environment:
+      PYTHONIOENCODING: utf-8
     plugs:
       - home
       - network
