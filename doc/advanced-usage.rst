@@ -36,7 +36,7 @@ Publickey authentication in SSH-MITM is enabled by default. All you have to do i
 .. code-block:: none
     :linenos:
 
-    $ ssh-mitm --remote-host 192.168.0.x
+    $ ssh-mitm --remote-host 192.168.0.x:PORT
 
 The client must be started with agent forwarding enabled.
 
@@ -206,7 +206,7 @@ To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` 
 .. code-block:: bash
 
     # start the ssh server
-    ssh-mitm --remote-host github.com --scp-interface debug_traffic
+    ssh-mitm --remote-host github.com:PORT --scp-interface debug_traffic
 
     # invoke git commands
     GIT_SSH_COMMAND="ssh -A" git clone ssh://git@127.0.0.1:10022/ssh-mitm/ssh-mitm.git
