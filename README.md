@@ -68,7 +68,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 To start SSH-MITM, all you have to do is run this command in your terminal of choice.
 
-    $ ssh-mitm --remote-host 192.168.0.x
+    $ ssh-mitm --remote-host 192.168.0.x:PORT
 
 Now let's try to connect. SSH-MITM is listening on port 10022.
 

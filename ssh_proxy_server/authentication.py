@@ -88,7 +88,7 @@ class Authenticator(BaseModule):
             '--remote-host',
             dest='remote_host',
             type=validate_remote_host,
-            help='remote host to connect to (default 127.0.0.1:22)'
+            help='remote host to connect to (format remote_host:remote_port, default 127.0.0.1:22)'
         )
         plugin_group.add_argument(
             '--auth-username',
