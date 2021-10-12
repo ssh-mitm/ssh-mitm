@@ -4,6 +4,7 @@ from colored.colored import stylize, fg, attr
 import pkg_resources
 import yaml
 from paramiko import Transport, common
+from paramiko.ssh_exception import SSHException
 
 from rich.markup import escape
 from rich._emoji_codes import EMOJI
@@ -81,6 +82,9 @@ def handle_key_negotiation(session):
 
 
         # normal operation
-        Transport._negotiate_keys(transport, m)
+        try:
+            Transport._negotiate_keys(transport, m)
+        except SSHException as ex:
+            logging.error(str(ex))
 
     session.transport._handler_table[common.MSG_KEXINIT] = intercept_key_negotiation
