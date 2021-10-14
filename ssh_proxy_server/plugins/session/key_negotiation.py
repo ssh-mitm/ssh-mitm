@@ -34,7 +34,7 @@ class KeyNegotiationData:
         logging.info(
             f"{EMOJI['information']} connected client version: {stylize(self.client_version, fg('green') + attr('bold'))}"
         )
-        logging.debug("cookie: %s", self.cookie)
+        logging.debug("cookie: %s", self.cookie.hex())
         logging.debug("kex_algorithms: %s", escape(str(self.kex_algorithms)))
         logging.debug("server_host_key_algorithms: %s", self.server_host_key_algorithms)
         logging.debug("encryption_algorithms_client_to_server: %s", self.encryption_algorithms_client_to_server)
