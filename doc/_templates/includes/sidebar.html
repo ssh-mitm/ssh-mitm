@@ -12,7 +12,7 @@
         </div>
 
     {% block menu %}
-        {% set theTocTree = toctree(maxdepth=2)
+        {% set theTocTree = toctree(maxdepth=1)
             | replace('<p class="caption"><span class="caption-text">Contents:</span></p>', "")
             | replace("toctree-l1", "toctree-l1 toctree-item") %}
         {{theTocTree}}
