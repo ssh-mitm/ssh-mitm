@@ -5,7 +5,7 @@ import argparse
 import sys
 
 from paramiko.pkey import PublicBlob
-from ssh_proxy_server.authentication import probe_host
+from ssh_proxy_server.authentication import probe_host, Authenticator
 
 
 def check_publickey(args):
@@ -32,6 +32,15 @@ def main():
     parser_check_publickey.add_argument('--username', type=str, required=True, help='username to check')
     parser_check_publickey.add_argument('--public-key', type=str, required=True, help='publickey to check')
 
+
+
+    parser_scan_auth = subparsers.add_parser('get-auth', help='checks authentication methods')
+    parser_scan_auth.add_argument('--host', type=str, required=True, help='Hostname or IP address')
+    parser_scan_auth.add_argument('--port', type=int, default=22, help='port (default: 22)')
+
+
     args = parser.parse_args(sys.argv[1:])
     if args.subparser_name == 'check-publickey':
         check_publickey(args)
+    elif args.subparser_name == 'get-auth':
+        print(",".join(Authenticator.get_auth_methods(args.host, args.port)))

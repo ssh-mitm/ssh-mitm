@@ -74,6 +74,16 @@ def validate_honeypot(remote_host):
     raise argparse.ArgumentTypeError('honeypot address must be in format username_password@hostname:port')
 
 
+class RemoteCredentials():
+
+    def __init__(self, *, username=None, password=None, key=None, host=None, port=None) -> None:
+        self.username = username
+        self.password = password
+        self.key = key
+        self.host = host
+        self.port = port
+
+
 class Authenticator(BaseModule):
 
     REQUEST_AGENT_BREAKIN = False
@@ -140,20 +150,37 @@ class Authenticator(BaseModule):
                 remote_host = self.args.remote_host[:self.args.remote_host.rfind(':')]
                 remote_port = int(self.args.remote_host[self.args.remote_host.rfind(':') + 1:])
         if self.session.proxyserver.transparent:
-            return (
-                self.args.auth_username or username,
-                self.args.auth_password or password,
-                key,
-                remote_host or self.session.socket_remote_address[0],
-                remote_port or self.session.socket_remote_address[1]
+            return RemoteCredentials(
+                username=self.args.auth_username or username,
+                password=self.args.auth_password or password,
+                key=key,
+                host=remote_host or self.session.socket_remote_address[0],
+                port=remote_port or self.session.socket_remote_address[1]
             )
-        return (
-            self.args.auth_username or username,
-            self.args.auth_password or password,
-            key,
-            remote_host or '127.0.0.1',
-            remote_port or 22
+        return RemoteCredentials(
+            username=self.args.auth_username or username,
+            password=self.args.auth_password or password,
+            key=key,
+            host=remote_host or '127.0.0.1',
+            port=remote_port or 22
         )
+
+    @classmethod
+    def get_auth_methods(cls, host, port):
+        auth_methods = None
+        t = paramiko.Transport((host, port))
+        try:
+            t.connect()
+        except paramiko.ssh_exception.SSHException:
+            t.close()
+            return auth_methods
+        try:
+            t.auth_none('')
+        except paramiko.BadAuthenticationType as err:
+            auth_methods = err.allowed_types
+        finally:
+            t.close()
+        return auth_methods
 
     def authenticate(self, username=None, password=None, key=None, store_credentials=True):
         if store_credentials:
@@ -161,10 +188,10 @@ class Authenticator(BaseModule):
             self.session.password_provided = password
         if username:
             remote_credentials = self.get_remote_host_credentials(username, password, key)
-            self.session.username = remote_credentials[0]
-            self.session.password = remote_credentials[1]
-            self.session.key = remote_credentials[2]
-            self.session.remote_address = (remote_credentials[3], remote_credentials[4])
+            self.session.username = remote_credentials.username
+            self.session.password = remote_credentials.password
+            self.session.key = remote_credentials.key
+            self.session.remote_address = (remote_credentials.host, remote_credentials.port)
         if key and not self.session.key:
             self.session.key = key
 
