@@ -8,7 +8,7 @@ from paramiko.pkey import PublicBlob
 from ssh_proxy_server.authentication import probe_host, Authenticator
 
 
-def check_publickey(args):
+def check_publickey(args: argparse.Namespace) -> None:
     key = open(args.public_key, 'rt').read()
     if probe_host(
         hostname_or_ip=args.host,
@@ -21,7 +21,7 @@ def check_publickey(args):
         print("bad key")
 
 
-def main():
+def main() -> None:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
     subparsers.required = True
@@ -40,4 +40,6 @@ def main():
     if args.subparser_name == 'check-publickey':
         check_publickey(args)
     elif args.subparser_name == 'get-auth':
-        print(",".join(Authenticator.get_auth_methods(args.host, args.port)))
+        auth_methods = Authenticator.get_auth_methods(args.host, args.port)
+        if auth_methods:
+            print(",".join(auth_methods))

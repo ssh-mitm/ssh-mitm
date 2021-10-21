@@ -1,3 +1,4 @@
+from typing import Optional
 import logging
 import os
 
@@ -19,12 +20,13 @@ class ServerInterface(BaseServerInterface):
     """ssh server implementation for SSH-MITM
     """
 
-    def __init__(self, session):
+    def __init__(self, session) -> None:
         super().__init__(session)
         self.forwarders = []
+        self.possible_auth_methods: Optional[str] = None
 
     @classmethod
-    def parser_arguments(cls):
+    def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
             cls.__name__,
             "options for integrated ssh server"
@@ -89,7 +91,7 @@ class ServerInterface(BaseServerInterface):
             help='extra authentication mehtod names'
         )
 
-    def check_channel_exec_request(self, channel, command):
+    def check_channel_exec_request(self, channel, command) -> bool:
         logging.debug("check_channel_exec_request: channel=%s, command=%s", channel, command.decode('utf8'))
         if self.args.disable_scp:
             logging.warning('scp command not allowed!')
@@ -111,13 +113,13 @@ class ServerInterface(BaseServerInterface):
         logging.warning('ssh command not allowed!')
         return False
 
-    def check_channel_forward_agent_request(self, channel):
+    def check_channel_forward_agent_request(self, channel) -> bool:
         logging.debug("check_channel_forward_agent_request: channel=%s", channel)
         self.session.agent_requested.set()
         self.session.authenticator.REQUEST_AGENT = True
         return True
 
-    def check_channel_shell_request(self, channel):
+    def check_channel_shell_request(self, channel) -> bool:
         logging.debug("check_channel_shell_request: channel=%s", channel)
         if not self.args.disable_ssh:
             self.session.ssh_requested = True
@@ -125,7 +127,7 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes):
+    def check_channel_pty_request(self, channel, term, width, height, pixelwidth, pixelheight, modes) -> bool:
         logging.debug(
             "check_channel_pty_request: channel=%s, term=%s, width=%s, height=%s, pixelwidth=%s, pixelheight=%s, modes=%s",
             channel, term, width, height, pixelwidth, pixelheight, modes
@@ -142,7 +144,11 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    def get_allowed_auths(self, username):
+    def get_allowed_auths(self, username: str) -> str:
+        if self.possible_auth_methods is None:
+            creds = self.session.authenticator.get_remote_host_credentials(username)
+            self.possible_auth_methods = self.session.authenticator.get_auth_methods(creds.host, creds.port)
+            logging.info(f"Remote auth-methods: {str(self.possible_auth_methods)}")
         logging.debug("get_allowed_auths: username=%s", username)
         allowed_auths = []
         if self.args.extra_auth_methods:
@@ -160,14 +166,14 @@ class ServerInterface(BaseServerInterface):
         logging.warning('Authentication is set to "none", but logins are disabled!')
         return 'none'
 
-    def check_auth_none(self, username):
+    def check_auth_none(self, username: str):
         logging.debug("check_auth_none: username=%s", username)
         if self.args.enable_none_auth:
             self.session.authenticator.authenticate(username, key=None)
             return paramiko.AUTH_SUCCESSFUL
         return paramiko.AUTH_FAILED
 
-    def check_auth_interactive(self, username, submethods):
+    def check_auth_interactive(self, username: str, submethods):
         logging.debug("check_auth_interactive: username=%s, submethods=%s", username, submethods)
         if not self.args.enable_keyboard_interactive_auth:
             return paramiko.AUTH_FAILED
@@ -186,7 +192,7 @@ class ServerInterface(BaseServerInterface):
             return paramiko.AUTH_FAILED
         return self.session.authenticator.authenticate(self.session.username, password=responses[0])
 
-    def check_auth_publickey(self, username, key):
+    def check_auth_publickey(self, username: str, key):
         ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
         logging.debug("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
@@ -209,7 +215,7 @@ class ServerInterface(BaseServerInterface):
             return paramiko.AUTH_FAILED
         return auth_result
 
-    def check_auth_password(self, username, password):
+    def check_auth_password(self, username: str, password: str):
         logging.debug("check_auth_password: username=%s, password=%s", username, password)
         if self.args.disable_password_auth:
             logging.warning("Password login attempt, but password auth was disabled!")
@@ -220,7 +226,7 @@ class ServerInterface(BaseServerInterface):
         logging.debug("check_channel_request: kind=%s , chanid=%s", kind, chanid)
         return paramiko.OPEN_SUCCEEDED
 
-    def check_channel_env_request(self, channel, name, value):
+    def check_channel_env_request(self, channel, name, value) -> bool:
         logging.debug("check_channel_env_request: channel=%s, name=%s, value=%s", channel, name, value)
         self.session.env_requests[name] = value
         return True
@@ -282,7 +288,7 @@ class ServerInterface(BaseServerInterface):
 
         return paramiko.OPEN_SUCCEEDED
 
-    def check_channel_window_change_request(self, channel, width, height, pixelwidth, pixelheight):
+    def check_channel_window_change_request(self, channel, width, height, pixelwidth, pixelheight) -> bool:
         logging.debug(
             "check_channel_window_change_request: channel=%s, width=%s, height=%s, pixelwidth=%s, pixelheight=%s",
             channel, width, height, pixelwidth, pixelheight
@@ -292,14 +298,14 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number):
+    def check_channel_x11_request(self, channel, single_connection, auth_protocol, auth_cookie, screen_number) -> bool:
         logging.debug(
             "check_channel_x11_request: channel=%s, single_connection=%s, auth_protocol=%s, auth_cookie=%s, screen_number=%s",
             channel, single_connection, auth_protocol, auth_cookie, screen_number
         )
         return False
 
-    def check_global_request(self, msg):
+    def check_global_request(self, msg) -> None:
         logging.debug(
             "check_global_request: msg=%s", msg
         )

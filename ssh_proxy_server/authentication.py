@@ -4,6 +4,12 @@ import os
 import sys
 import socket
 import re
+
+from typing import (
+    Optional,
+    List
+)
+
 from colored.colored import stylize, attr, fg
 from rich._emoji_codes import EMOJI
 
@@ -62,7 +68,7 @@ def probe_host(hostname_or_ip, port, username, public_key):
     return valid_key
 
 
-def validate_remote_host(remote_host):
+def validate_remote_host(remote_host: str):
     if re.match(r"^[\w.]+(:[0-9]+)?$", remote_host):
         return remote_host
     raise argparse.ArgumentTypeError('remot host must be in format hostname:port')
@@ -76,12 +82,18 @@ def validate_honeypot(remote_host):
 
 class RemoteCredentials():
 
-    def __init__(self, *, username=None, password=None, key=None, host=None, port=None) -> None:
-        self.username = username
-        self.password = password
+    def __init__(
+        self, *,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        key=None,
+        host: Optional[str] = None,
+        port: Optional[int] = None) -> None:
+        self.username: Optional[str] = username
+        self.password: Optional[str] = password
         self.key = key
-        self.host = host
-        self.port = port
+        self.host: Optional[str] = host
+        self.port: Optional[int] = port
 
 
 class Authenticator(BaseModule):
@@ -126,11 +138,16 @@ class Authenticator(BaseModule):
             help='do not log credentials (usefull for presentations)'
         )
 
-    def __init__(self, session):
+    def __init__(self, session) -> None:
         super().__init__()
         self.session = session
 
-    def get_remote_host_credentials(self, username, password=None, key=None):
+    def get_remote_host_credentials(
+        self,
+        username: str,
+        password: Optional[str] = None,
+        key=None
+    ) -> RemoteCredentials:
         remote_host = None
         remote_port = None
         if self.args.remote_host:
@@ -154,7 +171,7 @@ class Authenticator(BaseModule):
         )
 
     @classmethod
-    def get_auth_methods(cls, host, port):
+    def get_auth_methods(cls, host: str, port: int) -> Optional[List[str]]:
         auth_methods = None
         t = paramiko.Transport((host, port))
         try:
@@ -170,7 +187,13 @@ class Authenticator(BaseModule):
             t.close()
         return auth_methods
 
-    def authenticate(self, username=None, password=None, key=None, store_credentials=True):
+    def authenticate(
+        self,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+        key=None,
+        store_credentials: bool = True
+    ) -> int:
         if store_credentials:
             self.session.username_provided = username
             self.session.password_provided = password
@@ -208,7 +231,7 @@ class Authenticator(BaseModule):
             logging.error("no remote host")
         except Exception:
             logging.exception("internal error, abort authentication!")
-        return paramiko.AUTH_FAILED
+        return paramiko.common.AUTH_FAILED
 
     def auth_agent(self, username, host, port):
         raise NotImplementedError("authentication must be implemented")

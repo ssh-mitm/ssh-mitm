@@ -3,6 +3,8 @@ import threading
 from uuid import uuid4
 import os
 
+from typing import Optional
+
 from enhancements.modules import BaseModule
 
 from colored.colored import stylize, fg, attr
@@ -48,26 +50,26 @@ class Session(BaseSession):
         self.name = f"{client_address}->{remoteaddr}"
         self.closed = False
 
-        self.agent_requested = threading.Event()
+        self.agent_requested: threading.Event = threading.Event()
 
-        self.ssh_requested = False
+        self.ssh_requested: bool = False
         self.ssh_channel = None
         self.ssh_client = None
         self.ssh_pty_kwargs = None
 
-        self.scp_requested = False
+        self.scp_requested: bool = False
         self.scp_channel = None
         self.scp_command = ''
 
-        self.sftp_requested = False
+        self.sftp_requested: bool = False
         self.sftp_channel = None
         self.sftp_client = None
         self.sftp_client_ready = threading.Event()
 
-        self.username = ''
-        self.username_provided = None
-        self.password = None
-        self.password_provided = None
+        self.username: str = ''
+        self.username_provided: Optional[str] = None
+        self.password: Optional[str] = None
+        self.password_provided: Optional[str] = None
         self.socket_remote_address = remoteaddr
         self.remote_address = (None, None)
         self.key = None
@@ -75,9 +77,9 @@ class Session(BaseSession):
         self.authenticator = authenticator(self)
 
         self.env_requests = {}
-        self.session_log_dir = self.get_session_log_dir()
+        self.session_log_dir: Optional[str] = self.get_session_log_dir()
 
-    def get_session_log_dir(self):
+    def get_session_log_dir(self) -> Optional[str]:
         if not self.args.session_log_dir:
             return None
         session_log_dir = os.path.expanduser(self.args.session_log_dir)
@@ -87,7 +89,7 @@ class Session(BaseSession):
         )
 
     @property
-    def running(self):
+    def running(self) -> bool:
         session_channel_open = not self.channel.closed if self.channel else True
         ssh_channel_open = not self.ssh_channel.closed if self.ssh_channel else False
         scp_channel_open = not self.scp_channel.closed if self.scp_channel else False
@@ -142,7 +144,7 @@ class Session(BaseSession):
         self.sftp_client_ready.set()
         return True
 
-    def start(self):
+    def start(self) -> bool:
         event = threading.Event()
         self.transport.start_server(
             event=event,
@@ -176,7 +178,7 @@ class Session(BaseSession):
         logging.info(f"{EMOJI['information']} session started: {stylize(self.sessionid, fg('light_blue') + attr('bold'))}")
         return True
 
-    def close(self):
+    def close(self) -> None:
         if self.agent:
             self.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
@@ -198,12 +200,12 @@ class Session(BaseSession):
         logging.debug(f"({self}) session closed")
         self.closed = True
 
-    def __str__(self):
+    def __str__(self) -> str:
         return self.name
 
-    def __enter__(self):
+    def __enter__(self) -> 'Session':
         return self
 
-    def __exit__(self, value_type, value, traceback):
+    def __exit__(self, value_type, value, traceback) -> None:
         logging.debug("(%s) session exited", self)
         self.close()

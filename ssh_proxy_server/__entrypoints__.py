@@ -1,4 +1,6 @@
-entry_points = {
+from typing import Dict, List
+
+entry_points: Dict[str, List[str]] = {
     'SSHBaseForwarder': [
         'base = ssh_proxy_server.forwarders.ssh:SSHForwarder',
         'mirrorshell = ssh_proxy_server.plugins.ssh.mirrorshell:SSHMirrorForwarder',

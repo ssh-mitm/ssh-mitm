@@ -47,7 +47,7 @@ from ssh_proxy_server.update import check_version
 from ssh_proxy_server.session import BaseSession, Session
 
 
-def get_parser():
+def get_parser() -> ModuleParser:
     parser = ModuleParser(
         description='SSH Proxy Server',
         version=f"SSH-MITM {ssh_mitm_version}",
@@ -192,7 +192,7 @@ def get_parser():
     return parser
 
 
-def main():
+def main() -> None:
 
     if os.environ.get('APPIMAGE', None):
         # if running as appimage, remove empty arguments
@@ -202,7 +202,6 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    FORMAT = "%(message)s"
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
     root_logger.handlers.clear()

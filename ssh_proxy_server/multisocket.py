@@ -32,12 +32,13 @@ import socket
 import select
 import contextlib
 
+from typing import Optional
 
 __author__ = "Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>"
 __license__ = "MIT"
 
 
-def has_dual_stack(sock=None):
+def has_dual_stack(sock=None) -> bool:
     """Return True if kernel allows creating a socket which is able to
     listen for both IPv4 and IPv6 connections.
     If *sock* is provided the check is made against it.
@@ -58,11 +59,11 @@ def has_dual_stack(sock=None):
 def create_server_sock(
     address,
     family=None,
-    reuse_addr=None,
-    transparent=False,
-    queue_size=5,
-    dual_stack=has_dual_stack()
-):
+    reuse_addr: Optional[bool] = None,
+    transparent: bool = False,
+    queue_size: int = 5,
+    dual_stack: bool = has_dual_stack()
+) -> socket.socket:
     """Convenience function which creates a TCP server bound to
     *address* and return the socket object.
 
@@ -159,7 +160,7 @@ class MultipleSocketsListener:
     socket in the list.
     """
 
-    def __init__(self, addresses, family=None, reuse_addr=None, transparent=False, queue_size=5):
+    def __init__(self, addresses, family=None, reuse_addr=None, transparent: bool = False, queue_size: int = 5) -> None:
         self._socks = []
         self._sockmap = {}
         if hasattr(select, 'poll'):
