@@ -70,7 +70,11 @@ class SSHClientAudit():
             for e in cvelist.values():
                 cvemessagelist.append(f"  * {e.cve}: {e.url}")
                 if e.cve in vulnerabilities.keys():
-                    cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
+                    if isinstance(vulnerabilities[e.cve], list):
+                        for e1 in vulnerabilities[e.cve]:
+                            cvemessagelist.append(f"    - {e1}")
+                    else:
+                        cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
 
         logging.info(
                 "".join([
@@ -80,17 +84,27 @@ class SSHClientAudit():
         )
 
     def check_key_negotiation(self):
+        messages = []
         if not self.SERVER_HOST_KEY_ALGORITHMS:
             return {}
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_name())
         for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
-                message = stylize(f"client connecting for the first time or using default key order!", fg('green'))
+                messages.append(stylize(
+                    f"client connecting for the first time or using default key order!",
+                    fg('green')
+                ))
                 break
         else:
-            message = stylize(f"client has a locally cached remote fingerprint!", fg('yellow'))
-        return {self.SERVER_HOST_KEY_ALGORITHMS_CVE: message}
+            messages.append(stylize(
+                f"client has a locally cached remote fingerprint.",
+                fg('yellow')
+            ))
+        messages.append(
+            f"Preferred server host key algorithm: {self.key_negotiation_data.server_host_key_algorithms[0]}"
+        )
+        return {self.SERVER_HOST_KEY_ALGORITHMS_CVE: messages}
 
     def run_audit(self):
         vulnerabilities = defaultdict(list)
