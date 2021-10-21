@@ -32,12 +32,9 @@ def main():
     parser_check_publickey.add_argument('--username', type=str, required=True, help='username to check')
     parser_check_publickey.add_argument('--public-key', type=str, required=True, help='publickey to check')
 
-
-
     parser_scan_auth = subparsers.add_parser('get-auth', help='checks authentication methods')
     parser_scan_auth.add_argument('--host', type=str, required=True, help='Hostname or IP address')
     parser_scan_auth.add_argument('--port', type=int, default=22, help='port (default: 22)')
-
 
     args = parser.parse_args(sys.argv[1:])
     if args.subparser_name == 'check-publickey':

@@ -54,6 +54,18 @@ class ServerInterface(BaseServerInterface):
             help='disable public key authentication (not RFC-4252 conform)'
         )
         plugin_group.add_argument(
+            '--accept-first-publickey',
+            dest='accept_first_publickey',
+            action='store_true',
+            help='accepts the first key - does not check if user is allowed to login with publickey authentication'
+        )
+        plugin_group.add_argument(
+            '--disallow-publickey-auth',
+            dest='disallow_publickey_auth',
+            action='store_true',
+            help='disallow public key authentication but still checks if publickey authentication would be possible'
+        )
+        plugin_group.add_argument(
             '--enable-none-auth',
             dest='enable_none_auth',
             action='store_true',
@@ -186,7 +198,16 @@ class ServerInterface(BaseServerInterface):
         if self.args.disable_pubkey_auth:
             logging.debug("Publickey login attempt, but publickey auth was disabled!")
             return paramiko.AUTH_FAILED
-        return self.session.authenticator.authenticate(username, key=key)
+        if self.args.accept_first_publickey:
+            logging.debug('host probing disabled - first key accepted')
+            if self.args.disallow_publickey_auth:
+                logging.debug('ignoring argument --disallow-publickey-auth, first key still accepted')
+            return paramiko.AUTH_SUCCESSFUL
+
+        auth_result = self.session.authenticator.authenticate(username, key=key)
+        if self.args.disallow_publickey_auth:
+            return paramiko.AUTH_FAILED
+        return auth_result
 
     def check_auth_password(self, username, password):
         logging.debug("check_auth_password: username=%s, password=%s", username, password)
