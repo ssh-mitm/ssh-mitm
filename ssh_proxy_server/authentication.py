@@ -63,13 +63,13 @@ def probe_host(hostname_or_ip, port, username, public_key):
 
 
 def validate_remote_host(remote_host):
-    if re.match(r"^[^\:]+(:[0-9]{5})?$", remote_host):
+    if re.match(r"[^\:]+(:[0-9]{5})?", remote_host):
         return remote_host
     raise argparse.ArgumentTypeError('remot host must be in format hostname:port')
 
 
 def validate_honeypot(remote_host):
-    if re.match(r"^[^\:]+:[^@]+@[^\:]+:([0-9]{5})?$", remote_host):
+    if re.match(r"[^\:]+:[^@]+@[^\:]+(:[0-9]{5})?", remote_host):
         return remote_host
     raise argparse.ArgumentTypeError('honeypot address must be in format username:password@hostname:port')
 
