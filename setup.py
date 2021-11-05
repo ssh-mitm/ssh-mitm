@@ -71,7 +71,8 @@ setup(
         'packaging',
         'colored',
         'rich',
-        'requests'
+        'requests',
+        'typeguard'
     ],
     extras_require={
         'plugins': [

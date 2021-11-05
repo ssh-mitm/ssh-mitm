@@ -1,12 +1,22 @@
 import logging
 from enum import Enum
 
+from typing import (
+    TYPE_CHECKING,
+    Text
+)
+
+from typeguard import typechecked
 import paramiko
 import paramiko.hostkeys
-from sshpubkeys import SSHKey
+from sshpubkeys import SSHKey  # type: ignore
 
 from enhancements.modules import BaseModule
+import ssh_proxy_server
 from ssh_proxy_server.exceptions import NoAgentKeys, InvalidHostKey
+
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 
 class AuthenticationMethod(Enum):
@@ -23,7 +33,8 @@ class SSHClient(BaseSSHClient):
 
     CIPHERS = None
 
-    def __init__(self, host, port, method, password, user, key, session):
+    #@typechecked
+    def __init__(self, host, port, method, password, user, key, session: 'ssh_proxy_server.session.Session') -> None:
         self.session = session
         self.host = host
         self.port = port

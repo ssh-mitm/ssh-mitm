@@ -2,21 +2,38 @@ import logging
 import threading
 from uuid import uuid4
 import os
+import socket
 
-from typing import Optional
+from typing import (
+    TYPE_CHECKING,
+    Dict,
+    Optional,
+    Union,
+    Tuple,
+    Text,
+    Type,
+    ByteString
+)
 
 from enhancements.modules import BaseModule
 
-from colored.colored import stylize, fg, attr
+from colored.colored import stylize, fg, attr  # type: ignore
+import paramiko
+from paramiko.pkey import PKey
 from rich._emoji_codes import EMOJI
 
-from paramiko import Transport, AUTH_SUCCESSFUL
+from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
+from typeguard import typechecked
 
+import ssh_proxy_server
 from ssh_proxy_server.forwarders.agent import AgentProxy
 from ssh_proxy_server.interfaces.server import ProxySFTPServer
 from ssh_proxy_server.plugins.session import key_negotiation
 from ssh_proxy_server.plugins.tunnel.injectclienttunnel import InjectableClientTunnelForwarder
+
+if TYPE_CHECKING:
+    from ssh_proxy_server.server import SSHProxyServer
 
 
 class BaseSession(BaseModule):
@@ -28,7 +45,8 @@ class Session(BaseSession):
     CIPHERS = None
 
     @classmethod
-    def parser_arguments(cls):
+    @typechecked
+    def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
             '--session-log-dir',
@@ -36,7 +54,15 @@ class Session(BaseSession):
             help='directory to store ssh session logs'
         )
 
-    def __init__(self, proxyserver, client_socket, client_address, authenticator, remoteaddr):
+    @typechecked
+    def __init__(
+        self,
+        proxyserver: 'ssh_proxy_server.server.SSHProxyServer',
+        client_socket: socket.socket,
+        client_address: Union[Tuple[Text, int], Tuple[Text, int, int, int]],
+        authenticator: Type['ssh_proxy_server.authentication.Authenticator'],
+        remoteaddr: Union[Tuple[Text, int], Tuple[Text, int, int, int]]
+    ) -> None:
         super().__init__()
         self.sessionid = uuid4()
         logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} created")
@@ -54,7 +80,7 @@ class Session(BaseSession):
 
         self.ssh_requested: bool = False
         self.ssh_channel = None
-        self.ssh_client = None
+        self.ssh_client: Optional[ssh_proxy_server.clients.ssh.SSHClient] = None
         self.ssh_pty_kwargs = None
 
         self.scp_requested: bool = False
@@ -71,14 +97,15 @@ class Session(BaseSession):
         self.password: Optional[str] = None
         self.password_provided: Optional[str] = None
         self.socket_remote_address = remoteaddr
-        self.remote_address = (None, None)
-        self.key = None
-        self.agent = None
+        self.remote_address: Tuple[Optional[Text], Optional[int]] = (None, None)
+        self.key: Optional[PKey] = None
+        self.agent: Optional[AgentProxy] = None
         self.authenticator = authenticator(self)
 
-        self.env_requests = {}
+        self.env_requests: Dict[ByteString, ByteString] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
 
+    @typechecked
     def get_session_log_dir(self) -> Optional[str]:
         if not self.args.session_log_dir:
             return None
@@ -90,9 +117,16 @@ class Session(BaseSession):
 
     @property
     def running(self) -> bool:
-        session_channel_open = not self.channel.closed if self.channel else True
-        ssh_channel_open = not self.ssh_channel.closed if self.ssh_channel else False
-        scp_channel_open = not self.scp_channel.closed if self.scp_channel else False
+        session_channel_open: bool = True
+        ssh_channel_open: bool = False
+        scp_channel_open: bool = False
+
+        if self.channel is not None:
+            session_channel_open = not self.channel.closed
+        if self.ssh_channel is not None:
+            ssh_channel_open = not self.ssh_channel.closed
+        if self.scp_channel is not None:
+            scp_channel_open = not self.scp_channel.closed if self.scp_channel else False
         open_channel_exists = session_channel_open or ssh_channel_open or scp_channel_open
 
         return_value = self.proxyserver.running and open_channel_exists and not self.closed
@@ -112,7 +146,8 @@ class Session(BaseSession):
 
         return self._transport
 
-    def _start_channels(self):
+    @typechecked
+    def _start_channels(self) -> bool:
         # create client or master channel
         if self.ssh_client:
             self.sftp_client_ready.set()
@@ -129,9 +164,12 @@ class Session(BaseSession):
                 return False
         # Connect method start
         if not self.agent:
-            return self.authenticator.auth_fallback(self.username_provided) == AUTH_SUCCESSFUL
+            if self.username_provided is None:
+                logging.error("No username proviced during login!")
+                return False
+            return self.authenticator.auth_fallback(self.username_provided) == paramiko.common.AUTH_SUCCESSFUL
 
-        if self.authenticator.authenticate(store_credentials=False) != AUTH_SUCCESSFUL:
+        if self.authenticator.authenticate(store_credentials=False) != paramiko.common.AUTH_SUCCESSFUL:
             logging.error('Permission denied (publickey)')
             return False
 
@@ -144,6 +182,7 @@ class Session(BaseSession):
         self.sftp_client_ready.set()
         return True
 
+    @typechecked
     def start(self) -> bool:
         event = threading.Event()
         self.transport.start_server(
@@ -178,13 +217,15 @@ class Session(BaseSession):
         logging.info(f"{EMOJI['information']} session started: {stylize(self.sessionid, fg('light_blue') + attr('bold'))}")
         return True
 
+    @typechecked
     def close(self) -> None:
         if self.agent:
             self.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
         if self.ssh_client:
             logging.debug("(%s) closing ssh client to remote", self)
-            self.ssh_client.transport.close()
+            if self.ssh_client.transport:
+                self.ssh_client.transport.close()
             # With graceful exit the completion_event can be polled to wait, well ..., for completion
             # it can also only be a graceful exit if the ssh client has already been established
             if self.transport.completion_event.is_set() and self.transport.is_active():
@@ -200,12 +241,14 @@ class Session(BaseSession):
         logging.debug(f"({self}) session closed")
         self.closed = True
 
+    @typechecked
     def __str__(self) -> str:
         return self.name
 
+    @typechecked
     def __enter__(self) -> 'Session':
         return self
 
-    def __exit__(self, value_type, value, traceback) -> None:
+    def __exit__(self, exc_type, exc_value, traceback) -> None:
         logging.debug("(%s) session exited", self)
         self.close()

@@ -3,31 +3,38 @@ import logging
 import os
 import sys
 import socket
-import re
 
 from typing import (
     Optional,
-    List
+    List,
+    Tuple,
+    Text
 )
 
-from colored.colored import stylize, attr, fg
+from colored.colored import stylize, attr, fg  # type: ignore
+from paramiko import PKey
 from rich._emoji_codes import EMOJI
 
 from enhancements.modules import BaseModule
 import paramiko
-from sshpubkeys import SSHKey
+from sshpubkeys import SSHKey  # type: ignore
+from typeguard import typechecked
 
 from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
 from ssh_proxy_server.exceptions import MissingHostException
+from ssh_proxy_server.session import Session
 
 
-def probe_host(hostname_or_ip, port, username, public_key):
+@typechecked
+def probe_host(hostname_or_ip: Text, port: int, username: Text, public_key: paramiko.pkey.PublicBlob) -> bool:
 
-    def valid(self, msg):
+    @typechecked
+    def valid(self, msg: paramiko.message.Message) -> None:
         self.auth_event.set()
         self.authenticated = True
 
-    def parse_service_accept(self, m):
+    @typechecked
+    def parse_service_accept(self, m: paramiko.message.Message) -> None:
         # https://tools.ietf.org/html/rfc4252#section-7
         service = m.get_text()
         if not (service == "ssh-userauth" and self.auth_method == "publickey"):
@@ -44,7 +51,7 @@ def probe_host(hostname_or_ip, port, username, public_key):
 
     valid_key = False
     try:
-        client_handler_table = paramiko.auth_handler.AuthHandler._client_handler_table
+        client_handler_table = paramiko.auth_handler.AuthHandler._client_handler_table  # type: ignore
         client_handler_table[paramiko.common.MSG_USERAUTH_INFO_REQUEST] = valid
         client_handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = parse_service_accept
 
@@ -56,28 +63,29 @@ def probe_host(hostname_or_ip, port, username, public_key):
         # For compatibility with paramiko, we need to generate a random private key and replace
         # the public key with our data.
         key = paramiko.RSAKey.generate(2048)
-        #key.public_blob =
-        key.public_blob = public_key
+        key.public_blob = public_key  # type: ignore
         transport.auth_publickey(username, key)
         valid_key = True
     except paramiko.ssh_exception.AuthenticationException:
         pass
     finally:
-        client_handler_table[paramiko.common.MSG_USERAUTH_INFO_REQUEST] = paramiko.auth_handler.AuthHandler._parse_userauth_info_request
-        client_handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = paramiko.auth_handler.AuthHandler._parse_service_accept
+        client_handler_table[paramiko.common.MSG_USERAUTH_INFO_REQUEST] = paramiko.auth_handler.AuthHandler._parse_userauth_info_request  # type: ignore
+        client_handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore
     return valid_key
 
 
 class RemoteCredentials():
 
+    @typechecked
     def __init__(
         self, *,
-        username: Optional[str] = None,
+        username: str,
         password: Optional[str] = None,
         key=None,
         host: Optional[str] = None,
-        port: Optional[int] = None) -> None:
-        self.username: Optional[str] = username
+        port: Optional[int] = None
+    ) -> None:
+        self.username: str = username
         self.password: Optional[str] = password
         self.key = key
         self.host: Optional[str] = host
@@ -89,7 +97,8 @@ class Authenticator(BaseModule):
     REQUEST_AGENT_BREAKIN = False
 
     @classmethod
-    def parser_arguments(cls):
+    @typechecked
+    def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
             cls.__name__,
             "options for remote authentication"
@@ -156,15 +165,17 @@ class Authenticator(BaseModule):
             help='password for the honeypot'
         )
 
-    def __init__(self, session) -> None:
+    @typechecked
+    def __init__(self, session: Session) -> None:
         super().__init__()
         self.session = session
 
+    @typechecked
     def get_remote_host_credentials(
         self,
         username: str,
         password: Optional[str] = None,
-        key=None
+        key: Optional[PKey] = None
     ) -> RemoteCredentials:
         if self.session.proxyserver.transparent:
             return RemoteCredentials(
@@ -183,6 +194,7 @@ class Authenticator(BaseModule):
         )
 
     @classmethod
+    @typechecked
     def get_auth_methods(cls, host: str, port: int) -> Optional[List[str]]:
         auth_methods = None
         t = paramiko.Transport((host, port))
@@ -199,11 +211,12 @@ class Authenticator(BaseModule):
             t.close()
         return auth_methods
 
+    @typechecked
     def authenticate(
         self,
         username: Optional[str] = None,
         password: Optional[str] = None,
-        key=None,
+        key: Optional[PKey] = None,
         store_credentials: bool = True
     ) -> int:
         if store_credentials:
@@ -217,6 +230,10 @@ class Authenticator(BaseModule):
             self.session.remote_address = (remote_credentials.host, remote_credentials.port)
         if key and not self.session.key:
             self.session.key = key
+
+        if self.session.remote_address[0] is None or self.session.remote_address[1] is None:
+            logging.error("no remote host")
+            return paramiko.common.AUTH_FAILED
 
         try:
             if self.session.agent:
@@ -245,52 +262,35 @@ class Authenticator(BaseModule):
             logging.exception("internal error, abort authentication!")
         return paramiko.common.AUTH_FAILED
 
-    def auth_agent(self, username, host, port):
+    @typechecked
+    def auth_agent(self, username: Text, host: Text, port: int) -> int:
         raise NotImplementedError("authentication must be implemented")
 
-    def auth_password(self, username, host, port, password):
+    @typechecked
+    def auth_password(self, username: Text, host: Text, port: int, password: Text) -> int:
         raise NotImplementedError("authentication must be implemented")
 
-    def auth_publickey(self, username, host, port, key):
+    @typechecked
+    def auth_publickey(self, username: Text, host: Text, port: int, key: PKey) -> int:
         raise NotImplementedError("authentication must be implemented")
 
-    def auth_fallback(self, username):
-        def parse_host(connectionurl):
-            username = None
-            password = None
-            hostname = None
-            port = 22
-            if '@' in connectionurl:
-                username = connectionurl[:connectionurl.rfind('@')]
-                print(username)
-                if ':' in username:
-                    password = username[username.rfind(':') + 1:]
-                    username = username[:username.rfind(':')]
-                hostname = connectionurl[connectionurl.rfind('@') + 1:]
-            if ':' in hostname:
-                port = int(hostname[hostname.rfind(':') + 1:])
-                hostname = hostname[:hostname.rfind(':')]
-            return username, password, hostname, port
-
+    @typechecked
+    def auth_fallback(self, username: Text) -> int:
         if not self.args.fallback_host:
             logging.error("\n".join([
                 stylize(EMOJI['exclamation'] + " ssh agent not forwarded. Login to remote host not possible with publickey authentication.", fg('red') + attr('bold')),
                 stylize(EMOJI['information'] + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.", fg('yellow') + attr('bold'))
             ]))
-            return paramiko.AUTH_FAILED
-        try:
-            fallback_username, fallback_password, fallback_host, fallback_port = parse_host(self.args.fallback_host)
-        except Exception:
-            logging.error(stylize(EMOJI['exclamation'] + " failed to parse connection string for honeypot - publickey authentication failed", fg('red') + attr('bold')))
-            return paramiko.AUTH_FAILED
+            return paramiko.common.AUTH_FAILED
+
         auth_status = self.connect(
-            user=fallback_username or username,
-            password=fallback_password,
-            host=fallback_host,
-            port=int(fallback_port),
+            user=self.args.fallback_username or username,
+            password=self.args.fallback_password,
+            host=self.args.fallback_host,
+            port=self.args.fallback_port,
             method=AuthenticationMethod.password
         )
-        if auth_status == paramiko.AUTH_SUCCESSFUL:
+        if auth_status == paramiko.common.AUTH_SUCCESSFUL:
             logging.warning(
                 stylize(EMOJI['warning'] + " publickey authentication failed - no agent forwarded - connecting to honeypot!", fg('yellow') + attr('bold')),
             )
@@ -300,11 +300,12 @@ class Authenticator(BaseModule):
             )
         return auth_status
 
-    def connect(self, user, host, port, method, password=None, key=None):
+    @typechecked
+    def connect(self, user: Text, host: Text, port: int, method: AuthenticationMethod, password: Optional[Text] = None, key: Optional[PKey] = None) -> int:
         if not host:
             raise MissingHostException()
 
-        auth_status = paramiko.AUTH_FAILED
+        auth_status = paramiko.common.AUTH_FAILED
         self.session.ssh_client = SSHClient(
             host,
             port,
@@ -316,18 +317,20 @@ class Authenticator(BaseModule):
         )
         self.pre_auth_action()
         try:
-            if self.session.ssh_client.connect():
-                auth_status = paramiko.AUTH_SUCCESSFUL
+            if self.session.ssh_client is not None and self.session.ssh_client.connect():
+                auth_status = paramiko.common.AUTH_SUCCESSFUL
         except paramiko.SSHException:
             logging.error(stylize("Connection to remote server refused", fg('red') + attr('bold')))
-            return paramiko.AUTH_FAILED
-        self.post_auth_action(auth_status == paramiko.AUTH_SUCCESSFUL)
+            return paramiko.common.AUTH_FAILED
+        self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
         return auth_status
 
-    def pre_auth_action(self):
+    @typechecked
+    def pre_auth_action(self) -> None:
         pass
 
-    def post_auth_action(self, success):
+    @typechecked
+    def post_auth_action(self, success: bool) -> None:
         pass
 
 
@@ -335,13 +338,16 @@ class AuthenticatorPassThrough(Authenticator):
     """pass the authentication to the remote server (reuses the credentials)
     """
 
-    def auth_agent(self, username, host, port):
+    @typechecked
+    def auth_agent(self, username: Text, host: Text, port: int) -> int:
         return self.connect(username, host, port, AuthenticationMethod.agent)
 
-    def auth_password(self, username, host, port, password):
+    @typechecked
+    def auth_password(self, username: Text, host: Text, port: int, password: Text) -> int:
         return self.connect(username, host, port, AuthenticationMethod.password, password=password)
 
-    def auth_publickey(self, username, host, port, key):
+    @typechecked
+    def auth_publickey(self, username: Text, host: Text, port: int, key: PKey) -> int:
         ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
         if key.can_sign():
@@ -353,15 +359,20 @@ class AuthenticatorPassThrough(Authenticator):
         publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
         if probe_host(host, port, username, publickey):
             logging.debug(f"Found valid key for host {host}:{port} username={username}, key={key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
+            return paramiko.common.AUTH_SUCCESSFUL
+        return paramiko.common.AUTH_FAILED
 
-    def post_auth_action(self, success):
-        def get_agent_pubkeys():
+    @typechecked
+    def post_auth_action(self, success: bool) -> None:
+        @typechecked
+        def get_agent_pubkeys() -> List[Tuple[Text, SSHKey, bool, Text]]:
             pubkeyfile_path = None
 
+            keys_parsed: List[Tuple[Text, SSHKey, bool, Text]] = []
+            if self.session.agent is None:
+                return keys_parsed
+
             keys = self.session.agent.get_keys()
-            keys_parsed = []
             for k in keys:
                 ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
                 ssh_pub_key.parse()
@@ -385,8 +396,9 @@ class AuthenticatorPassThrough(Authenticator):
         else:
             logmessage.append(stylize("Remote authentication failed", fg('red')))
 
-        logmessage.append(f"\tRemote Address: {self.session.ssh_client.host}:{self.session.ssh_client.port}")
-        logmessage.append(f"\tUsername: {self.session.username_provided}")
+        if self.session.ssh_client is not None:
+            logmessage.append(f"\tRemote Address: {self.session.ssh_client.host}:{self.session.ssh_client.port}")
+            logmessage.append(f"\tUsername: {self.session.username_provided}")
 
         if self.session.password_provided:
             display_password = None
@@ -403,7 +415,7 @@ class AuthenticatorPassThrough(Authenticator):
         if self.session.agent:
             ssh_keys = get_agent_pubkeys()
 
-        logmessage.append(f"\tAgent: {f'available keys: {len(ssh_keys)}' if ssh_keys else 'no agent'}")
+        logmessage.append(f"\tAgent: {f'available keys: {len(ssh_keys or [])}' if ssh_keys else 'no agent'}")
         if ssh_keys is not None:
             logmessage.append("\n".join(
                 [f"\t\tAgent-Key: {k[0]} {k[1].hash_sha256()} {k[1].bits}bits, can sign: {k[2]}" for k in ssh_keys]

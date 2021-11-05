@@ -1,5 +1,7 @@
 import sys
-def main():
+
+
+def main() -> None:
     print("GUI not implemented!")
     sys.exit(1)
 

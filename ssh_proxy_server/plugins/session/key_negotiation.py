@@ -1,5 +1,5 @@
 import logging
-from colored.colored import stylize, fg, attr
+from colored.colored import stylize, fg, attr  # type: ignore
 
 import pkg_resources
 import yaml

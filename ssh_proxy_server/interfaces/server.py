@@ -1,12 +1,19 @@
 from typing import Optional
 import logging
 import os
+from typing import (
+    ByteString,
+    List,
+    Union
+)
 
 import paramiko
-from sshpubkeys import SSHKey
+from sshpubkeys import SSHKey  # type: ignore
 
 from enhancements.modules import BaseModule
+from typeguard import typechecked
 from ssh_proxy_server.clients.sftp import SFTPClient
+from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, ClientTunnelForwarder, ServerTunnelForwarder
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
@@ -22,7 +29,7 @@ class ServerInterface(BaseServerInterface):
 
     def __init__(self, session) -> None:
         super().__init__(session)
-        self.forwarders = []
+        self.forwarders: List[Union[TunnelForwarder, ClientTunnelForwarder, ServerTunnelForwarder]] = []
         self.possible_auth_methods: Optional[str] = None
 
     @classmethod
@@ -170,13 +177,13 @@ class ServerInterface(BaseServerInterface):
         logging.debug("check_auth_none: username=%s", username)
         if self.args.enable_none_auth:
             self.session.authenticator.authenticate(username, key=None)
-            return paramiko.AUTH_SUCCESSFUL
-        return paramiko.AUTH_FAILED
+            return paramiko.common.AUTH_SUCCESSFUL
+        return paramiko.common.AUTH_FAILED
 
     def check_auth_interactive(self, username: str, submethods):
         logging.debug("check_auth_interactive: username=%s, submethods=%s", username, submethods)
         if not self.args.enable_keyboard_interactive_auth:
-            return paramiko.AUTH_FAILED
+            return paramiko.common.AUTH_FAILED
         self.session.username = username
         iq = paramiko.server.InteractiveQuery()
         if not self.args.disable_keyboard_interactive_prompts:
@@ -187,9 +194,9 @@ class ServerInterface(BaseServerInterface):
         logging.debug("check_auth_interactive_response: responses=%s", responses)
         if self.args.disable_keyboard_interactive_prompts:
             self.session.authenticator.authenticate(self.session.username, key=None)
-            return paramiko.AUTH_SUCCESSFUL
+            return paramiko.common.AUTH_SUCCESSFUL
         if not responses:
-            return paramiko.AUTH_FAILED
+            return paramiko.common.AUTH_FAILED
         return self.session.authenticator.authenticate(self.session.username, password=responses[0])
 
     def check_auth_publickey(self, username: str, key):
@@ -203,23 +210,23 @@ class ServerInterface(BaseServerInterface):
                     pubkeyfile.write(f"{key.get_name()} {key.get_base64()} saved-from-auth-publickey\n")
         if self.args.disable_pubkey_auth:
             logging.debug("Publickey login attempt, but publickey auth was disabled!")
-            return paramiko.AUTH_FAILED
+            return paramiko.common.AUTH_FAILED
         if self.args.accept_first_publickey:
             logging.debug('host probing disabled - first key accepted')
             if self.args.disallow_publickey_auth:
                 logging.debug('ignoring argument --disallow-publickey-auth, first key still accepted')
-            return paramiko.AUTH_SUCCESSFUL
+            return paramiko.common.AUTH_SUCCESSFUL
 
         auth_result = self.session.authenticator.authenticate(username, key=key)
         if self.args.disallow_publickey_auth:
-            return paramiko.AUTH_FAILED
+            return paramiko.common.AUTH_FAILED
         return auth_result
 
     def check_auth_password(self, username: str, password: str):
         logging.debug("check_auth_password: username=%s, password=%s", username, password)
         if self.args.disable_password_auth:
             logging.warning("Password login attempt, but password auth was disabled!")
-            return paramiko.AUTH_FAILED
+            return paramiko.common.AUTH_FAILED
         return self.session.authenticator.authenticate(username, password=password)
 
     def check_channel_request(self, kind, chanid):
@@ -305,7 +312,7 @@ class ServerInterface(BaseServerInterface):
         )
         return False
 
-    def check_global_request(self, msg) -> None:
+    def check_global_request(self, msg):
         logging.debug(
             "check_global_request: msg=%s", msg
         )

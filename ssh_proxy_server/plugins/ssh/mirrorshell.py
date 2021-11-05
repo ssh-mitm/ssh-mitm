@@ -8,40 +8,53 @@ import os
 import tempfile
 import pytz
 
-from colored.colored import stylize, attr, fg
+from typing import (
+    ByteString,
+    Text,
+    Optional
+)
+
+from colored.colored import stylize, attr, fg  # type: ignore
 from rich._emoji_codes import EMOJI
 import paramiko
+from typeguard import typechecked
 
 from ssh_proxy_server.forwarders.ssh import SSHForwarder
 
 
 class InjectServer(paramiko.ServerInterface):
-    def __init__(self, server_channel):
+
+    @typechecked
+    def __init__(self, server_channel: paramiko.channel.Channel) -> None:
         self.server_channel = server_channel
-        self.injector_channel = None
+        self.injector_channel: Optional[paramiko.channel.Channel] = None
 
-    def check_auth_none(self, username):
-        return paramiko.AUTH_SUCCESSFUL
+    @typechecked
+    def check_auth_none(self, username: Text) -> int:
+        return paramiko.common.AUTH_SUCCESSFUL
 
-    def check_channel_request(self, kind, chanid):
+    @typechecked
+    def check_channel_request(self, kind: Text, chanid: int) -> int:
         if kind == 'session':
-            return paramiko.OPEN_SUCCEEDED
+            return paramiko.common.OPEN_SUCCEEDED
+        return paramiko.common.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
-    def check_auth_password(self, username, key):
-        return paramiko.AUTH_SUCCESSFUL
-
-    def get_allowed_auths(self, username):
-        return 'password, publickey'
-
-    def check_auth_publickey(self, username, key):
-        return paramiko.AUTH_SUCCESSFUL
-
-    def check_channel_shell_request(self, channel):
+    @typechecked
+    def check_channel_shell_request(self, channel: paramiko.channel.Channel) -> bool:
         self.injector_channel = channel
         return True
 
-    def check_channel_pty_request(self, channel, term, width, height,
-                                  pixelwidth, pixelheight, modes):
+    @typechecked
+    def check_channel_pty_request(
+        self,
+        channel: paramiko.channel.Channel,
+        term: ByteString,
+        width: int,
+        height: int,
+        pixelwidth: int,
+        pixelheight: int,
+        modes: ByteString
+    ) -> bool:
         return True
 
 

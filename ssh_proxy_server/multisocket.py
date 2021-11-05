@@ -1,3 +1,4 @@
+# type: ignore
 """
 Utility functions to create server sockets able to listen on both
 IPv4 and IPv6.
@@ -32,13 +33,20 @@ import socket
 import select
 import contextlib
 
-from typing import Optional
+from typing import (
+    Any,
+    Dict,
+    Tuple,
+    Optional,
+    Text,
+    List
+)
 
 __author__ = "Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>"
 __license__ = "MIT"
 
 
-def has_dual_stack(sock=None) -> bool:
+def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
     """Return True if kernel allows creating a socket which is able to
     listen for both IPv4 and IPv6 connections.
     If *sock* is provided the check is made against it.
@@ -57,8 +65,8 @@ def has_dual_stack(sock=None) -> bool:
 
 
 def create_server_sock(
-    address,
-    family=None,
+    address: Tuple[Text, int],
+    family: Optional[socket.AddressFamily] = None,
     reuse_addr: Optional[bool] = None,
     transparent: bool = False,
     queue_size: int = 5,
@@ -97,6 +105,8 @@ def create_server_sock(
     ...     # handle new sock connection
     """
     AF_INET6 = getattr(socket, 'AF_INET6', 0)
+    host: Optional[Text]
+    port: int
     host, port = address
     if host == "" or host == "0.0.0.0":  # nosec
         # http://mail.python.org/pipermail/python-ideas/2013-March/019937.html
@@ -160,7 +170,15 @@ class MultipleSocketsListener:
     socket in the list.
     """
 
-    def __init__(self, addresses, family=None, reuse_addr=None, transparent: bool = False, queue_size: int = 5) -> None:
+    def __init__(
+        self,
+        addresses: List[Tuple[Text, int]],
+        family: Optional[socket.AddressFamily] = None,
+        reuse_addr: Optional[bool] = None,
+        transparent: bool = False,
+        queue_size: int = 5
+    ) -> None:
+        self._pollster: Optional[select.poll]
         self._socks = []
         self._sockmap = {}
         if hasattr(select, 'poll'):
@@ -221,12 +239,12 @@ class MultipleSocketsListener:
         except IndexError:
             pass  # non-blocking socket
 
-    def _multicall(self, name, *args, **kwargs):
+    def _multicall(self, name: Text, *args: Tuple[Any], **kwargs: Dict[Text, Any]) -> None:
         for sock in self._socks:
             meth = getattr(sock, name)
             meth(*args, **kwargs)
 
-    def accept(self):
+    def accept(self) -> None:
         """Accept a connection from the first socket which is ready
         to do so.
         """
@@ -240,6 +258,7 @@ class MultipleSocketsListener:
         """
         return list(self._sockmap.keys())
 
+
     def getsockname(self):
         """Return first registered socket's own address."""
         return self._socks[0].getsockname()
@@ -248,11 +267,11 @@ class MultipleSocketsListener:
         """Return first registered socket's options."""
         return self._socks[0].getsockopt(level, optname, buflen)
 
-    def gettimeout(self):
+    def gettimeout(self) -> float:
         """Return first registered socket's timeout."""
         return self._socks[0].gettimeout()
 
-    def settimeout(self, timeout):
+    def settimeout(self, timeout: float) -> None:
         """Set timeout for all registered sockets."""
         self._multicall('settimeout', timeout)
 
@@ -264,11 +283,11 @@ class MultipleSocketsListener:
         """Set option for all registered sockets."""
         self._multicall('setsockopt', level, optname, value)
 
-    def shutdown(self, how):
+    def shutdown(self, how) -> None:
         """Shut down all registered sockets."""
         self._multicall('shutdown', how)
 
-    def close(self):
+    def close(self) -> None:
         """Close all registered sockets."""
         self._multicall('close')
         self._socks = []

@@ -5,22 +5,32 @@ import argparse
 import sys
 
 from paramiko.pkey import PublicBlob
+from typeguard import typechecked
 from ssh_proxy_server.authentication import probe_host, Authenticator
 
 
-def check_publickey(args: argparse.Namespace) -> None:
+@typechecked
+def check_publickey(args: argparse.Namespace) -> bool:
     key = open(args.public_key, 'rt').read()
+    try:
+        pubkey = PublicBlob.from_string(key)
+    except:
+        print("file is not a valid public key")
+        return False
     if probe_host(
         hostname_or_ip=args.host,
         port=args.port,
         username=args.username,
-        public_key=PublicBlob.from_string(key)
+        public_key=pubkey
     ):
         print("valid key")
+        return True
     else:
         print("bad key")
+        return False
 
 
+@typechecked
 def main() -> None:
     parser = argparse.ArgumentParser()
     subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
@@ -38,7 +48,8 @@ def main() -> None:
 
     args = parser.parse_args(sys.argv[1:])
     if args.subparser_name == 'check-publickey':
-        check_publickey(args)
+        if not check_publickey(args):
+            sys.exit(1)
     elif args.subparser_name == 'get-auth':
         auth_methods = Authenticator.get_auth_methods(args.host, args.port)
         if auth_methods:

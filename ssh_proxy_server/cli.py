@@ -10,6 +10,7 @@ from paramiko import Transport
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 from rich import print as rich_print
+from typeguard import typechecked
 
 from ssh_proxy_server.console import sshconsole
 from ssh_proxy_server.server import SSHProxyServer
@@ -47,6 +48,7 @@ from ssh_proxy_server.update import check_version
 from ssh_proxy_server.session import BaseSession, Session
 
 
+@typechecked
 def get_parser() -> ModuleParser:
     parser = ModuleParser(
         description='SSH Proxy Server',
@@ -191,7 +193,7 @@ def get_parser() -> ModuleParser:
 
     return parser
 
-
+@typechecked
 def main() -> None:
 
     if os.environ.get('APPIMAGE', None):
@@ -224,7 +226,7 @@ def main() -> None:
         sys.exit(0)
 
     if not args.disable_workarounds:
-        Transport.run = dropbear.transport_run
+        Transport.run = dropbear.transport_run  # type: ignore
 
     if args.paramiko_log_level == 'debug':
         logging.getLogger("paramiko").setLevel(logging.DEBUG)
@@ -259,7 +261,7 @@ def main() -> None:
         args=args
     )
     if args.banner_name is not None:
-        Transport._CLIENT_ID = args.banner_name
+        Transport._CLIENT_ID = args.banner_name  # type: ignore
     proxy.start()
 
 

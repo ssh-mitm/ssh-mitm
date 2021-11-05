@@ -4,9 +4,11 @@ from typing import Optional, cast
 
 import requests
 from packaging import version as p_version
+from typeguard import typechecked
 from ssh_proxy_server.__version__ import version as ssh_mitm_version
 
 
+@typechecked
 def check_version() -> Optional[str]:
     try:
         response = requests.get("https://api.github.com/repos/ssh-mitm/ssh-mitm/releases/latest")
