@@ -68,18 +68,6 @@ def probe_host(hostname_or_ip, port, username, public_key):
     return valid_key
 
 
-def validate_remote_host(remote_host):
-    if re.match(r"[^\:]+(:[0-9]{5})?", remote_host):
-        return remote_host
-    raise argparse.ArgumentTypeError('remot host must be in format hostname:port')
-
-
-def validate_honeypot(remote_host):
-    if re.match(r"[^\:]+:[^@]+@[^\:]+(:[0-9]{5})?", remote_host):
-        return remote_host
-    raise argparse.ArgumentTypeError('honeypot address must be in format username:password@hostname:port')
-
-
 class RemoteCredentials():
 
     def __init__(
@@ -109,8 +97,13 @@ class Authenticator(BaseModule):
         plugin_group.add_argument(
             '--remote-host',
             dest='remote_host',
-            type=validate_remote_host,
-            help='remote host to connect to (format remote_host:remote_port, default 127.0.0.1:22)'
+            help='remote host to connect to (default 127.0.0.1)'
+        )
+        plugin_group.add_argument(
+            '--remote-port',
+            type=int,
+            dest='remote_port',
+            help='remote port to connect to (default 22)'
         )
         plugin_group.add_argument(
             '--auth-username',
@@ -124,18 +117,43 @@ class Authenticator(BaseModule):
         )
 
         plugin_group.add_argument(
-            '--fallback-host',
-            dest='fallback_host',
-            required='--enable-auth-fallback' in sys.argv,
-            type=validate_honeypot,
-            help='fallback host for the honeypot (format username:password@hostname:port)'
-        )
-
-        plugin_group.add_argument(
             '--hide-credentials',
             dest='auth_hide_credentials',
             action='store_true',
             help='do not log credentials (usefull for presentations)'
+        )
+
+        honeypot_group = cls.parser().add_argument_group('Authentication Fallback')
+        honeypot_group.add_argument(
+            '--enable-auth-fallback',
+            action='store_true',
+            default=False,
+            help="use a honeypot if no agent was forwarded to login with publickey auth "
+        )
+        honeypot_group.add_argument(
+            '--fallback-host',
+            dest='fallback_host',
+            required='--enable-auth-fallback' in sys.argv,
+            help='fallback host for the honeypot'
+        )
+        honeypot_group.add_argument(
+            '--fallback-port',
+            dest='fallback_port',
+            type=int,
+            default=22,
+            help='fallback port for the honeypot'
+        )
+        honeypot_group.add_argument(
+            '--fallback-username',
+            dest='fallback_username',
+            required='--enable-auth-fallback' in sys.argv,
+            help='username for the honeypot'
+        )
+        honeypot_group.add_argument(
+            '--fallback-password',
+            dest='fallback_password',
+            required='--enable-auth-fallback' in sys.argv,
+            help='password for the honeypot'
         )
 
     def __init__(self, session) -> None:
@@ -148,26 +166,20 @@ class Authenticator(BaseModule):
         password: Optional[str] = None,
         key=None
     ) -> RemoteCredentials:
-        remote_host = None
-        remote_port = None
-        if self.args.remote_host:
-            if ':' in self.args.remote_host:
-                remote_host = self.args.remote_host[:self.args.remote_host.rfind(':')]
-                remote_port = int(self.args.remote_host[self.args.remote_host.rfind(':') + 1:])
         if self.session.proxyserver.transparent:
             return RemoteCredentials(
                 username=self.args.auth_username or username,
                 password=self.args.auth_password or password,
                 key=key,
-                host=remote_host or self.session.socket_remote_address[0],
-                port=remote_port or self.session.socket_remote_address[1]
+                host=self.args.remote_host or self.session.socket_remote_address[0],
+                port=self.args.remote_port or self.session.socket_remote_address[1]
             )
         return RemoteCredentials(
             username=self.args.auth_username or username,
             password=self.args.auth_password or password,
             key=key,
-            host=remote_host or '127.0.0.1',
-            port=remote_port or 22
+            host=self.args.remote_host or '127.0.0.1',
+            port=self.args.remote_port or 22
         )
 
     @classmethod
