@@ -74,9 +74,6 @@ setup(
         'requests'
     ],
     extras_require={
-        'gui': [
-            'Gooey'
-        ],
         'plugins': [
             'ssh-mitm-plugins'
         ],
