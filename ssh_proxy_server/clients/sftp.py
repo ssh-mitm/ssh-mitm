@@ -13,7 +13,7 @@ class SFTPClient(SSHClient):
 
     def __init__(self, host, port, method, password, user, key, session):
         super().__init__(host, port, method, password, user, key, session)
-        self._sftp = None
+        self._sftp: Optional[paramiko.SFTPClient] = None
         self.subsystem_count = 0
 
     @classmethod
@@ -53,70 +53,100 @@ class SFTPClient(SSHClient):
         ret = super().connect()
         if not ret:
             return False
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         try:
             self._sftp = paramiko.SFTPClient.from_transport(self.transport)
             return True
         except Exception:
             logging.exception('error creating sftp client')
-            return False
+        return False
 
     def chmod(self, path, mode):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         self._sftp.chmod(path, mode)
-        return paramiko.SFTP_OK
+        return paramiko.sftp.SFTP_OK
 
     def chown(self, path, uid, gid):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         self._sftp.chown(path, uid, gid)
-        return paramiko.SFTP_OK
+        return paramiko.sftp.SFTP_OK
 
     def get(self, remotePath, localPath, callback=None):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         try:
             self._sftp.get(remotePath, localPath, callback)
-            return paramiko.SFTP_OK
+            return paramiko.sftp.SFTP_OK
         except (IOError, OSError) as ex:
             logging.error(ex)
             os.remove(localPath)
-            return paramiko.SFTP_FAILURE
+            return paramiko.sftp.SFTP_FAILURE
 
     def listdir_attr(self, path='.'):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         return self._sftp.listdir_attr(path)
 
     def lstat(self, path):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         return self._sftp.lstat(path)
 
     def mkdir(self, path, mode=511):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         self._sftp.mkdir(path, mode)
-        return paramiko.SFTP_OK
+        return paramiko.sftp.SFTP_OK
 
     def put(self, localPath, remotePath, callback=None, confirm=True):
         raise NotImplementedError('put not implemented')
 
     def readlink(self, path):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         return self._sftp.readlink(path)
 
     def remove(self, path):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         self._sftp.remove(path)
-        return paramiko.SFTP_OK
+        return paramiko.sftp.SFTP_OK
 
     def rename(self, oldpath, newpath):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         self._sftp.rename(oldpath, newpath)
-        return paramiko.SFTP_OK
+        return paramiko.sftp.SFTP_OK
 
     def rmdir(self, path):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         self._sftp.rmdir(path)
-        return paramiko.SFTP_OK
+        return paramiko.sftp.SFTP_OK
 
     def stat(self, path):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         return self._sftp.stat(path)
 
     def utime(self, path, times):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         return self._sftp.utime(path, times)
 
     def symlink(self, source, dest):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         self._sftp.symlink(source, dest)
-        return paramiko.SFTP_OK
+        return paramiko.sftp.SFTP_OK
 
     def close(self):
+        if self._sftp is None:
+            return paramiko.sftp.SFTP_FAILURE
         if not self.running:
             self._sftp.close()
             self.session.sftp_channel.close()
-        return paramiko.SFTP_OK
+        return paramiko.sftp.SFTP_OK
