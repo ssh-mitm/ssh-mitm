@@ -19,7 +19,7 @@ from ssh_proxy_server.authentication import (
     Authenticator,
     AuthenticatorPassThrough
 )
-from ssh_proxy_server.interfaces import (
+from ssh_proxy_server.interfaces.server import (
     BaseServerInterface,
     ServerInterface
 )

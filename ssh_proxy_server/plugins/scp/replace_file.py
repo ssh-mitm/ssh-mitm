@@ -1,6 +1,12 @@
 import os
-from ssh_proxy_server.forwarders.scp import SCPForwarder
+from typing import (
+    TYPE_CHECKING
+)
 
+import ssh_proxy_server
+from ssh_proxy_server.forwarders.scp import SCPForwarder
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 class SCPReplaceFile(SCPForwarder):
     """replace the file with another file
@@ -16,7 +22,7 @@ class SCPReplaceFile(SCPForwarder):
             help='file that is used for replacement'
         )
 
-    def __init__(self, session) -> None:
+    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
         super().__init__(session)
         self.args.scp_replacement_file = os.path.expanduser(self.args.scp_replacement_file)
 

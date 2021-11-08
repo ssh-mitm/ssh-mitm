@@ -24,7 +24,7 @@ from paramiko.ssh_exception import SSHException
 from sshpubkeys import SSHKey  # type: ignore
 from typeguard import typechecked
 
-from ssh_proxy_server.multisocket import (
+from ssh_proxy_server.multisocket import (  # type: ignore
     create_server_sock,
     has_dual_stack,
     MultipleSocketsListener
@@ -36,7 +36,7 @@ from ssh_proxy_server.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerP
 from ssh_proxy_server.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
 from ssh_proxy_server.forwarders.tunnel import ClientTunnelForwarder, ServerTunnelForwarder
 from ssh_proxy_server.authentication import Authenticator, AuthenticatorPassThrough
-from ssh_proxy_server.interfaces import ServerInterface
+from ssh_proxy_server.interfaces.server import BaseServerInterface, ServerInterface
 from ssh_proxy_server.exceptions import KeyGenerationError
 
 
@@ -57,12 +57,12 @@ class SSHProxyServer:
         sftp_handler: Type[SFTPHandlerBasePlugin] = SFTPHandlerPlugin,
         server_tunnel_interface: Type[ServerTunnelForwarder] = ServerTunnelForwarder,
         client_tunnel_interface: Type[ClientTunnelForwarder] = ClientTunnelForwarder,
-        authentication_interface=ServerInterface,
+        authentication_interface: Type[BaseServerInterface] = ServerInterface,
         authenticator: Type[Authenticator] = AuthenticatorPassThrough,
         transparent: bool = False,
         session_class: Type[Session] = Session,
         args: Optional[Namespace] = None
-    ):
+    ) -> None:
         self.args = args
 
         self._threads: List[threading.Thread] = []
@@ -73,21 +73,21 @@ class SSHProxyServer:
         self.listen_address_v6 = '::'
         self.running = False
 
-        self.key_file = key_file
-        self.key_algorithm = key_algorithm
-        self.key_length = key_length
+        self.key_file: Optional[Text] = key_file
+        self.key_algorithm: Text = key_algorithm
+        self.key_length: int = key_length
 
-        self.ssh_interface = ssh_interface
-        self.scp_interface = scp_interface
-        self.sftp_handler = sftp_handler
-        self.sftp_interface = self.sftp_handler.get_interface() or sftp_interface
-        self.server_tunnel_interface = server_tunnel_interface
-        self.client_tunnel_interface = client_tunnel_interface
+        self.ssh_interface: Type[SSHBaseForwarder] = ssh_interface
+        self.scp_interface: Type[SCPBaseForwarder] = scp_interface
+        self.sftp_handler: Type[SFTPHandlerBasePlugin] = sftp_handler
+        self.sftp_interface: Type[BaseSFTPServerInterface] = self.sftp_handler.get_interface() or sftp_interface
+        self.server_tunnel_interface: Type[ServerTunnelForwarder] = server_tunnel_interface
+        self.client_tunnel_interface: Type[ClientTunnelForwarder] = client_tunnel_interface
         # Server Interface
-        self.authentication_interface = authentication_interface
-        self.authenticator = authenticator
-        self.transparent = transparent
-        self.session_class = session_class
+        self.authentication_interface: Type[BaseServerInterface] = authentication_interface
+        self.authenticator: Type[Authenticator] = authenticator
+        self.transparent: bool = transparent
+        self.session_class: Type[Session] = session_class
 
         try:
             self.generate_host_key()
@@ -174,7 +174,7 @@ class SSHProxyServer:
         return key
 
     @property
-    def host_key(self):
+    def host_key(self) -> Optional[PKey]:
         if not self._hostkey:
             self.generate_host_key()
         return self._hostkey

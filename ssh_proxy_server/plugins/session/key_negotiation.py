@@ -14,7 +14,7 @@ from ssh_proxy_server.plugins.session.clientaudit import SSHClientAudit
 
 class KeyNegotiationData:
 
-    def __init__(self, session, m):
+    def __init__(self, session, m) -> None:
         self.session = session
         self.client_version = session.transport.remote_version
         self.cookie = m.get_bytes(16)  # cookie (random bytes)

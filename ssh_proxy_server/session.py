@@ -6,13 +6,15 @@ import socket
 
 from typing import (
     TYPE_CHECKING,
+    cast,
+    Any,
+    ByteString,
     Dict,
     Optional,
     Union,
     Tuple,
     Text,
-    Type,
-    ByteString
+    Type
 )
 
 from enhancements.modules import BaseModule
@@ -28,7 +30,7 @@ from typeguard import typechecked
 
 import ssh_proxy_server
 from ssh_proxy_server.forwarders.agent import AgentProxy
-from ssh_proxy_server.interfaces.server import ProxySFTPServer
+from ssh_proxy_server.interfaces.server import BaseServerInterface, ProxySFTPServer
 from ssh_proxy_server.plugins.session import key_negotiation
 from ssh_proxy_server.plugins.tunnel.injectclienttunnel import InjectableClientTunnelForwarder
 
@@ -66,11 +68,11 @@ class Session(BaseSession):
         super().__init__()
         self.sessionid = uuid4()
         logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} created")
-        self._transport = None
+        self._transport: Optional[paramiko.Transport] = None
 
         self.channel = None
 
-        self.proxyserver = proxyserver
+        self.proxyserver: 'ssh_proxy_server.server.SSHProxyServer' = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
         self.name = f"{client_address}->{remoteaddr}"
@@ -79,13 +81,13 @@ class Session(BaseSession):
         self.agent_requested: threading.Event = threading.Event()
 
         self.ssh_requested: bool = False
-        self.ssh_channel = None
+        self.ssh_channel: Optional[paramiko.Channel] = None
         self.ssh_client: Optional[ssh_proxy_server.clients.ssh.SSHClient] = None
         self.ssh_pty_kwargs = None
 
         self.scp_requested: bool = False
         self.scp_channel = None
-        self.scp_command = ''
+        self.scp_command: ByteString = b''
 
         self.sftp_requested: bool = False
         self.sftp_channel = None
@@ -100,9 +102,9 @@ class Session(BaseSession):
         self.remote_address: Tuple[Optional[Text], Optional[int]] = (None, None)
         self.key: Optional[PKey] = None
         self.agent: Optional[AgentProxy] = None
-        self.authenticator = authenticator(self)
+        self.authenticator: 'ssh_proxy_server.authentication.Authenticator' = authenticator(self)
 
-        self.env_requests: Dict[ByteString, ByteString] = {}
+        self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
 
     @typechecked
@@ -133,16 +135,18 @@ class Session(BaseSession):
         return return_value
 
     @property
-    def transport(self):
-        if not self._transport:
+    def transport(self) -> paramiko.Transport:
+        if self._transport is None:
             self._transport = Transport(self.client_socket)
             key_negotiation.handle_key_negotiation(self)
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
                     raise ValueError('ciphers must be a tuple')
                 self._transport.get_security_options().ciphers = self.CIPHERS
-            self._transport.add_server_key(self.proxyserver.host_key)
-            self._transport.set_subsystem_handler('sftp', ProxySFTPServer, self.proxyserver.sftp_interface)
+            host_key: Optional[PKey] = self.proxyserver.host_key
+            if host_key is not None:
+                self._transport.add_server_key(host_key)
+            self._transport.set_subsystem_handler('sftp', ProxySFTPServer, self.proxyserver.sftp_interface, self)
 
         return self._transport
 
@@ -207,9 +211,7 @@ class Session(BaseSession):
         if not self.transport.is_active():
             return False
 
-        # Setup the InjectableClientTunnelForwarder (after master channel init)
-        if self.proxyserver.client_tunnel_interface is InjectableClientTunnelForwarder:
-            self.proxyserver.client_tunnel_interface.setup_injector(self)
+        self.proxyserver.client_tunnel_interface.setup(self)
 
         if not self._start_channels():
             return False
@@ -228,14 +230,16 @@ class Session(BaseSession):
                 self.ssh_client.transport.close()
             # With graceful exit the completion_event can be polled to wait, well ..., for completion
             # it can also only be a graceful exit if the ssh client has already been established
-            if self.transport.completion_event.is_set() and self.transport.is_active():
-                self.transport.completion_event.clear()
-                while self.transport.is_active():
-                    if self.transport.completion_event.wait(0.1):
-                        break
-        for f in self.transport.server_object.forwarders:
-            f.close()
-            f.join()
+            if self.transport.completion_event is not None:
+                if self.transport.completion_event.is_set() and self.transport.is_active():
+                    self.transport.completion_event.clear()
+                    while self.transport.is_active():
+                        if self.transport.completion_event.wait(0.1):
+                            break
+        if self.transport.server_object is not None:
+            for f in cast(BaseServerInterface, self.transport.server_object).forwarders:
+                f.close()
+                f.join()
         self.transport.close()
         logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} closed")
         logging.debug(f"({self}) session closed")
@@ -249,6 +253,6 @@ class Session(BaseSession):
     def __enter__(self) -> 'Session':
         return self
 
-    def __exit__(self, exc_type, exc_value, traceback) -> None:
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         logging.debug("(%s) session exited", self)
         self.close()

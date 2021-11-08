@@ -1,6 +1,15 @@
-import logging
+from typing import (
+    TYPE_CHECKING
+)
 
 from enhancements.modules import BaseModule
+import paramiko
+from typeguard import typechecked
+
+import ssh_proxy_server
+from ssh_proxy_server.exceptions import MissingClient
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 
 class BaseForwarder(BaseModule):
@@ -11,22 +20,27 @@ class BaseForwarder(BaseModule):
     # Slow file transmission
     BUF_LEN = 65536*100
 
-    def __init__(self, session):
+    @typechecked
+    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
         super().__init__()
-        self.server_channel = session.ssh_client.transport.open_session()
+        if session.ssh_client is None or session.ssh_client.transport is None:
+            raise MissingClient("session.ssh_client is None")
+        self.server_channel: paramiko.Channel = session.ssh_client.transport.open_session()
         if session.agent is not None:
             session.agent.forward_agent(self.server_channel)
-        self.channel = None
-        self.session = session
+        self.channel: paramiko.Channel = None
+        self.session: 'Session' = session
 
         # pass environment variables from client to server
         for env_name, env_value in self.session.env_requests.items():
             self.server_channel.set_environment_variable(env_name, env_value)
 
-    def forward(self):
+    @typechecked
+    def forward(self) -> None:
         raise NotImplementedError
 
-    def close_session(self, channel):
+    @typechecked
+    def close_session(self, channel: paramiko.Channel) -> None:
         channel.lock.acquire()
         if not channel.closed:
             channel.lock.release()
@@ -34,6 +48,7 @@ class BaseForwarder(BaseModule):
         if channel.lock.locked():
             channel.lock.release()
 
-    def _closed(self, channel):
+    @typechecked
+    def _closed(self, channel: paramiko.Channel) -> bool:
         #return channel.closed or channel.eof_received or channel.eof_sent or not channel.active
         return channel.closed or not channel.active

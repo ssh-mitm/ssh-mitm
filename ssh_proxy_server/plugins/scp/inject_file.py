@@ -1,7 +1,14 @@
 import logging
 import os
+from typing import (
+    TYPE_CHECKING
+)
 
+import ssh_proxy_server
 from ssh_proxy_server.forwarders.scp import SCPForwarder
+
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 
 class SCPInjectFile(SCPForwarder):
@@ -37,7 +44,7 @@ class SCPInjectFile(SCPForwarder):
         logging.debug("SCPClient is not downloading a file, reverting to normal SCPForwarder")
         return SCPForwarder(args[0])
 
-    def __init__(self, session) -> None:
+    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
         super().__init__(session)
         self.args.scp_inject_file = os.path.expanduser(self.args.scp_inject_file)
 

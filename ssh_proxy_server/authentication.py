@@ -5,6 +5,7 @@ import sys
 import socket
 
 from typing import (
+    TYPE_CHECKING,
     Optional,
     List,
     Tuple,
@@ -20,9 +21,12 @@ import paramiko
 from sshpubkeys import SSHKey  # type: ignore
 from typeguard import typechecked
 
+import ssh_proxy_server
 from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
 from ssh_proxy_server.exceptions import MissingHostException
-from ssh_proxy_server.session import Session
+
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 
 @typechecked
@@ -62,8 +66,8 @@ def probe_host(hostname_or_ip: Text, port: int, username: Text, public_key: para
 
         # For compatibility with paramiko, we need to generate a random private key and replace
         # the public key with our data.
-        key = paramiko.RSAKey.generate(2048)
-        key.public_blob = public_key  # type: ignore
+        key: PKey = paramiko.RSAKey.generate(2048)
+        key.public_blob = public_key
         transport.auth_publickey(username, key)
         valid_key = True
     except paramiko.ssh_exception.AuthenticationException:
@@ -166,7 +170,7 @@ class Authenticator(BaseModule):
         )
 
     @typechecked
-    def __init__(self, session: Session) -> None:
+    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
         super().__init__()
         self.session = session
 
@@ -223,7 +227,7 @@ class Authenticator(BaseModule):
             self.session.username_provided = username
             self.session.password_provided = password
         if username:
-            remote_credentials = self.get_remote_host_credentials(username, password, key)
+            remote_credentials: RemoteCredentials = self.get_remote_host_credentials(username, password, key)
             self.session.username = remote_credentials.username
             self.session.password = remote_credentials.password
             self.session.key = remote_credentials.key

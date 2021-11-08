@@ -107,6 +107,10 @@ class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
             self.local_ch = self.session.transport.accept(5)
         super(ClientTunnelForwarder, self).run()
 
+    @classmethod
+    def setup(cls, session):
+        pass
+
 
 class ServerTunnelBaseForwarder(BaseModule):
     pass
@@ -124,6 +128,12 @@ class ServerTunnelForwarder(ServerTunnelBaseForwarder):
         self.session = session
         self.server_interface = server_interface
         self.destination = destination
+
+    def join(self) -> None:
+        pass
+
+    def close(self) -> None:
+        pass
 
     def handler(self, channel, origin, destination):
         try:

@@ -1,5 +1,10 @@
 import logging
+import argparse
 import re
+from typing import (
+    List,
+    Optional
+)
 
 import paramiko
 
@@ -48,13 +53,13 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
         )
 
     session = None
-    args = None
-    tcpservers = []
+    args: Optional[argparse.Namespace] = None  # type: ignore
+    tcpservers: List[TCPServerThread] = []
 
     # Setup should occur after master channel establishment
 
     @classmethod
-    def setup_injector(cls, session):
+    def setup(cls, session) -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
         cls.session = session

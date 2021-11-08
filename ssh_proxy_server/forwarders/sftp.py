@@ -1,24 +1,41 @@
 import logging
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Union, Type
+)
+
 import paramiko
 from enhancements.modules import BaseModule
+from typeguard import typechecked
+
+import ssh_proxy_server
+from ssh_proxy_server.interfaces.sftp import BaseSFTPServerInterface
+
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 
 class SFTPHandlerBasePlugin(BaseModule):
 
-    def __init__(self, sftp, filename):
+    @typechecked
+    def __init__(self, sftp, filename) -> None:
         super().__init__()
         self.filename = filename
         self.sftp = sftp
 
     @classmethod
-    def get_interface(cls):
+    @typechecked
+    def get_interface(cls) -> Optional[Type[BaseSFTPServerInterface]]:
         return None
 
     @classmethod
-    def get_file_handle(cls):
-        return None
+    @typechecked
+    def get_file_handle(cls) -> Type['SFTPBaseHandle']:
+        return SFTPBaseHandle
 
-    def close(self):
+    @typechecked
+    def close(self) -> None:
         pass
 
     def handle_data(self, data, *, offset=None, length=None):
@@ -32,24 +49,34 @@ class SFTPHandlerPlugin(SFTPHandlerBasePlugin):
 
 class SFTPBaseHandle(paramiko.SFTPHandle):
 
-    def __init__(self, session, plugin, filename, flags=0):
+    @typechecked
+    def __init__(
+        self, session: 'ssh_proxy_server.session.Session', plugin, filename, flags: int = 0
+    ) -> None:
         super().__init__(flags)
         self.session = session
         self.plugin = plugin(self, filename)
-        self.writefile = None
-        self.readfile = None
+        self.writefile: Optional[paramiko.sftp_file.SFTPFile] = None
+        self.readfile: Optional[paramiko.sftp_file.SFTPFile] = None
 
-    def close(self):
+    @typechecked
+    def close(self) -> None:
         super().close()
         self.plugin.close()
 
-    def read(self, offset, length):
+    @typechecked
+    def read(self, offset, length) -> Union[bytes, int]:
         logging.debug("R_OFFSET: %s", offset)
+        if self.readfile is None:
+            return paramiko.sftp.SFTP_FAILURE
         data = self.readfile.read(length)
         return self.plugin.handle_data(data, length=length)
 
-    def write(self, offset, data):
+    @typechecked
+    def write(self, offset: int, data: bytes) -> int:
         logging.debug("W_OFFSET: %s", offset)
         data = self.plugin.handle_data(data, offset=offset)
+        if self.writefile is None:
+            return paramiko.sftp.SFTP_FAILURE
         self.writefile.write(data)
-        return paramiko.SFTP_OK
+        return paramiko.sftp.SFTP_OK

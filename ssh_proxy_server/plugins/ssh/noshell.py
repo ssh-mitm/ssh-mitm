@@ -6,7 +6,9 @@ from ssh_proxy_server.forwarders.ssh import SSHForwarder
 class NoShellForwarder(SSHForwarder):
     """let the client connect to a shell, but do not transfer data
     """
-    def forward(self):
+    def forward(self) -> None:
+        if self.session.channel is None:
+            return
         self.session.channel.send_stderr('Terminalzugriff nicht erlaubt!\r\n')
         self.session.channel.send_stderr('Verbindung kann als Masterchannel genutzt werden.\r\n')
         self.session.channel.send_stderr('Beenden mit strg+c!\r\n')

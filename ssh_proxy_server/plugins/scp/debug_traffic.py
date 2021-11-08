@@ -1,4 +1,6 @@
 import binascii
+
+from typeguard import typechecked
 from ssh_proxy_server.forwarders.scp import SCPForwarder
 
 
@@ -7,7 +9,8 @@ class SCPDebugForwarder(SCPForwarder):
     """
 
     @staticmethod
-    def print_hexdump(traffic, hexwidth=16):
+    @typechecked
+    def print_hexdump(traffic: bytes, hexwidth: int = 16) -> None:
         result = []
 
         for i in range(0, len(traffic), hexwidth):
@@ -21,7 +24,8 @@ class SCPDebugForwarder(SCPForwarder):
 
         print('\n'.join(result))
 
-    def handle_traffic(self, traffic, isclient):
+    @typechecked
+    def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         print("Client data:" if isclient else "Server data:")
         self.print_hexdump(traffic)
         return traffic

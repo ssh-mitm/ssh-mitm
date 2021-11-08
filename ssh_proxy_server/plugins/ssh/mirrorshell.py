@@ -9,7 +9,6 @@ import tempfile
 import pytz
 
 from typing import (
-    ByteString,
     Text,
     Optional
 )
@@ -48,12 +47,12 @@ class InjectServer(paramiko.ServerInterface):
     def check_channel_pty_request(
         self,
         channel: paramiko.channel.Channel,
-        term: ByteString,
+        term: bytes,
         width: int,
         height: int,
         pixelwidth: int,
         pixelheight: int,
-        modes: ByteString
+        modes: bytes
     ) -> bool:
         return True
 

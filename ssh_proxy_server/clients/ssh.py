@@ -3,8 +3,10 @@ from enum import Enum
 
 from typing import (
     TYPE_CHECKING,
+    Optional,
     Text
 )
+from paramiko.pkey import PKey
 
 from typeguard import typechecked
 import paramiko
@@ -34,7 +36,16 @@ class SSHClient(BaseSSHClient):
     CIPHERS = None
 
     #@typechecked
-    def __init__(self, host, port, method, password, user, key, session: 'ssh_proxy_server.session.Session') -> None:
+    def __init__(
+        self,
+        host: Text,
+        port: int,
+        method: AuthenticationMethod,
+        password: Optional[Text],
+        user: Text,
+        key: Optional[PKey],
+        session: 'ssh_proxy_server.session.Session'
+    ) -> None:
         self.session = session
         self.host = host
         self.port = port

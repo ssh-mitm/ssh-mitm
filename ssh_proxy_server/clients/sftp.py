@@ -1,5 +1,8 @@
 import logging
 import os
+from typing import (
+    Optional
+)
 
 import paramiko
 
@@ -14,7 +17,7 @@ class SFTPClient(SSHClient):
         self.subsystem_count = 0
 
     @classmethod
-    def from_client(cls, ssh_client):
+    def from_client(cls, ssh_client: Optional[SSHClient]):
         if ssh_client is None:
             logging.error('error creating sftp client - no ssh client!')
             return None
@@ -32,6 +35,9 @@ class SFTPClient(SSHClient):
                 ssh_client.key,
                 ssh_client.session
             )
+            if ssh_client.transport is None:
+                logging.debug("ssh_client does not have a transport")
+                return None
             sftp._sftp = paramiko.SFTPClient.from_transport(ssh_client.transport)
             sftp.connected = True
             return sftp
