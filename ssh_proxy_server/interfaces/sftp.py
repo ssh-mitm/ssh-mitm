@@ -45,6 +45,8 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             attr.st_uid = oldattr.st_uid
         if not attr.st_gid:
             attr.st_gid = oldattr.st_gid
+        if attr.st_uid is None or attr.st_gid is None:
+            return paramiko.sftp.SFTP_FAILURE
         return self.session.sftp_client.chown(path, attr.st_uid, attr.st_gid)
 
     @typechecked
@@ -66,6 +68,8 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
+        if attr.st_mode is None:
+            return paramiko.sftp.SFTP_FAILURE
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
     @typechecked
@@ -93,7 +97,9 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
                 fstr = 'rb'
 
             try:
-                client_f = self.session.sftp_client._sftp.open(path, fstr)
+                if self.session.sftp_client is None:
+                    return paramiko.sftp.SFTP_FAILURE
+                client_f = self.session.sftp_client.open(path, fstr)
             except Exception:
                 logging.exception("Error file")
                 return paramiko.sftp.SFTP_FAILURE

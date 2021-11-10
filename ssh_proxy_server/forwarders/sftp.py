@@ -2,7 +2,9 @@ import logging
 from typing import (
     TYPE_CHECKING,
     Optional,
-    Union, Type
+    Text,
+    Union, Type,
+    cast
 )
 
 import paramiko
@@ -19,10 +21,10 @@ if TYPE_CHECKING:
 class SFTPHandlerBasePlugin(BaseModule):
 
     @typechecked
-    def __init__(self, sftp, filename) -> None:
+    def __init__(self, sftp: 'SFTPBaseHandle', filename: Text) -> None:
         super().__init__()
-        self.filename = filename
-        self.sftp = sftp
+        self.filename: Text = filename
+        self.sftp: 'SFTPBaseHandle' = sftp
 
     @classmethod
     @typechecked
@@ -32,13 +34,13 @@ class SFTPHandlerBasePlugin(BaseModule):
     @classmethod
     @typechecked
     def get_file_handle(cls) -> Type['SFTPBaseHandle']:
-        return SFTPBaseHandle
+        return cast(Type[SFTPBaseHandle], SFTPBaseHandle)
 
     @typechecked
     def close(self) -> None:
         pass
 
-    def handle_data(self, data, *, offset=None, length=None):
+    def handle_data(self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None) -> bytes:
         return data
 
 
@@ -51,7 +53,11 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
 
     @typechecked
     def __init__(
-        self, session: 'ssh_proxy_server.session.Session', plugin, filename, flags: int = 0
+        self,
+        session: 'ssh_proxy_server.session.Session',
+        plugin: Type[SFTPHandlerBasePlugin],
+        filename: Text,
+        flags: int = 0
     ) -> None:
         super().__init__(flags)
         self.session = session
@@ -65,7 +71,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         self.plugin.close()
 
     @typechecked
-    def read(self, offset, length) -> Union[bytes, int]:
+    def read(self, offset: int, length: int) -> Union[bytes, int]:
         logging.debug("R_OFFSET: %s", offset)
         if self.readfile is None:
             return paramiko.sftp.SFTP_FAILURE

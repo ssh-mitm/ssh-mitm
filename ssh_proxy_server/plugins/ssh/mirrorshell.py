@@ -64,7 +64,7 @@ class SSHMirrorForwarder(SSHForwarder):
     HOST_KEY_LENGTH = 2048
 
     @classmethod
-    def parser_arguments(cls):
+    def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
             '--ssh-mirrorshell-net',
@@ -83,7 +83,7 @@ class SSHMirrorForwarder(SSHForwarder):
             help='store ssh session in scriptreplay format'
         )
 
-    def __init__(self, session):
+    def __init__(self, session) -> None:
         super().__init__(session)
         if self.args.ssh_mirrorshell_key:
             self.args.ssh_mirrorshell_key = os.path.expanduser(self.args.ssh_mirrorshell_key)
@@ -104,7 +104,7 @@ class SSHMirrorForwarder(SSHForwarder):
         self.conn_thread = threading.Thread(target=self.injector_connect)
         self.conn_thread.start()
 
-    def _initFiles(self):
+    def _initFiles(self) -> None:
         if not self.session.session_log_dir or not self.args.store_ssh_session:
             return
         try:
@@ -148,7 +148,7 @@ class SSHMirrorForwarder(SSHForwarder):
         except Exception:
             logging.exception("Error file init")
 
-    def write_timingfile(self, text):
+    def write_timingfile(self, text: bytes) -> None:
         if not self.timestamp:
             self.timestamp = datetime.datetime.now()
         oldtime = self.timestamp
@@ -157,7 +157,7 @@ class SSHMirrorForwarder(SSHForwarder):
         self.timeingfile.write(f"{diff.seconds}.{diff.microseconds} {len(text)}\n".encode())
         self.timeingfile.flush()
 
-    def injector_connect(self):
+    def injector_connect(self) -> None:
         inject_host, inject_port = self.injector_sock.getsockname()
         logging.info(
             f"{EMOJI['information']} created mirrorshell on port {inject_port}. connect with: {stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))}"
@@ -195,7 +195,7 @@ class SSHMirrorForwarder(SSHForwarder):
             logging.exception("injector connection suffered an unexpected error")
             self.close_session(self.channel)
 
-    def close_session(self, channel):
+    def close_session(self, channel) -> None:
         super().close_session(channel)
         self.injector_sock.close()
         if self.inject_server:
@@ -206,7 +206,7 @@ class SSHMirrorForwarder(SSHForwarder):
             self.fileOut.close()
             self.fileIn.close()
 
-    def forward_stdin(self):
+    def forward_stdin(self) -> None:
         if self.session.ssh_channel.recv_ready():
             buf = self.session.ssh_channel.recv(self.BUF_LEN)
             if self.logdir:
@@ -215,7 +215,7 @@ class SSHMirrorForwarder(SSHForwarder):
             buf = self.stdin(buf)
             self.server_channel.sendall(buf)
 
-    def forward_stdout(self):
+    def forward_stdout(self) -> None:
         if self.server_channel.recv_ready():
             buf = self.server_channel.recv(self.BUF_LEN)
             if self.logdir:
@@ -227,7 +227,7 @@ class SSHMirrorForwarder(SSHForwarder):
             if self.inject_server is not None:
                 self.inject_server.injector_channel.sendall(buf)
 
-    def forward_stderr(self):
+    def forward_stderr(self) -> None:
         if self.server_channel.recv_stderr_ready():
             buf = self.server_channel.recv_stderr(self.BUF_LEN)
             if self.logdir:

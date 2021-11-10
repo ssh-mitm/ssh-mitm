@@ -33,16 +33,16 @@ if TYPE_CHECKING:
 def probe_host(hostname_or_ip: Text, port: int, username: Text, public_key: paramiko.pkey.PublicBlob) -> bool:
 
     @typechecked
-    def valid(self, msg: paramiko.message.Message) -> None:
+    def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore
         self.auth_event.set()
         self.authenticated = True
 
     @typechecked
-    def parse_service_accept(self, m: paramiko.message.Message) -> None:
+    def parse_service_accept(self, m: paramiko.message.Message) -> None:  # type: ignore
         # https://tools.ietf.org/html/rfc4252#section-7
         service = m.get_text()
         if not (service == "ssh-userauth" and self.auth_method == "publickey"):
-            return self._parse_service_accept(m)
+            return self._parse_service_accept(m)  # type: ignore
         m = paramiko.message.Message()
         m.add_byte(paramiko.common.cMSG_USERAUTH_REQUEST)
         m.add_string(self.username)
@@ -83,16 +83,16 @@ class RemoteCredentials():
     @typechecked
     def __init__(
         self, *,
-        username: str,
-        password: Optional[str] = None,
-        key=None,
-        host: Optional[str] = None,
+        username: Text,
+        password: Optional[Text] = None,
+        key: Optional[PKey]=None,
+        host: Optional[Text] = None,
         port: Optional[int] = None
     ) -> None:
-        self.username: str = username
-        self.password: Optional[str] = password
-        self.key = key
-        self.host: Optional[str] = host
+        self.username: Text = username
+        self.password: Optional[Text] = password
+        self.key: Optional[PKey] = key
+        self.host: Optional[Text] = host
         self.port: Optional[int] = port
 
 
@@ -177,8 +177,8 @@ class Authenticator(BaseModule):
     @typechecked
     def get_remote_host_credentials(
         self,
-        username: str,
-        password: Optional[str] = None,
+        username: Text,
+        password: Optional[Text] = None,
         key: Optional[PKey] = None
     ) -> RemoteCredentials:
         if self.session.proxyserver.transparent:
@@ -199,7 +199,7 @@ class Authenticator(BaseModule):
 
     @classmethod
     @typechecked
-    def get_auth_methods(cls, host: str, port: int) -> Optional[List[str]]:
+    def get_auth_methods(cls, host: Text, port: int) -> Optional[List[Text]]:
         auth_methods = None
         t = paramiko.Transport((host, port))
         try:
@@ -218,8 +218,8 @@ class Authenticator(BaseModule):
     @typechecked
     def authenticate(
         self,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        username: Optional[Text] = None,
+        password: Optional[Text] = None,
         key: Optional[PKey] = None,
         store_credentials: bool = True
     ) -> int:

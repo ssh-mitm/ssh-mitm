@@ -67,7 +67,7 @@ class SSHClientAudit():
             return None
         version_sring = re.match(self.VERSION_REGEX, self.key_negotiation_data.client_version.lower())
         if version_sring:
-            return cast(Text, version_sring[1])
+            return version_sring[1]
         return None
 
     @typechecked

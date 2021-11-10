@@ -1,5 +1,6 @@
 from typing import (
-    TYPE_CHECKING
+    TYPE_CHECKING,
+    Optional
 )
 
 from enhancements.modules import BaseModule
@@ -28,7 +29,7 @@ class BaseForwarder(BaseModule):
         self.server_channel: paramiko.Channel = session.ssh_client.transport.open_session()
         if session.agent is not None:
             session.agent.forward_agent(self.server_channel)
-        self.channel: paramiko.Channel = None
+        self.channel: Optional[paramiko.Channel] = None
         self.session: 'Session' = session
 
         # pass environment variables from client to server

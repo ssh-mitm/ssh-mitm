@@ -179,7 +179,7 @@ def transport_run(self):  # type: ignore
                 else:  # empty tuple, e.g. socket.timeout
                     emsg = str(e) or repr(e)
             else:
-                emsg = e.args
+                emsg = e.args  # type: ignore
             self._log(ERROR, "Socket exception: " + emsg)
             self.saved_exception = e
         except Exception as e:
@@ -209,5 +209,5 @@ def transport_run(self):  # type: ignore
         # wake up during interpreter shutdown. Or rather -- raise
         # everything *if* sys.modules (used as a convenient sentinel)
         # appears to still exist.
-        if self.sys.modules is not None:
+        if self.sys.modules is not None:  # type: ignore
             raise

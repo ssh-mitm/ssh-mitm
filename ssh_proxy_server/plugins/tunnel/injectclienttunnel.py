@@ -2,22 +2,26 @@ import logging
 import argparse
 import re
 from typing import (
+    TYPE_CHECKING,
     List,
-    Optional
+    Optional,
+    Tuple
 )
 
 import paramiko
 
+import ssh_proxy_server
 from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, ClientTunnelForwarder
 from ssh_proxy_server.plugins.session.tcpserver import TCPServerThread
-
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 class ClientTunnelHandler:
     """
     Similar to the ServerTunnelForwarder
     """
 
-    def __init__(self, session, destination):
+    def __init__(self, session: 'ssh_proxy_server.session.Session', destination: Optional[Tuple[str, int]]) -> None:
         self.session = session
         self.destination = destination
 
