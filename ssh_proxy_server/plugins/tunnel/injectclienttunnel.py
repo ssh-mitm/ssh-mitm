@@ -13,6 +13,8 @@ from typing import (
 
 import paramiko
 from typeguard import typechecked
+from rich._emoji_codes import EMOJI
+from colored.colored import stylize, fg, attr  # type: ignore
 
 import ssh_proxy_server
 from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, ClientTunnelForwarder
@@ -92,6 +94,8 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
             )
             t.start()
             cls.tcpservers.append(t)
-            logging.info(
-                f"{session} created client tunnel injector for host {t.network} on port {t.port} to destination {target}"
-            )
+            logging.info((
+                f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
+                " - "
+                f"created client tunnel injector for host {t.network} on port {t.port} to destination {target}"
+            ))

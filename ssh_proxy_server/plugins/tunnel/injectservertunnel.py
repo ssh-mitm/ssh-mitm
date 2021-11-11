@@ -4,6 +4,8 @@ from typing import TYPE_CHECKING, Optional, Tuple, Text, Union
 
 import paramiko
 from typeguard import typechecked
+from rich._emoji_codes import EMOJI
+from colored.colored import stylize, fg, attr  # type: ignore
 
 import ssh_proxy_server
 from ssh_proxy_server.forwarders.tunnel import ServerTunnelForwarder, TunnelForwarder
@@ -44,9 +46,11 @@ class InjectableServerTunnelForwarder(ServerTunnelForwarder):
             network=self.args.server_tunnel_net,
             run_status=self.session.running
         )
-        logging.info(
+        logging.info((
+            f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
+            " - "
             f"created server tunnel injector for host {self.tcpserver.network} on port {self.tcpserver.port} to destination {self.destination}"
-        )
+        ))
         self.tcpserver.start()
 
     @typechecked

@@ -216,7 +216,7 @@ class Session(BaseSession):
         if not self._start_channels():
             return False
 
-        logging.info(f"{EMOJI['information']} session started: {stylize(self.sessionid, fg('light_blue') + attr('bold'))}")
+        logging.info(f"{EMOJI['information']} {stylize(self.sessionid, fg('light_blue') + attr('bold'))} - session started")
         return True
 
     @typechecked
