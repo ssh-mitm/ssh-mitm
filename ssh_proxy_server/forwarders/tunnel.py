@@ -2,10 +2,12 @@ import logging
 import select
 import threading
 import time
+from socket import socket
 from typing import (
     TYPE_CHECKING,
     Optional,
-    Tuple
+    Tuple,
+    Union
 )
 
 import paramiko
@@ -21,7 +23,7 @@ if TYPE_CHECKING:
 class TunnelForwarder(threading.Thread):
 
     @typechecked
-    def __init__(self, local_ch: Optional[paramiko.Channel], remote_ch: Optional[paramiko.Channel]) -> None:
+    def __init__(self, local_ch: Optional[Union[socket, paramiko.Channel]], remote_ch: Optional[Union[socket, paramiko.Channel]]) -> None:
         super(TunnelForwarder, self).__init__()
         self.local_ch = local_ch
         self.remote_ch = remote_ch
@@ -87,7 +89,7 @@ class TunnelForwarder(threading.Thread):
             self.close_channel(self.remote_ch)
 
     @typechecked
-    def close_channel(self, channel: paramiko.Channel) -> None:
+    def close_channel(self, channel: Union[socket, paramiko.Channel]) -> None:
         if not isinstance(channel, paramiko.Channel): # socket.socket
             channel.close()
             return

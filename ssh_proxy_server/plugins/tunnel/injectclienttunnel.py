@@ -35,7 +35,7 @@ class ClientTunnelHandler:
         self.destination = destination
 
     @typechecked
-    def handle_request(self, client: paramiko.Channel, addr: Optional[Tuple[str, int]]) -> None:
+    def handle_request(self, client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
         try:

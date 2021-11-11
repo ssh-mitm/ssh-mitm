@@ -1,5 +1,6 @@
 import logging
-from typing import TYPE_CHECKING, Optional, Tuple, Text
+from socket import socket
+from typing import TYPE_CHECKING, Optional, Tuple, Text, Union
 
 import paramiko
 from typeguard import typechecked
@@ -49,7 +50,7 @@ class InjectableServerTunnelForwarder(ServerTunnelForwarder):
         self.tcpserver.start()
 
     @typechecked
-    def serve(self, client: paramiko.Channel, addr: Tuple[Text, int]) -> None:
+    def serve(self, client: Union[socket, paramiko.Channel], addr: Tuple[Text, int]) -> None:
         try:
             f = TunnelForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", self.destination, addr),

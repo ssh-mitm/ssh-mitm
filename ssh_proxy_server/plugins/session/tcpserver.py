@@ -21,7 +21,7 @@ class TCPServerThread(threading.Thread):
     @typechecked
     def __init__(
         self,
-        request_handler: Optional[Callable[[paramiko.Channel, Tuple[Text, int]], None]] = None,
+        request_handler: Optional[Callable[[Union[socket.socket, paramiko.Channel], Tuple[Text, int]], None]] = None,
         network: Text = '127.0.0.1',
         port: int = 0,
         run_status: bool = True,
@@ -52,7 +52,7 @@ class TCPServerThread(threading.Thread):
             time.sleep(0.1)
 
     @typechecked
-    def handle_request(self, client: paramiko.Channel, addr: Tuple[Text, int]) -> None:
+    def handle_request(self, client: Union[socket.socket, paramiko.Channel], addr: Tuple[Text, int]) -> None:
         if self.handle_request_callback is not None:
             self.handle_request_callback(client, addr)
 
