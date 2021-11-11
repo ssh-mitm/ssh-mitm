@@ -1,14 +1,18 @@
 import logging
 import argparse
 import re
+import socket
 from typing import (
     TYPE_CHECKING,
     List,
     Optional,
-    Tuple
+    Tuple,
+    Union,
+    Text
 )
 
 import paramiko
+from typeguard import typechecked
 
 import ssh_proxy_server
 from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, ClientTunnelForwarder
@@ -21,11 +25,19 @@ class ClientTunnelHandler:
     Similar to the ServerTunnelForwarder
     """
 
-    def __init__(self, session: 'ssh_proxy_server.session.Session', destination: Optional[Tuple[str, int]]) -> None:
+    @typechecked
+    def __init__(
+        self,
+        session: 'ssh_proxy_server.session.Session',
+        destination: Optional[Tuple[str, int]]
+    ) -> None:
         self.session = session
         self.destination = destination
 
-    def handle_request(self, client, addr):
+    @typechecked
+    def handle_request(self, client: paramiko.Channel, addr: Optional[Tuple[str, int]]) -> None:
+        if self.session.ssh_client is None or self.session.ssh_client.transport is None:
+            return
         try:
             logging.debug("Injecting direct-tcpip channel (%s -> %s) to client", addr, self.destination)
             remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, addr)
@@ -40,7 +52,8 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
     """
 
     @classmethod
-    def parser_arguments(cls):
+    @typechecked
+    def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
             '--tunnel-client-dest',
@@ -56,14 +69,15 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
             help='network on which to serve the client tunnel injector'
         )
 
-    session = None
-    args: Optional[argparse.Namespace] = None  # type: ignore
+    session: Optional['ssh_proxy_server.session.Session'] = None
+    args: Optional[argparse.Namespace] = None
     tcpservers: List[TCPServerThread] = []
 
     # Setup should occur after master channel establishment
 
     @classmethod
-    def setup(cls, session) -> None:
+    @typechecked
+    def setup(cls, session: 'ssh_proxy_server.session.Session') -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
         cls.session = session

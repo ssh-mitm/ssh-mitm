@@ -24,7 +24,7 @@ from paramiko.ssh_exception import SSHException
 from sshpubkeys import SSHKey  # type: ignore
 from typeguard import typechecked
 
-from ssh_proxy_server.multisocket import (  # type: ignore
+from ssh_proxy_server.multisocket import (
     create_server_sock,
     has_dual_stack,
     MultipleSocketsListener
@@ -199,7 +199,9 @@ class SSHProxyServer:
     @typechecked
     def start(self) -> None:
         self._clean_environment()
-        sock: Union[socket, MultipleSocketsListener] = create_server_sock(
+        sock: Optional[Union[socket, MultipleSocketsListener]] = None
+
+        sock = create_server_sock(
             (self.listen_address, self.listen_port),
             transparent=self.transparent
         )
@@ -212,6 +214,9 @@ class SSHProxyServer:
                 ],
                 transparent=self.transparent
             )
+        if sock is None:
+            logging.error("error creating socket!")
+            return
 
         logging.info(f'listen interfaces {self.listen_address} and {self.listen_address_v6} on port {self.listen_port}')
         self.running = True

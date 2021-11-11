@@ -13,8 +13,8 @@ from enhancements.modules import BaseModule
 from typeguard import typechecked
 
 import ssh_proxy_server
-from ssh_proxy_server.interfaces.server import ServerInterface
 if TYPE_CHECKING:
+    from ssh_proxy_server.interfaces.server import ServerInterface
     from ssh_proxy_server.session import Session
 
 
@@ -164,7 +164,7 @@ class ServerTunnelForwarder(ServerTunnelBaseForwarder):
     def __init__(
         self,
         session: 'ssh_proxy_server.session.Session',
-        server_interface: ServerInterface,
+        server_interface: 'ssh_proxy_server.interfaces.server.ServerInterface',
         destination: Optional[Tuple[str, int]]
     ) -> None:
         super(ServerTunnelBaseForwarder, self).__init__()

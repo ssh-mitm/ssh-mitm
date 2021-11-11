@@ -1,4 +1,5 @@
 import datetime
+from io import BytesIO
 import logging
 import select
 import threading
@@ -9,8 +10,10 @@ import tempfile
 import pytz
 
 from typing import (
+    TYPE_CHECKING,
     Text,
-    Optional
+    Optional,
+    IO
 )
 
 from colored.colored import stylize, attr, fg  # type: ignore
@@ -18,8 +21,10 @@ from rich._emoji_codes import EMOJI
 import paramiko
 from typeguard import typechecked
 
+import ssh_proxy_server
 from ssh_proxy_server.forwarders.ssh import SSHForwarder
-
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 class InjectServer(paramiko.ServerInterface):
 
@@ -64,6 +69,7 @@ class SSHMirrorForwarder(SSHForwarder):
     HOST_KEY_LENGTH = 2048
 
     @classmethod
+    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -83,29 +89,35 @@ class SSHMirrorForwarder(SSHForwarder):
             help='store ssh session in scriptreplay format'
         )
 
-    def __init__(self, session) -> None:
+    @typechecked
+    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
         super().__init__(session)
         if self.args.ssh_mirrorshell_key:
             self.args.ssh_mirrorshell_key = os.path.expanduser(self.args.ssh_mirrorshell_key)
 
-        self.logdir = None
-        self.timestamp = None
-        self.fileIn, self.fileOut, self.timeingfile = None, None, None
+        self.logdir: Optional[Text] = None
+        self.timestamp: Optional[datetime.datetime] = None
+        self.fileIn: Optional[IO[bytes]] = None
+        self.fileOut: Optional[IO[bytes]] = None
+        self.timeingfile: Optional[IO[bytes]] = None
         self._initFiles()
 
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.injector_sock.bind((self.args.ssh_mirrorshell_net, 0))
         self.injector_sock.listen(5)
-        self.inject_server = None
+        self.inject_server: Optional[InjectServer] = None
 
-        self.injector_client_sock = None
+        self.injector_client_sock: Optional[socket.socket] = None
 
         self.conn_thread = threading.Thread(target=self.injector_connect)
         self.conn_thread.start()
 
+    @typechecked
     def _initFiles(self) -> None:
-        if not self.session.session_log_dir or not self.args.store_ssh_session:
+        if not self.args.store_ssh_session:
+            return
+        if self.session.session_log_dir is None or self.session.username is None or self.session.remote_address is None:
             return
         try:
             self.logdir = os.path.join(
@@ -148,8 +160,11 @@ class SSHMirrorForwarder(SSHForwarder):
         except Exception:
             logging.exception("Error file init")
 
+    @typechecked
     def write_timingfile(self, text: bytes) -> None:
-        if not self.timestamp:
+        if self.timeingfile is None:
+            return
+        if self.timestamp is None:
             self.timestamp = datetime.datetime.now()
         oldtime = self.timestamp
         self.timestamp = datetime.datetime.now()
@@ -157,6 +172,7 @@ class SSHMirrorForwarder(SSHForwarder):
         self.timeingfile.write(f"{diff.seconds}.{diff.microseconds} {len(text)}\n".encode())
         self.timeingfile.flush()
 
+    @typechecked
     def injector_connect(self) -> None:
         inject_host, inject_port = self.injector_sock.getsockname()
         logging.info(
@@ -166,7 +182,7 @@ class SSHMirrorForwarder(SSHForwarder):
             while self.session.running:
                 readable = select.select([self.injector_sock], [], [], 0.5)[0]
                 if len(readable) == 1 and readable[0] is self.injector_sock:
-                    self.injector_client_sock, addr = self.injector_sock.accept()
+                    self.injector_client_sock, _ = self.injector_sock.accept()
 
                     t = paramiko.Transport(self.injector_client_sock)
                     t.set_gss_host(socket.getfqdn(""))
@@ -193,48 +209,58 @@ class SSHMirrorForwarder(SSHForwarder):
 
         except Exception:
             logging.exception("injector connection suffered an unexpected error")
-            self.close_session(self.channel)
+            if self.channel is not None:
+                self.close_session(self.channel)
 
-    def close_session(self, channel) -> None:
+    @typechecked
+    def close_session(self, channel: paramiko.Channel) -> None:
         super().close_session(channel)
         self.injector_sock.close()
-        if self.inject_server:
+        if self.inject_server is not None and self.inject_server.injector_channel is not None:
             self.inject_server.injector_channel.get_transport().close()
         self.conn_thread.join()
         if self.logdir:
-            self.timeingfile.close()
-            self.fileOut.close()
-            self.fileIn.close()
+            if self.timeingfile is not None:
+                self.timeingfile.close()
+            if self.fileOut is not None:
+                self.fileOut.close()
+            if self.fileIn is not None:
+                self.fileIn.close()
 
+    @typechecked
     def forward_stdin(self) -> None:
-        if self.session.ssh_channel.recv_ready():
+        if self.session.ssh_channel is not None and self.session.ssh_channel.recv_ready():
             buf = self.session.ssh_channel.recv(self.BUF_LEN)
-            if self.logdir:
+            if self.logdir is not None and self.fileIn is not None:
                 self.fileIn.write(buf)
                 self.fileIn.flush()
             buf = self.stdin(buf)
             self.server_channel.sendall(buf)
 
+    @typechecked
     def forward_stdout(self) -> None:
         if self.server_channel.recv_ready():
             buf = self.server_channel.recv(self.BUF_LEN)
-            if self.logdir:
+            if self.logdir is not None and self.fileOut is not None:
                 self.fileOut.write(buf)
                 self.fileOut.flush()
                 self.write_timingfile(buf)
             buf = self.stdout(buf)
-            self.session.ssh_channel.sendall(buf)
-            if self.inject_server is not None:
+            if self.session.ssh_channel is not None:
+                self.session.ssh_channel.sendall(buf)
+            if self.inject_server is not None and self.inject_server.injector_channel is not None:
                 self.inject_server.injector_channel.sendall(buf)
 
+    @typechecked
     def forward_stderr(self) -> None:
         if self.server_channel.recv_stderr_ready():
             buf = self.server_channel.recv_stderr(self.BUF_LEN)
-            if self.logdir:
+            if self.logdir is not None and self.fileOut is not None:
                 self.fileOut.write(buf)
                 self.fileOut.flush()
                 self.write_timingfile(buf)
             buf = self.stderr(buf)
-            self.session.ssh_channel.sendall_stderr(buf)
-            if self.inject_server is not None:
+            if self.session.ssh_channel is not None:
+                self.session.ssh_channel.sendall_stderr(buf)
+            if self.inject_server is not None and self.inject_server.injector_channel is not None:
                 self.inject_server.injector_channel.sendall(buf)
