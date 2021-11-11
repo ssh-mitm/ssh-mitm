@@ -285,7 +285,7 @@ class ServerInterface(BaseServerInterface):
         OS will tell us which port).
         If it can't be opened, we just return false.
         """
-        logging.info(
+        logging.debug(
             "check_port_forward_request: address=%s, port=%s",
             address, port
         )

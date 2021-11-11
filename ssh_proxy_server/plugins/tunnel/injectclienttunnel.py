@@ -69,8 +69,6 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
             help='network on which to serve the client tunnel injector'
         )
 
-    session: Optional['ssh_proxy_server.session.Session'] = None
-    args: Optional[argparse.Namespace] = None
     tcpservers: List[TCPServerThread] = []
 
     # Setup should occur after master channel establishment
@@ -80,19 +78,17 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
     def setup(cls, session: 'ssh_proxy_server.session.Session') -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
-        cls.session = session
-        cls.args = args
         form = re.compile('.*:\d{1,5}')
 
-        for target in cls.args.client_tunnel_dest:
+        for target in args.client_tunnel_dest:
             if not form.match(target):
                 logging.warning("--tunnel-client-dest %s does not match format host:port (e.g. google.com:80)", target)
                 break
             destnet, destport = target.split(":")
             t = TCPServerThread(
                 ClientTunnelHandler(session, (destnet, int(destport))).handle_request,
-                run_status=cls.session.running,
-                network=cls.args.client_tunnel_net
+                run_status=session.running,
+                network=args.client_tunnel_net
             )
             t.start()
             cls.tcpservers.append(t)

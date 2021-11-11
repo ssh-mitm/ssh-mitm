@@ -38,17 +38,6 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
         def stat(self, path: Text) -> Union[SFTPAttributes, int]:
             return self.lstat(path)
 
-    class SFTPHandle(SFTPBaseHandle):
-
-        @typechecked
-        def close(self) -> None:
-            if not self.plugin.data_handled:
-                args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
-                with open(args.sftp_replacement_file, "rb") as r:
-                    if self.writefile is not None:
-                        self.writefile.write(r.read())
-            super().close()
-
     @classmethod
     @typechecked
     def get_interface(cls) -> Optional[Type[BaseSFTPServerInterface]]:
