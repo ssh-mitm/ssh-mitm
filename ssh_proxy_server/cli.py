@@ -35,7 +35,6 @@ from ssh_proxy_server.interfaces.sftp import (
 from ssh_proxy_server.forwarders.tunnel import (
     ServerTunnelBaseForwarder,
     ClientTunnelForwarder,
-    ServerTunnelForwarder,
     ClientTunnelBaseForwarder
 )
 
@@ -43,6 +42,7 @@ from ssh_proxy_server.workarounds import dropbear
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 from ssh_proxy_server.plugins.scp.store_file import SCPStorageForwarder
 from ssh_proxy_server.plugins.sftp.store_file import SFTPHandlerStoragePlugin
+from ssh_proxy_server.plugins.tunnel.injectservertunnel import InjectableServerTunnelForwarder
 from ssh_proxy_server.__version__ import version as ssh_mitm_version
 from ssh_proxy_server.update import check_version
 from ssh_proxy_server.session import BaseSession, Session
@@ -127,7 +127,7 @@ def get_parser() -> ModuleParser:
     parser.add_module(
         '--server-tunnel',
         dest='server_tunnel_interface',
-        default=ServerTunnelForwarder,
+        default=InjectableServerTunnelForwarder,
         help='interface to handle tunnels from the server',
         baseclass=ServerTunnelBaseForwarder
     )
