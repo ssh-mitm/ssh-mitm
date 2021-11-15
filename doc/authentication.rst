@@ -10,83 +10,42 @@ This is most common with Git repositories. Examples of this are GitLab and GitHu
 resources a user is allowed to access based on the public key at login.
 
 
-none Authentication
--------------------
+**none** authentication - `RFC-4252/5.2 <https://datatracker.ietf.org/doc/html/rfc4252#section-5.2>`_
+-----------------------------------------------------------------------------------------------------
 
 The none authentication takes a special position among the authentication methods.
-The reason is that this authentication method is used to tell the client which methods are accepted by the server. For this reason, none-Authentication is executed before all other authentication methods.
+The reason is that this authentication method is used to tell the client which methods are accepted by the server.
+For this reason, none-Authentication is executed before all other authentication methods.
 
 However, it can also be used to give a user access to a system without requiring an explicit login.
+
+.. code-block:: none
+
+    5.2.  The "none" Authentication Request
+
+    A client may request a list of authentication 'method name' values
+    that may continue by using the "none" authentication 'method name'.
+
+    If no authentication is needed for the user, the server MUST return
+    SSH_MSG_USERAUTH_SUCCESS.  Otherwise, the server MUST return
+    SSH_MSG_USERAUTH_FAILURE and MAY return with it a list of methods
+    that may continue in its 'authentications that can continue' value.
+
+    This 'method name' MUST NOT be listed as supported by the server.
 
 Support in SSH-MITM
 """""""""""""""""""
 
-**none** authentication is fully supported but disabled by default
-
-.. note::
-
-    "none" authentication is only usfull when the remote server also accepts "none" authentication.
-
-    If the remote server needs anothere login method, "none" authentication can breakt the login process and
-    SSH-MITM closes the connection.
+**none** authentication is fully supported but disabled by default. The reason is, that this authentication method can
+break ssh-mitm attacks, if the remote server does not allow logins with **none** authentication
 
 .. code-block::
 
     ssh-mitm  --remote-host 192.168.0.x:PORT --enable-none-auth
 
-password authentication
------------------------
 
-Password authentication is one of the most common login methods. Almost all current operating systems support this method both for local logins and over the network. By default, OpenSSH and many other SSH servers have this type of authentication active.
-
-With SSH, within the encrypted channel, the password is transmitted in clear text. If a client connects to a Man in the Middle server, the server is able to read the username and password in clear text. This information can then be used to log in to other servers if the user exists and uses the same password.
-
-Another problem is that accounts with weak passwords can be compromised relatively easily through a brute force attack. This happens very often with IoT devices because they often have the same username on many devices and they are protected by a default password or only a weak password is set.
-
-On the client side, password authentication should not be used because of security concernes.
-
-
-Support in SSH-MITM
-"""""""""""""""""""
-
-**password** authentication is fully supported.
-
-Example SSH-MITM session intercepting password authentication:
-
-.. code-block:: none
-
-    $ ssh-mitm  --remote-host 192.168.0.x:PORT
-    2021-09-02 09:51:35,354 [INFO]  starting SSH-MITM 0.5.13
-    2021-09-02 09:51:38,590 [INFO]  connected client version: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.3
-    2021-09-02 09:51:48,629 [INFO]  Client connection established with parameters:
-        Remote Address: 127.0.0.1
-        Port: 22
-        Username: testuser
-        Password: secret
-        Key: None
-        Agent: no agent
-
-
-keyboard-interactive authentication
------------------------------------
-
-keyboard-interactive is similar to password authentication. The main difference is that the server can send any number of requests to the client, which are necessary for the login process. The server defines both the prompt text and whether the value is visible or not when entered.
-
-In many cases keyboard-interactive is used for 2 factor authentication. In the first step a password is requested and then e.g. the input of a time-based token is necessary (TOTP).
-
-Unless special tools are used to create cryptographically secured input, all input via keyboard-interactive can be reused during a man in the middle attack to login to another server.
-
-Support in SSH-MITM
-"""""""""""""""""""
-
-The current version of SSH-MITM does not support man in the middle attacks using keyboard-interactive authentication.
-
-At the moment only one prompt is snet to the client and the answer is used for password authentication on the remote server.
-
-It's planned, that the upcoming release of SSH-MITM 1.0, has full support for keyboard-interactive authentication.
-
-publickey authentication
-------------------------
+**publickey** authentication - `RFC-4252/7 <https://datatracker.ietf.org/doc/html/rfc4252#section-7>`_
+------------------------------------------------------------------------------------------------------
 
 In contrast to password authentication, where the password is transmitted in plain text, publickey authentication is based on asymmetric encryption. In asymmetric encryption, a key pair consisting of a private part and a public part is created.
 
@@ -121,14 +80,12 @@ Publickey authentication in SSH-MITM is enabled by default.
 All you have to do is to start the server:
 
 .. code-block:: none
-    :linenos:
 
     $ ssh-mitm --remote-host 192.168.0.x:PORT
 
 To do a full mitm attack, the client should use agent forwarding.
 
 .. code-block:: none
-    :linenos:
 
     $ ssh -A -p 10022 user@proxyserver
 
@@ -138,9 +95,60 @@ If the client does not forward an agent, but publickey authentication would be p
 SSH-MITM can redirect the session to a honeypot.
 
 .. code-block:: none
-    :linenos:
 
     $ ssh-mitm --remote-host 192.168.0.x:PORT --fallback-host user:password@honeypot:22
 
 Connections are only redirected to the honeypot if no agent was forwarded after publickey authentication.
 All other connections are forwarded to the destination server and a full man in the middle attack is possible.
+
+
+**password** authentication - `RFC-4252/8 <https://datatracker.ietf.org/doc/html/rfc4252#section-8>`_
+-----------------------------------------------------------------------------------------------------
+
+Password authentication is one of the most common login methods. Almost all current operating systems support this method both for local logins and over the network. By default, OpenSSH and many other SSH servers have this type of authentication active.
+
+With SSH, within the encrypted channel, the password is transmitted in clear text. If a client connects to a Man in the Middle server, the server is able to read the username and password in clear text. This information can then be used to log in to other servers if the user exists and uses the same password.
+
+Another problem is that accounts with weak passwords can be compromised relatively easily through a brute force attack. This happens very often with IoT devices because they often have the same username on many devices and they are protected by a default password or only a weak password is set.
+
+On the client side, password authentication should not be used because of security concernes.
+
+
+Support in SSH-MITM
+"""""""""""""""""""
+
+**password** authentication is fully supported.
+
+Example SSH-MITM session intercepting password authentication:
+
+.. code-block:: bash
+
+    $ ssh-mitm  --remote-host 192.168.0.x:PORT
+    2021-09-02 09:51:35,354 [INFO]  starting SSH-MITM 0.5.13
+    2021-09-02 09:51:38,590 [INFO]  connected client version: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.3
+    2021-09-02 09:51:48,629 [INFO]  Client connection established with parameters:
+        Remote Address: 127.0.0.1
+        Port: 22
+        Username: testuser
+        Password: secret
+        Key: None
+        Agent: no agent
+
+
+**keyboard-interactive** authentication - `RFC-4256 <https://datatracker.ietf.org/doc/html/rfc4256>`_
+-----------------------------------------------------------------------------------------------------
+
+keyboard-interactive is similar to password authentication. The main difference is that the server can send any number of requests to the client, which are necessary for the login process. The server defines both the prompt text and whether the value is visible or not when entered.
+
+In many cases keyboard-interactive is used for 2 factor authentication. In the first step a password is requested and then e.g. the input of a time-based token is necessary (TOTP).
+
+Unless special tools are used to create cryptographically secured input, all input via keyboard-interactive can be reused during a man in the middle attack to login to another server.
+
+Support in SSH-MITM
+"""""""""""""""""""
+
+The current version of SSH-MITM does not support man in the middle attacks using keyboard-interactive authentication.
+
+At the moment only one prompt is sent to the client and the answer is used for password authentication on the remote server.
+
+It's planned, that the upcoming release of SSH-MITM 1.0, has full support for keyboard-interactive authentication.
