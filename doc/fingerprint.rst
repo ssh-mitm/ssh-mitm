@@ -13,6 +13,24 @@ In most cases, a new key is automatically generated during installation. When a 
 
     For this reason, the fingerprint must always be compared against a trusted source.
 
+
+There are SSH clients that have a flawed fingerprint check and are thus vulnerable to man in the middle attacks. An example of this is the SFTP implementation of Midnight Commander. This vulnerability was discovered and fixed only after 9 years. See CVE-2021-36370
+
+However, most programs do not have fingerprint verification vulnerabilities. As long as the fingerprint is checked, it is not possible to connect to an unknown server.
+
+In many cases, the vulnerability is not the program, but the user who does not properly check the fingerprint against a known value. There can be many reasons for this.
+
+Many users do not know what the fingerprint means. There are tutorials on the Internet that do not describe what the fingerprint is, but only write that you simply have to confirm this query with "yes" to establish the connection.
+
+It also often happens that the fingerprint is not known and cannot be checked against a trusted source. These could be new systems that generate a random key on first launch.
+
+Systems such as a development server may have it reinstalled frequently. This causes the fingerprints to change which leads to users being used to accepting unknown fingerprints.
+
+However, previous studies (Peter Gutmann, Do Users Verify SSH Keys? / Konrad Rieck (Fuzzy Fingerprints Attacking Vulnerabilities in the Human Brain, 2002) ) have shown that users verify a fingerprint in very few cases. In the study by Peter Gutmann, IT departments were asked how often the user asked the IT department for the new fingerprint after a new installation. The study showed that this was almost never the case.
+
+In cases where the fingerprint is checked, it is very efficient to generate an SSH key with a similar hash value as the one of the target computer.  The longer and more complex a fingerprint becomes, the more likely it is that only parts of the fingerprint are compared. This results in a fingerprint that is actually wrong being considered correct. This technique is known as fuzzy fingerprinting.
+
+
 Checking the fingerprint
 ------------------------
 
@@ -78,6 +96,9 @@ So in the above example
 .. code-block:: none
 
     ssh-keygen -f "/home/tux/.ssh/known_hosts" -R 172.217.22.227
+
+
+
 
 
 Determine fingerprint of the server
@@ -201,7 +222,7 @@ If the fingerprint is not known, the list is sent to the server with a predefine
 However, if the client has already saved a fingerprint for the server, the last used algorithm used is put first.
 
 Fuzzy Fingerprints
-""""""""""""""""""
+------------------
 
 .. note::
 
