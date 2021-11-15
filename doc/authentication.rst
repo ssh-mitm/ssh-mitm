@@ -23,10 +23,16 @@ Support in SSH-MITM
 
 **none** authentication is fully supported but disabled by default
 
-"none" authentication is only usfull when the remote server also accepts "none" authentication.
+.. note::
 
-If the remote server needs anothere login method, "none" authentication can breakt the login process and
-SSH-MITM closes the connection.
+    "none" authentication is only usfull when the remote server also accepts "none" authentication.
+
+    If the remote server needs anothere login method, "none" authentication can breakt the login process and
+    SSH-MITM closes the connection.
+
+.. code-block::
+
+    ssh-mitm  --remote-host 192.168.0.x:PORT --enable-none-auth
 
 password authentication
 -----------------------
@@ -49,7 +55,7 @@ Example SSH-MITM session intercepting password authentication:
 
 .. code-block:: none
 
-    $ ssh-mitm
+    $ ssh-mitm  --remote-host 192.168.0.x:PORT
     2021-09-02 09:51:35,354 [INFO]  starting SSH-MITM 0.5.13
     2021-09-02 09:51:38,590 [INFO]  connected client version: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.3
     2021-09-02 09:51:48,629 [INFO]  Client connection established with parameters:
@@ -74,6 +80,8 @@ Support in SSH-MITM
 """""""""""""""""""
 
 The current version of SSH-MITM does not support man in the middle attacks using keyboard-interactive authentication.
+
+At the moment only one prompt is snet to the client and the answer is used for password authentication on the remote server.
 
 It's planned, that the upcoming release of SSH-MITM 1.0, has full support for keyboard-interactive authentication.
 
