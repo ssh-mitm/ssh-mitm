@@ -14,7 +14,8 @@ In most cases, a new key is automatically generated during installation. When a 
     For this reason, the fingerprint must always be compared against a trusted source.
 
 
-There are SSH clients that have a flawed fingerprint check and are thus vulnerable to man in the middle attacks. An example of this is the SFTP implementation of Midnight Commander. This vulnerability was discovered and fixed only after 9 years. See CVE-2021-36370
+There are SSH clients that have a flawed fingerprint check and are thus vulnerable to man in the middle attacks. An example of this is the SFTP implementation of Midnight Commander.
+This vulnerability was discovered and fixed only after 9 years. See ref:`CVE-2021-36370`
 
 However, most programs do not have fingerprint verification vulnerabilities. As long as the fingerprint is checked, it is not possible to connect to an unknown server.
 
@@ -245,11 +246,13 @@ Because many users only check the beginning and the end, it is more important th
 
 The following example shows a 2-byte fingerprint.
 
-+------------------------+---+---+---+---+
-| **Target fingerprint** | 9 | 7 | B | 3 |
-+------------------------+---+---+---+---+
-| **Fuzzy fingerprint    | 9 | 1 | E | 3 |
-+------------------------+---+---+---+---+
++---------------------------------+
+| **Fingerprint Type**            |
++----------------------+----------+
+| Target fingerprint   | **5BE4** |
++----------------------+----------+
+| Fuzzy fingerprint    | **5EB4** |
++----------------------+----------+
 
 To improve the fingerprint, similar characters can also be used. Certain characters can be perceived differently by a user or, depending on the character set, can also be confused.
 
