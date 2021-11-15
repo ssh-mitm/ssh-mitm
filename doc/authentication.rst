@@ -1,6 +1,14 @@
 Authentication
 ==============
 
+The choice of the right authentication method against SSH-MITM can have a decisive influence on the success of a Man in the Middle attack.
+
+The most popular authentication methods are "password" and "publickey" authentication. However, there are others, such as "none" and "keyboard-interactive".
+
+To log in to an SSH server it is necessary to specify an existing user. There are systems that use a default username.
+This is most common with Git repositories. Examples of this are GitLab and GitHub, which use the username "git" and distinguish which
+resources a user is allowed to access based on the public key at login.
+
 
 none Authentication
 -------------------
