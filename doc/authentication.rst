@@ -18,6 +18,16 @@ The reason is that this authentication method is used to tell the client which m
 
 However, it can also be used to give a user access to a system without requiring an explicit login.
 
+Support in SSH-MITM
+"""""""""""""""""""
+
+**none** authentication is fully supported but disabled by default
+
+"none" authentication is only usfull when the remote server also accepts "none" authentication.
+
+If the remote server needs anothere login method, "none" authentication can breakt the login process and
+SSH-MITM closes the connection.
+
 password authentication
 -----------------------
 
@@ -27,10 +37,13 @@ With SSH, within the encrypted channel, the password is transmitted in clear tex
 
 Another problem is that accounts with weak passwords can be compromised relatively easily through a brute force attack. This happens very often with IoT devices because they often have the same username on many devices and they are protected by a default password or only a weak password is set.
 
-.. warning::
+On the client side, password authentication should not be used because of security concernes.
 
-    Password authentication should not be used for these reasons!
 
+Support in SSH-MITM
+"""""""""""""""""""
+
+**password** authentication is fully supported.
 
 Example SSH-MITM session intercepting password authentication:
 
@@ -57,7 +70,12 @@ In many cases keyboard-interactive is used for 2 factor authentication. In the f
 
 Unless special tools are used to create cryptographically secured input, all input via keyboard-interactive can be reused during a man in the middle attack to login to another server.
 
+Support in SSH-MITM
+"""""""""""""""""""
 
+The current version of SSH-MITM does not support man in the middle attacks using keyboard-interactive authentication.
+
+It's planned, that the upcoming release of SSH-MITM 1.0, has full support for keyboard-interactive authentication.
 
 publickey authentication
 ------------------------
@@ -75,3 +93,46 @@ Publickey authentication is only partially suitable for a man-in-the-middle atta
 Another problem is that the key that should be used for the login is not known. This can lead to FIDO2 and SSH-Askpass protected keys displaying a prompt for an incorrect key to the user.
 
 An attacker should use PublicKey authentication only if the client does not accept other authentication methods.
+
+
+Support in SSH-MITM
+"""""""""""""""""""
+
+**publickey authentication** is supported and SSH-MITM is able to detect,
+if a user is able to login with publickey authentication on the remote server.
+This allows SSH-MITM to acccept the same key as the destination server.
+
+SSH-MITM is able to request the agent from the client and use
+it for remote authentication. By using this feature, it's possible
+to do a full man-in-the-middle attack when publickey authentication is used.
+
+If publickey authentication is not possible, the
+authentication will fall back to password-authentication.
+
+Publickey authentication in SSH-MITM is enabled by default.
+All you have to do is to start the server:
+
+.. code-block:: none
+    :linenos:
+
+    $ ssh-mitm --remote-host 192.168.0.x:PORT
+
+To do a full mitm attack, the client should use agent forwarding.
+
+.. code-block:: none
+    :linenos:
+
+    $ ssh -A -p 10022 user@proxyserver
+
+**Redirecting client to a honeypot**
+
+If the client does not forward an agent, but publickey authentication would be possible on the remote server,
+SSH-MITM can redirect the session to a honeypot.
+
+.. code-block:: none
+    :linenos:
+
+    $ ssh-mitm --remote-host 192.168.0.x:PORT --fallback-host user:password@honeypot:22
+
+Connections are only redirected to the honeypot if no agent was forwarded after publickey authentication.
+All other connections are forwarded to the destination server and a full man in the middle attack is possible.
