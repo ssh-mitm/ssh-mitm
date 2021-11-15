@@ -1,4 +1,4 @@
-SSH Vurnabilities
+SSH Vulnerabilities
 ===================
 
 
