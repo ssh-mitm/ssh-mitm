@@ -1,15 +1,23 @@
 import logging
 import os
+from typing import (
+    Text,
+    BinaryIO,
+    Optional
+)
 import uuid
 
-from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin
+from typeguard import typechecked
+
+from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
 
 
 class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
     """Stores transferred files to the file system
     """
     @classmethod
-    def parser_arguments(cls):
+    @typechecked
+    def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
             '--store-sftp-files',
@@ -18,12 +26,13 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
             help='store files from sftp'
         )
 
-    def __init__(self, sftp, filename):
+    @typechecked
+    def __init__(self, sftp: SFTPBaseHandle, filename: Text) -> None:
         super().__init__(sftp, filename)
         self.file_id = str(uuid.uuid4())
         self.sftp_storage_dir = None
         self.output_path = None
-        self.out_file = None
+        self.out_file: Optional[BinaryIO] = None
 
         if self.sftp.session.session_log_dir and self.args.store_sftp_files:
             self.sftp_storage_dir = os.path.join(self.sftp.session.session_log_dir, 'sftp')
@@ -34,11 +43,13 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
 
         logging.info("sftp file transfer: %s -> %s", filename, self.file_id)
 
-    def close(self):
-        if self.args.store_sftp_files:
+    @typechecked
+    def close(self) -> None:
+        if self.args.store_sftp_files and self.out_file is not None:
             self.out_file.close()
 
-    def handle_data(self, data, *, offset=None, length=None):
-        if self.args.store_sftp_files:
+    @typechecked
+    def handle_data(self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None) -> bytes:
+        if self.args.store_sftp_files and self.out_file is not None:
             self.out_file.write(data)
         return data

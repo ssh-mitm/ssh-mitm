@@ -1,53 +1,87 @@
 import logging
 import paramiko
 import os
+from typing import (
+    cast,
+    Text,
+    List,
+    Union
+)
 
+import paramiko
 from enhancements.modules import BaseModule
+from paramiko.sftp_attr import SFTPAttributes
+from paramiko.sftp_handle import SFTPHandle
+from typeguard import typechecked
 
-from ssh_proxy_server.forwarders.sftp import SFTPBaseHandle
+from ssh_proxy_server.exceptions import MissingClient
+from ssh_proxy_server.interfaces.server import BaseServerInterface
 
 
 class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):
 
-    def __init__(self, authenticationinterface):
-        super().__init__(authenticationinterface)
-        self.session = authenticationinterface.session
+    @typechecked
+    def __init__(self, serverinterface: BaseServerInterface) -> None:
+        super().__init__(serverinterface)
+        self.session = serverinterface.session
 
 
 class SFTPProxyServerInterface(BaseSFTPServerInterface):
     """sftp subsystem implementation for SSH-MITM
     """
 
-    def chattr(self, path, attr):
+    @typechecked
+    def chattr(self, path: Text, attr: SFTPAttributes) -> int:
         self.session.sftp_client_ready.wait()
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
         if attr.st_mode:
             return self.session.sftp_client.chmod(path, attr.st_mode)
-        oldattr = paramiko.SFTPAttributes.from_stat(self.stat(path))
+        remotestat = self.stat(path)
+        if isinstance(remotestat, int):
+            return remotestat
+        oldattr = paramiko.SFTPAttributes.from_stat(cast(os.stat_result, remotestat))
         if not attr.st_uid:
             attr.st_uid = oldattr.st_uid
         if not attr.st_gid:
             attr.st_gid = oldattr.st_gid
+        if attr.st_uid is None or attr.st_gid is None:
+            return paramiko.sftp.SFTP_FAILURE
         return self.session.sftp_client.chown(path, attr.st_uid, attr.st_gid)
 
-    def list_folder(self, path):
+    @typechecked
+    def list_folder(self, path: Text) -> Union[List[SFTPAttributes], int]:
         self.session.sftp_client_ready.wait()
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.listdir_attr(path)
 
-    def lstat(self, path):
+    @typechecked
+    def lstat(self, path: Text) -> Union[SFTPAttributes, int]:
         self.session.sftp_client_ready.wait()
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.lstat(path)
 
-    def mkdir(self, path, attr):
+    @typechecked
+    def mkdir(self, path: Text, attr: SFTPAttributes) -> int:
         self.session.sftp_client_ready.wait()
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
+        if attr.st_mode is None:
+            return paramiko.sftp.SFTP_FAILURE
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
-    def open(self, remotePath, flags, attr):
+    @typechecked
+    def open(self, path: Text, flags: int, attr: SFTPAttributes) -> Union[SFTPHandle, int]:
         try:
             self.session.sftp_client_ready.wait()
+            if self.session.sftp_client is None:
+                raise MissingClient("self.session.sftp_client is None!")
 
             # Code aus dem StubSFTPServer der Paramiko Demo auf GitHub
             if (flags & os.O_CREAT) and attr:
-                attr._flags &= ~attr.FLAG_PERMISSIONS
+                attr._flags &= ~attr.FLAG_PERMISSIONS  # type: ignore
             if flags & os.O_WRONLY:
                 if flags & os.O_APPEND:
                     fstr = 'ab'
@@ -63,14 +97,16 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
                 fstr = 'rb'
 
             try:
-                client_f = self.session.sftp_client._sftp.open(remotePath, fstr)
+                if self.session.sftp_client is None:
+                    return paramiko.sftp.SFTP_FAILURE
+                client_f = self.session.sftp_client.open(path, fstr)
             except Exception:
                 logging.exception("Error file")
-                return None
+                return paramiko.sftp.SFTP_FAILURE
 
             sftp_handler = self.session.proxyserver.sftp_handler
-            sftp_file_handle = sftp_handler.get_file_handle() or SFTPBaseHandle
-            fobj = sftp_file_handle(self.session, sftp_handler, remotePath)
+            sftp_file_handle = sftp_handler.get_file_handle()
+            fobj = sftp_file_handle(self.session, sftp_handler, path)
 
             # writeonly
             if fstr in ('wb', 'ab'):
@@ -83,32 +119,53 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
                 fobj.writefile = client_f
                 fobj.readfile = client_f
             if fobj.writefile:
-                self.chattr(remotePath, attr)
+                self.chattr(path, attr)
             return fobj
-        except Exception as e:
+        except (OSError, IOError) as e:
             logging.exception("Error")
             return paramiko.SFTPServer.convert_errno(e.errno)
+        except Exception as e:
+            logging.exception("Error")
+            return paramiko.sftp.SFTP_FAILURE
 
-    def readlink(self, path):
+    @typechecked
+    def readlink(self, path: Text) -> Union[Text, int]:
         self.session.sftp_client_ready.wait()
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.readlink(path)
 
-    def remove(self, remotePath):
+    @typechecked
+    def remove(self, path: Text) -> int:
         self.session.sftp_client_ready.wait()
-        return self.session.sftp_client.remove(remotePath)
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
+        return self.session.sftp_client.remove(path)
 
-    def rename(self, oldpath, newpath):
+    @typechecked
+    def rename(self, oldpath: Text, newpath: Text) -> int:
         self.session.sftp_client_ready.wait()
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.rename(oldpath, newpath)
 
-    def rmdir(self, path):
+    @typechecked
+    def rmdir(self, path: Text) -> int:
         self.session.sftp_client_ready.wait()
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.rmdir(path)
 
-    def stat(self, remotePath):
+    @typechecked
+    def stat(self, path: Text) -> Union[SFTPAttributes, int]:
         self.session.sftp_client_ready.wait()
-        return self.session.sftp_client.stat(remotePath)
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
+        return self.session.sftp_client.stat(path)
 
-    def symlink(self, targetPath, path):
+    @typechecked
+    def symlink(self, targetPath: Text, path: Text) -> int:
         self.session.sftp_client_ready.wait()
+        if self.session.sftp_client is None:
+            raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.symlink(targetPath, path)

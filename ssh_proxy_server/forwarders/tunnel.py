@@ -2,19 +2,34 @@ import logging
 import select
 import threading
 import time
+from socket import socket
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Tuple,
+    Union
+)
 
 import paramiko
 from enhancements.modules import BaseModule
+from typeguard import typechecked
+
+import ssh_proxy_server
+if TYPE_CHECKING:
+    from ssh_proxy_server.interfaces.server import ServerInterface
+    from ssh_proxy_server.session import Session
 
 
 class TunnelForwarder(threading.Thread):
 
-    def __init__(self, local_ch, remote_ch):
+    @typechecked
+    def __init__(self, local_ch: Optional[Union[socket, paramiko.Channel]], remote_ch: Optional[Union[socket, paramiko.Channel]]) -> None:
         super(TunnelForwarder, self).__init__()
         self.local_ch = local_ch
         self.remote_ch = remote_ch
         self.start()
 
+    @typechecked
     def run(self) -> None:
         try:
             self.tunnel()
@@ -22,11 +37,19 @@ class TunnelForwarder(threading.Thread):
             logging.exception("Tunnel exception with peer")
         self.close()
 
-    def tunnel(self, chunk_size=1024):
+    @typechecked
+    def tunnel(self, chunk_size: int = 1024) -> None:
         """
         Connect two SSH channels (socket like objects).
         """
         while True:
+            if self.local_ch is None:
+                logging.error("local channel is None")
+                break
+            if self.remote_ch is None:
+                logging.error("remote channel is None")
+                break
+
             r, w, x = select.select([self.local_ch, self.remote_ch], [], [])
 
             if self.local_ch in r:
@@ -43,16 +66,20 @@ class TunnelForwarder(threading.Thread):
                     break
                 self.local_ch.send(data)
 
-    def handle_data(self, data):
+    @typechecked
+    def handle_data(self, data: bytes) -> bytes:
         return data
 
-    def handle_data_from_remote(self, data):
+    @typechecked
+    def handle_data_from_remote(self, data: bytes) -> bytes:
         return self.handle_data(data)
 
-    def handle_data_from_local(self, data):
+    @typechecked
+    def handle_data_from_local(self, data: bytes) -> bytes:
         return self.handle_data(data)
 
-    def close(self):
+    @typechecked
+    def close(self) -> None:
         """
         Comparable with Channels and Sockets
         """
@@ -61,7 +88,8 @@ class TunnelForwarder(threading.Thread):
         if self.remote_ch:
             self.close_channel(self.remote_ch)
 
-    def close_channel(self, channel):
+    @typechecked
+    def close_channel(self, channel: Union[socket, paramiko.Channel]) -> None:
         if not isinstance(channel, paramiko.Channel): # socket.socket
             channel.close()
             return
@@ -84,15 +112,25 @@ class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
         - implements Proxyjump (-W / -J) feature, client side port forwarding (-L)
     """
 
-    def __init__(self, session, chanid, origin, destination):
+    @typechecked
+    def __init__(
+        self,
+        session: 'ssh_proxy_server.session.Session',
+        chanid: int,
+        origin: Optional[Tuple[str, int]],
+        destination: Optional[Tuple[str, int]]
+    ) -> None:
         self.session = session
         self.chanid = chanid
         self.origin = origin
         self.destination = destination
         logging.debug("Forwarding direct-tcpip request (%s -> %s) to remote", self.origin, self.destination)
+        if self.session.ssh_client is None or self.session.ssh_client.transport is None:
+            raise ValueError("No SSH client!")
         remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, self.origin)
         super(ClientTunnelForwarder, self).__init__(None, remote_ch)
 
+    @typechecked
     def run(self) -> None:
         # Channel setup in thread start - so that transport thread can return to the session thread
         # Wait for master channel establishment
@@ -107,6 +145,11 @@ class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
             self.local_ch = self.session.transport.accept(5)
         super(ClientTunnelForwarder, self).run()
 
+    @classmethod
+    @typechecked
+    def setup(cls, session: 'ssh_proxy_server.session.Session') -> None:
+        pass
+
 
 class ServerTunnelBaseForwarder(BaseModule):
     pass
@@ -119,13 +162,28 @@ class ServerTunnelForwarder(ServerTunnelBaseForwarder):
     -> that is why it does not inherit the TunnelForwarder; it just uses it in the handler
     """
 
-    def __init__(self, session, server_interface, destination):
+    @typechecked
+    def __init__(
+        self,
+        session: 'ssh_proxy_server.session.Session',
+        server_interface: 'ssh_proxy_server.interfaces.server.ServerInterface',
+        destination: Optional[Tuple[str, int]]
+    ) -> None:
         super(ServerTunnelBaseForwarder, self).__init__()
         self.session = session
         self.server_interface = server_interface
         self.destination = destination
 
-    def handler(self, channel, origin, destination):
+    @typechecked
+    def join(self) -> None:
+        pass
+
+    @typechecked
+    def close(self) -> None:
+        pass
+
+    @typechecked
+    def handler(self, channel: paramiko.Channel, origin: Optional[Tuple[str, int]], destination: Optional[Tuple[str, int]]) -> None:
         try:
             logging.debug("Opening forwarded-tcpip channel (%s -> %s) to client", origin, destination)
             f = TunnelForwarder(

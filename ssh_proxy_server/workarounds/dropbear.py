@@ -47,10 +47,10 @@ from paramiko.ssh_exception import (
 )
 
 
-from paramiko.transport import _active_threads
+from paramiko.transport import _active_threads  # type: ignore
 
 
-def transport_run(self):
+def transport_run(self):  # type: ignore
     # (use the exposed "run" method, because if we specify a thread target
     # of a private method, threading.Thread will keep a reference to it
     # indefinitely, creating a GC cycle and not letting Transport ever be
@@ -179,7 +179,7 @@ def transport_run(self):
                 else:  # empty tuple, e.g. socket.timeout
                     emsg = str(e) or repr(e)
             else:
-                emsg = e.args
+                emsg = e.args  # type: ignore
             self._log(ERROR, "Socket exception: " + emsg)
             self.saved_exception = e
         except Exception as e:
@@ -209,5 +209,5 @@ def transport_run(self):
         # wake up during interpreter shutdown. Or rather -- raise
         # everything *if* sys.modules (used as a convenient sentinel)
         # appears to still exist.
-        if self.sys.modules is not None:
+        if self.sys.modules is not None:  # type: ignore
             raise

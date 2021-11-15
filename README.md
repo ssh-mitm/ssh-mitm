@@ -54,7 +54,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 <img src="https://www.ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" align="left" width="128">
 
-**SSH-MITM** can be installed as a [Ubuntu Snap](https://snapcraft.io/ssh-mitm), [PIP-Package](https://pypi.org/project/ssh-mitm/) or [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest)
+**SSH-MITM** can be installed as a [Ubuntu Snap](https://snapcraft.io/ssh-mitm), [PIP-Package](https://pypi.org/project/ssh-mitm/) or [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest) and even runs on **[Android devices](https://github.com/ssh-mitm/ssh-mitm/discussions/83#discussioncomment-1531873)**
 
     # install ssh-mitm as snap package
     $ sudo snap install ssh-mitm
@@ -62,13 +62,15 @@ When publickey authentication is possible, a forwarded agent is needed to login 
     # install ssh-mitm as python pip package
     $ pip install ssh-mitm
 
+
+
 ## Quickstart
 
 <img src="https://www.ssh-mitm.at/assets/images/streamline-free/programmer-male.svg" align="left" width="128">
 
 To start SSH-MITM, all you have to do is run this command in your terminal of choice.
 
-    $ ssh-mitm --remote-host 192.168.0.x
+    $ ssh-mitm --remote-host 192.168.0.x:PORT
 
 Now let's try to connect. SSH-MITM is listening on port 10022.
 

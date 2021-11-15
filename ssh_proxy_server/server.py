@@ -5,12 +5,24 @@ import select
 import time
 import threading
 import sys
+from argparse import Namespace
+from socket import socket
 
-from colored import stylize, attr, fg
+from typing import (
+    Optional,
+    Text,
+    Type,
+    Tuple,
+    List,
+    Union
+)
 
-from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key
+from colored import stylize, attr, fg  # type: ignore
+
+from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key, PKey
 from paramiko.ssh_exception import SSHException
-from sshpubkeys import SSHKey
+from sshpubkeys import SSHKey  # type: ignore
+from typeguard import typechecked
 
 from ssh_proxy_server.multisocket import (
     create_server_sock,
@@ -18,74 +30,73 @@ from ssh_proxy_server.multisocket import (
     MultipleSocketsListener
 )
 from ssh_proxy_server.session import Session
-from ssh_proxy_server.forwarders.ssh import SSHForwarder
-from ssh_proxy_server.forwarders.scp import SCPForwarder
-from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin
-from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
-from ssh_proxy_server.forwarders.tunnel import (
-    ClientTunnelForwarder,
-    ServerTunnelForwarder
-)
-from ssh_proxy_server.authentication import AuthenticatorPassThrough
-from ssh_proxy_server.interfaces import ServerInterface
+from ssh_proxy_server.forwarders.ssh import SSHBaseForwarder, SSHForwarder
+from ssh_proxy_server.forwarders.scp import SCPBaseForwarder, SCPForwarder
+from ssh_proxy_server.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
+from ssh_proxy_server.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
+from ssh_proxy_server.forwarders.tunnel import ClientTunnelForwarder, ServerTunnelForwarder
+from ssh_proxy_server.authentication import Authenticator, AuthenticatorPassThrough
+from ssh_proxy_server.interfaces.server import BaseServerInterface, ServerInterface
 from ssh_proxy_server.exceptions import KeyGenerationError
 
 
 class SSHProxyServer:
     SELECT_TIMEOUT = 0.5
 
+    @typechecked
     def __init__(
         self,
-        listen_port,
+        listen_port: int,
         *,
-        key_file=None,
-        key_algorithm='rsa',
-        key_length=2048,
-        ssh_interface=SSHForwarder,
-        scp_interface=SCPForwarder,
-        sftp_interface=SFTPProxyServerInterface,
-        sftp_handler=SFTPHandlerPlugin,
-        server_tunnel_interface=ServerTunnelForwarder,
-        client_tunnel_interface=ClientTunnelForwarder,
-        authentication_interface=ServerInterface,
-        authenticator=AuthenticatorPassThrough,
-        transparent=False,
-        session_class=Session,
-        args=None
-    ):
+        key_file: Optional[Text] = None,
+        key_algorithm: Text = 'rsa',
+        key_length: int = 2048,
+        ssh_interface: Type[SSHBaseForwarder] = SSHForwarder,
+        scp_interface: Type[SCPBaseForwarder] = SCPForwarder,
+        sftp_interface: Type[BaseSFTPServerInterface] = SFTPProxyServerInterface,
+        sftp_handler: Type[SFTPHandlerBasePlugin] = SFTPHandlerPlugin,
+        server_tunnel_interface: Type[ServerTunnelForwarder] = ServerTunnelForwarder,
+        client_tunnel_interface: Type[ClientTunnelForwarder] = ClientTunnelForwarder,
+        authentication_interface: Type[BaseServerInterface] = ServerInterface,
+        authenticator: Type[Authenticator] = AuthenticatorPassThrough,
+        transparent: bool = False,
+        session_class: Type[Session] = Session,
+        args: Optional[Namespace] = None
+    ) -> None:
         self.args = args
 
-        self._threads = []
-        self._hostkey = None
+        self._threads: List[threading.Thread] = []
+        self._hostkey: Optional[PKey] = None
 
         self.listen_port = listen_port
         self.listen_address = '0.0.0.0'  # nosec
         self.listen_address_v6 = '::'
         self.running = False
 
-        self.key_file = key_file
-        self.key_algorithm = key_algorithm
-        self.key_length = key_length
+        self.key_file: Optional[Text] = key_file
+        self.key_algorithm: Text = key_algorithm
+        self.key_length: int = key_length
 
-        self.ssh_interface = ssh_interface
-        self.scp_interface = scp_interface
-        self.sftp_handler = sftp_handler
-        self.sftp_interface = self.sftp_handler.get_interface() or sftp_interface
-        self.server_tunnel_interface = server_tunnel_interface
-        self.client_tunnel_interface = client_tunnel_interface
+        self.ssh_interface: Type[SSHBaseForwarder] = ssh_interface
+        self.scp_interface: Type[SCPBaseForwarder] = scp_interface
+        self.sftp_handler: Type[SFTPHandlerBasePlugin] = sftp_handler
+        self.sftp_interface: Type[BaseSFTPServerInterface] = self.sftp_handler.get_interface() or sftp_interface
+        self.server_tunnel_interface: Type[ServerTunnelForwarder] = server_tunnel_interface
+        self.client_tunnel_interface: Type[ClientTunnelForwarder] = client_tunnel_interface
         # Server Interface
-        self.authentication_interface = authentication_interface
-        self.authenticator = authenticator
-        self.transparent = transparent
-        self.session_class = session_class
+        self.authentication_interface: Type[BaseServerInterface] = authentication_interface
+        self.authenticator: Type[Authenticator] = authenticator
+        self.transparent: bool = transparent
+        self.session_class: Type[Session] = session_class
 
         try:
             self.generate_host_key()
         except KeyGenerationError:
             sys.exit(1)
 
-    def generate_host_key(self):
-        key_algorithm_class = None
+    @typechecked
+    def generate_host_key(self) -> None:
+        key_algorithm_class: Optional[Type[PKey]] = None
         key_algorithm_bits = None
         if self.key_algorithm == 'dss':
             key_algorithm_class = DSSKey
@@ -105,7 +116,7 @@ class SSHProxyServer:
 
         if not self.key_file:
             try:
-                self._hostkey = key_algorithm_class.generate(bits=key_algorithm_bits)
+                self._hostkey = key_algorithm_class.generate(bits=key_algorithm_bits)  # type: ignore
             except ValueError as err:
                 logging.error(str(err))
                 raise KeyGenerationError()
@@ -134,7 +145,8 @@ class SSHProxyServer:
             f"    {stylize(ssh_pub_key.hash_sha256(),fg('light_blue') + attr('bold'))}"
         ))
 
-    def _key_from_filepath(self, filename, klass, password):
+    @typechecked
+    def _key_from_filepath(self, filename: Text, klass: Type[PKey], password: Optional[Text]) -> PKey:
         """
         Attempt to derive a `.PKey` from given string path ``filename``:
         - If ``filename`` appears to be a cert, the matching private key is
@@ -162,13 +174,14 @@ class SSHProxyServer:
         return key
 
     @property
-    def host_key(self):
+    def host_key(self) -> Optional[PKey]:
         if not self._hostkey:
             self.generate_host_key()
         return self._hostkey
 
     @staticmethod
-    def _clean_environment():
+    @typechecked
+    def _clean_environment() -> None:
         for env_var in [
             'SSH_ASKPASS',
             'SSH_AUTH_SOCK',
@@ -183,8 +196,11 @@ class SSHProxyServer:
             except KeyError:
                 pass
 
-    def start(self):
+    @typechecked
+    def start(self) -> None:
         self._clean_environment()
+        sock: Optional[Union[socket, MultipleSocketsListener]] = None
+
         sock = create_server_sock(
             (self.listen_address, self.listen_port),
             transparent=self.transparent
@@ -198,6 +214,9 @@ class SSHProxyServer:
                 ],
                 transparent=self.transparent
             )
+        if sock is None:
+            logging.error("error creating socket!")
+            return
 
         logging.info(f'listen interfaces {self.listen_address} and {self.listen_address_v6} on port {self.listen_port}')
         self.running = True
@@ -222,7 +241,13 @@ class SSHProxyServer:
             for thread in self._threads[:]:
                 thread.join()
 
-    def create_session(self, client, addr, remoteaddr):
+    @typechecked
+    def create_session(
+        self,
+        client: socket,
+        addr: Union[Tuple[Text, int], Tuple[Text, int, int, int]],
+        remoteaddr: Union[Tuple[Text, int], Tuple[Text, int, int, int]]
+    ) -> None:
         try:
             with self.session_class(self, client, addr, self.authenticator, remoteaddr) as session:
                 if session.start():

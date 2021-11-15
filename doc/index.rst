@@ -5,9 +5,11 @@ SSH-MITM Docs - Main Page
    :maxdepth: 2
    :caption: Contents:
 
-   install
    quickstart
-   advanced-usage
+   fingerprint
+   authentication
+   sshagent
+   filetransfer
    portforwarding
+   advanced-usage
    ssh_vulnerabilities
-   jumphosts

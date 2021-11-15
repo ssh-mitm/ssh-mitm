@@ -1,15 +1,25 @@
 import logging
 import os
 import uuid
+from typing import (
+    TYPE_CHECKING,
+    Optional,
+    Text
+)
 
+from typeguard import typechecked
+import ssh_proxy_server
 from ssh_proxy_server.forwarders.scp import SCPForwarder
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 
 class SCPStorageForwarder(SCPForwarder):
     """Stores transferred files to the file system
     """
     @classmethod
-    def parser_arguments(cls):
+    @typechecked
+    def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
             '--store-scp-files',
@@ -18,20 +28,20 @@ class SCPStorageForwarder(SCPForwarder):
             help='store files from scp'
         )
 
-    def __init__(self, session):
+    @typechecked
+    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
         super().__init__(session)
-        self.file_id = None
+        self.file_id: Optional[Text] = None
         self.scp_storage_dir = None
         if self.session.session_log_dir:
             self.scp_storage_dir = os.path.join(self.session.session_log_dir, 'scp')
 
-
-
-    def process_data(self, traffic):
+    @typechecked
+    def process_data(self, traffic: bytes) -> bytes:
         if not self.args.store_scp_files or not self.scp_storage_dir:
             return traffic
         os.makedirs(self.scp_storage_dir, exist_ok=True)
-        if not self.file_id:
+        if self.file_id is None:
             self.file_id = str(uuid.uuid4())
         output_path = os.path.join(self.scp_storage_dir, self.file_id)
 

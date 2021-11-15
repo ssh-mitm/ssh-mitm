@@ -10,6 +10,7 @@ from paramiko import Transport
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 from rich import print as rich_print
+from typeguard import typechecked
 
 from ssh_proxy_server.console import sshconsole
 from ssh_proxy_server.server import SSHProxyServer
@@ -18,7 +19,7 @@ from ssh_proxy_server.authentication import (
     Authenticator,
     AuthenticatorPassThrough
 )
-from ssh_proxy_server.interfaces import (
+from ssh_proxy_server.interfaces.server import (
     BaseServerInterface,
     ServerInterface
 )
@@ -47,7 +48,8 @@ from ssh_proxy_server.update import check_version
 from ssh_proxy_server.session import BaseSession, Session
 
 
-def get_parser():
+@typechecked
+def get_parser() -> ModuleParser:
     parser = ModuleParser(
         description='SSH Proxy Server',
         version=f"SSH-MITM {ssh_mitm_version}",
@@ -191,8 +193,8 @@ def get_parser():
 
     return parser
 
-
-def main():
+@typechecked
+def main() -> None:
 
     if os.environ.get('APPIMAGE', None):
         # if running as appimage, remove empty arguments
@@ -202,7 +204,6 @@ def main():
     parser = get_parser()
     args = parser.parse_args()
 
-    FORMAT = "%(message)s"
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
     root_logger.handlers.clear()
@@ -225,7 +226,7 @@ def main():
         sys.exit(0)
 
     if not args.disable_workarounds:
-        Transport.run = dropbear.transport_run
+        Transport.run = dropbear.transport_run  # type: ignore
 
     if args.paramiko_log_level == 'debug':
         logging.getLogger("paramiko").setLevel(logging.DEBUG)
@@ -260,7 +261,7 @@ def main():
         args=args
     )
     if args.banner_name is not None:
-        Transport._CLIENT_ID = args.banner_name
+        Transport._CLIENT_ID = args.banner_name  # type: ignore
     proxy.start()
 
 
