@@ -230,10 +230,10 @@ class Authenticator(BaseModule):
             remote_credentials: RemoteCredentials = self.get_remote_host_credentials(username, password, key)
             self.session.username = remote_credentials.username
             self.session.password = remote_credentials.password
-            self.session.key = remote_credentials.key
+            self.session.remote_key = remote_credentials.key
             self.session.remote_address = (remote_credentials.host, remote_credentials.port)
-        if key and not self.session.key:
-            self.session.key = key
+        if key and not self.session.remote_key:
+            self.session.remote_key = key
 
         if self.session.remote_address[0] is None or self.session.remote_address[1] is None:
             logging.error("no remote host")
@@ -253,12 +253,12 @@ class Authenticator(BaseModule):
                     self.session.remote_address[1],
                     self.session.password
                 )
-            if self.session.key:
+            if self.session.remote_key:
                 return self.auth_publickey(
                     self.session.username,
                     self.session.remote_address[0],
                     self.session.remote_address[1],
-                    self.session.key
+                    self.session.remote_key
                 )
         except MissingHostException:
             logging.error("no remote host")
@@ -410,10 +410,15 @@ class AuthenticatorPassThrough(Authenticator):
                 display_password = self.session.password_provided
             logmessage.append(f"\tPassword: {display_password or stylize('*******', fg('dark_gray'))}")
 
-        if self.session.key is not None:
-            ssh_pub_key = SSHKey(f"{self.session.key.get_name()} {self.session.key.get_base64()}")
+        if self.session.accepted_key is not None and self.session.remote_key != self.session.accepted_key:
+            ssh_pub_key = SSHKey(f"{self.session.accepted_key.get_name()} {self.session.accepted_key.get_base64()}")
             ssh_pub_key.parse()
-            logmessage.append(f"\tLogin-Key: {self.session.key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
+            logmessage.append(f"\tAccepted-Publickey: {self.session.accepted_key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
+
+        if self.session.remote_key is not None:
+            ssh_pub_key = SSHKey(f"{self.session.remote_key.get_name()} {self.session.remote_key.get_base64()}")
+            ssh_pub_key.parse()
+            logmessage.append(f"\tRemote-Publickey: {self.session.remote_key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits")
 
         ssh_keys = None
         if self.session.agent:

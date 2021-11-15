@@ -100,7 +100,8 @@ class Session(BaseSession):
         self.password_provided: Optional[str] = None
         self.socket_remote_address = remoteaddr
         self.remote_address: Tuple[Optional[Text], Optional[int]] = (None, None)
-        self.key: Optional[PKey] = None
+        self.remote_key: Optional[PKey] = None
+        self.accepted_key: Optional[PKey] = None
         self.agent: Optional[AgentProxy] = None
         self.authenticator: 'ssh_proxy_server.authentication.Authenticator' = authenticator(self)
 

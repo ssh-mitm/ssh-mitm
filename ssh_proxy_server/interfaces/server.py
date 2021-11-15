@@ -242,9 +242,13 @@ class ServerInterface(BaseServerInterface):
             logging.debug('host probing disabled - first key accepted')
             if self.args.disallow_publickey_auth:
                 logging.debug('ignoring argument --disallow-publickey-auth, first key still accepted')
+            self.session.authenticator.authenticate(username, key=None)
+            self.session.accepted_key = key
             return paramiko.common.AUTH_SUCCESSFUL
 
         auth_result: int = self.session.authenticator.authenticate(username, key=key)
+        if auth_result == paramiko.common.AUTH_SUCCESSFUL:
+            self.session.accepted_key = key
         if self.args.disallow_publickey_auth:
             return paramiko.common.AUTH_FAILED
         return auth_result
