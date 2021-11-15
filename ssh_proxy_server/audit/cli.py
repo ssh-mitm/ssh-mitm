@@ -14,7 +14,7 @@ def check_publickey(args: argparse.Namespace) -> bool:
     key = open(args.public_key, 'rt').read()
     try:
         pubkey = PublicBlob.from_string(key)
-    except:
+    except ValueError:
         print("file is not a valid public key")
         return False
     if probe_host(
@@ -25,9 +25,8 @@ def check_publickey(args: argparse.Namespace) -> bool:
     ):
         print("valid key")
         return True
-    else:
-        print("bad key")
-        return False
+    print("bad key")
+    return False
 
 
 @typechecked

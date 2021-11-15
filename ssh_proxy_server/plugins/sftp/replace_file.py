@@ -76,5 +76,4 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             return self.replacement.read()
         if length is not None:
             return self.replacement.read(length)
-        else:
-            return b''
+        return b''
