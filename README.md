@@ -14,7 +14,7 @@
   </p>
 </p>
 
-<h2 align="center">:star:  Upcoming Feature: Spoofing of FIDO2 Tokens :star: </h1> <br>
+<h2 align="center">:star:  Spoofing of FIDO2 Tokens :star: </h1> <br>
 
   <p align="center">
   OpenSSH supports FIDO2 hardware tokens to protect ssh keys.<br>
