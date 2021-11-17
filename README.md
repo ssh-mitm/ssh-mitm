@@ -14,6 +14,20 @@
   </p>
 </p>
 
+<h2 align="center">:star:  Upcoming Feature: Spoofing of FIDO2 Tokens :star: </h1> <br>
+
+  <p align="center">
+  OpenSSH supports FIDO2 hardware tokens to protect ssh keys.<br>
+  Even if you are using agent forwarding, the key should be protected,<br>
+  because the usage must be confirmed with the hardware token.
+  </p>
+  
+  <h2 align="center">:star: help getting 1.000 stars :star:</h2>
+  
+  <p align="center">
+  When this repository reaches 1.000 :star: I will implement full support for spoofing FIDO2 Tokens.
+  </p>
+
 ## Table of Contents
 
 - [Introduction](#introduction)
