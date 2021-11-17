@@ -22,10 +22,10 @@
   because the usage must be confirmed with the hardware token.
   </p>
   
-  <h2 align="center">:star: help getting 1.000 stars :star:</h2>
+  <h2 align="center">:star: help getting 500 stars :star:</h2>
   
   <p align="center">
-  When this repository reaches 1.000 :star: I will implement full support for spoofing FIDO2 Tokens.
+  When this repository reaches 500 :star: I will implement full support for spoofing FIDO2 Tokens.
   </p>
 
 ## Table of Contents
