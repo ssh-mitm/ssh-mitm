@@ -278,10 +278,11 @@ class ServerInterface(BaseServerInterface):
         )
         return False
 
-    def check_global_request(self, msg):
+    def check_global_request(self, kind, msg):
         logging.debug(
-            "check_global_request: msg=%s", msg
+            "check_global_request: kind=%s, msg=%s", kind, msg
         )
+        return False
 
 
 class ProxySFTPServer(paramiko.SFTPServer):
