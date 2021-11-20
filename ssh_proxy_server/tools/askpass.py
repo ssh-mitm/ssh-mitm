@@ -2,21 +2,22 @@
 import argparse
 import logging
 try:
-    import wx
+    import tkinter
+    from tkinter.simpledialog import askstring
+    from tkinter import messagebox
 except ImportError:
-    wx = None
+    tkinter = None
 
 
 def ask_pass(primary_message, secondary_message=None):
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
-    app = wx.App()
-    dlg = wx.PasswordEntryDialog(None, dialog_text, 'SSH-MITM - Askpass', "", wx.OK | wx.CANCEL)
-
-    response = dlg.ShowModal()
-    if response == wx.ID_OK:
-        return dlg.GetValue()
+    root = tkinter.Tk()
+    root.withdraw()
+    password = askstring('SSH-MITM - Askpass', dialog_text, show="*")
+    if password is not None:
+        return password
     return None
 
 
@@ -24,19 +25,17 @@ def confirm(primary_message, secondary_message=None):
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
-    app = wx.App()
-    dlg = wx.MessageDialog(None, dialog_text, 'SSH-MITM - Askpass', wx.YES | wx.NO)
-    response = dlg.ShowModal()
-    if response == wx.ID_YES:
+    root= tkinter.Tk()
+    answer = tkinter.messagebox.askquestion('SSH-MITM - Askpass', dialog_text, icon='question')
+    if answer == 'yes':
         return True
     return False
 
 
 def main():
-    if wx is False:
-        logging.error("wxPython not installed! please install!")
-        exit(1)
-
+    if tkinter is None:
+        logging.error("tkinter not installed!")
+        sys.exit(1)
     parser = argparse.ArgumentParser()
     parser.add_argument('messages', nargs='*')
     args = parser.parse_args()
