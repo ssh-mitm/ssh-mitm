@@ -17,7 +17,7 @@ AppDir:
     id: at.ssh-mitm.server
     name: ssh-mitm
     icon: ssh-mitm
-    version: 0.6.3
+    version: 1.0.0
     # Set the python executable as entry point
     exec: usr/bin/python3
     # Set the application main script path as argument. Use '$@' to forward CLI parameters
