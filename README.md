@@ -31,6 +31,10 @@
   Thanks for supporting me 😄 ❗I have created a discussion where I will kepp you up to date:<br>
   <a href="https://github.com/ssh-mitm/ssh-mitm/discussions/89">Discussion:  Spoofing FIDO2 tokens and SSH-Askpass</a>
   </p>
+  <h3 align="center">
+  <b>✔️ Full support for trivial authentication is implemented in the develop branch! ✔️</b>
+  </h3>
+
 
 ## Table of Contents
 
