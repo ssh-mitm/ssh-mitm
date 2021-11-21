@@ -21,19 +21,20 @@
   Even if you are using agent forwarding, the key should be protected,<br>
   because the usage must be confirmed with the hardware token.
   </p>
-  
-  <h2 align="center">:star: help getting 500 stars :star:</h2>
-  
   <p align="center">
-  <strike>When this repository reaches 500 :star: I will implement full support for spoofing FIDO2 Tokens.</strike>
+  Trivial success authentication is a vulnerability in,<br>
+  which is defined in RFC-4252 and allows a server to<br>
+  spoof various security features like FIDO2 and SSH-Askpass
   </p>
   <p align="center">
-  Thanks for supporting me 😄 ❗I have created a discussion where I will kepp you up to date:<br>
-  <a href="https://github.com/ssh-mitm/ssh-mitm/discussions/89">Discussion:  Spoofing FIDO2 tokens and SSH-Askpass</a>
+  <b><a href="https://github.com/ssh-mitm/ssh-mitm/discussions/89#discussioncomment-1677929">Tutorial how to spoof FIDO2 tokens</a></b>
   </p>
   <h3 align="center">
-  <b>✔️ Full support for trivial authentication is implemented in the develop branch! ✔️</b>
+  <b>:star: if you like this feature, pleas give me a :star: to show your support for my work</b>
   </h3>
+  <p align="center">
+  <i>At the moment full support for spoofing FIDO2 tokens is only implemented in the development branch!</i>
+  </p>
 
 
 ## Table of Contents
