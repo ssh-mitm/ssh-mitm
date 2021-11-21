@@ -14,28 +14,6 @@
   </p>
 </p>
 
-<h2 align="center">:star:  Spoofing of FIDO2 Tokens :star: </h1> <br>
-
-  <p align="center">
-  OpenSSH supports FIDO2 hardware tokens to protect ssh keys.<br>
-  Even if you are using agent forwarding, the key should be protected,<br>
-  because the usage must be confirmed with the hardware token.
-  </p>
-  <p align="center">
-  Trivial success authentication is a vulnerability,<br>
-  which is defined in RFC-4252 and allows a server to<br>
-  spoof various security features like FIDO2 and SSH-Askpass
-  </p>
-  <h3 align="center">
-  <b>:book: <a href="https://github.com/ssh-mitm/ssh-mitm/discussions/89#discussioncomment-1677929">Tutorial how to spoof FIDO2 tokens</a> :book:</b>
-  </h3>
-  <h3 align="center">
-  <b>:star: if you like this feature, pleas give me a :star: to show your support for my work :star:</b>
-  </h3>
-  <p align="center">
-  <i>At the moment full support for spoofing FIDO2 tokens is only implemented in the development branch!</i>
-  </p>
-
 
 ## Table of Contents
 
