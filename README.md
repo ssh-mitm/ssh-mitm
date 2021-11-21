@@ -22,7 +22,7 @@
   because the usage must be confirmed with the hardware token.
   </p>
   <p align="center">
-  Trivial success authentication is a vulnerability in,<br>
+  Trivial success authentication is a vulnerability,<br>
   which is defined in RFC-4252 and allows a server to<br>
   spoof various security features like FIDO2 and SSH-Askpass
   </p>
