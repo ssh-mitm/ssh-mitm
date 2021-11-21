@@ -26,11 +26,11 @@
   which is defined in RFC-4252 and allows a server to<br>
   spoof various security features like FIDO2 and SSH-Askpass
   </p>
-  <p align="center">
-  <b><a href="https://github.com/ssh-mitm/ssh-mitm/discussions/89#discussioncomment-1677929">Tutorial how to spoof FIDO2 tokens</a></b>
-  </p>
   <h3 align="center">
-  <b>:star: if you like this feature, pleas give me a :star: to show your support for my work</b>
+  <b>:book: <a href="https://github.com/ssh-mitm/ssh-mitm/discussions/89#discussioncomment-1677929">Tutorial how to spoof FIDO2 tokens</a> :book:</b>
+  </h3>
+  <h3 align="center">
+  <b>:star: if you like this feature, pleas give me a :star: to show your support for my work :star:</b>
   </h3>
   <p align="center">
   <i>At the moment full support for spoofing FIDO2 tokens is only implemented in the development branch!</i>
