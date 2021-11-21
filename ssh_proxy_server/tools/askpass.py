@@ -35,7 +35,7 @@ def confirm(primary_message, secondary_message=None):
 def main():
     if tkinter is None:
         logging.error("tkinter not installed!")
-        sys.exit(1)
+        exit(1)
     parser = argparse.ArgumentParser()
     parser.add_argument('messages', nargs='*')
     args = parser.parse_args()
