@@ -1,7 +1,8 @@
 Trivial Authentication
 ======================
 
-The "trivial authentication" spoofing attack was found by AUT-milCERT during an audit of FIDO2 tokens.
+The "trivial authentication" spoofing attack was found by Manfred Kaiser (AUT-milCERT)
+in cooperation with Simon Tatham (PuTTY) and Matt Johnston (Dropbear) during an security audit of FIDO2 tokens.
 
 Trivial authentication is a special form of spoofing attack that exploits authentication methods to force a client to log in.
 
