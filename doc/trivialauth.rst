@@ -116,23 +116,29 @@ Spoofing FIDO2 tokens / SSH-Askpass
 
 **SSH-MITM >= 1.0.0**
 
-```bash
-ssh-mitm --remote-host TARGET --enable-trivial-auth
-```
+.. code-block:: bash
+
+    ssh-mitm --remote-host TARGET --enable-trivial-auth
+
 
 **SSH-MITM < 1.0.0**
 
 SSH-MITM < 1.0.0 does not fully support "trivial authentication", but you can configure the authentication process, to test "trivial authentication".
 
-```bash
-ssh-mitm --remote-host TARGET --disallow-publickey-auth --enable-keyboard-interactive-auth --disable-keyboard-interactive-prompts
-```
+.. code-block:: bash
+
+    ssh-mitm --remote-host TARGET \
+        --disallow-publickey-auth \
+        --enable-keyboard-interactive-auth \
+        --disable-keyboard-interactive-prompts
+
 
 Connect the client to SSH-MITM with agent forwarding:
 
-```bash
-ssh -A -p 10022 localhost
-```
+.. code-block:: bash
+
+    ssh -A -p 10022 localhost
+
 
 Verification without bypass
 """""""""""""""""""""""""""
@@ -140,15 +146,17 @@ Verification without bypass
 To verify the default behavior for a login using publickey authentication on the MitM server and on the remote server,
 SSH-MITM can be started with following parameters:
 
-```bash
-ssh-mitm --remote-host TARGET
-```
+.. code-block:: bash
+
+    ssh-mitm --remote-host TARGET
+
 
 Connect the client to SSH-MITM with agent forwarding:
 
-```bash
-ssh -A -p 10022 localhost
-```
+.. code-block:: bash
+
+    ssh -A -p 10022 localhost
+
 
 In this case, the client must authenticate to the SSH-MITM server using "publickey", which requires a confirmation.
 
