@@ -1,9 +1,9 @@
-Trivial Success authentication
-==============================
+Trivial Authentication
+======================
 
-Trivial success authentication is a special form of spoofing attack that exploits trivial authentication methods to force a client to log in. Trivial authentication methods are those that do not require any interaction from the client. "none" is an example of a trivial authentication method because it allows an immediate login to a server and in most cases the client simply accepts it if the login was successful.
+Trivial authentication is a special form of spoofing attack that exploits trivial authentication methods to force a client to log in. Trivial authentication methods are those that do not require any interaction from the client. "none" is an example of a trivial authentication method because it allows an immediate login to a server and in most cases the client simply accepts it if the login was successful.
 
-This "trivial success authentication" spoofing attack was found during an audit of FIDO2 tokens. SSH keys can be additionally protected with a FIDO2 token as of OpenSSH 8.2, thus protecting against misuse should the private key be compromised.
+This "trivial authentication" spoofing attack was found during an audit of FIDO2 tokens. SSH keys can be additionally protected with a FIDO2 token as of OpenSSH 8.2, thus protecting against misuse should the private key be compromised.
 
 none authentication
 -------------------
