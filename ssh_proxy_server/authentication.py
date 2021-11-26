@@ -49,7 +49,10 @@ def probe_host(hostname_or_ip: Text, port: int, username: Text, public_key: para
         m.add_string("ssh-connection")
         m.add_string(self.auth_method)
         m.add_boolean(False)
-        m.add_string(self.private_key.public_blob.key_type)
+        if self.private_key.public_blob.key_type == 'ssh-rsa':
+            m.add_string('rsa-sha2-512')
+        else:
+            m.add_string(self.private_key.public_blob.key_type)
         m.add_string(self.private_key.public_blob.key_blob)
         self.transport._send_message(m)
 
