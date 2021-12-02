@@ -9,6 +9,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [1.0.0] - 2021-11-20
 
+### Added
+
+- added full support for trivial success authentication
+- better documentation
+- added typehints and typecheching
+- added audit command, which tests publickey authentication with a specific private key
+
+### Changed
+
+- separate arguments for remote host and remote port
+- changed logoutput format
+- port forwarding: set injectable server tunnel forwarder as default forwarder
+- replaced wxpython ssh-askpass implementation with tkinter
+
+### Fixed
+
+- added workarround for publickey lookup with OpenSSH 8.8
+
+### Removed
+
+- Gooey GUI
+- removed SFTPHandle from SFTP replace_file plugin
+- removed setup.cfg file
+
+
 ## [0.6.3] - 2021-11-04
 
 - fixed hostname regex (error in regex)
