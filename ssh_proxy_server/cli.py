@@ -2,6 +2,7 @@ import argparse
 import logging
 import sys
 import os
+from typing import cast
 
 from enhancements.modules import ModuleParser
 
@@ -228,9 +229,9 @@ def main() -> None:
     subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
     subparsers.required = True
 
-    parser_mitm_server = subparsers.add_parser('server', help='start the ssh-mitm server')
+    parser_mitm_server: ModuleParser = cast(ModuleParser, subparsers.add_parser('server', help='start the ssh-mitm server'))
     init_server_parser(parser_mitm_server)
-    parser_audit = subparsers.add_parser('audit', help='audit tools for ssh servers')
+    parser_audit: ModuleParser = cast(ModuleParser, subparsers.add_parser('audit', help='audit tools for ssh servers'))
     init_audit_parser(parser_audit)
 
     args = parser.parse_args()
