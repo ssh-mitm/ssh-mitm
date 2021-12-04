@@ -53,10 +53,7 @@ setup(
     entry_points={
         **{
             'console_scripts': [
-                'ssh-proxy-server = ssh_proxy_server.cli:main',
                 'ssh-mitm = ssh_proxy_server.cli:main',
-                'ssh-mitm-gui = ssh_proxy_server.gui:main',
-                'ssh-mitm-audit = ssh_proxy_server.audit.cli:main',
                 'ssh-mitm-askpass = ssh_proxy_server.tools.askpass:main'
             ]
         },
@@ -73,10 +70,5 @@ setup(
         'rich',
         'requests',
         'typeguard'
-    ],
-    extras_require={
-        'plugins': [
-            'ssh-mitm-plugins'
-        ],
-    }
+    ]
 )
