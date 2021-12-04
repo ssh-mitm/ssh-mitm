@@ -5,6 +5,7 @@ import argparse
 import paramiko
 import sys
 
+from enhancements.modules import ModuleParser
 from paramiko.pkey import PublicBlob
 from typeguard import typechecked
 from ssh_proxy_server.authentication import probe_host, Authenticator
@@ -53,9 +54,8 @@ def check_privatekey(args: argparse.Namespace) -> bool:
 
 
 @typechecked
-def main() -> None:
-    parser = argparse.ArgumentParser()
-    subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
+def init_audit_parser(parser: ModuleParser) -> None:
+    subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='audit-command')
     subparsers.required = True
 
     parser_check_publickey = subparsers.add_parser('check-publickey', help='checks a username and publickey against a server')
@@ -74,9 +74,9 @@ def main() -> None:
     parser_scan_auth = subparsers.add_parser('get-auth', help='checks authentication methods')
     parser_scan_auth.add_argument('--host', type=str, required=True, help='Hostname or IP address')
     parser_scan_auth.add_argument('--port', type=int, default=22, help='port (default: 22)')
-    
 
-    args = parser.parse_args(sys.argv[1:])
+
+def run_audit(args: argparse.Namespace) -> None:
     if args.subparser_name == 'check-publickey':
         if not check_publickey(args):
             sys.exit(1)
