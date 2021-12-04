@@ -17,34 +17,14 @@ parts:
     # See 'snapcraft plugins'
     plugin: python
     source: .
-    python-packages:
-      - https://extras.wxpython.org/wxPython4/extras/linux/gtk3/ubuntu-18.04/wxPython-4.1.1-cp36-cp36m-linux_x86_64.whl
-      - Gooey
-    stage-packages:
-      - libsdl2-2.0-0
 apps:
   ssh-mitm:
     command: usr/bin/python3 $SNAP/bin/ssh-mitm
     environment:
       PYTHONIOENCODING: utf-8
+      PYTHONOPTIMIZE: 1
     plugs:
       - home
       - network
       - network-bind
-  audit:
-    command: usr/bin/python3 $SNAP/bin/ssh-mitm-audit
-    environment:
-      PYTHONIOENCODING: utf-8
-    plugs:
-      - home
-      - network
-  gui:
-    command: usr/bin/python3 $SNAP/bin/ssh-mitm-gui
-    environment:
-      PYTHONIOENCODING: utf-8
-    plugs:
-      - home
-      - network
-      - network-bind
-    extensions:
-      - gnome-3-34
+      - ssh-keys

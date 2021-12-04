@@ -43,6 +43,7 @@ AppDir:
       # Path to the site-packages dir or other modules dirs
       # See https://docs.python.org/3/using/cmdline.html#envvar-PYTHONPATH
       PYTHONPATH: '${APPDIR}/usr/lib/python3.8/site-packages'
+      PYTHONOPTIMIZE: 1
 
   test:
     fedora:
