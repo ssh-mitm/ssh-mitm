@@ -21,13 +21,13 @@ entry_points: Dict[str, List[str]] = {
         'replace_file = ssh_proxy_server.plugins.sftp.replace_file:SFTPProxyReplaceHandler',
         'store_file = ssh_proxy_server.plugins.sftp.store_file:SFTPHandlerStoragePlugin'
     ],
-    'ServerTunnelBaseForwarder': [
-        'base = ssh_proxy_server.forwarders.tunnel:ServerTunnelForwarder',
-        'inject = ssh_proxy_server.plugins.tunnel.injectservertunnel:InjectableServerTunnelForwarder'
+    'RemotePortForwardingBaseForwarder': [
+        'base = ssh_proxy_server.forwarders.tunnel:RemotePortForwardingForwarder',
+        'inject = ssh_proxy_server.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardingForwarder'
     ],
-    'ClientTunnelBaseForwarder': [
-        'base = ssh_proxy_server.forwarders.tunnel:ClientTunnelForwarder',
-        'inject = ssh_proxy_server.plugins.tunnel.injectclienttunnel:InjectableClientTunnelForwarder'
+    'LocalPortForwardingBaseForwarder': [
+        'base = ssh_proxy_server.forwarders.tunnel:LocalPortForwardingForwarder',
+        'socks5 = ssh_proxy_server.plugins.tunnel.injectclienttunnel:SOCKS5TunnelForwarder'
     ],
     'BaseServerInterface': [
         'base = ssh_proxy_server.interfaces.server:ServerInterface'

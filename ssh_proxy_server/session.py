@@ -32,7 +32,7 @@ import ssh_proxy_server
 from ssh_proxy_server.forwarders.agent import AgentProxy
 from ssh_proxy_server.interfaces.server import BaseServerInterface, ProxySFTPServer
 from ssh_proxy_server.plugins.session import key_negotiation
-from ssh_proxy_server.plugins.tunnel.injectclienttunnel import InjectableClientTunnelForwarder
+from ssh_proxy_server.plugins.tunnel.injectclienttunnel import SOCKS5TunnelForwarder
 
 if TYPE_CHECKING:
     from ssh_proxy_server.server import SSHProxyServer

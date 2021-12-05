@@ -8,17 +8,18 @@ from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
 import ssh_proxy_server
-from ssh_proxy_server.forwarders.tunnel import ServerTunnelForwarder, TunnelForwarder
+from ssh_proxy_server.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
 from ssh_proxy_server.plugins.session.tcpserver import TCPServerThread
 
 if TYPE_CHECKING:
     from ssh_proxy_server.interfaces.server import ServerInterface
     from ssh_proxy_server.session import Session
 
-class InjectableServerTunnelForwarder(ServerTunnelForwarder):
+
+class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
     """For each server port forwarding request open a local port to inject traffic into the port-forward
 
-    The Handler is still the same as the ServerTunnelForwarder, only a tcp server is added
+    The Handler is still the same as the RemotePortForwardingForwarder, only a tcp server is added
 
     """
 
@@ -42,7 +43,7 @@ class InjectableServerTunnelForwarder(ServerTunnelForwarder):
     ) -> None:
         super().__init__(session, server_interface, destination)
         self.tcpserver = TCPServerThread(
-            self.serve,
+            self.handle_request,
             network=self.args.server_tunnel_net,
             run_status=self.session.running
         )
@@ -54,7 +55,7 @@ class InjectableServerTunnelForwarder(ServerTunnelForwarder):
         self.tcpserver.start()
 
     @typechecked
-    def serve(self, client: Union[socket, paramiko.Channel], addr: Tuple[Text, int]) -> None:
+    def handle_request(self, listenaddr: Tuple[Text, int], client: Union[socket, paramiko.Channel], addr: Tuple[Text, int]) -> None:
         try:
             f = TunnelForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", self.destination, addr),

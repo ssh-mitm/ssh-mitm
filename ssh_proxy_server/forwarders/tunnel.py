@@ -101,11 +101,11 @@ class TunnelForwarder(threading.Thread):
             channel.lock.release()
 
 
-class ClientTunnelBaseForwarder(BaseModule):
+class LocalPortForwardingBaseForwarder(BaseModule):
     pass
 
 
-class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
+class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwarder):
     """Handles tunnel forwarding when the client is requesting a tunnel connection
 
     Then forward traffic between direct-tcpip channels connecting to local and to remote through the ssh-mitm
@@ -128,7 +128,7 @@ class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             raise ValueError("No SSH client!")
         remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, self.origin)
-        super(ClientTunnelForwarder, self).__init__(None, remote_ch)
+        super(LocalPortForwardingForwarder, self).__init__(None, remote_ch)
 
     @typechecked
     def run(self) -> None:
@@ -143,7 +143,7 @@ class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
             logging.debug("Proxyjump: forwarding traffic through master channel [chanid %s]", self.chanid)
         if not self.local_ch:
             self.local_ch = self.session.transport.accept(5)
-        super(ClientTunnelForwarder, self).run()
+        super(LocalPortForwardingForwarder, self).run()
 
     @classmethod
     @typechecked
@@ -151,11 +151,11 @@ class ClientTunnelForwarder(TunnelForwarder, ClientTunnelBaseForwarder):
         pass
 
 
-class ServerTunnelBaseForwarder(BaseModule):
+class RemotePortForwardingBaseForwarder(BaseModule):
     pass
 
 
-class ServerTunnelForwarder(ServerTunnelBaseForwarder):
+class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     """Handles Tunnel forwarding when the server is requesting a tunnel connection
 
     Actually just used to wrap data around a handler to parse to the transport.request_port_forward
@@ -169,7 +169,7 @@ class ServerTunnelForwarder(ServerTunnelBaseForwarder):
         server_interface: 'ssh_proxy_server.interfaces.server.ServerInterface',
         destination: Optional[Tuple[str, int]]
     ) -> None:
-        super(ServerTunnelBaseForwarder, self).__init__()
+        super(RemotePortForwardingBaseForwarder, self).__init__()
         self.session = session
         self.server_interface = server_interface
         self.destination = destination

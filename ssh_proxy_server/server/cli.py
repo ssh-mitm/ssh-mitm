@@ -29,15 +29,15 @@ from ssh_proxy_server.interfaces.sftp import (
 )
 
 from ssh_proxy_server.forwarders.tunnel import (
-    ServerTunnelBaseForwarder,
-    ClientTunnelForwarder,
-    ClientTunnelBaseForwarder
+    RemotePortForwardingBaseForwarder,
+    LocalPortForwardingForwarder,
+    LocalPortForwardingBaseForwarder
 )
 
 from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 from ssh_proxy_server.plugins.scp.store_file import SCPStorageForwarder
 from ssh_proxy_server.plugins.sftp.store_file import SFTPHandlerStoragePlugin
-from ssh_proxy_server.plugins.tunnel.injectservertunnel import InjectableServerTunnelForwarder
+from ssh_proxy_server.plugins.tunnel.injectservertunnel import InjectableRemotePortForwardingForwarder
 from ssh_proxy_server.session import BaseSession, Session
 
 
@@ -104,18 +104,18 @@ def init_server_parser(parser: ModuleParser) -> None:
         baseclass=SFTPHandlerBasePlugin
     )
     parser.add_module(
-        '--server-tunnel',
+        '--remote-port-forwarder',
         dest='server_tunnel_interface',
-        default=InjectableServerTunnelForwarder,
+        default=InjectableRemotePortForwardingForwarder,
         help='interface to handle tunnels from the server',
-        baseclass=ServerTunnelBaseForwarder
+        baseclass=RemotePortForwardingBaseForwarder
     )
     parser.add_module(
-        '--client-tunnel',
+        '--local-port-forwarder',
         dest='client_tunnel_interface',
-        default=ClientTunnelForwarder,
+        default=LocalPortForwardingForwarder,
         help='interface to handle tunnels from the client',
-        baseclass=ClientTunnelBaseForwarder
+        baseclass=LocalPortForwardingBaseForwarder
     )
     parser.add_module(
         '--auth-interface',

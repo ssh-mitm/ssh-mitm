@@ -34,7 +34,7 @@ from ssh_proxy_server.forwarders.ssh import SSHBaseForwarder, SSHForwarder
 from ssh_proxy_server.forwarders.scp import SCPBaseForwarder, SCPForwarder
 from ssh_proxy_server.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
 from ssh_proxy_server.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
-from ssh_proxy_server.forwarders.tunnel import ClientTunnelForwarder, ServerTunnelForwarder
+from ssh_proxy_server.forwarders.tunnel import LocalPortForwardingForwarder, RemotePortForwardingForwarder
 from ssh_proxy_server.authentication import Authenticator, AuthenticatorPassThrough
 from ssh_proxy_server.interfaces.server import BaseServerInterface, ServerInterface
 from ssh_proxy_server.exceptions import KeyGenerationError
@@ -55,8 +55,8 @@ class SSHProxyServer:
         scp_interface: Type[SCPBaseForwarder] = SCPForwarder,
         sftp_interface: Type[BaseSFTPServerInterface] = SFTPProxyServerInterface,
         sftp_handler: Type[SFTPHandlerBasePlugin] = SFTPHandlerPlugin,
-        server_tunnel_interface: Type[ServerTunnelForwarder] = ServerTunnelForwarder,
-        client_tunnel_interface: Type[ClientTunnelForwarder] = ClientTunnelForwarder,
+        server_tunnel_interface: Type[RemotePortForwardingForwarder] = RemotePortForwardingForwarder,
+        client_tunnel_interface: Type[LocalPortForwardingForwarder] = LocalPortForwardingForwarder,
         authentication_interface: Type[BaseServerInterface] = ServerInterface,
         authenticator: Type[Authenticator] = AuthenticatorPassThrough,
         transparent: bool = False,
@@ -81,8 +81,8 @@ class SSHProxyServer:
         self.scp_interface: Type[SCPBaseForwarder] = scp_interface
         self.sftp_handler: Type[SFTPHandlerBasePlugin] = sftp_handler
         self.sftp_interface: Type[BaseSFTPServerInterface] = self.sftp_handler.get_interface() or sftp_interface
-        self.server_tunnel_interface: Type[ServerTunnelForwarder] = server_tunnel_interface
-        self.client_tunnel_interface: Type[ClientTunnelForwarder] = client_tunnel_interface
+        self.server_tunnel_interface: Type[RemotePortForwardingForwarder] = server_tunnel_interface
+        self.client_tunnel_interface: Type[LocalPortForwardingForwarder] = client_tunnel_interface
         # Server Interface
         self.authentication_interface: Type[BaseServerInterface] = authentication_interface
         self.authenticator: Type[Authenticator] = authenticator

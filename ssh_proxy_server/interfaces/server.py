@@ -20,7 +20,7 @@ from typeguard import typechecked
 import ssh_proxy_server
 from ssh_proxy_server.authentication import RemoteCredentials
 from ssh_proxy_server.clients.sftp import SFTPClient
-from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, ClientTunnelForwarder, ServerTunnelForwarder
+from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder, RemotePortForwardingForwarder
 
 if TYPE_CHECKING:
     from ssh_proxy_server.session import Session
@@ -32,7 +32,7 @@ class BaseServerInterface(paramiko.ServerInterface, BaseModule):
     def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
         super().__init__()
         self.session: 'ssh_proxy_server.session.Session' = session
-        self.forwarders: List[Union[TunnelForwarder, ClientTunnelForwarder, ServerTunnelForwarder]] = []
+        self.forwarders: List[Union[TunnelForwarder, LocalPortForwardingForwarder, RemotePortForwardingForwarder]] = []
         self.possible_auth_methods: Optional[List[Text]] = None
 
 

@@ -17,39 +17,45 @@ from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
 import ssh_proxy_server
-from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, ClientTunnelForwarder
+from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from ssh_proxy_server.plugins.session.tcpserver import TCPServerThread
+from ssh_proxy_server.socks.server import Socks5Server  # type: ignore
 if TYPE_CHECKING:
     from ssh_proxy_server.session import Session
 
 class ClientTunnelHandler:
     """
-    Similar to the ServerTunnelForwarder
+    Similar to the RemotePortForwardingForwarder
     """
 
     @typechecked
     def __init__(
         self,
-        session: 'ssh_proxy_server.session.Session',
-        destination: Optional[Tuple[str, int]]
+        session: 'ssh_proxy_server.session.Session'
     ) -> None:
         self.session = session
-        self.destination = destination
 
     @typechecked
-    def handle_request(self, client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]) -> None:
+    def handle_request(self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
+        destination: Optional[Tuple[Text, int]] = None
+        socks5connection = Socks5Server(listenaddr)
+        destination = socks5connection.get_address(client)
+        if destination is None:
+            client.close()
+            logging.error("unable to parse socks5 request")
+            return
         try:
-            logging.debug("Injecting direct-tcpip channel (%s -> %s) to client", addr, self.destination)
-            remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, addr)
+            logging.debug("Injecting direct-tcpip channel (%s -> %s) to client", addr, destination)
+            remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", destination, addr)
             TunnelForwarder(client, remote_ch)
         except paramiko.ssh_exception.ChannelException:
             client.close()
-            logging.error("Could not setup forward from %s to %s.", addr, self.destination)
+            logging.error("Could not setup forward from %s to %s.", addr, destination)
 
 
-class InjectableClientTunnelForwarder(ClientTunnelForwarder):
+class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
     """Serve out direct-tcpip connections over a session on local ports
     """
 
@@ -57,13 +63,6 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
     @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
-        plugin_group.add_argument(
-            '--tunnel-client-dest',
-            dest='client_tunnel_dest',
-            help='multiple direct-tcpip address/port combination to forward to (e.g. google.com:80, youtube.com:80)',
-            required=True,
-            nargs='+'
-        )
         plugin_group.add_argument(
             '--tunnel-client-net',
             dest='client_tunnel_net',
@@ -80,22 +79,16 @@ class InjectableClientTunnelForwarder(ClientTunnelForwarder):
     def setup(cls, session: 'ssh_proxy_server.session.Session') -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
-        form = re.compile('.*:\d{1,5}')
 
-        for target in args.client_tunnel_dest:
-            if not form.match(target):
-                logging.warning("--tunnel-client-dest %s does not match format host:port (e.g. google.com:80)", target)
-                break
-            destnet, destport = target.split(":")
-            t = TCPServerThread(
-                ClientTunnelHandler(session, (destnet, int(destport))).handle_request,
-                run_status=session.running,
-                network=args.client_tunnel_net
-            )
-            t.start()
-            cls.tcpservers.append(t)
-            logging.info((
-                f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
-                " - "
-                f"created client tunnel injector for host {t.network} on port {t.port} to destination {target}"
-            ))
+        t = TCPServerThread(
+            ClientTunnelHandler(session).handle_request,
+            run_status=session.running,
+            network=args.client_tunnel_net
+        )
+        t.start()
+        cls.tcpservers.append(t)
+        logging.info((
+            f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
+            " - "
+            f"created SOCKS5 proxy server on port {t.port}. connect with: {stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))}"
+        ))
