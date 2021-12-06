@@ -26,8 +26,7 @@ entry_points: Dict[str, List[str]] = {
         'inject = ssh_proxy_server.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardingForwarder'
     ],
     'LocalPortForwardingBaseForwarder': [
-        'base = ssh_proxy_server.forwarders.tunnel:LocalPortForwardingForwarder',
-        'socks5 = ssh_proxy_server.plugins.tunnel.injectclienttunnel:SOCKS5TunnelForwarder'
+        'base = ssh_proxy_server.forwarders.tunnel:LocalPortForwardingForwarder'
     ],
     'BaseServerInterface': [
         'base = ssh_proxy_server.interfaces.server:ServerInterface'
