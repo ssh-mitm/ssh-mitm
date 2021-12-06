@@ -30,7 +30,6 @@ from ssh_proxy_server.interfaces.sftp import (
 
 from ssh_proxy_server.forwarders.tunnel import (
     RemotePortForwardingBaseForwarder,
-    LocalPortForwardingForwarder,
     LocalPortForwardingBaseForwarder
 )
 
@@ -38,6 +37,7 @@ from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
 from ssh_proxy_server.plugins.scp.store_file import SCPStorageForwarder
 from ssh_proxy_server.plugins.sftp.store_file import SFTPHandlerStoragePlugin
 from ssh_proxy_server.plugins.tunnel.injectservertunnel import InjectableRemotePortForwardingForwarder
+from ssh_proxy_server.plugins.tunnel.socks5 import SOCKS5TunnelForwarder
 from ssh_proxy_server.session import BaseSession, Session
 
 
@@ -113,7 +113,7 @@ def init_server_parser(parser: ModuleParser) -> None:
     parser.add_module(
         '--local-port-forwarder',
         dest='client_tunnel_interface',
-        default=LocalPortForwardingForwarder,
+        default=SOCKS5TunnelForwarder,
         help='interface to handle tunnels from the client',
         baseclass=LocalPortForwardingBaseForwarder
     )
