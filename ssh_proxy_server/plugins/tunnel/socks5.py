@@ -1,6 +1,7 @@
 import logging
 from enum import Enum
 import socket
+import sys
 from typing import (
     TYPE_CHECKING,
     cast,
@@ -104,8 +105,6 @@ class Socks5Server():
     @typechecked
     def _get_auth_methods(self, clientsock: Union[socket.socket, paramiko.Channel]) -> List[Socks5AuthenticationType]:
         """Ermittelt die angebotenen Authentifizierungsmechanismen"""
-        if clientsock.recv(1) != Socks5Server.SOCKSVERSION:
-            raise Socks5Error("Invalid Socks5 Version")
         methods_count = int.from_bytes(clientsock.recv(1), byteorder='big')
         try:
             methods = [Socks5AuthenticationType(bytes([m])) for m in clientsock.recv(methods_count)]
@@ -222,8 +221,11 @@ class Socks5Server():
         return username == self.username and password == self.password
 
     @typechecked
-    def get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[Text, int]]:
+    def get_address(self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False) -> Optional[Tuple[Text, int]]:
         try:
+            # check socks version
+            if not ignore_version and clientsock.recv(1) != Socks5Server.SOCKSVERSION:
+                raise Socks5Error("Invalid Socks5 Version")
             if self._authenticate(clientsock):
                 return self._get_address(clientsock)
         except Socks5Error as sockserror:
@@ -239,16 +241,20 @@ class ClientTunnelHandler:
     @typechecked
     def __init__(
         self,
-        session: 'ssh_proxy_server.session.Session'
+        session: 'ssh_proxy_server.session.Session',
+        username: Optional[Text] = None,
+        password: Optional[Text] = None
     ) -> None:
         self.session = session
+        self.username = username
+        self.password = password
 
     @typechecked
     def handle_request(self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
         destination: Optional[Tuple[Text, int]] = None
-        socks5connection = Socks5Server(listenaddr)
+        socks5connection = Socks5Server(listenaddr, self.username, self.password)
         destination = socks5connection.get_address(client)
         if destination is None:
             client.close()
@@ -272,10 +278,21 @@ class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
-            '--tunnel-client-net',
-            dest='client_tunnel_net',
+            '--socks-listen-address',
+            dest='socks_listen_address',
             default='127.0.0.1',
-            help='network on which to serve the client tunnel injector'
+            help='socks server listen address (default: 127.0.0.1)'
+        )
+        plugin_group.add_argument(
+            '--socks5-username',
+            dest='socks5_username',
+            help='username for the SOCKS5 server'
+        )
+        plugin_group.add_argument(
+            '--socks5-password',
+            dest='socks5_password',
+            required='--socks5-username' in sys.argv,
+            help='password for the SOCKS5 server'
         )
 
     tcpservers: List[TCPServerThread] = []
@@ -289,9 +306,9 @@ class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
         args, _ = parser_retval
 
         t = TCPServerThread(
-            ClientTunnelHandler(session).handle_request,
+            ClientTunnelHandler(session, args.socks5_username, args.socks5_password).handle_request,
             run_status=session.running,
-            network=args.client_tunnel_net
+            network=args.socks_listen_address
         )
         t.start()
         cls.tcpservers.append(t)

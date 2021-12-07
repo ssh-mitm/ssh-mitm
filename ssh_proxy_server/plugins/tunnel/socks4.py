@@ -49,13 +49,6 @@ class Socks4Command(Socks4Types):
     BIND = b"\x02"
 
 
-class Socks4AddressType(Socks4Types):
-    """Addresstypen für den Socks Proxy"""
-    IPv4 = b"\x01"
-    DOMAIN = b"\x03"
-    IPv6 = b"\x04"
-
-
 class Socks4CommandReply(Socks4Types):
     """Bestättigungen für den Socks Proxy"""
     SUCCESS = b"\x5A"
@@ -84,9 +77,6 @@ class Socks4Server():
     @typechecked
     def _get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[Text, int]]:
         """Ermittelt das Ziel aus der Socks Anfrage"""
-        # check socks version
-        if clientsock.recv(1) != Socks4Server.SOCKSVERSION:
-            raise Socks4Error("Invalid Socks4 Version")
         # get socks command
         try:
             command = Socks4Command(clientsock.recv(1))
@@ -105,6 +95,14 @@ class Socks4Server():
         dst_addr = ".".join([str(i) for i in dst_addr_b])
         dst_port = dst_port_b[0] * 256 + dst_port_b[1]
 
+        continue_recv = True
+        userid = b""
+        while continue_recv:
+            nextchr = clientsock.recv(1)
+            if nextchr == b"\x00":
+                break
+            userid += nextchr
+
         address: Optional[Tuple[Text, int]] = None
         reply = Socks4CommandReply.FAILED
         if command is Socks4Command.CONNECT:
@@ -120,8 +118,11 @@ class Socks4Server():
         return address
 
     @typechecked
-    def get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[Text, int]]:
+    def get_address(self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False) -> Optional[Tuple[Text, int]]:
         try:
+            # check socks version
+            if not ignore_version and clientsock.recv(1) != Socks4Server.SOCKSVERSION:
+                raise Socks4Error("Invalid Socks4 Version")
             return self._get_address(clientsock)
         except Socks4Error as sockserror:
             logging.error("Socks4 Error: %s", str(sockserror))
@@ -169,10 +170,10 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
-            '--tunnel-client-net',
-            dest='client_tunnel_net',
+            '--socks-listen-address',
+            dest='socks_listen_address',
             default='127.0.0.1',
-            help='network on which to serve the client tunnel injector'
+            help='socks server listen address (default: 127.0.0.1)'
         )
 
     tcpservers: List[TCPServerThread] = []
@@ -188,7 +189,7 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
         t = TCPServerThread(
             ClientTunnelHandler(session).handle_request,
             run_status=session.running,
-            network=args.client_tunnel_net
+            network=args.socks_listen_address
         )
         t.start()
         cls.tcpservers.append(t)
