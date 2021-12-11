@@ -223,6 +223,8 @@ class SSHProxyServer:
             return
 
         logging.info(f'listen interfaces {self.listen_address} and {self.listen_address_v6} on port {self.listen_port}')
+        if self.transparent:
+            logging.info(f"{stylize('Transparent mode enabled!', attr('bold'))} (experimental)")
         self.running = True
         try:
             while self.running:
