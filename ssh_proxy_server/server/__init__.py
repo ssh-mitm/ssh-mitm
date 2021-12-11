@@ -201,21 +201,25 @@ class SSHProxyServer:
         self._clean_environment()
         sock: Optional[Union[socket, MultipleSocketsListener]] = None
 
-        sock = create_server_sock(
-            (self.listen_address, self.listen_port),
-            transparent=self.transparent
-        )
-        if not has_dual_stack(sock):
-            sock.close()
-            sock = MultipleSocketsListener(
-                [
-                    (self.listen_address, self.listen_port),
-                    (self.listen_address_v6, self.listen_port)
-                ],
+        try:
+            sock = create_server_sock(
+                (self.listen_address, self.listen_port),
                 transparent=self.transparent
             )
+            if not has_dual_stack(sock):
+                sock.close()
+                sock = MultipleSocketsListener(
+                    [
+                        (self.listen_address, self.listen_port),
+                        (self.listen_address_v6, self.listen_port)
+                    ],
+                    transparent=self.transparent
+                )
+        except PermissionError:
+            logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))} Note: SSH-MITM requires root privileges to run in transparent mode")
+            return
         if sock is None:
-            logging.error("error creating socket!")
+            logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))}")
             return
 
         logging.info(f'listen interfaces {self.listen_address} and {self.listen_address_v6} on port {self.listen_port}')
