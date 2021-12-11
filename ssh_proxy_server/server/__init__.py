@@ -215,8 +215,13 @@ class SSHProxyServer:
                     ],
                     transparent=self.transparent
                 )
-        except PermissionError:
-            logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))} Note: SSH-MITM requires root privileges to run in transparent mode")
+        except PermissionError as permerror:
+            if self.transparent and permerror.errno == 1:
+                logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))} Note: running SSH-MITM in transparent mode requires root privileges")
+            elif permerror.errno == 13 and self.listen_port < 1024:
+                logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))} Note: running SSH-MITM on a port < 1024 requires root privileges")
+            else:
+                logging.exception(f"{stylize('error creating socket!', fg('red') + attr('bold'))} - unknown error")
             return
         if sock is None:
             logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))}")
