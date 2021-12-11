@@ -29,7 +29,8 @@ def main() -> None:
     parser = ModuleParser(
         description='SSH-MITM Tools',
         version=f"SSH-MITM {ssh_mitm_version}",
-        modules_from_file=True
+        modules_from_file=True,
+        allow_abbrev=False
     )
     parser.add_argument(
         '-d',
@@ -56,9 +57,23 @@ def main() -> None:
     subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
     subparsers.required = True
 
-    parser_mitm_server: ModuleParser = cast(ModuleParser, subparsers.add_parser('server', help='start the ssh-mitm server'))
+    parser_mitm_server: ModuleParser = cast(
+        ModuleParser,
+        subparsers.add_parser(
+            'server',
+            allow_abbrev=False,
+            help='start the ssh-mitm server'
+        )
+    )
     init_server_parser(parser_mitm_server)
-    parser_audit: ModuleParser = cast(ModuleParser, subparsers.add_parser('audit', help='audit tools for ssh servers'))
+    parser_audit: ModuleParser = cast(
+        ModuleParser,
+        subparsers.add_parser(
+            'audit',
+            allow_abbrev=False,
+            help='audit tools for ssh servers'
+        )
+    )
     init_audit_parser(parser_audit)
 
     args = parser.parse_args()
