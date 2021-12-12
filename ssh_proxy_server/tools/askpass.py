@@ -1,31 +1,27 @@
-# type: ignore
 import argparse
 import logging
 try:
     import tkinter
     from tkinter.simpledialog import askstring
-    from tkinter import messagebox
+    from tkinter import ttk
 except ImportError:
     tkinter = None
 
 
-def ask_pass(primary_message, secondary_message=None):
+def ask_pass(root, primary_message, secondary_message=None):
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
-    root = tkinter.Tk()
-    root.withdraw()
     password = askstring('SSH-MITM - Askpass', dialog_text, show="*")
     if password is not None:
         return password
     return None
 
 
-def confirm(primary_message, secondary_message=None):
+def confirm(root, primary_message, secondary_message=None):
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
-    root= tkinter.Tk()
     answer = tkinter.messagebox.askquestion('SSH-MITM - Askpass', dialog_text, icon='question')
     if answer == 'yes':
         return True
@@ -49,12 +45,16 @@ def main():
     if secondary_message == "":
         secondary_message = None
 
+    root= tkinter.Tk()
+    root.withdraw()
+    style = ttk.Style()
+    style.theme_use('clam')
     if primary_message.endswith("?"):
-        ok = confirm(primary_message, secondary_message)
+        ok = confirm(root, primary_message, secondary_message)
         if not ok:
             exit(1)
     else:
-        result = ask_pass(primary_message, secondary_message)
+        result = ask_pass(root, primary_message, secondary_message)
         if result is None:
             exit(1)
         else:
