@@ -284,10 +284,16 @@ class Authenticator(BaseModule):
     @typechecked
     def auth_fallback(self, username: Text) -> int:
         if not self.args.fallback_host:
-            logging.error("\n".join([
-                stylize(EMOJI['exclamation'] + " ssh agent not forwarded. Login to remote host not possible with publickey authentication.", fg('red') + attr('bold')),
-                stylize(EMOJI['information'] + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.", fg('yellow') + attr('bold'))
-            ]))
+            if self.session.agent:
+                logging.error("\n".join([
+                    stylize(EMOJI['exclamation'] + " ssh agent keys are not allowed for signing. Remote authentication not possible.", fg('red') + attr('bold')),
+                    stylize(EMOJI['information'] + " To intercept clients, you can provide credentials for a honeypot.", fg('yellow') + attr('bold'))
+                ]))
+            else:
+                logging.error("\n".join([
+                    stylize(EMOJI['exclamation'] + " ssh agent not forwarded. Login to remote host not possible with publickey authentication.", fg('red') + attr('bold')),
+                    stylize(EMOJI['information'] + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.", fg('yellow') + attr('bold'))
+                ]))
             return paramiko.common.AUTH_FAILED
 
         auth_status = self.connect(
@@ -295,7 +301,8 @@ class Authenticator(BaseModule):
             password=self.args.fallback_password,
             host=self.args.fallback_host,
             port=self.args.fallback_port,
-            method=AuthenticationMethod.password
+            method=AuthenticationMethod.password,
+            run_post_auth=False
         )
         if auth_status == paramiko.common.AUTH_SUCCESSFUL:
             logging.warning(
@@ -308,7 +315,7 @@ class Authenticator(BaseModule):
         return auth_status
 
     @typechecked
-    def connect(self, user: Text, host: Text, port: int, method: AuthenticationMethod, password: Optional[Text] = None, key: Optional[PKey] = None) -> int:
+    def connect(self, user: Text, host: Text, port: int, method: AuthenticationMethod, password: Optional[Text] = None, key: Optional[PKey] = None, *, run_post_auth: bool = True) -> int:
         if not host:
             raise MissingHostException()
 
@@ -329,7 +336,8 @@ class Authenticator(BaseModule):
         except paramiko.SSHException:
             logging.error(stylize("Connection to remote server refused", fg('red') + attr('bold')))
             return paramiko.common.AUTH_FAILED
-        self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
+        if run_post_auth:
+            self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
         return auth_status
 
     @typechecked

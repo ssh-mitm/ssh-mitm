@@ -174,8 +174,14 @@ class Session(BaseSession):
             return self.authenticator.auth_fallback(self.username_provided) == paramiko.common.AUTH_SUCCESSFUL
 
         if self.authenticator.authenticate(store_credentials=False) != paramiko.common.AUTH_SUCCESSFUL:
-            logging.error('Permission denied (publickey)')
-            return False
+            if self.username_provided is None:
+                logging.error("No username proviced during login!")
+                return False
+            if self.authenticator.auth_fallback(self.username_provided) == paramiko.common.AUTH_SUCCESSFUL:
+                return True
+            else:
+                self.transport.close()
+                return False
 
         # Connect method end
         if not self.scp_requested and not self.ssh_requested and not self.sftp_requested:
