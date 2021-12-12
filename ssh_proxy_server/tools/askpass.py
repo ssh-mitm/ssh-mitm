@@ -1,14 +1,19 @@
 import argparse
 import logging
+from typing import NoReturn, Optional, Text
+
+from typeguard import typechecked
 try:
     import tkinter
     from tkinter.simpledialog import askstring
     from tkinter import ttk
+    tkinter_imported = True
 except ImportError:
-    tkinter = None
+    tkinter_imported = False
 
 
-def ask_pass(root, primary_message, secondary_message=None):
+@typechecked
+def ask_pass(primary_message: Text, secondary_message: Optional[Text]=None) -> Optional[Text]:
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
@@ -18,18 +23,19 @@ def ask_pass(root, primary_message, secondary_message=None):
     return None
 
 
-def confirm(root, primary_message, secondary_message=None):
+@typechecked
+def confirm(primary_message: Text, secondary_message: Optional[Text]=None) -> bool:
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
-    answer = tkinter.messagebox.askquestion('SSH-MITM - Askpass', dialog_text, icon='question')
+    answer = tkinter.messagebox.askquestion('SSH-MITM - Askpass', dialog_text, icon='question')  # type: ignore
     if answer == 'yes':
         return True
     return False
 
 
-def main():
-    if tkinter is None:
+def main() -> NoReturn:
+    if not tkinter_imported:
         logging.error("tkinter not installed!")
         exit(1)
     parser = argparse.ArgumentParser()
@@ -41,7 +47,7 @@ def main():
     if primary_message == "":
         primary_message = "ssh-askpass"
 
-    secondary_message = "\n".join(lines[1:]).strip()
+    secondary_message: Optional[Text] = "\n".join(lines[1:]).strip()
     if secondary_message == "":
         secondary_message = None
 
@@ -50,11 +56,11 @@ def main():
     style = ttk.Style()
     style.theme_use('clam')
     if primary_message.endswith("?"):
-        ok = confirm(root, primary_message, secondary_message)
+        ok = confirm(primary_message, secondary_message)
         if not ok:
             exit(1)
     else:
-        result = ask_pass(root, primary_message, secondary_message)
+        result = ask_pass(primary_message, secondary_message)
         if result is None:
             exit(1)
         else:
