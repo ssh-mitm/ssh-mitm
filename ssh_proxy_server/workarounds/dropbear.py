@@ -29,6 +29,7 @@ from paramiko import util
 from paramiko.common import (
     xffffffff,
     DEBUG,
+    INFO,
     MSG_KEXINIT,
     MSG_IGNORE,
     MSG_DISCONNECT,
@@ -166,8 +167,8 @@ def transport_run(self):  # type: ignore
                         self._send_message(msg)
                 self.packetizer.complete_handshake()
         except SSHException as e:
-            self._log(ERROR, "Exception: " + str(e))
-            self._log(ERROR, util.tb_strings())
+            self._log(INFO, "Exception: " + str(e))
+            self._log(INFO, util.tb_strings())
             self.saved_exception = e
         except EOFError as e:
             self._log(DEBUG, "EOF in transport thread")
