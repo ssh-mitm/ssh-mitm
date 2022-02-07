@@ -118,7 +118,7 @@ Spoofing FIDO2 tokens / SSH-Askpass
 
 .. code-block:: bash
 
-    ssh-mitm --remote-host TARGET --enable-trivial-auth
+    ssh-mitm server --remote-host TARGET --enable-trivial-auth
 
 
 **SSH-MITM < 1.0.0**
@@ -148,7 +148,7 @@ SSH-MITM can be started with following parameters:
 
 .. code-block:: bash
 
-    ssh-mitm --remote-host TARGET
+    ssh-mitm server --remote-host TARGET
 
 
 Connect the client to SSH-MITM with agent forwarding:

@@ -41,7 +41,7 @@ break ssh-mitm attacks, if the remote server does not allow logins with **none**
 
 .. code-block::
 
-    ssh-mitm  --remote-host 192.168.0.x:PORT --enable-none-auth
+    ssh-mitm server --remote-host 192.168.0.x --enable-none-auth
 
 
 **publickey** authentication - `RFC-4252/7 <https://datatracker.ietf.org/doc/html/rfc4252#section-7>`_
@@ -81,7 +81,7 @@ All you have to do is to start the server:
 
 .. code-block:: none
 
-    $ ssh-mitm --remote-host 192.168.0.x:PORT
+    $ ssh-mitm server --remote-host 192.168.0.x
 
 To do a full mitm attack, the client should use agent forwarding.
 
@@ -96,7 +96,7 @@ SSH-MITM can redirect the session to a honeypot.
 
 .. code-block:: none
 
-    $ ssh-mitm --remote-host 192.168.0.x:PORT --fallback-host user:password@honeypot:22
+    $ ssh-mitm server --remote-host 192.168.0.x:PORT --fallback-host user:password@honeypot:22
 
 Connections are only redirected to the honeypot if no agent was forwarded after publickey authentication.
 All other connections are forwarded to the destination server and a full man in the middle attack is possible.
@@ -123,7 +123,7 @@ Example SSH-MITM session intercepting password authentication:
 
 .. code-block:: bash
 
-    $ ssh-mitm  --remote-host 192.168.0.x:PORT
+    $ ssh-mitm server --remote-host 192.168.0.x:PORT
     2021-09-02 09:51:35,354 [INFO]  starting SSH-MITM 0.5.13
     2021-09-02 09:51:38,590 [INFO]  connected client version: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.3
     2021-09-02 09:51:48,629 [INFO]  Client connection established with parameters:

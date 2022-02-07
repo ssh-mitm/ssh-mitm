@@ -58,7 +58,7 @@ In cases, when no agent was forwarded, SSH-MITM can rediredt the session to a ho
                         <p>
                             To start an intercepting mitm-ssh server on Port 10022,
                             all you have to do is run a single command.<br/>
-                            <code>$ ssh-mitm --remote-host 192.168.0.x:PORT</code>
+                            <code>$ ssh-mitm server --remote-host 192.168.0.x:PORT</code>
                         </p>
                         <p>
                             Now let's try to connect to the ssh-mitm server.<br/>
@@ -131,7 +131,7 @@ All you have to do is run this command in your terminal of choice.
 
 .. code-block:: bash
 
-    $ ssh-mitm --remote-host 192.168.0.x:PORT
+    $ ssh-mitm server --remote-host 192.168.0.x:PORT
 
 Now let's try to connect to the ssh-mitm server.
 The ssh-mitm server is listening on port 10022.
@@ -192,4 +192,4 @@ SSH-MITM can redirect the connection to a honeypot.
 
 .. code-block:: bash
 
-    $ ssh-mitm --fallback-host username:password@hostname:port
+    $ ssh-mitm server --fallback-host username:password@hostname:port
