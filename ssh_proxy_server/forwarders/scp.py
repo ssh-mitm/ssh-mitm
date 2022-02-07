@@ -1,38 +1,56 @@
 import logging
 import time
 import re
+from typing import (
+    TYPE_CHECKING,
+    Callable,
+    Optional,
+    Text
+)
+import paramiko
 
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF
 from paramiko.message import Message
+from typeguard import typechecked
 
+import ssh_proxy_server
 from ssh_proxy_server.forwarders.base import BaseForwarder
+
+if TYPE_CHECKING:
+    from ssh_proxy_server.session import Session
 
 
 class SCPBaseForwarder(BaseForwarder):
 
-    def handle_traffic(self, traffic, isclient):
+    @typechecked
+    def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         return traffic
 
-    def handle_error(self, traffic):
+    @typechecked
+    def handle_error(self, traffic: bytes) -> bytes:
         return traffic
 
-    def forward(self):
+    @typechecked
+    def forward(self) -> None:
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
-        self.server_channel.exec_command(self.session.scp_command)  # nosec
+        self.server_channel.exec_command(self.session.scp_command.decode('utf8'))  # nosec
 
         # Wait for SCP remote to remote auth, command exec and copy to finish
         if self.session.scp_command.decode('utf8').startswith('scp'):
             if not self.session.scp_command.find(b' -t ') != -1 and not self.session.scp_command.find(b' -f ') != -1:
-                logging.debug("[chan %d] Initiating SCP remote to remote", self.session.scp_channel.get_id())
-                if self.session.agent is None:
-                    logging.warning("[chan %d] SCP remote to remote needs a forwarded agent", self.session.scp_channel.get_id())
+                if self.session.scp_channel is not None:
+                    logging.debug("[chan %d] Initiating SCP remote to remote", self.session.scp_channel.get_id())
+                    if self.session.agent is None:
+                        logging.warning("[chan %d] SCP remote to remote needs a forwarded agent", self.session.scp_channel.get_id())
                 while not self._closed(self.server_channel):
                     time.sleep(1)
 
         try:
             while self.session.running:
+                if self.session.scp_channel is None:
+                    raise ValueError("No SCP Channel available!")
                 # redirect stdout <-> stdin und stderr <-> stderr
                 if self.session.scp_channel.recv_ready():
                     buf = self.session.scp_channel.recv(self.BUF_LEN)
@@ -62,7 +80,7 @@ class SCPBaseForwarder(BaseForwarder):
                     break
                 if self.session.scp_channel.exit_status_ready():
                     status = self.session.scp_channel.recv_exit_status()
-                    #self.server_channel.send_exit_status(status)
+                    # self.server_channel.send_exit_status(status)
                     self.close_session(self.session.scp_channel)
                     break
 
@@ -81,7 +99,8 @@ class SCPBaseForwarder(BaseForwarder):
             logging.exception('error processing scp command')
             raise
 
-    def sendall(self, channel, data, sendfunc):
+    @typechecked
+    def sendall(self, channel: paramiko.Channel, data: bytes, sendfunc: Callable[[bytes], int]) -> int:
         if not data:
             return 0
         if channel.exit_status_ready():
@@ -95,7 +114,8 @@ class SCPBaseForwarder(BaseForwarder):
             sent += newsent
         return sent
 
-    def close_session(self, channel):
+    @typechecked
+    def close_session(self, channel: paramiko.Channel) -> None:
         # pylint: disable=protected-access
         if channel.closed:
             return
@@ -104,21 +124,21 @@ class SCPBaseForwarder(BaseForwarder):
             message = Message()
             message.add_byte(cMSG_CHANNEL_EOF)
             message.add_int(channel.remote_chanid)
-            channel.transport._send_user_message(message)
+            channel.transport._send_user_message(message)  # type: ignore
 
             message = Message()
             message.add_byte(cMSG_CHANNEL_REQUEST)
             message.add_int(channel.remote_chanid)
             message.add_string('eow@openssh.com')
             message.add_boolean(False)
-            channel.transport._send_user_message(message)
+            channel.transport._send_user_message(message)  # type: ignore
 
         message = Message()
         message.add_byte(cMSG_CHANNEL_CLOSE)
         message.add_int(channel.remote_chanid)
-        channel.transport._send_user_message(message)
+        channel.transport._send_user_message(message)  # type: ignore
 
-        channel._unlink()
+        channel._unlink()  # type: ignore
 
         super(SCPBaseForwarder, self).close_session(channel)
         logging.debug("[chan %d] SCP closed", channel.get_id())
@@ -128,21 +148,23 @@ class SCPForwarder(SCPBaseForwarder):
     """forwards a file from or to the remote server
     """
 
-    def __init__(self, session):
+    @typechecked
+    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
         super().__init__(session)
 
         self.await_response = False
         self.bytes_remaining = 0
         self.bytes_to_write = 0
 
-        self.file_command = None
-        self.file_mode = None
-        self.file_size = 0
-        self.file_name = ''
+        self.file_command: Optional[Text] = None
+        self.file_mode: Optional[Text] = None
+        self.file_size: int = 0
+        self.file_name: Text = ''
 
         self.got_c_command = False
 
-    def handle_command(self, traffic):
+    @typechecked
+    def handle_command(self, traffic: bytes) -> bytes:
         self.got_c_command = False
         command = traffic.decode('utf-8')
 
@@ -169,13 +191,16 @@ class SCPForwarder(SCPBaseForwarder):
         self.await_response = True
         return traffic
 
-    def process_data(self, traffic):
+    @typechecked
+    def process_data(self, traffic: bytes) -> bytes:
         return traffic
 
-    def process_response(self, traffic):
+    @typechecked
+    def process_response(self, traffic: bytes) -> bytes:
         return traffic
 
-    def handle_traffic(self, traffic, isclient):
+    @typechecked
+    def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         if not self.session.scp_command.startswith(b'scp'):
             return traffic
 

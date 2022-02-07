@@ -81,6 +81,7 @@ page_descriptions = {
     'fingerprint.html': 'Description of host fingerprints and how to detect if a client already knows a host fingerprint',
     'authentication.html': 'SSH authentication methods explained and how to use them during audits',
     'sshagent.html': 'SSH agent and agent forwarding explained and security considerations discussed',
+    'trivialauth.html': 'Spoofing FIDO2 Tokens and SSH-Askpass',
     'filetransfer.html': 'Description of the SCP/SFTP protocols and how to manipulate files during audits',
     'portforwarding.html': 'Introduction to port forwarding features of SSH-MITM',
     'advanced-usage.html': 'Guide on how to setup a SSH-MITM server for advanced security audits in large networks and special use cases',

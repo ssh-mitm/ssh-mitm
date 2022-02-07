@@ -1,12 +1,19 @@
 import time
+from typing import Tuple, List, Union
 
-from paramiko.agent import Agent, AgentServerProxy, AgentClientProxy
+from paramiko.agent import Agent, AgentKey, AgentServerProxy, AgentClientProxy
+from paramiko.transport import Transport
+from paramiko.channel import Channel
 import os
+
+from typeguard import typechecked
+
 
 class AgentProxy(object):
 
-    def __init__(self, transport) -> None:
-        self.agents = []
+    @typechecked
+    def __init__(self, transport: Transport) -> None:
+        self.agents: List[Union[Agent, AgentClientProxy]] = []
         self.transport = transport
         a = AgentServerProxy(self.transport)
         os.environ.update(a.get_env())
@@ -18,18 +25,22 @@ class AgentProxy(object):
         # agent is still sending over the channel
         # agent.close()
 
-    def get_keys(self):
+    @typechecked
+    def get_keys(self) -> Tuple[AgentKey, ...]:
         return self.keys
 
-    def forward_agent(self, chanClient):
-        chanClient.request_forward_agent(self._forward_agent_handler)
+    @typechecked
+    def forward_agent(self, chanClient: Channel) -> bool:
+        return chanClient.request_forward_agent(self._forward_agent_handler)
 
-    def _forward_agent_handler(self, chanRemote):
+    @typechecked
+    def _forward_agent_handler(self, chanRemote: Channel) -> None:
         agent = AgentServerProxy(self.transport)
         os.environ.update(agent.get_env())
         time.sleep(0.1)
         self.agents.append(AgentClientProxy(chanRemote))
 
-    def close(self):
+    @typechecked
+    def close(self) -> None:
         for a in self.agents:
             a.close()

@@ -1,5 +1,6 @@
 from rich.console import Console
-sshconsole = Console(
-    emoji=False, 
+
+sshconsole: Console = Console(
+    emoji=False,
     highlight=False
 )

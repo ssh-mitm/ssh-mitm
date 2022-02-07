@@ -1,4 +1,6 @@
-entry_points = {
+from typing import Dict, List
+
+entry_points: Dict[str, List[str]] = {
     'SSHBaseForwarder': [
         'base = ssh_proxy_server.forwarders.ssh:SSHForwarder',
         'mirrorshell = ssh_proxy_server.plugins.ssh.mirrorshell:SSHMirrorForwarder',
@@ -19,13 +21,14 @@ entry_points = {
         'replace_file = ssh_proxy_server.plugins.sftp.replace_file:SFTPProxyReplaceHandler',
         'store_file = ssh_proxy_server.plugins.sftp.store_file:SFTPHandlerStoragePlugin'
     ],
-    'ServerTunnelBaseForwarder': [
-        'base = ssh_proxy_server.forwarders.tunnel:ServerTunnelForwarder',
-        'inject = ssh_proxy_server.plugins.tunnel.injectservertunnel:InjectableServerTunnelForwarder'
+    'RemotePortForwardingBaseForwarder': [
+        'base = ssh_proxy_server.forwarders.tunnel:RemotePortForwardingForwarder',
+        'inject = ssh_proxy_server.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardingForwarder'
     ],
-    'ClientTunnelBaseForwarder': [
-        'base = ssh_proxy_server.forwarders.tunnel:ClientTunnelForwarder',
-        'inject = ssh_proxy_server.plugins.tunnel.injectclienttunnel:InjectableClientTunnelForwarder'
+    'LocalPortForwardingBaseForwarder': [
+        'base = ssh_proxy_server.forwarders.tunnel:LocalPortForwardingForwarder',
+        'socks4 = ssh_proxy_server.plugins.tunnel.socks4:SOCKS4TunnelForwarder',
+        'socks5 = ssh_proxy_server.plugins.tunnel.socks5:SOCKS5TunnelForwarder'
     ],
     'BaseServerInterface': [
         'base = ssh_proxy_server.interfaces.server:ServerInterface'

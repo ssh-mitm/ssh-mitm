@@ -44,9 +44,11 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 * publickey authentication
    * accept same key as destination server
+   * Spoofing FIDO2 Tokens
 * hijacking and logging of terminal sessions
 * store and replace files during SCP/SFTP file transferes
 * port porwarding
+  * SOCKS 4/5 support for dynamic port forwarding
 * audit clients against known vulnerabilities
 * plugin support
 
@@ -71,7 +73,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 To start SSH-MITM, all you have to do is run this command in your terminal of choice.
 
-    $ ssh-mitm --remote-host 192.168.0.x:PORT
+    $ ssh-mitm server --remote-host 192.168.0.x:PORT
 
 Now let's try to connect. SSH-MITM is listening on port 10022.
 
@@ -109,7 +111,17 @@ SSH-MITM is able to verify, if a user is able to login with publickey authentica
 
 For a full login on the remote server agent forwarding is still required. When no agent was forwarded, SSH-MITM can redirect the connection to a honeypot.
 
-    ssh-mitm --fallback-host username:password@hostname:port
+    ssh-mitm server --fallback-host username:password@hostname:port
+
+## Spoofing of FIDO2 Tokens (2 factor authentication)
+
+SSH-MITM is able to spoof FIDO2 Tokens which can be used for 2 factor authentication.
+
+The attack is called trivial authentication and can be enabled with the command line argument `--enable-trivial-auth`.
+
+  ssh-mitm server --enable-trivial-auth
+
+Using the trivial authentication attack does not break password authentication, because the attack is only performed when a publickey login is possible.
 
 ## Contributing
 

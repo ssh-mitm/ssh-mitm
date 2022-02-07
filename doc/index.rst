@@ -9,6 +9,7 @@ SSH-MITM Docs - Main Page
    fingerprint
    authentication
    sshagent
+   trivialauth
    filetransfer
    portforwarding
    advanced-usage

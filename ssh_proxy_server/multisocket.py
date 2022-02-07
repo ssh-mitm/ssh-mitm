@@ -32,12 +32,25 @@ import socket
 import select
 import contextlib
 
+from typing import (
+    Any,
+    Dict,
+    Tuple,
+    Optional,
+    Text,
+    List,
+    Union,
+    overload
+)
+
+from typeguard import typechecked
 
 __author__ = "Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>"
 __license__ = "MIT"
 
 
-def has_dual_stack(sock=None):
+@typechecked
+def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
     """Return True if kernel allows creating a socket which is able to
     listen for both IPv4 and IPv6 connections.
     If *sock* is provided the check is made against it.
@@ -55,14 +68,15 @@ def has_dual_stack(sock=None):
         return False
 
 
+@typechecked
 def create_server_sock(
-    address,
-    family=None,
-    reuse_addr=None,
-    transparent=False,
-    queue_size=5,
-    dual_stack=has_dual_stack()
-):
+    address: Tuple[Text, int],
+    family: Optional[socket.AddressFamily] = None,
+    reuse_addr: Optional[bool] = None,
+    transparent: bool = False,
+    queue_size: int = 5,
+    dual_stack: bool = has_dual_stack()
+) -> socket.socket:
     """Convenience function which creates a TCP server bound to
     *address* and return the socket object.
 
@@ -96,6 +110,8 @@ def create_server_sock(
     ...     # handle new sock connection
     """
     AF_INET6 = getattr(socket, 'AF_INET6', 0)
+    host: Optional[Text]
+    port: int
     host, port = address
     if host == "" or host == "0.0.0.0":  # nosec
         # http://mail.python.org/pipermail/python-ideas/2013-March/019937.html
@@ -159,9 +175,18 @@ class MultipleSocketsListener:
     socket in the list.
     """
 
-    def __init__(self, addresses, family=None, reuse_addr=None, transparent=False, queue_size=5):
-        self._socks = []
-        self._sockmap = {}
+    @typechecked
+    def __init__(
+        self,
+        addresses: List[Tuple[Text, int]],
+        family: Optional[socket.AddressFamily] = None,
+        reuse_addr: Optional[bool] = None,
+        transparent: bool = False,
+        queue_size: int = 5
+    ) -> None:
+        self._pollster: Optional[select.poll]
+        self._socks: List[socket.socket] = []
+        self._sockmap: Dict[int, socket.socket] = {}
         if hasattr(select, 'poll'):
             self._pollster = select.poll()
         else:
@@ -187,13 +212,16 @@ class MultipleSocketsListener:
             if not completed:
                 self.close()
 
-    def __enter__(self):
+    @typechecked
+    def __enter__(self) -> 'MultipleSocketsListener':
         return self
 
-    def __exit__(self, *args):
+    @typechecked
+    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.close()
 
-    def __repr__(self):
+    @typechecked
+    def __repr__(self) -> Text:
         addrs = []
         for sock in self._socks:
             try:
@@ -202,30 +230,39 @@ class MultipleSocketsListener:
                 addrs.append(())
         return '<%s (%r) at %#x>' % (self.__class__.__name__, addrs, id(self))
 
-    def _poll(self):
+    @typechecked
+    def _poll(self) -> Optional[Any]:
         """Return the first readable fd."""
+        fds_select: Optional[Tuple[List[Any], List[Any], List[Any]]] = None
+        fds_poll: Optional[List[Tuple[int, int]]] = None
         timeout = self.gettimeout()
         if self._pollster is None:
-            fds = select.select(self._sockmap.keys(), [], [], timeout)
-            if timeout and fds == ([], [], []):
-                raise socket.timeout('timed out')
+            fds_select = select.select(self._sockmap.keys(), [], [], timeout)
+            if timeout and fds_select == ([], [], []):
+                raise TimeoutError('timed out')
         else:
             if timeout is not None:
                 timeout *= 1000
-            fds = self._pollster.poll(timeout)
-            if timeout and fds == []:
-                raise socket.timeout('timed out')
+            fds_poll = self._pollster.poll(timeout)
+            if timeout and fds_poll == []:
+                raise TimeoutError('timed out')
         try:
-            return fds[0][0]
+            if fds_select is not None:
+                return fds_select[0][0]
+            if fds_poll is not None:
+                return fds_poll[0][0]
         except IndexError:
             pass  # non-blocking socket
+        return None
 
-    def _multicall(self, name, *args, **kwargs):
+    @typechecked
+    def _multicall(self, name: Text, *args: Any, **kwargs: Any) -> None:
         for sock in self._socks:
             meth = getattr(sock, name)
             meth(*args, **kwargs)
 
-    def accept(self):
+    @typechecked
+    def accept(self) -> Tuple[socket.socket, Any]:
         """Accept a connection from the first socket which is ready
         to do so.
         """
@@ -233,41 +270,61 @@ class MultipleSocketsListener:
         sock = self._sockmap[fd] if fd else self._socks[0]
         return sock.accept()
 
-    def filenos(self):
+    @typechecked
+    def filenos(self) -> List[int]:
         """Return sockets' file descriptors as a list of integers.
         This is useful with select().
         """
         return list(self._sockmap.keys())
 
-    def getsockname(self):
+    @typechecked
+    def getsockname(self) -> Any:
         """Return first registered socket's own address."""
         return self._socks[0].getsockname()
 
-    def getsockopt(self, level, optname, buflen=0):
+    @overload
+    def getsockopt(self, level: int, optname: int) -> int: ...
+
+    @overload
+    def getsockopt(self, level: int, optname: int, buflen: int) -> bytes: ...
+
+    @typechecked
+    def getsockopt(self, level: int, optname: int, buflen: int = 0) -> Union[int, bytes]:
         """Return first registered socket's options."""
         return self._socks[0].getsockopt(level, optname, buflen)
 
-    def gettimeout(self):
+    @typechecked
+    def gettimeout(self) -> Optional[float]:
         """Return first registered socket's timeout."""
         return self._socks[0].gettimeout()
 
-    def settimeout(self, timeout):
+    @typechecked
+    def settimeout(self, timeout: float) -> None:
         """Set timeout for all registered sockets."""
         self._multicall('settimeout', timeout)
 
-    def setblocking(self, flag):
+    @typechecked
+    def setblocking(self, flag: bool) -> None:
         """Set non/blocking mode for all registered sockets."""
         self._multicall('setblocking', flag)
 
-    def setsockopt(self, level, optname, value):
-        """Set option for all registered sockets."""
-        self._multicall('setsockopt', level, optname, value)
+    @overload
+    def setsockopt(self, level: int, optname: int, value: Union[int, bytes], optlen: None) -> None: ...
+    @overload
+    def setsockopt(self, level: int, optname: int, value: None, optlen: int) -> None: ...
 
-    def shutdown(self, how):
+    @typechecked
+    def setsockopt(self, level: int, optname: int, value: Optional[Union[int, bytes]], optlen: Optional[int]) -> None:
+        """Set option for all registered sockets."""
+        self._multicall('setsockopt', level, optname, value, optlen)
+
+    @typechecked
+    def shutdown(self, how: int) -> None:
         """Shut down all registered sockets."""
         self._multicall('shutdown', how)
 
-    def close(self):
+    @typechecked
+    def close(self) -> None:
         """Close all registered sockets."""
         self._multicall('close')
         self._socks = []

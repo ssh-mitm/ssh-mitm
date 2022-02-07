@@ -11,7 +11,10 @@ In most cases, a new key is automatically generated during installation. When a 
 
     However, it can also be a Man in the Middle attack, where the connection was redirected to another server.
 
-    For this reason, the fingerprint must always be compared against a trusted source. 
+    For this reason, the fingerprint must always be compared against a trusted source.
+
+
+
 
 Checking the fingerprint
 ------------------------
@@ -20,7 +23,7 @@ The first time you connect to a server, you will be asked if you want to connect
 
 .. code-block:: none
 
-    $ ssh github.com 
+    $ ssh github.com
     The authenticity of host 'github.com (140.82.121.3)' can't be established.
     RSA key fingerprint is SHA256:nThbg6kXUpJWGl7E1IGOCspRomTxdCARLviKw6E5SY8.
     Are you sure you want to continue connecting (yes/no/[fingerprint])?
@@ -37,9 +40,9 @@ The reason is that if you compare fingerprints manually, errors can occur and yo
 
     If the fingerprint is unknown, you should ask the server administrator for the correct fingerprint.
 
-    You can also contact support if the server is a rented server. They should be able to give you information. However, don't let support trick you into simply accepting the connection and insist that the fingerprint be provided to you in writing via a trusted source. 
-    
-    
+    You can also contact support if the server is a rented server. They should be able to give you information. However, don't let support trick you into simply accepting the connection and insist that the fingerprint be provided to you in writing via a trusted source.
+
+
 Warning for changed fingerprints
 --------------------------------
 
@@ -71,14 +74,14 @@ If the fingerprint has changed for a legitimate reason, you can remove the old f
 
 .. code-block:: none
 
-    ssh-keygen -f <DATEI> -R <HOST> 
-    
+    ssh-keygen -f <DATEI> -R <HOST>
+
 So in the above example
 
 .. code-block:: none
 
-    ssh-keygen -f "/home/tux/.ssh/known_hosts" -R 172.217.22.227 
-    
+    ssh-keygen -f "/home/tux/.ssh/known_hosts" -R 172.217.22.227
+
 
 Determine fingerprint of the server
 -----------------------------------
@@ -100,14 +103,14 @@ In most cases, multiple keys are generated for an SSH server. The following one-
 
 .. code-block:: none
 
-    find /etc/ssh/ -name 'ssh_*.pub' -exec ssh-keygen -f {} -l -E sha256 \; 
-    
+    find /etc/ssh/ -name 'ssh_*.pub' -exec ssh-keygen -f {} -l -E sha256 \;
+
 Analogously, you can also calculate the MD5 fingerprints:
 
 .. code-block:: none
 
-    find /etc/ssh/ -name 'ssh_*.pub' -exec ssh-keygen -f {} -l -E md5 \; 
-    
+    find /etc/ssh/ -name 'ssh_*.pub' -exec ssh-keygen -f {} -l -E md5 \;
+
 SSHFP Records - The fingerprint in DNS
 --------------------------------------
 
@@ -122,7 +125,7 @@ On a server the SSHFP records can be created with the following command:
 
 .. code-block:: none
 
-    $ ssh-keygen -r examplehost.example.org 
+    $ ssh-keygen -r examplehost.example.org
     examplehost.example.org IN SSHFP 1 1 d004948e1d359f2a267f03a599c3efe5d8285ae1
     examplehost.example.org IN SSHFP 1 2 f94a95111db1158903bc23e61f75843d029f9d3edabfd74c200f201d4b80b330
     examplehost.example.org IN SSHFP 3 1 3b355dc1e3a508e4594e7f8aa30d315d820eb602
@@ -136,7 +139,7 @@ To check whether the new DNS records work, you can check this with the program d
 
 .. code-block:: none
 
-    dig SSHFP examplehost.example.org +short 
+    dig SSHFP examplehost.example.org +short
 
 Client configuration
 """"""""""""""""""""
@@ -146,7 +149,7 @@ By default, the OpenSSH client does not check the fingerprint against an SSHFP r
 .. code-block:: none
 
     VerifyHostKeyDNS yes
-    
+
 If you then connect to the new server, you no longer need to confirm the fingerprint.
 
 Troubleshooting
@@ -165,8 +168,85 @@ In this case, the fingerprint must still be checked against a trusted source.
 
 However, the fingerprint stored in the DNS is no longer considered trustworthy in this case. The reason for this is that the integrity of the DNS zone is no longer guaranteed due to an incorrect DNSSEC configuration.
 
+
+SSH-MITM - attacks on the fingerprint verification
+--------------------------------------------------
+
+There are SSH clients that have a flawed fingerprint check and are thus vulnerable to man in the middle attacks. An example of this is the SFTP implementation of Midnight Commander.
+This vulnerability was discovered and fixed only after 9 years. See :ref:`CVE-2021-36370`
+
+However, most programs do not have fingerprint verification vulnerabilities. As long as the fingerprint is checked, it is not possible to connect to an unknown server.
+
+In many cases, the vulnerability is not the program, but the user who does not properly check the fingerprint against a known value. There can be many reasons for this.
+
+Many users do not know what the fingerprint means. There are tutorials on the Internet that do not describe what the fingerprint is, but only write that you simply have to confirm this query with "yes" to establish the connection.
+
+It also often happens that the fingerprint is not known and cannot be checked against a trusted source. These could be new systems that generate a random key on first launch.
+
+Systems such as a development server may have it reinstalled frequently. This causes the fingerprints to change which leads to users being used to accepting unknown fingerprints.
+
+However, previous studies (Peter Gutmann, Do Users Verify SSH Keys? / Konrad Rieck (Fuzzy Fingerprints Attacking Vulnerabilities in the Human Brain, 2002) ) have shown that users verify a fingerprint in very few cases. In the study by Peter Gutmann, IT departments were asked how often the user asked the IT department for the new fingerprint after a new installation. The study showed that this was almost never the case.
+
+In cases where the fingerprint is checked, it is very efficient to generate an SSH key with a similar hash value as the one of the target computer.  The longer and more complex a fingerprint becomes, the more likely it is that only parts of the fingerprint are compared. This results in a fingerprint that is actually wrong being considered correct. This technique is known as fuzzy fingerprinting.
+
+
+Fuzzy Fingerprints
+""""""""""""""""""
+
+.. note::
+
+    Fuzzy fingerprints are not implemented in SSH-MITM
+
+In many cases, an attacker is not in possession of the private key for the server. An attack on the encryption algorithms can also only be implemented efficiently for very old and weak algorithms.
+
+Konrad Rieck (Fuzzy Fingerprints Attacking Vulnerabilities in the Human Brain, 2002) describes in his work a method how a user can be tricked into accepting a wrong fingerprint during a manual check.
+
+Many clients still use MD5 to represent the fingerprint. However, MD5 is no longer considered secure enough because hash collisions cannot be ruled out. For this reason, there is an increasing switch to SHA256.
+
+The advantage of SHA256 is that it is much more resistant to collisions. However, it also makes the fingerprint longer and more difficult to read. The more complex and longer a fingerprint is, the more often only individual parts are checked.
+
+In his work, Konrad Rieck describes that most users only compare the beginning and the end of a hash value. Users with more experience also checked parts in the middle. However, it was observed that very few compared the full hash value.
+
+Based on these observations, it is possible to generate fingerprints that are very similar to a known fingerprint. When creating a fingerprint, care must be taken to incorporate the observed behavior of the users into the generation of the key.
+
+Because many users only check the beginning and the end, it is more important that these have the same byte sequence as the original fingerprint. Parts in the middle are checked less often, which is why they do not necessarily have to be the same.
+
+
+The following example shows a 2-byte fingerprint.
+
++---------------------------------+
+| **Fingerprint Type**            |
++----------------------+----------+
+| Target fingerprint   | **5BE4** |
++----------------------+----------+
+| Fuzzy fingerprint    | **5EB4** |
++----------------------+----------+
+
+To improve the fingerprint, similar characters can also be used. Certain characters can be perceived differently by a user or, depending on the character set, can also be confused.
+
+The more extensive the character set with which the fingerprint can be represented, the easier it is to find an optically similar fingerprint.
+
+With a SHA256 hash, however, this is no longer represented in hex format, but as Base64.
+
+.. code-block:: none
+
+    SHA256:G+rKuLGk+8Z1oxUV3cox0baNsH0qGQWm/saWPr4qZMM
+
+With Base64 encoding the characters A-Z, a-z, 0-9, + and / can be used. At the end of the string a = can be used.
+
+This extended character set offers the advantage that there are substantially more similar characters.
+
+With fuzzy fingerprints, it is relatively easy to trick a user connecting to a server for the first time into accepting a wrong fingerprint.
+
+Sergey Dechand et al described in "An Empirical Study of Textual Key-Fingerprint Representations" that with a hexadecimal setting over 10% of the attacks failed to detect the wrong fingerprint. Other methods, such as Base32 had a slightly better error rate of 8.5%.
+
+Base64, which is used for SHA256 fingerprints, was not evaluated in this work, which is why no statement can be made for this.
+
+
+
+
 Recognizing clients with known fingerprints
--------------------------------------------
+"""""""""""""""""""""""""""""""""""""""""""
 
 If the client is already in possession of a fingerprint, the received fingerprint is compared with it. If the fingerprints do not match, a warning is issued and the connection is terminated.
 

@@ -26,30 +26,37 @@
     content: "\f084";
 }
 
-/* File transfer */
+/* SSH Agent */
 #docs-nav .toctree-l1:nth-child(5):before,
 #docs-cards .toctree-l1:nth-child(5) i:before {
+    font-family: FontAwesome;
+    content: "\f0c4";
+}
+
+/* File transfer */
+#docs-nav .toctree-l1:nth-child(6):before,
+#docs-cards .toctree-l1:nth-child(6) i:before {
     font-family: FontAwesome;
     content: "\f56f";
 }
 
 /* Port Forwarding */
-#docs-nav .toctree-l1:nth-child(6):before,
-#docs-cards .toctree-l1:nth-child(6) i:before {
+#docs-nav .toctree-l1:nth-child(7):before,
+#docs-cards .toctree-l1:nth-child(7) i:before {
     font-family: FontAwesome;
     content: "\f542";
 }
 
 /* Advanced usage */
-#docs-nav .toctree-l1:nth-child(7):before,
-#docs-cards .toctree-l1:nth-child(7) i:before {
+#docs-nav .toctree-l1:nth-child(8):before,
+#docs-cards .toctree-l1:nth-child(8) i:before {
     font-family: FontAwesome;
     content: "\f0e8";
 }
 
 /* SSH Vurnabilities */
-#docs-nav .toctree-l1:nth-child(8):before,
-#docs-cards .toctree-l1:nth-child(8) i:before {
+#docs-nav .toctree-l1:nth-child(9):before,
+#docs-cards .toctree-l1:nth-child(9) i:before {
     font-family: FontAwesome;
     content: "\f714";
 }

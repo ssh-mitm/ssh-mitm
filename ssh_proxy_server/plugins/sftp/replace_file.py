@@ -1,10 +1,18 @@
 import logging
 import os
+from typing import (
+    Text,
+    Optional,
+    Type,
+    Union
+)
 
 from paramiko import SFTPAttributes
+from typeguard import typechecked
+from ssh_proxy_server.exceptions import MissingClient
 
 from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
-from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface
+from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface, BaseSFTPServerInterface
 
 
 class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
@@ -13,32 +21,30 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
     class SFTPInterface(SFTPProxyServerInterface):
 
-        def lstat(self, path):
+        @typechecked
+        def lstat(self, path: Text) -> Union[SFTPAttributes, int]:
             self.session.sftp_client_ready.wait()
             args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
+            if self.session.sftp_client is None:
+                raise MissingClient("self.session.sftp_client is None!")
             stat_remote = self.session.sftp_client.lstat(path)
+            if isinstance(stat_remote, int):
+                return stat_remote
             stat_replace = SFTPAttributes.from_stat(os.stat(args.sftp_replacement_file))
             stat_remote.st_size = stat_replace.st_size
             return stat_remote
 
-        def stat(self, remotePath):
-            return self.lstat(remotePath)
-
-    class SFTPHandle(SFTPBaseHandle):
-
-        def close(self):
-            if not self.plugin.data_handled:
-                args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
-                with open(args.sftp_replacement_file, "rb") as r:
-                    self.writefile.write(r.read())
-            super().close()
+        @typechecked
+        def stat(self, path: Text) -> Union[SFTPAttributes, int]:
+            return self.lstat(path)
 
     @classmethod
-    def get_interface(cls):
+    @typechecked
+    def get_interface(cls) -> Optional[Type[BaseSFTPServerInterface]]:
         return cls.SFTPInterface
 
     @classmethod
-    def parser_arguments(cls):
+    def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
             '--sftp-replace',
@@ -47,7 +53,8 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             help='file that is used for replacement'
         )
 
-    def __init__(self, sftp, filename):
+    @typechecked
+    def __init__(self, sftp: SFTPBaseHandle, filename: Text) -> None:
         super().__init__(sftp, filename)
         self.args.sftp_replacement_file = os.path.expanduser(self.args.sftp_replacement_file)
 
@@ -56,14 +63,17 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
         self.file_uploaded = False
         self.data_handled = False
 
-    def close(self):
+    def close(self) -> None:
         self.replacement.close()
 
-    def handle_data(self, data, *, offset=None, length=None):
+    @typechecked
+    def handle_data(self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None) -> bytes:
         self.data_handled = True
         if self.file_uploaded:
             return b''
         if self.sftp.writefile:
             self.file_uploaded = True
             return self.replacement.read()
-        return self.replacement.read(length)
+        if length is not None:
+            return self.replacement.read(length)
+        return b''

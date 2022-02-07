@@ -1,41 +1,43 @@
 import argparse
 import logging
+from typing import NoReturn, Optional, Text
+
+from typeguard import typechecked
 try:
-    import wx
+    import tkinter
+    from tkinter.simpledialog import askstring
+    from tkinter import ttk
+    tkinter_imported = True
 except ImportError:
-    wx = None
+    tkinter_imported = False
 
 
-def ask_pass(primary_message, secondary_message=None):
+@typechecked
+def ask_pass(primary_message: Text, secondary_message: Optional[Text] = None) -> Optional[Text]:
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
-    app = wx.App()
-    dlg = wx.PasswordEntryDialog(None, dialog_text, 'SSH-MITM - Askpass', "", wx.OK | wx.CANCEL)
-
-    response = dlg.ShowModal()
-    if response == wx.ID_OK:
-        return dlg.GetValue()
+    password = askstring('SSH-MITM - Askpass', dialog_text, show="*")
+    if password is not None:
+        return password
     return None
 
 
-def confirm(primary_message, secondary_message=None):
+@typechecked
+def confirm(primary_message: Text, secondary_message: Optional[Text] = None) -> bool:
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
-    app = wx.App()
-    dlg = wx.MessageDialog(None, dialog_text, 'SSH-MITM - Askpass', wx.YES | wx.NO)
-    response = dlg.ShowModal()
-    if response == wx.ID_YES:
+    answer = tkinter.messagebox.askquestion('SSH-MITM - Askpass', dialog_text, icon='question')  # type: ignore
+    if answer == 'yes':
         return True
     return False
 
 
-def main():
-    if wx is False:
-        logging.error("wxPython not installed! please install!")
+def main() -> NoReturn:
+    if not tkinter_imported:
+        logging.error("tkinter not installed!")
         exit(1)
-
     parser = argparse.ArgumentParser()
     parser.add_argument('messages', nargs='*')
     args = parser.parse_args()
@@ -45,10 +47,14 @@ def main():
     if primary_message == "":
         primary_message = "ssh-askpass"
 
-    secondary_message = "\n".join(lines[1:]).strip()
+    secondary_message: Optional[Text] = "\n".join(lines[1:]).strip()
     if secondary_message == "":
         secondary_message = None
 
+    root = tkinter.Tk()
+    root.withdraw()
+    style = ttk.Style()
+    style.theme_use('clam')
     if primary_message.endswith("?"):
         ok = confirm(primary_message, secondary_message)
         if not ok:
@@ -60,6 +66,7 @@ def main():
         else:
             print(result)
     exit(0)
+
 
 if __name__ == '__main__':
     main()

@@ -16,3 +16,7 @@ class MissingHostException(Exception):
 
 class KeyGenerationError(Exception):
     pass
+
+
+class MissingClient(Exception):
+    pass
