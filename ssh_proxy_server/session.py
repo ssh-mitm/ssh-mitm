@@ -8,7 +8,6 @@ from typing import (
     TYPE_CHECKING,
     cast,
     Any,
-    ByteString,
     Dict,
     Optional,
     Union,

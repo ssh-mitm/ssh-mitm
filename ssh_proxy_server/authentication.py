@@ -1,4 +1,3 @@
-import argparse
 import logging
 import os
 import sys
@@ -88,7 +87,7 @@ class RemoteCredentials():
         self, *,
         username: Text,
         password: Optional[Text] = None,
-        key: Optional[PKey]=None,
+        key: Optional[PKey] = None,
         host: Optional[Text] = None,
         port: Optional[int] = None
     ) -> None:
@@ -403,7 +402,6 @@ class AuthenticatorPassThrough(Authenticator):
                     ]))
 
             return keys_parsed
-
 
         logmessage = []
         if success:

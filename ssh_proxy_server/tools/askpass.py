@@ -13,7 +13,7 @@ except ImportError:
 
 
 @typechecked
-def ask_pass(primary_message: Text, secondary_message: Optional[Text]=None) -> Optional[Text]:
+def ask_pass(primary_message: Text, secondary_message: Optional[Text] = None) -> Optional[Text]:
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
@@ -24,7 +24,7 @@ def ask_pass(primary_message: Text, secondary_message: Optional[Text]=None) -> O
 
 
 @typechecked
-def confirm(primary_message: Text, secondary_message: Optional[Text]=None) -> bool:
+def confirm(primary_message: Text, secondary_message: Optional[Text] = None) -> bool:
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
@@ -51,7 +51,7 @@ def main() -> NoReturn:
     if secondary_message == "":
         secondary_message = None
 
-    root= tkinter.Tk()
+    root = tkinter.Tk()
     root.withdraw()
     style = ttk.Style()
     style.theme_use('clam')
@@ -66,6 +66,7 @@ def main() -> NoReturn:
         else:
             print(result)
     exit(0)
+
 
 if __name__ == '__main__':
     main()

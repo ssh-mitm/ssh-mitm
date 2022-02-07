@@ -22,6 +22,7 @@ from ssh_proxy_server.clients.ssh import AuthenticationMethod, SSHClient
 if TYPE_CHECKING:
     from ssh_proxy_server.session import Session
 
+
 class SFTPClient(SSHClient):
 
     @typechecked

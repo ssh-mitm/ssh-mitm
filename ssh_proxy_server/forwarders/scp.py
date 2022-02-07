@@ -19,6 +19,7 @@ from ssh_proxy_server.forwarders.base import BaseForwarder
 if TYPE_CHECKING:
     from ssh_proxy_server.session import Session
 
+
 class SCPBaseForwarder(BaseForwarder):
 
     @typechecked
@@ -79,7 +80,7 @@ class SCPBaseForwarder(BaseForwarder):
                     break
                 if self.session.scp_channel.exit_status_ready():
                     status = self.session.scp_channel.recv_exit_status()
-                    #self.server_channel.send_exit_status(status)
+                    # self.server_channel.send_exit_status(status)
                     self.close_session(self.session.scp_channel)
                     break
 

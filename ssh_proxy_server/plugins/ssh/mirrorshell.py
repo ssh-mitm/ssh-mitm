@@ -1,5 +1,4 @@
 import datetime
-from io import BytesIO
 import logging
 import select
 import threading
@@ -25,6 +24,7 @@ import ssh_proxy_server
 from ssh_proxy_server.forwarders.ssh import SSHForwarder
 if TYPE_CHECKING:
     from ssh_proxy_server.session import Session
+
 
 class InjectServer(paramiko.ServerInterface):
 

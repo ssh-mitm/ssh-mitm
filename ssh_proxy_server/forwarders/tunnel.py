@@ -90,7 +90,7 @@ class TunnelForwarder(threading.Thread):
 
     @typechecked
     def close_channel(self, channel: Union[socket, paramiko.Channel]) -> None:
-        if not isinstance(channel, paramiko.Channel): # socket.socket
+        if not isinstance(channel, paramiko.Channel):  # socket.socket
             channel.close()
             return
         channel.lock.acquire()

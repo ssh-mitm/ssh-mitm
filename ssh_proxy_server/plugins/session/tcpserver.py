@@ -6,7 +6,6 @@ from typing import (
     Callable,
     List,
     Text,
-    Any,
     Union,
     Tuple,
     Optional

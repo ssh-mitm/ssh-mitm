@@ -59,6 +59,7 @@ class Socks4Server():
     """Socks4 kompatibler Forwarder
     """
     SOCKSVERSION = b"\x04"
+
     @typechecked
     def __init__(self, listenaddress: Tuple[Text, int]) -> None:
         self.listenaddress = listenaddress
@@ -87,7 +88,6 @@ class Socks4Server():
         dst_addr: Text
         dst_port_b: bytes
         dst_port: int
-
 
         dst_port_b, dst_addr_b = clientsock.recv(2), clientsock.recv(4)
         if len(dst_addr_b) != 4 or len(dst_port_b) != 2:

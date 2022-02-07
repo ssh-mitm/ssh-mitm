@@ -277,7 +277,6 @@ class MultipleSocketsListener:
         """
         return list(self._sockmap.keys())
 
-
     @typechecked
     def getsockname(self) -> Any:
         """Return first registered socket's own address."""

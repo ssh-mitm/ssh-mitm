@@ -10,6 +10,7 @@ from ssh_proxy_server.forwarders.scp import SCPForwarder
 if TYPE_CHECKING:
     from ssh_proxy_server.session import Session
 
+
 class SCPReplaceFile(SCPForwarder):
     """replace the file with another file
     """

@@ -8,6 +8,7 @@ import os
 
 from typeguard import typechecked
 
+
 class AgentProxy(object):
 
     @typechecked

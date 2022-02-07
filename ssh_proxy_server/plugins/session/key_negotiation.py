@@ -1,7 +1,6 @@
 import logging
 from typing import (
-    TYPE_CHECKING,
-    Text
+    TYPE_CHECKING
 )
 
 from colored.colored import stylize, fg, attr  # type: ignore
@@ -94,7 +93,6 @@ def handle_key_negotiation(session: 'ssh_proxy_server.session.Session') -> None:
         key_negotiation_data = KeyNegotiationData(session, m)
         key_negotiation_data.show_debug_info()
         key_negotiation_data.audit_client()
-
 
         # normal operation
         try:

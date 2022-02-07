@@ -1,9 +1,7 @@
 import logging
-from enum import Enum
 import socket
 from typing import (
     TYPE_CHECKING,
-    cast,
     List,
     Optional,
     Tuple,

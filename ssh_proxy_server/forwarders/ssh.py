@@ -1,9 +1,7 @@
 import logging
 import time
 from typing import (
-    TYPE_CHECKING,
-    ByteString,
-    Text
+    TYPE_CHECKING
 )
 
 from typeguard import typechecked

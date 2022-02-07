@@ -10,7 +10,6 @@ from typing import (
     Optional,
     Dict,
     Union,
-    cast,
     Any,
     DefaultDict
 )
@@ -29,7 +28,7 @@ if TYPE_CHECKING:
 class Vulnerability:
 
     @typechecked
-    def __init__(self, cve: Text, indocs: bool=False) -> None:
+    def __init__(self, cve: Text, indocs: bool = False) -> None:
         self.cve: Text = cve
         self.indocs: bool = indocs
 
@@ -90,7 +89,6 @@ class SSHClientAudit():
             if self.between_versions(version_min, version_max):
                 cvelist[cve] = Vulnerability(cve, indocs)
 
-
         cvemessagelist: List[Text] = []
         if cvelist:
             for e in cvelist.values():
@@ -119,13 +117,13 @@ class SSHClientAudit():
         for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
                 messages.append(stylize(
-                    f"client connecting for the first time or using default key order!",
+                    "client connecting for the first time or using default key order!",
                     fg('green')
                 ))
                 break
         else:
             messages.append(stylize(
-                f"client has a locally cached remote fingerprint.",
+                "client has a locally cached remote fingerprint.",
                 fg('yellow')
             ))
         messages.append(
@@ -139,7 +137,7 @@ class SSHClientAudit():
         for k, v in self.check_key_negotiation().items():
             vulnerabilities[k].extend(v)
 
-        vulnerabilities["clientaudit"].extend( self.audit())
+        vulnerabilities["clientaudit"].extend(self.audit())
 
         self.check_cves(vulnerabilities)
         client_audits = vulnerabilities.get("clientaudit", [])

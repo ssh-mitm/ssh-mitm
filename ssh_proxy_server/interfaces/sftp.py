@@ -8,7 +8,6 @@ from typing import (
     Union
 )
 
-import paramiko
 from enhancements.modules import BaseModule
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
@@ -124,7 +123,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         except (OSError, IOError) as e:
             logging.exception("Error")
             return paramiko.SFTPServer.convert_errno(e.errno)
-        except Exception as e:
+        except Exception:
             logging.exception("Error")
             return paramiko.sftp.SFTP_FAILURE
 

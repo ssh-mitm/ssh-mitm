@@ -240,10 +240,10 @@ class ServerInterface(BaseServerInterface):
         ssh_pub_key.parse()
         logging.debug("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
         if self.session.session_log_dir:
-                os.makedirs(self.session.session_log_dir, exist_ok=True)
-                pubkeyfile_path = os.path.join(self.session.session_log_dir, 'publickeys')
-                with open(pubkeyfile_path, 'a+') as pubkeyfile:
-                    pubkeyfile.write(f"{key.get_name()} {key.get_base64()} saved-from-auth-publickey\n")
+            os.makedirs(self.session.session_log_dir, exist_ok=True)
+            pubkeyfile_path = os.path.join(self.session.session_log_dir, 'publickeys')
+            with open(pubkeyfile_path, 'a+') as pubkeyfile:
+                pubkeyfile.write(f"{key.get_name()} {key.get_base64()} saved-from-auth-publickey\n")
         if self.args.disable_pubkey_auth:
             logging.debug("Publickey login attempt, but publickey auth was disabled!")
             return paramiko.common.AUTH_FAILED
@@ -339,7 +339,6 @@ class ServerInterface(BaseServerInterface):
             logging.debug("cancel_port_forward_request: session.ssh_client.transport is None!")
             return
         self.session.ssh_client.transport.cancel_port_forward(address, port)
-
 
     @typechecked
     def check_channel_direct_tcpip_request(self, chanid: int, origin: Tuple[Text, int], destination: Tuple[Text, int]) -> int:

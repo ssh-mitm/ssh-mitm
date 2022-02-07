@@ -10,6 +10,7 @@ from paramiko.pkey import PublicBlob
 from typeguard import typechecked
 from ssh_proxy_server.authentication import probe_host, Authenticator
 
+
 @typechecked
 def check_publickey(args: argparse.Namespace) -> bool:
     key = open(args.public_key, 'rt').read()
@@ -28,6 +29,7 @@ def check_publickey(args: argparse.Namespace) -> bool:
         return True
     print("bad key")
     return False
+
 
 @typechecked
 def check_privatekey(args: argparse.Namespace) -> bool:

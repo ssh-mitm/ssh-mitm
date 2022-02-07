@@ -136,7 +136,6 @@ class SSHProxyServer:
                 logging.error('host key format not supported!')
                 raise KeyGenerationError()
 
-
         ssh_pub_key = SSHKey(f"{self._hostkey.get_name()} {self._hostkey.get_base64()}")
         ssh_pub_key.parse()
         logging.info((
