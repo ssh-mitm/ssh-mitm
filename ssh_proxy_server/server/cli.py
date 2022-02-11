@@ -157,6 +157,7 @@ def run_server(args: argparse.Namespace) -> None:
     if args.request_agent_breakin:
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
+    print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
     sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
     rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
     rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
