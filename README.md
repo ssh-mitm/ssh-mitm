@@ -44,7 +44,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 * publickey authentication
    * accept same key as destination server
-   * Spoofing FIDO2 Tokens
+   * Spoofing FIDO2 Tokens ([Information from OpenSSH](https://www.openssh.com/agent-restrict.html))
 * hijacking and logging of terminal sessions
 * store and replace files during SCP/SFTP file transferes
 * port porwarding
@@ -117,7 +117,7 @@ For a full login on the remote server agent forwarding is still required. When n
 
 SSH-MITM is able to spoof FIDO2 Tokens which can be used for 2 factor authentication.
 
-The attack is called trivial authentication and can be enabled with the command line argument `--enable-trivial-auth`.
+The attack is called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html) ([CVE-2021-36367](https://docs.ssh-mitm.at/CVE-2021-36367.html), [CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html)) and can be enabled with the command line argument `--enable-trivial-auth`.
 
   ssh-mitm server --enable-trivial-auth
 
