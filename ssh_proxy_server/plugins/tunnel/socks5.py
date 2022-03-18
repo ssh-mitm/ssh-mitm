@@ -122,7 +122,7 @@ class Socks5Server():
         if not self.auth_required and Socks5AuthenticationType.NONE in authmethods:
             clientsock.sendall(Socks5Server.SOCKSVERSION + Socks5AuthenticationType.NONE)
             return True
-        elif self.auth_required and Socks5AuthenticationType.PASSWORD in authmethods:
+        if self.auth_required and Socks5AuthenticationType.PASSWORD in authmethods:
             clientsock.sendall(Socks5Server.SOCKSVERSION + Socks5AuthenticationType.PASSWORD)
         else:
             clientsock.sendall(Socks5Server.SOCKSVERSION + b"\xFF")
