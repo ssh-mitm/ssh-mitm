@@ -1,4 +1,7 @@
 <h1 align="center"> SSH-MITM - ssh audits made simple </h1> <br>
+<p align="center"><a href="https://war.ukraine.ua/support-ukraine/">
+  <img src="https://img.shields.io/badge/Support%20Ukraine-%F0%9F%87%BA%F0%9F%87%A6-lightgrey?style=for-the-badge">
+</a></p>
 <p align="center">
   <a href="https://www.ssh-mitm.at">
     <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://www.ssh-mitm.at/img/ssh-mitm-password.png?20220211" >
