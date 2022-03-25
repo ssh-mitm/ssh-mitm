@@ -25,7 +25,7 @@
 - [Installation](#installation)
 - [Quickstart](#quickstart)
 - [Session hijacking](#session-hijacking)
-- [Publickey authentication](#publickey-authentication)
+- [Spoofing FIDO Tokens](#spoofing-fido-tokens)
 - [Contributing](#contributing)
 
 ## Introduction
@@ -49,7 +49,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 * publickey authentication
    * accept same key as destination server
-   * Spoofing FIDO2 Tokens ([Information from OpenSSH](https://www.openssh.com/agent-restrict.html))
+   * Spoofing FIDO Tokens ([Information from OpenSSH](https://www.openssh.com/agent-restrict.html))
 * hijacking and logging of terminal sessions
 * store and replace files during SCP/SFTP file transferes
 * port porwarding
@@ -78,7 +78,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 To start SSH-MITM, all you have to do is run this command in your terminal of choice.
 
-    $ ssh-mitm server --remote-host 192.168.0.x:PORT
+    $ ssh-mitm server --remote-host 192.168.0.x
 
 Now let's try to connect. SSH-MITM is listening on port 10022.
 
@@ -110,15 +110,7 @@ Try to execute somme commands in the hijacked session or in the original session
 
 The output will be shown in both sessions.
 
-## Publickey authentication
-
-SSH-MITM is able to verify, if a user is able to login with publickey authentication on the remote server. If publickey authentication is not possible, SSH-MITM falls back to password authentication. **This step does not require a forwarded agent.**
-
-For a full login on the remote server agent forwarding is still required. When no agent was forwarded, SSH-MITM can redirect the connection to a honeypot.
-
-    ssh-mitm server --fallback-host username:password@hostname:port
-
-## Spoofing of FIDO2 Tokens (2 factor authentication)
+## Spoofing FIDO Tokens
 
 SSH-MITM is able to spoof FIDO2 Tokens which can be used for 2 factor authentication.
 
