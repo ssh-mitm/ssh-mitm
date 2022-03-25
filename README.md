@@ -1,7 +1,4 @@
-<h1 align="center"> SSH-MITM - ssh audits made simple </h1> <br>
-<p align="center"><a href="https://war.ukraine.ua/support-ukraine/">
-  <img src="https://img.shields.io/badge/Support%20Ukraine-%F0%9F%87%BA%F0%9F%87%A6-lightgrey?style=for-the-badge">
-</a></p>
+<h1 align="center"> SSH-MITM - ssh audits made simple </h1>
 <p align="center">
   <a href="https://www.ssh-mitm.at">
     <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://www.ssh-mitm.at/img/ssh-mitm-password.png?20220211" >
@@ -35,7 +32,6 @@
 [![Documentation Status](https://readthedocs.org/projects/ssh-mitm/badge/?version=latest)](https://docs.ssh-mitm.at/?badge=latest)
 [![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm?color=%23434ee6)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![Support Ukraine Badge](https://img.shields.io/badge/Support%20Ukraine-%F0%9F%87%BA%F0%9F%87%A6-lightgrey)](https://war.ukraine.ua/support-ukraine/)
 
 
 **SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
