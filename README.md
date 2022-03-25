@@ -136,6 +136,11 @@ Using the trivial authentication attack does not break password authentication, 
   </a>
 </p>
 
+<p align="center">
+  <b><a href="https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf">Downlaod presentation slides</a></b>
+</p>
+
+
 ## Contributing
 
 <img src="https://www.ssh-mitm.at/assets/images/streamline-free/write-paper-ink.svg" align="left" width="128">
