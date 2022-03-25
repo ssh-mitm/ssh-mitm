@@ -128,6 +128,14 @@ The attack is called [trivial authentication](https://docs.ssh-mitm.at/trivialau
 
 Using the trivial authentication attack does not break password authentication, because the attack is only performed when a publickey login is possible.
 
+<p align="center">
+  <b>Video explaining the spoofing attack:</b><br/>
+  <i>Click to view video on vimeo.com</i><br/>
+  <a href="https://vimeo.com/showcase/9059922/video/651517195">
+  <img src="https://github.com/ssh-mitm/ssh-mitm/raw/master/doc/images/ds2021-video.png" alt="Click to view video on vimeo.com">
+  </a>
+</p>
+
 ## Contributing
 
 <img src="https://www.ssh-mitm.at/assets/images/streamline-free/write-paper-ink.svg" align="left" width="128">
