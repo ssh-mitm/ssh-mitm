@@ -1,4 +1,4 @@
-<h1 align="center"> SSH-MITM - ssh audits made simple </h1> <br>
+<h1 align="center"> SSH-MITM - ssh audits made simple </h1>
 <p align="center">
   <a href="https://www.ssh-mitm.at">
     <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://www.ssh-mitm.at/img/ssh-mitm-password.png?20220211" >
@@ -22,16 +22,17 @@
 - [Installation](#installation)
 - [Quickstart](#quickstart)
 - [Session hijacking](#session-hijacking)
-- [Publickey authentication](#publickey-authentication)
+- [Spoofing FIDO Tokens](#spoofing-fido-tokens)
 - [Contributing](#contributing)
 
 ## Introduction
 
+[![Downloads](https://pepy.tech/badge/ssh-mitm)](https://pepy.tech/project/ssh-mitm)
 [![CodeFactor](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm/badge)](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm)
 [![Documentation Status](https://readthedocs.org/projects/ssh-mitm/badge/?version=latest)](https://docs.ssh-mitm.at/?badge=latest)
-[![PyPI downloads](https://pepy.tech/badge/ssh-mitm/month)](https://pepy.tech/project/ssh-mitm)
 [![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm?color=%23434ee6)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+
 
 **SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
 
@@ -44,7 +45,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 * publickey authentication
    * accept same key as destination server
-   * Spoofing FIDO2 Tokens
+   * Spoofing FIDO Tokens ([Information from OpenSSH](https://www.openssh.com/agent-restrict.html))
 * hijacking and logging of terminal sessions
 * store and replace files during SCP/SFTP file transferes
 * port porwarding
@@ -73,7 +74,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 To start SSH-MITM, all you have to do is run this command in your terminal of choice.
 
-    $ ssh-mitm server --remote-host 192.168.0.x:PORT
+    $ ssh-mitm server --remote-host 192.168.0.x
 
 Now let's try to connect. SSH-MITM is listening on port 10022.
 
@@ -105,23 +106,28 @@ Try to execute somme commands in the hijacked session or in the original session
 
 The output will be shown in both sessions.
 
-## Publickey authentication
-
-SSH-MITM is able to verify, if a user is able to login with publickey authentication on the remote server. If publickey authentication is not possible, SSH-MITM falls back to password authentication. **This step does not require a forwarded agent.**
-
-For a full login on the remote server agent forwarding is still required. When no agent was forwarded, SSH-MITM can redirect the connection to a honeypot.
-
-    ssh-mitm server --fallback-host username:password@hostname:port
-
-## Spoofing of FIDO2 Tokens (2 factor authentication)
+## Spoofing FIDO Tokens
 
 SSH-MITM is able to spoof FIDO2 Tokens which can be used for 2 factor authentication.
 
-The attack is called trivial authentication and can be enabled with the command line argument `--enable-trivial-auth`.
+The attack is called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html) ([CVE-2021-36367](https://docs.ssh-mitm.at/CVE-2021-36367.html), [CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html)) and can be enabled with the command line argument `--enable-trivial-auth`.
 
   ssh-mitm server --enable-trivial-auth
 
 Using the trivial authentication attack does not break password authentication, because the attack is only performed when a publickey login is possible.
+
+<p align="center">
+  <b>Video explaining the spoofing attack:</b><br/>
+  <i>Click to view video on vimeo.com</i><br/>
+  <a href="https://vimeo.com/showcase/9059922/video/651517195">
+  <img src="https://github.com/ssh-mitm/ssh-mitm/raw/master/doc/images/ds2021-video.png" alt="Click to view video on vimeo.com">
+  </a>
+</p>
+
+<p align="center">
+  <b><a href="https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf">Downlaod presentation slides</a></b>
+</p>
+
 
 ## Contributing
 
