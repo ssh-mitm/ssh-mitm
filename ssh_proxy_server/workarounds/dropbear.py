@@ -105,6 +105,9 @@ def transport_run(self):  # type: ignore
                 if len(self._expected_packet) > 0:
                     if ptype not in self._expected_packet:
                         if ptype == 30:
+                            # according to rfc 4253, the next packet should be ignored,
+                            # when first_kex_packet_follows is True
+                            # this is a workarround at the moment, but connection works
                             continue
                         raise SSHException(
                             "Expecting packet from {!r}, got {:d}".format(
@@ -167,8 +170,13 @@ def transport_run(self):  # type: ignore
                         self._send_message(msg)
                 self.packetizer.complete_handshake()
         except SSHException as e:
-            self._log(INFO, "Exception: " + str(e))
-            self._log(INFO, util.tb_strings())
+            self._log(
+                ERROR,
+                "Exception ({}): {}".format(
+                    "server" if self.server_mode else "client", e
+                ),
+            )
+            self._log(ERROR, util.tb_strings())
             self.saved_exception = e
         except EOFError as e:
             self._log(DEBUG, "EOF in transport thread")
