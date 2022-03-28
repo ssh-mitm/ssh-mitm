@@ -93,7 +93,7 @@ class ServerInterface(BaseServerInterface):
             '--enable-trivial-auth',
             dest='enable_trivial_auth',
             action='store_true',
-            help='enables "trivial success authentication" spoofing attack'
+            help='enables "trivial success authentication" phishing attack'
         )
         plugin_group.add_argument(
             '--enable-keyboard-interactive-auth',
