@@ -1,4 +1,4 @@
-from ssh_proxy_server.interfaces.server import (
+from sshmitm.interfaces.server import (
     BaseServerInterface,
     ServerInterface
 )

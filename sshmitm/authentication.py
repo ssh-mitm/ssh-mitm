@@ -20,12 +20,12 @@ import paramiko
 from sshpubkeys import SSHKey  # type: ignore
 from typeguard import typechecked
 
-import ssh_proxy_server
-from ssh_proxy_server.clients.ssh import SSHClient, AuthenticationMethod
-from ssh_proxy_server.exceptions import MissingHostException
+import sshmitm
+from sshmitm.clients.ssh import SSHClient, AuthenticationMethod
+from sshmitm.exceptions import MissingHostException
 
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 @typechecked
@@ -172,7 +172,7 @@ class Authenticator(BaseModule):
         )
 
     @typechecked
-    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
+    def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__()
         self.session = session
 

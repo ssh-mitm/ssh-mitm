@@ -17,11 +17,11 @@ from typeguard import typechecked
 from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
-import ssh_proxy_server
-from ssh_proxy_server.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
-from ssh_proxy_server.plugins.session.tcpserver import TCPServerThread
+import sshmitm
+from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
+from sshmitm.plugins.session.tcpserver import TCPServerThread
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class Socks5Error(Exception):
@@ -241,7 +241,7 @@ class ClientTunnelHandler:
     @typechecked
     def __init__(
         self,
-        session: 'ssh_proxy_server.session.Session',
+        session: 'sshmitm.session.Session',
         username: Optional[Text] = None,
         password: Optional[Text] = None
     ) -> None:
@@ -301,7 +301,7 @@ class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
 
     @classmethod
     @typechecked
-    def setup(cls, session: 'ssh_proxy_server.session.Session') -> None:
+    def setup(cls, session: 'sshmitm.session.Session') -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
 

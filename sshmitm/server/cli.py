@@ -7,38 +7,38 @@ from typeguard import typechecked
 
 from paramiko import Transport
 
-from ssh_proxy_server.__version__ import version as ssh_mitm_version
-from ssh_proxy_server.console import sshconsole
-from ssh_proxy_server.server import SSHProxyServer
+from sshmitm.__version__ import version as ssh_mitm_version
+from sshmitm.console import sshconsole
+from sshmitm.server import SSHProxyServer
 
-from ssh_proxy_server.authentication import (
+from sshmitm.authentication import (
     Authenticator,
     AuthenticatorPassThrough
 )
-from ssh_proxy_server.interfaces.server import (
+from sshmitm.interfaces.server import (
     BaseServerInterface,
     ServerInterface
 )
-from ssh_proxy_server.forwarders.scp import SCPBaseForwarder
-from ssh_proxy_server.forwarders.ssh import SSHBaseForwarder
-from ssh_proxy_server.forwarders.sftp import SFTPHandlerBasePlugin
+from sshmitm.forwarders.scp import SCPBaseForwarder
+from sshmitm.forwarders.ssh import SSHBaseForwarder
+from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin
 
-from ssh_proxy_server.interfaces.sftp import (
+from sshmitm.interfaces.sftp import (
     BaseSFTPServerInterface,
     SFTPProxyServerInterface
 )
 
-from ssh_proxy_server.forwarders.tunnel import (
+from sshmitm.forwarders.tunnel import (
     RemotePortForwardingBaseForwarder,
     LocalPortForwardingBaseForwarder
 )
 
-from ssh_proxy_server.plugins.ssh.mirrorshell import SSHMirrorForwarder
-from ssh_proxy_server.plugins.scp.store_file import SCPStorageForwarder
-from ssh_proxy_server.plugins.sftp.store_file import SFTPHandlerStoragePlugin
-from ssh_proxy_server.plugins.tunnel.injectservertunnel import InjectableRemotePortForwardingForwarder
-from ssh_proxy_server.plugins.tunnel.socks import SOCKSTunnelForwarder
-from ssh_proxy_server.session import BaseSession, Session
+from sshmitm.plugins.ssh.mirrorshell import SSHMirrorForwarder
+from sshmitm.plugins.scp.store_file import SCPStorageForwarder
+from sshmitm.plugins.sftp.store_file import SFTPHandlerStoragePlugin
+from sshmitm.plugins.tunnel.injectservertunnel import InjectableRemotePortForwardingForwarder
+from sshmitm.plugins.tunnel.socks import SOCKSTunnelForwarder
+from sshmitm.session import BaseSession, Session
 
 
 @typechecked

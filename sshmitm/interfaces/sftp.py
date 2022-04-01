@@ -13,8 +13,8 @@ from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 from typeguard import typechecked
 
-from ssh_proxy_server.exceptions import MissingClient
-from ssh_proxy_server.interfaces.server import BaseServerInterface
+from sshmitm.exceptions import MissingClient
+from sshmitm.interfaces.server import BaseServerInterface
 
 
 class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):

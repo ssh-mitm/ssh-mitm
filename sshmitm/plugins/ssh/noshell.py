@@ -1,6 +1,6 @@
 import time
 
-from ssh_proxy_server.forwarders.ssh import SSHForwarder
+from sshmitm.forwarders.ssh import SSHForwarder
 
 
 class NoShellForwarder(SSHForwarder):

@@ -18,11 +18,11 @@ from paramiko import ECDSAKey
 from rich._emoji_codes import EMOJI
 from typeguard import typechecked
 
-import ssh_proxy_server
-from ssh_proxy_server.plugins.session import cve202014002, cve202014145
+import sshmitm
+from sshmitm.plugins.session import cve202014002, cve202014145
 
 if TYPE_CHECKING:
-    from ssh_proxy_server.plugins.session.key_negotiation import KeyNegotiationData
+    from sshmitm.plugins.session.key_negotiation import KeyNegotiationData
 
 
 class Vulnerability:
@@ -49,7 +49,7 @@ class SSHClientAudit():
     @typechecked
     def __init__(
         self,
-        key_negotiation_data: 'ssh_proxy_server.plugins.session.key_negotiation.KeyNegotiationData',
+        key_negotiation_data: 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData',
         vulnerability_list: Dict[Text, Dict[Text, Any]]
     ) -> None:
         self.key_negotiation_data: 'KeyNegotiationData' = key_negotiation_data

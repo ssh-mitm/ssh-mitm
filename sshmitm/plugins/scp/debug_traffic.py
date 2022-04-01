@@ -1,7 +1,7 @@
 import binascii
 
 from typeguard import typechecked
-from ssh_proxy_server.forwarders.scp import SCPForwarder
+from sshmitm.forwarders.scp import SCPForwarder
 
 
 class SCPDebugForwarder(SCPForwarder):

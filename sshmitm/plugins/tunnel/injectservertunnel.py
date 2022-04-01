@@ -7,13 +7,13 @@ from typeguard import typechecked
 from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
-import ssh_proxy_server
-from ssh_proxy_server.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
-from ssh_proxy_server.plugins.session.tcpserver import TCPServerThread
+import sshmitm
+from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
+from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 if TYPE_CHECKING:
-    from ssh_proxy_server.interfaces.server import ServerInterface
-    from ssh_proxy_server.session import Session
+    from sshmitm.interfaces.server import ServerInterface
+    from sshmitm.session import Session
 
 
 class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
@@ -37,8 +37,8 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
     @typechecked
     def __init__(
         self,
-        session: 'ssh_proxy_server.session.Session',
-        server_interface: 'ssh_proxy_server.interfaces.server.ServerInterface',
+        session: 'sshmitm.session.Session',
+        server_interface: 'sshmitm.interfaces.server.ServerInterface',
         destination: Optional[Tuple[str, int]]
     ) -> None:
         super().__init__(session, server_interface, destination)

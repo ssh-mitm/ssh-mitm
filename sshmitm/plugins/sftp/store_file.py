@@ -9,7 +9,7 @@ import uuid
 
 from typeguard import typechecked
 
-from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
+from sshmitm.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
 
 
 class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):

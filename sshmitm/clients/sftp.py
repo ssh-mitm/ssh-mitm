@@ -17,10 +17,10 @@ from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_file import SFTPFile
 from typeguard import typechecked
 
-import ssh_proxy_server
-from ssh_proxy_server.clients.ssh import AuthenticationMethod, SSHClient
+import sshmitm
+from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class SFTPClient(SSHClient):
@@ -34,7 +34,7 @@ class SFTPClient(SSHClient):
         password: Optional[Text],
         user: Text,
         key: Optional[PKey],
-        session: 'ssh_proxy_server.session.Session'
+        session: 'sshmitm.session.Session'
     ) -> None:
         super().__init__(host, port, method, password, user, key, session)
         self._sftp: Optional[paramiko.SFTPClient] = None

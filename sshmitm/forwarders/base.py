@@ -7,10 +7,10 @@ from enhancements.modules import BaseModule
 import paramiko
 from typeguard import typechecked
 
-import ssh_proxy_server
-from ssh_proxy_server.exceptions import MissingClient
+import sshmitm
+from sshmitm.exceptions import MissingClient
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class BaseForwarder(BaseModule):
@@ -22,7 +22,7 @@ class BaseForwarder(BaseModule):
     BUF_LEN = 65536*100
 
     @typechecked
-    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
+    def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__()
         if session.ssh_client is None or session.ssh_client.transport is None:
             raise MissingClient("session.ssh_client is None")

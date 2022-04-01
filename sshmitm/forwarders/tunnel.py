@@ -14,10 +14,10 @@ import paramiko
 from enhancements.modules import BaseModule
 from typeguard import typechecked
 
-import ssh_proxy_server
+import sshmitm
 if TYPE_CHECKING:
-    from ssh_proxy_server.interfaces.server import ServerInterface
-    from ssh_proxy_server.session import Session
+    from sshmitm.interfaces.server import ServerInterface
+    from sshmitm.session import Session
 
 
 class TunnelForwarder(threading.Thread):
@@ -115,7 +115,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
     @typechecked
     def __init__(
         self,
-        session: 'ssh_proxy_server.session.Session',
+        session: 'sshmitm.session.Session',
         chanid: int,
         origin: Optional[Tuple[str, int]],
         destination: Optional[Tuple[str, int]]
@@ -147,7 +147,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
 
     @classmethod
     @typechecked
-    def setup(cls, session: 'ssh_proxy_server.session.Session') -> None:
+    def setup(cls, session: 'sshmitm.session.Session') -> None:
         pass
 
 
@@ -165,8 +165,8 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     @typechecked
     def __init__(
         self,
-        session: 'ssh_proxy_server.session.Session',
-        server_interface: 'ssh_proxy_server.interfaces.server.ServerInterface',
+        session: 'sshmitm.session.Session',
+        server_interface: 'sshmitm.interfaces.server.ServerInterface',
         destination: Optional[Tuple[str, int]]
     ) -> None:
         super(RemotePortForwardingBaseForwarder, self).__init__()

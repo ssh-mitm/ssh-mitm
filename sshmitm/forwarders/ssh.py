@@ -6,11 +6,11 @@ from typing import (
 
 from typeguard import typechecked
 
-from ssh_proxy_server.forwarders.base import BaseForwarder
-import ssh_proxy_server
+from sshmitm.forwarders.base import BaseForwarder
+import sshmitm
 
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class SSHBaseForwarder(BaseForwarder):
@@ -22,7 +22,7 @@ class SSHForwarder(SSHBaseForwarder):
     """
 
     @typechecked
-    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
+    def __init__(self, session: 'sshmitm.session.Session') -> None:
         super(SSHForwarder, self).__init__(session)
 
     @typechecked

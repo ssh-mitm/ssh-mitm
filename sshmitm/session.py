@@ -27,13 +27,13 @@ from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 from typeguard import typechecked
 
-import ssh_proxy_server
-from ssh_proxy_server.forwarders.agent import AgentProxy
-from ssh_proxy_server.interfaces.server import BaseServerInterface, ProxySFTPServer
-from ssh_proxy_server.plugins.session import key_negotiation
+import sshmitm
+from sshmitm.forwarders.agent import AgentProxy
+from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
+from sshmitm.plugins.session import key_negotiation
 
 if TYPE_CHECKING:
-    from ssh_proxy_server.server import SSHProxyServer
+    from sshmitm.server import SSHProxyServer
 
 
 class BaseSession(BaseModule):
@@ -57,10 +57,10 @@ class Session(BaseSession):
     @typechecked
     def __init__(
         self,
-        proxyserver: 'ssh_proxy_server.server.SSHProxyServer',
+        proxyserver: 'sshmitm.server.SSHProxyServer',
         client_socket: socket.socket,
         client_address: Union[Tuple[Text, int], Tuple[Text, int, int, int]],
-        authenticator: Type['ssh_proxy_server.authentication.Authenticator'],
+        authenticator: Type['sshmitm.authentication.Authenticator'],
         remoteaddr: Union[Tuple[Text, int], Tuple[Text, int, int, int]]
     ) -> None:
         super().__init__()
@@ -70,7 +70,7 @@ class Session(BaseSession):
 
         self.channel = None
 
-        self.proxyserver: 'ssh_proxy_server.server.SSHProxyServer' = proxyserver
+        self.proxyserver: 'sshmitm.server.SSHProxyServer' = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
         self.name = f"{client_address}->{remoteaddr}"
@@ -80,7 +80,7 @@ class Session(BaseSession):
 
         self.ssh_requested: bool = False
         self.ssh_channel: Optional[paramiko.Channel] = None
-        self.ssh_client: Optional[ssh_proxy_server.clients.ssh.SSHClient] = None
+        self.ssh_client: Optional[sshmitm.clients.ssh.SSHClient] = None
         self.ssh_pty_kwargs = None
 
         self.scp_requested: bool = False
@@ -89,7 +89,7 @@ class Session(BaseSession):
 
         self.sftp_requested: bool = False
         self.sftp_channel = None
-        self.sftp_client: Optional[ssh_proxy_server.clients.sftp.SFTPClient] = None
+        self.sftp_client: Optional[sshmitm.clients.sftp.SFTPClient] = None
         self.sftp_client_ready = threading.Event()
 
         self.username: str = ''
@@ -101,7 +101,7 @@ class Session(BaseSession):
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
         self.agent: Optional[AgentProxy] = None
-        self.authenticator: 'ssh_proxy_server.authentication.Authenticator' = authenticator(self)
+        self.authenticator: 'sshmitm.authentication.Authenticator' = authenticator(self)
 
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()

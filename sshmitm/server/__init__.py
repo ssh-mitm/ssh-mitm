@@ -24,20 +24,20 @@ from paramiko.ssh_exception import SSHException
 from sshpubkeys import SSHKey  # type: ignore
 from typeguard import typechecked
 
-from ssh_proxy_server.multisocket import (
+from sshmitm.multisocket import (
     create_server_sock,
     has_dual_stack,
     MultipleSocketsListener
 )
-from ssh_proxy_server.session import Session
-from ssh_proxy_server.forwarders.ssh import SSHBaseForwarder, SSHForwarder
-from ssh_proxy_server.forwarders.scp import SCPBaseForwarder, SCPForwarder
-from ssh_proxy_server.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
-from ssh_proxy_server.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
-from ssh_proxy_server.forwarders.tunnel import LocalPortForwardingForwarder, RemotePortForwardingForwarder
-from ssh_proxy_server.authentication import Authenticator, AuthenticatorPassThrough
-from ssh_proxy_server.interfaces.server import BaseServerInterface, ServerInterface
-from ssh_proxy_server.exceptions import KeyGenerationError
+from sshmitm.session import Session
+from sshmitm.forwarders.ssh import SSHBaseForwarder, SSHForwarder
+from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
+from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
+from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
+from sshmitm.forwarders.tunnel import LocalPortForwardingForwarder, RemotePortForwardingForwarder
+from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
+from sshmitm.interfaces.server import BaseServerInterface, ServerInterface
+from sshmitm.exceptions import KeyGenerationError
 
 
 class SSHProxyServer:

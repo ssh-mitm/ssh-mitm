@@ -13,11 +13,11 @@ from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_CLOSE, cMSG_CHANN
 from paramiko.message import Message
 from typeguard import typechecked
 
-import ssh_proxy_server
-from ssh_proxy_server.forwarders.base import BaseForwarder
+import sshmitm
+from sshmitm.forwarders.base import BaseForwarder
 
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class SCPBaseForwarder(BaseForwarder):
@@ -149,7 +149,7 @@ class SCPForwarder(SCPBaseForwarder):
     """
 
     @typechecked
-    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
+    def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__(session)
 
         self.await_response = False

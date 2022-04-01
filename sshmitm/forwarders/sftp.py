@@ -11,11 +11,11 @@ import paramiko
 from enhancements.modules import BaseModule
 from typeguard import typechecked
 
-import ssh_proxy_server
-from ssh_proxy_server.interfaces.sftp import BaseSFTPServerInterface
+import sshmitm
+from sshmitm.interfaces.sftp import BaseSFTPServerInterface
 
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class SFTPHandlerBasePlugin(BaseModule):
@@ -54,7 +54,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
     @typechecked
     def __init__(
         self,
-        session: 'ssh_proxy_server.session.Session',
+        session: 'sshmitm.session.Session',
         plugin: Type[SFTPHandlerBasePlugin],
         filename: Text,
         flags: int = 0

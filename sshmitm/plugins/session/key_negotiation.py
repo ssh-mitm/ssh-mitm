@@ -16,17 +16,17 @@ from paramiko.ssh_exception import SSHException
 from rich.markup import escape
 from rich._emoji_codes import EMOJI
 
-import ssh_proxy_server
-from ssh_proxy_server.plugins.session.clientaudit import SSHClientAudit
+import sshmitm
+from sshmitm.plugins.session.clientaudit import SSHClientAudit
 
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class KeyNegotiationData:
 
     @typechecked
-    def __init__(self, session: 'ssh_proxy_server.session.Session', m: Message) -> None:
+    def __init__(self, session: 'sshmitm.session.Session', m: Message) -> None:
         self.session = session
         self.client_version = session.transport.remote_version
         self.cookie = m.get_bytes(16)  # cookie (random bytes)
@@ -67,7 +67,7 @@ class KeyNegotiationData:
         vulnerability_list = None
         client_version = self.client_version.lower()
         try:
-            vulndb = pkg_resources.resource_filename('ssh_proxy_server', 'data/client_vulnerabilities.yml')
+            vulndb = pkg_resources.resource_filename('sshmitm', 'data/client_vulnerabilities.yml')
             with open(vulndb) as file:
                 vulnerability_list = yaml.safe_load(file)
         except Exception:
@@ -81,7 +81,7 @@ class KeyNegotiationData:
             client.run_audit()
 
 
-def handle_key_negotiation(session: 'ssh_proxy_server.session.Session') -> None:
+def handle_key_negotiation(session: 'sshmitm.session.Session') -> None:
     # When really trying to implement connection accepting/forwarding based on CVE-14145
     # one should consider that clients who already accepted the fingerprint of the ssh-mitm server
     # will be connected through on their second connect and will get a changed keys error

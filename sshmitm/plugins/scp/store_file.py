@@ -8,10 +8,10 @@ from typing import (
 )
 
 from typeguard import typechecked
-import ssh_proxy_server
-from ssh_proxy_server.forwarders.scp import SCPForwarder
+import sshmitm
+from sshmitm.forwarders.scp import SCPForwarder
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class SCPStorageForwarder(SCPForwarder):
@@ -29,7 +29,7 @@ class SCPStorageForwarder(SCPForwarder):
         )
 
     @typechecked
-    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
+    def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__(session)
         self.file_id: Optional[Text] = None
         self.scp_storage_dir = None

@@ -20,10 +20,10 @@ from rich._emoji_codes import EMOJI
 import paramiko
 from typeguard import typechecked
 
-import ssh_proxy_server
-from ssh_proxy_server.forwarders.ssh import SSHForwarder
+import sshmitm
+from sshmitm.forwarders.ssh import SSHForwarder
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class InjectServer(paramiko.ServerInterface):
@@ -90,7 +90,7 @@ class SSHMirrorForwarder(SSHForwarder):
         )
 
     @typechecked
-    def __init__(self, session: 'ssh_proxy_server.session.Session') -> None:
+    def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__(session)
         if self.args.ssh_mirrorshell_key:
             self.args.ssh_mirrorshell_key = os.path.expanduser(self.args.ssh_mirrorshell_key)

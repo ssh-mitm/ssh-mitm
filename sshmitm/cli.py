@@ -11,10 +11,10 @@ from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 from typeguard import typechecked
 
-from ssh_proxy_server.workarounds import dropbear
-from ssh_proxy_server.__version__ import version as ssh_mitm_version
-from ssh_proxy_server.server.cli import init_server_parser, run_server
-from ssh_proxy_server.audit.cli import init_audit_parser, run_audit
+from sshmitm.workarounds import dropbear
+from sshmitm.__version__ import version as ssh_mitm_version
+from sshmitm.server.cli import init_server_parser, run_server
+from sshmitm.audit.cli import init_audit_parser, run_audit
 
 
 @typechecked

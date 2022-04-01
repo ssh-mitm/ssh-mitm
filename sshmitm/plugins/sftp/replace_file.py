@@ -9,10 +9,10 @@ from typing import (
 
 from paramiko import SFTPAttributes
 from typeguard import typechecked
-from ssh_proxy_server.exceptions import MissingClient
+from sshmitm.exceptions import MissingClient
 
-from ssh_proxy_server.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
-from ssh_proxy_server.interfaces.sftp import SFTPProxyServerInterface, BaseSFTPServerInterface
+from sshmitm.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
+from sshmitm.interfaces.sftp import SFTPProxyServerInterface, BaseSFTPServerInterface
 
 
 class SFTPProxyReplaceHandler(SFTPHandlerPlugin):

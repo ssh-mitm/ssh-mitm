@@ -8,7 +8,7 @@ import sys
 from enhancements.modules import ModuleParser
 from paramiko.pkey import PublicBlob
 from typeguard import typechecked
-from ssh_proxy_server.authentication import probe_host, Authenticator
+from sshmitm.authentication import probe_host, Authenticator
 
 
 @typechecked

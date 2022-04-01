@@ -14,12 +14,12 @@ import paramiko.hostkeys
 from sshpubkeys import SSHKey  # type: ignore
 
 from enhancements.modules import BaseModule
-import ssh_proxy_server
-from ssh_proxy_server.forwarders.agent import AgentProxy
-from ssh_proxy_server.exceptions import NoAgentKeys, InvalidHostKey
+import sshmitm
+from sshmitm.forwarders.agent import AgentProxy
+from sshmitm.exceptions import NoAgentKeys, InvalidHostKey
 
 if TYPE_CHECKING:
-    from ssh_proxy_server.session import Session
+    from sshmitm.session import Session
 
 
 class AuthenticationMethod(Enum):
@@ -45,9 +45,9 @@ class SSHClient(BaseSSHClient):
         password: Optional[Text],
         user: Text,
         key: Optional[PKey],
-        session: 'ssh_proxy_server.session.Session'
+        session: 'sshmitm.session.Session'
     ) -> None:
-        self.session: 'ssh_proxy_server.session.Session' = session
+        self.session: 'sshmitm.session.Session' = session
         self.host: Text = host
         self.port: int = port
         self.method: AuthenticationMethod = method
