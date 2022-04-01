@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - changed license to GPLv3
+- renamed module to "sshmitm" - old name "ssh_proxy_server"
 
 ## [1.0.0] - 2022-02-07
 
