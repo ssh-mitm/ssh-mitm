@@ -22,7 +22,7 @@
 - [Installation](#installation)
 - [Quickstart](#quickstart)
 - [Session hijacking](#session-hijacking)
-- [Spoofing FIDO Tokens](#spoofing-fido-tokens)
+- [Phishing FIDO Tokens](#phishing-fido-tokens)
 - [Contributing](#contributing)
 
 ## Introduction
@@ -45,7 +45,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 * publickey authentication
    * accept same key as destination server
-   * Spoofing FIDO Tokens ([Information from OpenSSH](https://www.openssh.com/agent-restrict.html))
+   * Phishing FIDO Tokens ([Information from OpenSSH](https://www.openssh.com/agent-restrict.html))
 * hijacking and logging of terminal sessions
 * store and replace files during SCP/SFTP file transferes
 * port porwarding
@@ -106,9 +106,9 @@ Try to execute somme commands in the hijacked session or in the original session
 
 The output will be shown in both sessions.
 
-## Spoofing FIDO Tokens
+## Phishing FIDO Tokens
 
-SSH-MITM is able to spoof FIDO2 Tokens which can be used for 2 factor authentication.
+SSH-MITM is able to phish FIDO2 Tokens which can be used for 2 factor authentication.
 
 The attack is called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html) ([CVE-2021-36367](https://docs.ssh-mitm.at/CVE-2021-36367.html), [CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html)) and can be enabled with the command line argument `--enable-trivial-auth`.
 
@@ -117,7 +117,7 @@ The attack is called [trivial authentication](https://docs.ssh-mitm.at/trivialau
 Using the trivial authentication attack does not break password authentication, because the attack is only performed when a publickey login is possible.
 
 <p align="center">
-  <b>Video explaining the spoofing attack:</b><br/>
+  <b>Video explaining the phishing attack:</b><br/>
   <i>Click to view video on vimeo.com</i><br/>
   <a href="https://vimeo.com/showcase/9059922/video/651517195">
   <img src="https://github.com/ssh-mitm/ssh-mitm/raw/master/doc/images/ds2021-video.png" alt="Click to view video on vimeo.com">

@@ -41,7 +41,7 @@ remote host or the client.
 .. code-block:: bash
     :linenos:
 
-    $ ssh-mitm --client-tunnel inject --tunnel-client-dest google.com:80 --server-tunnel inject
+    $ ssh-mitm  server--client-tunnel inject --tunnel-client-dest google.com:80 --server-tunnel inject
 
 Using this configuration the ssh-mitm server will open ports on the designated network that will directly
 correlate to a port forward request to a given destination.

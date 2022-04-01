@@ -9,12 +9,12 @@ with open(path.join(this_directory, 'README.md'), encoding='utf-8') as f:
 
 
 def get_version():
-    from ssh_proxy_server.__version__ import version
+    from sshmitm.__version__ import version
     return version
 
 
 def get_entry_points():
-    from ssh_proxy_server.__entrypoints__ import entry_points as ssh_entry_points
+    from sshmitm.__entrypoints__ import entry_points as ssh_entry_points
     return {
         **ssh_entry_points
     }
@@ -49,15 +49,15 @@ setup(
         "Development Status :: 4 - Beta"
     ],
     package_data={
-        'ssh_proxy_server': [
+        'sshmitm': [
             'data/*.*',
         ]
     },
     entry_points={
         **{
             'console_scripts': [
-                'ssh-mitm = ssh_proxy_server.cli:main',
-                'ssh-mitm-askpass = ssh_proxy_server.tools.askpass:main'
+                'ssh-mitm = sshmitm.cli:main',
+                'ssh-mitm-askpass = sshmitm.tools.askpass:main'
             ]
         },
         **get_entry_points()

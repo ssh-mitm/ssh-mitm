@@ -64,7 +64,7 @@ Now only the ssh proxy server needs to be started in transparent mode to be able
 
 .. code-block:: none
 
-    $ ssh-mitm --transparent
+    $ ssh-mitm server --transparent
 
 By using the transparent mode, no remote host must be specified. If the ``--remote-host`` parameter is used,
 all incoming connections are redirected to the same remote host.
@@ -82,7 +82,7 @@ There is also a new plugin ``debug_traffic`` to debug the traffic of ssh command
 
 .. code-block:: bash
 
-    ssh-mitm --scp-interface debug_traffic
+    ssh-mitm server --scp-interface debug_traffic
 
 
 .. note::
@@ -100,7 +100,7 @@ To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` 
 .. code-block:: bash
 
     # start the ssh server
-    ssh-mitm --remote-host github.com:PORT --scp-interface debug_traffic
+    ssh-mitm server --remote-host github.com --scp-interface debug_traffic
 
     # invoke git commands
     GIT_SSH_COMMAND="ssh -A" git clone ssh://git@127.0.0.1:10022/ssh-mitm/ssh-mitm.git
