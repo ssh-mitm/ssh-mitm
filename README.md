@@ -11,11 +11,18 @@
    </a>
    <br />
    <br />
-   <a href="https://docs.ssh-mitm.at"><strong>Explore the docs »</strong></a>
+   <a href="https://docs.ssh-mitm.at"><img src="https://read-the-docs-guidelines.readthedocs-hosted.com/_downloads/d9606423d87d78fcceae4ee2af883b12/logo-wordmark-dark.png" title="read the docs" width="256"></a>
   </p>
 </p>
 
 
+<h3 align="center">Contributors</h3>
+<p align="center">
+<a href="https://github.com/ssh-mitm/ssh-mitm/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ssh-mitm/ssh-mitm" />
+</a>
+</p>
+  
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -25,6 +32,7 @@
 - [Session hijacking](#session-hijacking)
 - [Phishing FIDO Tokens](#phishing-fido-tokens)
 - [Contributing](#contributing)
+- [Contact](#contact)
 
 ## Introduction
 
@@ -95,7 +103,7 @@ You will see the credentials in the log output.
 
 ## Session hijacking
 
-<img src="https://www.ssh-mitm.at/assets/images/streamline-free/customer-service-woman.svg" align="left" width="128">
+<img src="https://www.ssh-mitm.at/assets/images/streamline-free/monitor-window.svg" align="left" width="128">
 
 Getting the plain text credentials is only half the fun.
 When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
@@ -156,6 +164,8 @@ See also the list of [contributors](https://github.com/ssh-mitm/ssh-mitm/graphs/
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Contact
+
+<img src="https://www.ssh-mitm.at/assets/images/streamline-free/customer-service-woman.svg" align="left" width="128">
 
 - E-Mail: support@ssh-mitm.at
 - Telegram: [@sshmitm](https://t.me/sshmitm)
