@@ -1,3 +1,4 @@
+<div id="top"></div>
 <h1 align="center"> SSH-MITM - ssh audits made simple </h1>
 <p align="center">
   <a href="https://www.ssh-mitm.at">
@@ -40,6 +41,7 @@ Password and **publickey authentication** are supported and SSH-MITM is able to 
 
 When publickey authentication is possible, a forwarded agent is needed to login to the remote server. In cases, when no agent was forwarded, SSH-MITM can rediredt the session to a honeypot.
 
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Features
 
@@ -53,6 +55,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 * audit clients against known vulnerabilities
 * plugin support
 
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Installation
 
@@ -66,7 +69,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
     # install ssh-mitm as python pip package
     $ pip install ssh-mitm
 
-
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Quickstart
 
@@ -88,6 +91,7 @@ You will see the credentials in the log output.
         Password: secret
         Agent: no agent
 
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Session hijacking
 
@@ -105,6 +109,8 @@ To hijack the session, you can use your favorite ssh client.
 Try to execute somme commands in the hijacked session or in the original session.
 
 The output will be shown in both sessions.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Phishing FIDO Tokens
 
@@ -128,13 +134,30 @@ Using the trivial authentication attack does not break password authentication, 
   <b><a href="https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf">Downlaod presentation slides</a></b>
 </p>
 
+<p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Contributing
 
 <img src="https://www.ssh-mitm.at/assets/images/streamline-free/write-paper-ink.svg" align="left" width="128">
 
-**Pull requests are welcome.**
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
-For major changes, please open an issue first to discuss what you would like to change.
+If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
+Don't forget to give the project a star! Thanks again!
+
+1. Fork the Project
+2. Create your Feature Branch (`git checkout -b feature/AmazingFeature`)
+3. Commit your Changes (`git commit -m 'Add some AmazingFeature'`)
+4. Push to the Branch (`git push origin feature/AmazingFeature`)
+5. Open a Pull Request
 
 See also the list of [contributors](https://github.com/ssh-mitm/ssh-mitm/graphs/contributors) who participated in this project.
+
+<p align="right">(<a href="#top">back to top</a>)</p>
+
+## Contact
+
+- E-Mail: support@ssh-mitm.at
+- Telegram: [@sshmitm](https://t.me/sshmitm)
+
+<p align="right">(<a href="#top">back to top</a>)</p>
