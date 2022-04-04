@@ -1,0 +1,163 @@
+.TH SSH-MITM 1 "April 4, 2022" "" "SSH-MITM - ssh audits made simple"
+
+.SH NAME
+SSH-MITM \- ssh audits made simple
+
+.SH SYNOPSIS
+.B SSH-MITM
+.RI [-h|--help]
+.RI [-V|--version]
+.RI [-d|--debug]
+.RI [--paramiko-log-level 
+{warning,info,debug}
+]
+.RI [--disable-workarounds]
+.RI [SUBCOMMAND]
+.RI [<args>]
+.br
+
+.SH DESCRIPTION
+This manual page explains the
+.B SSH-MITM
+program.
+.PP
+\fBSSH-MITM\fP is a man in the middle SSH Server for security audits and malware analysis.
+
+Password and publickey authentication are supported and SSH-MITM is able to detect, if a user is able to login with publickey authentication on the remote server. This allows SSH-MITM to acccept the same key as the destination server. If publickey authentication is not possible, the authentication will fall back to password-authentication.
+
+When publickey authentication is possible, a forwarded agent is needed to login to the remote server. In cases, when no agent was forwarded, SSH-MITM can rediredt the session to a honeypot.
+
+.SH OPTIONS
+
+.B
+.IP -h, --help
+show help message and exit
+
+.B
+.IP -V, --version
+show program's version number and exit
+
+.B
+.IP -d, --debug
+more verbose output of status information
+
+.B
+.IP --paramiko-log-level 
+.B Values: 
+.I warning, info, debug
+.br
+set paramikos log level
+
+.B
+.IP --disable-workarounds
+disable paramiko workarounds
+
+.SH SUBCOMMANDS
+
+.SS "audit"
+
+.B
+.IP check-publickey <args>
+checks a username and publickey against a server
+
+.B
+.IP check-privatekey <args>
+checks a username and privatekey against a server
+
+.B
+.IP get-auth <args>
+checks authentication methods
+
+.SS "server"
+
+.B
+.IP --listen-port LISTEN_PORT
+listen port of SSH-MITM
+
+.B
+.IP --transparent
+enables transparent mode (requires root)
+
+.B
+.IP --remote-host
+ remote host to connect to (default 127.0.0.1)
+
+.B
+.IP --remote-port
+remote port to connect to (default 22)
+
+.B
+.IP --auth-username
+optional username for remote authentication
+
+.B
+.IP --auth-password
+optional password for remote authentication
+
+.B
+.IP --host-key HOST_KEY
+host key file
+
+.B
+.IP --host-key-algorithm 
+host key algorithm (default rsa)
+.br
+.B Values:
+    dss, rsa, ecdsa, ed25519
+
+.B
+.IP --host-key-length HOST_KEY_LENGTH
+host key length for dss and rsa (default 2048)
+
+.B
+.IP --request-agent-breakin
+enables agent forwarding and tryies to break in to the agent, if not forwarded
+
+.B
+.IP --banner-name
+set a custom string as server banner
+
+.B
+.IP --store-scp-files
+store files from scp
+
+.B
+.IP --store-sftp-files
+store files from sftp
+
+.B
+.IP --enable-trivial-auth
+enables "trivial success authentication" spoofing attack
+
+.B
+.IP --hide-credentials
+do not log credentials (usefull for presentations)
+
+.B
+.IP --enable-auth-fallback
+use a honeypot if no agent was forwarded to login with publickey auth
+
+.B
+.IP --fallback-host
+fallback host for the honeypot
+
+.B
+.IP --fallback-port
+fallback port for the honeypot
+
+.B
+.IP --fallback-username
+username for the honeypot
+
+.B
+.IP --fallback-password
+password for the honeypot
+
+.B
+.IP --store-ssh-session
+store ssh session in scriptreplay format
+
+.B
+.IP --session-log-dir
+directory to store ssh session logs
+
