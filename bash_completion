@@ -1,16 +1,18 @@
 __python_argcomplete_run() {
     local IFS=" "
     COMP_LINE_ARRY=($COMP_LINE)
-    array_len="${#COMP_LINE_ARRY[@]}"
-
-    if [ $array_len == 1 -o "${COMP_LINE: -1}" == " " ]; then
-        EV="$COMP_LINE_ARRY"
+    if [ "${COMP_LINE_ARRY[1]}" == "server" ]; then
+        array_len="${#COMP_LINE_ARRY[@]}"
+        if [ $array_len == 1 -o "${COMP_LINE: -1}" == " " ]; then
+            EV="$COMP_LINE_ARRY"
+        else
+            array_len_minus_one=$((array_len - 1))
+            EV="${COMP_LINE_ARRY[@]:0:$array_len_minus_one}"
+        fi
+        eval "$EV" 8>&1 9>&2 1>/dev/null 2>&1
     else
-        array_len_minus_one=$((array_len - 1))
-        EV="${COMP_LINE_ARRY[@]:0:$array_len_minus_one}"
+        ssh-mitm 8>&1 9>&2 1>/dev/null 2>&1
     fi
-
-    eval "$EV" 8>&1 9>&2 1>/dev/null 2>&1
 }
 
 _python_argcomplete() {
