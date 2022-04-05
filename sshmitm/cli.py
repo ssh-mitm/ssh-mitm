@@ -28,6 +28,7 @@ def main() -> None:
     parser = ModuleParser(
         description='SSH-MITM Tools',
         version=f"SSH-MITM {ssh_mitm_version}",
+        autocomplete=True,
         modules_from_file=True,
         allow_abbrev=False
     )

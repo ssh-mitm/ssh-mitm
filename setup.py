@@ -63,7 +63,7 @@ setup(
         **get_entry_points()
     },
     install_requires=[
-        'enhancements>=0.3.0',
+        'enhancements>=0.4.0',
         'paramiko',
         'pytz',
         'sshpubkeys',
