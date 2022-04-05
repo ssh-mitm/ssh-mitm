@@ -1,4 +1,4 @@
-__python_argcomplete_run() {
+__python_sshmitm_argcomplete_run() {
     local IFS=" "
     COMP_LINE_ARRY=($COMP_LINE)
     if [ "${COMP_LINE_ARRY[1]}" == "server" ]; then
@@ -15,7 +15,7 @@ __python_argcomplete_run() {
     fi
 }
 
-_python_argcomplete() {
+_python_sshmitm_argcomplete() {
     local IFS=$'\013'
     local SUPPRESS_SPACE=0
     if compopt +o nospace 2> /dev/null; then
@@ -28,11 +28,11 @@ _python_argcomplete() {
                   _ARGCOMPLETE_COMP_WORDBREAKS="$COMP_WORDBREAKS" \
                   _ARGCOMPLETE=1 \
                   _ARGCOMPLETE_SUPPRESS_SPACE=$SUPPRESS_SPACE \
-                  __python_argcomplete_run "$1") )
+                  __python_sshmitm_argcomplete_run "$1") )
     if [[ $? != 0 ]]; then
         unset COMPREPLY
     elif [[ $SUPPRESS_SPACE == 1 ]] && [[ "${COMPREPLY-}" =~ [=/:]$ ]]; then
         compopt -o nospace
     fi
 }
-complete -o nospace -o default -o bashdefault -F _python_argcomplete ssh-mitm
+complete -o nospace -o default -o bashdefault -F _python_sshmitm_argcomplete ssh-mitm
