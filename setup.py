@@ -54,7 +54,11 @@ setup(
         ]
     },
     data_files = [
-        ('man/man1', ['ssh-mitm.1']),
+        ('man/man1', [
+            'man1/ssh-mitm.1',
+            'man1/ssh-mitm-audit.1',
+            'man1/ssh-mitm-server.1'
+        ]),
     ],
     entry_points={
         **{
