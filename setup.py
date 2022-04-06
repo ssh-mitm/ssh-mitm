@@ -60,7 +60,9 @@ setup(
         **{
             'console_scripts': [
                 'ssh-mitm = sshmitm.cli:main',
-                'ssh-mitm-askpass = sshmitm.tools.askpass:main'
+                'ssh-mitm-askpass = sshmitm.tools.askpass:main',
+                'ssh-mitm-audit = sshmitm.cli:audit',
+                'ssh-mitm-server = sshmitm.cli:server'
             ]
         },
         **get_entry_points()

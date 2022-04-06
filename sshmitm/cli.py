@@ -1,7 +1,8 @@
+from argparse import Namespace
 import logging
 import sys
 import os
-from typing import cast
+from typing import Optional, Text, cast, Callable
 
 from enhancements.modules import ModuleParser
 
@@ -17,8 +18,36 @@ from sshmitm.server.cli import init_server_parser, run_server
 from sshmitm.audit.cli import init_audit_parser, run_audit
 
 
+class SubCommand():
+
+    @typechecked
+    def __init__(
+        self, 
+        run_func: Callable[[Namespace], None],
+        parser_func: Callable[[ModuleParser], None],
+        help: Text
+    ):
+        self.run_func = run_func
+        self.help = help
+        self.parser_func = parser_func
+
+
+
 @typechecked
-def main() -> None:
+def run(subcommand_name: Optional[Text] = None) -> None:
+
+    available_subcommands = {
+        'audit': SubCommand(
+            run_func=run_audit,
+            parser_func=init_audit_parser,
+            help='audit tools for ssh servers'
+        ),
+        'server': SubCommand(
+            run_func=run_server,
+            parser_func=init_server_parser,
+            help='start the ssh-mitm server'
+        )
+    }
 
     if os.environ.get('APPIMAGE', None):
         # if running as appimage, remove empty arguments
@@ -54,27 +83,24 @@ def main() -> None:
         help='disable paramiko workarounds'
     )
 
-    subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
-    subparsers.required = True
-
-    parser_mitm_server: ModuleParser = cast(
-        ModuleParser,
-        subparsers.add_parser(
-            'server',
-            allow_abbrev=False,
-            help='start the ssh-mitm server'
-        )
-    )
-    init_server_parser(parser_mitm_server)
-    parser_audit: ModuleParser = cast(
-        ModuleParser,
-        subparsers.add_parser(
-            'audit',
-            allow_abbrev=False,
-            help='audit tools for ssh servers'
-        )
-    )
-    init_audit_parser(parser_audit)
+    if subcommand_name is None:
+        subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
+        subparsers.required = True
+        for sc_name, sc_item in available_subcommands.items():
+            sc_item.parser_func(
+                subparsers.add_parser(
+                    sc_name,
+                    allow_abbrev=False,
+                    help=sc_item.help
+                )
+            )
+    else:
+        try:
+            subcommand = available_subcommands[subcommand_name]
+            subcommand.parser_func(parser)
+        except KeyError:
+            logging.exception("can not init subcommand - invalid subcommand name")
+            sys.exit(1)
 
     args = parser.parse_args()
 
@@ -99,10 +125,22 @@ def main() -> None:
     else:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
-    if args.subparser_name == 'server':
-        run_server(args=args)
-    elif args.subparser_name == 'audit':
-        run_audit(args=args)
+    try:
+        sc_name = subcommand_name or args.subparser_name
+        available_subcommands[sc_name].run_func(args=args)
+    except (AttributeError, KeyError):
+        logging.exception("can not run subcommand - invalid subcommand name")
+        sys.exit(1)
+
+
+def main() -> None:
+    run()
+
+def audit() -> None:
+    run('audit')
+
+def server() -> None:
+    run('server')
 
 
 if __name__ == '__main__':
