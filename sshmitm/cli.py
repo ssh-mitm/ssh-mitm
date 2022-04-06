@@ -34,7 +34,7 @@ class SubCommand():
 
 
 @typechecked
-def run(subcommand_name: Optional[Text] = None) -> None:
+def run() -> None:
 
     available_subcommands = {
         'audit': SubCommand(
@@ -83,24 +83,17 @@ def run(subcommand_name: Optional[Text] = None) -> None:
         help='disable paramiko workarounds'
     )
 
-    if subcommand_name is None:
-        subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
-        subparsers.required = True
-        for sc_name, sc_item in available_subcommands.items():
-            sc_item.parser_func(
-                subparsers.add_parser(
-                    sc_name,
-                    allow_abbrev=False,
-                    help=sc_item.help
-                )
+    
+    subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
+    subparsers.required = True
+    for sc_name, sc_item in available_subcommands.items():
+        sc_item.parser_func(
+            subparsers.add_parser(
+                sc_name,
+                allow_abbrev=False,
+                help=sc_item.help
             )
-    else:
-        try:
-            subcommand = available_subcommands[subcommand_name]
-            subcommand.parser_func(parser)
-        except KeyError:
-            logging.exception("can not init subcommand - invalid subcommand name")
-            sys.exit(1)
+        )
 
     args = parser.parse_args()
 
@@ -126,8 +119,7 @@ def run(subcommand_name: Optional[Text] = None) -> None:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     try:
-        sc_name = subcommand_name or args.subparser_name
-        available_subcommands[sc_name].run_func(args=args)
+        available_subcommands[args.subparser_name].run_func(args=args)
     except (AttributeError, KeyError):
         logging.exception("can not run subcommand - invalid subcommand name")
         sys.exit(1)
