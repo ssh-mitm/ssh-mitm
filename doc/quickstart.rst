@@ -119,6 +119,15 @@ Install as AppImage
     $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
     $ chmod +x ssh-mitm*.AppImage
 
+Install from Nixpkgs
+""""""""""""""""""""
+
+For Nix or NixOS is a `package <https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm
+>`_ available. The lastest release is usually present in the ``unstable`` channel.
+
+.. code-block:: bash
+
+    $ nix-env -iA nixos.ssh-mitm
 
 Start SSH-MITM
 --------------
