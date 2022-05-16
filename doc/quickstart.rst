@@ -4,7 +4,7 @@ Quickstart
 **SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
 
 Password and publickey authentication are supported and SSH-MITM is able to detect, if a user is able to
-login with publickey authentication on the remote server. This allows SSH-MITM to acccept the same key as
+login with publickey authentication on the remote server. This allows SSH-MITM to accept the same key as
 the destination server. If publickey authentication is not possible, the authentication will fall
 back to password-authentication.
 
@@ -119,6 +119,15 @@ Install as AppImage
     $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
     $ chmod +x ssh-mitm*.AppImage
 
+Install from Nixpkgs
+""""""""""""""""""""
+
+For Nix or NixOS is a `package <https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm
+>`_ available. The lastest release is usually present in the ``unstable`` channel.
+
+.. code-block:: bash
+
+    $ nix-env -iA nixos.ssh-mitm
 
 Start SSH-MITM
 --------------
