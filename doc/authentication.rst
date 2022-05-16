@@ -67,7 +67,7 @@ Support in SSH-MITM
 
 **publickey authentication** is supported and SSH-MITM is able to detect,
 if a user is able to login with publickey authentication on the remote server.
-This allows SSH-MITM to acccept the same key as the destination server.
+This allows SSH-MITM to accept the same key as the destination server.
 
 SSH-MITM is able to request the agent from the client and use
 it for remote authentication. By using this feature, it's possible
