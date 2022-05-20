@@ -32,7 +32,9 @@ setup(
     packages=find_packages(),
     url="https://www.ssh-mitm.at",
     project_urls={
+        'Homepage': 'https://www.ssh-mitm.at',
         'Documentation': 'https://docs.ssh-mitm.at',
+        'Changelog': 'https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md',
         'Source': 'https://github.com/ssh-mitm/ssh-mitm',
         'Tracker': 'https://github.com/ssh-mitm/ssh-mitm/issues',
     },

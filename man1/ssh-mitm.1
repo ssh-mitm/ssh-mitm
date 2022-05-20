@@ -1,12 +1,4 @@
-'\" t
-.\"     Title: ssh-mitm
-.\"    Author: [see the "Authors" section]
-.\"      Date: 2022-04-05
-.\"    Manual: SSH-MITM Manual
-.\"    Source: SSH-MITM 3.0.0
-.\"  Language: English
-.\"
-.TH SSH-MITM 1 "2022-04-05" "SSH-MITM 3.0.0" "SSH-MITM Manual"
+.TH SSH-MITM 1 "SSH-MITM 2.0.2" "SSH-MITM Manual"
 
 .\" -----------------------------------------------------------------
 .\" * Define some portability stuff
@@ -45,7 +37,7 @@ program.
 .PP
 \fBSSH-MITM\fP is a man in the middle SSH Server for security audits and malware analysis.
 
-Password and publickey authentication are supported and \fBSSH-MITM\fP is able to detect, if a user is able to login with publickey authentication on the remote server. 
+Password and publickey authentication are supported and \fBSSH-MITM\fP is able to detect, if a user is able to login with publickey authentication on the remote server.
 This allows \fBSSH-MITM\fP to acccept the same key as the destination server. If publickey authentication is not possible, the authentication will fall back to password-authentication.
 
 When publickey authentication is possible, a forwarded agent is needed to login to the remote server. In cases, when no agent was forwarded, \fBSSH-MITM\fP can rediredt the session to a honeypot.

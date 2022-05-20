@@ -1,6 +1,6 @@
 name: ssh-mitm # you probably want to 'snapcraft register <name>'
 base: core20 # the base snap is the execution environment for this snap
-version: '2.0.1' # just for humans, typically '1.2+git' or '1.3.2'
+version: '2.0.2' # just for humans, typically '1.2+git' or '1.3.2'
 summary: ssh mitm server for security audits # 79 char long summary
 description: |
   ssh mitm server for security audits supporting
@@ -19,7 +19,7 @@ parts:
     source: .
 apps:
   ssh-mitm:
-    command: usr/bin/python3 $SNAP/bin/ssh-mitm
+    command: bin/ssh-mitm
     environment:
       PYTHONIOENCODING: utf-8
       PYTHONOPTIMIZE: 1
