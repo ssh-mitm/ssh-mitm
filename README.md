@@ -24,7 +24,7 @@
   <img src="https://contrib.rocks/image?repo=ssh-mitm/ssh-mitm" />
 </a>
 </p>
-  
+
 ## Table of Contents
 
 - [Introduction](#introduction)
@@ -173,6 +173,6 @@ See also the list of [contributors](https://github.com/ssh-mitm/ssh-mitm/graphs/
 <img src="https://www.ssh-mitm.at/assets/images/streamline-free/customer-service-woman.svg" align="left" width="128">
 
 - E-Mail: support@ssh-mitm.at
-- Telegram: [@sshmitm](https://t.me/sshmitm)
+- [Issue Tracker](https://github.com/ssh-mitm/ssh-mitm/issues)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
