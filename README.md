@@ -71,13 +71,16 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 <img src="https://www.ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" align="left" width="128">
 
-**SSH-MITM** can be installed as a [Ubuntu Snap](https://snapcraft.io/ssh-mitm), [PIP-Package](https://pypi.org/project/ssh-mitm/) or [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest) and even runs on **[Android devices](https://github.com/ssh-mitm/ssh-mitm/discussions/83#discussioncomment-1531873)**
+**SSH-MITM** can be installed as a [Ubuntu Snap](https://snapcraft.io/ssh-mitm), [PIP-Package](https://pypi.org/project/ssh-mitm/), [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest), [Nix](https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm) and even runs on **[Android devices](https://github.com/ssh-mitm/ssh-mitm/discussions/83#discussioncomment-1531873)**
 
     # install ssh-mitm as snap package
     $ sudo snap install ssh-mitm
 
     # install ssh-mitm as python pip package
     $ pip install ssh-mitm
+
+    # install as Nix package
+    $ nix-env -iA nixos.ssh-mitm
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
