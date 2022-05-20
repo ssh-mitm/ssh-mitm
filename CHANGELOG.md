@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.1] - 2022-05-20
+
+### Changed
+
+- snap distribution - base image changed to core20
+
 ## [2.0.0] - 2022-04-01
 
 ### Changed
@@ -254,7 +260,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.0...develop
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.1...develop
+[2.0.1]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.0...2.0.1
 [2.0.0]: https://github.com/ssh-mitm/ssh-mitm/compare/1.0.0...2.0.0
 [1.0.0]: https://github.com/ssh-mitm/ssh-mitm/compare/0.6.3...1.0.0
 [0.6.3]: https://github.com/ssh-mitm/ssh-mitm/compare/0.6.2...0.6.3

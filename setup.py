@@ -44,15 +44,22 @@ setup(
         "Programming Language :: Python :: 3.8",
         "Programming Language :: Python :: 3.9",
         "Programming Language :: Python :: 3.10",
-        "License :: OSI Approved :: GNU Lesser General Public License v3 (LGPLv3)",
+        "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
         "Topic :: System :: Networking",
-        "Development Status :: 4 - Beta"
+        "Development Status :: 5 - Production/Stable"
     ],
     package_data={
         'sshmitm': [
             'data/*.*',
         ]
     },
+    data_files = [
+        ('man/man1', [
+            'man1/ssh-mitm.1',
+            'man1/ssh-mitm-audit.1',
+            'man1/ssh-mitm-server.1'
+        ]),
+    ],
     entry_points={
         **{
             'console_scripts': [
@@ -63,7 +70,7 @@ setup(
         **get_entry_points()
     },
     install_requires=[
-        'enhancements>=0.3.0',
+        'enhancements>=0.4.0',
         'paramiko',
         'pytz',
         'sshpubkeys',

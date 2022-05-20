@@ -1,0 +1,188 @@
+'\" t
+.\"     Title: ssh-mitm audit
+.\"    Author: [see the "Authors" section]
+.\"      Date: 2022-04-05
+.\"    Manual: SSH-MITM Manual
+.\"    Source: SSH-MITM 3.0.0
+.\"  Language: English
+.\"
+.TH SSH-MITM-AUDIT 1 "2022-04-05" "SSH-MITM 3.0.0" "SSH-MITM Manual"
+
+.\" -----------------------------------------------------------------
+.\" * Define some portability stuff
+.\" -----------------------------------------------------------------
+.\" ~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+.ie \n(.g .ds Aq \(aq
+.el       .ds Aq '
+.\" -----------------------------------------------------------------
+.\" * set default formatting
+.\" -----------------------------------------------------------------
+.\" disable hyphenation
+.nh
+.\" disable justification (adjust text to left margin only)
+.ad l
+
+.\" -----------------------------------------------------------------
+.\" * MAIN CONTENT STARTS HERE *
+.\" -----------------------------------------------------------------
+.SH "NAME"
+SSH-MITM \- ssh audits made simple
+.SH SYNOPSIS
+.sp
+.nf
+
+\fIssh-mitm audit\fR <subcommand> [<args>]
+.fi
+.sp
+
+.SH "DESCRIPTION"
+This manual page explains the
+.B SSH-MITM-AUDIT
+program.
+
+.SH "SUBCOMMANDS"
+
+.SS "check-privatekey"
+
+checks a username and privatekey against a server
+
+.PP
+\fB\-\-host <HOST>\fP
+.RS 4
+Hostname or IP address\&.
+.RE
+.PP
+\fB\-\-port <PORT>\fP
+.RS 4
+port (default: 22)\&.
+.RE
+.PP
+\fB\-\-username <USERNAME>\fP
+.RS 4
+username to check\&.
+.RE
+.PP
+\fB\-\-private\-key <PRIVATE_KEY>\fP
+.RS 4
+privatekey to check\&.
+.RE
+.PP
+\fB\-\-private\-key\-passphrase <PRIVATE_KEY_PASSPHRASE>\fP
+.RS 4
+used to decrypt the private key\&.
+.RE
+
+.SS "check-publickey"
+
+checks a username and \fBpublickey\fR against a server
+
+.PP
+\fB\-\-host <HOST>\fP
+.RS 4
+Hostname or IP address\&.
+.RE
+.PP
+\fB\-\-port <PORT>\fP
+.RS 4
+port (default: 22)\&.
+.RE
+.PP
+\fB\-\-username <USERNAME>\fP
+.RS 4
+username to check\&.
+.RE
+.PP
+\fB\-\-public\-key <PUBLIC_KEY>\fP
+.RS 4
+publickey to check\&.
+.RE
+
+
+.SS "get-auth"
+
+checks for available authentication methods
+
+.PP
+\fB\-\-host <HOST>\fP
+.RS 4
+Hostname or IP address\&.
+.RE
+.PP
+\fB\-\-port <PORT>\fP
+.RS 4
+port (default: 22)\&.
+.RE
+
+.SH "EXAMPLES"
+
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Get all available authentication methods from the ssh server.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ ssh-mitm audit get-auth --host 192.168.0.1
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Check if a specific \fBpublickey\fR is known by the remote ssh server.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ ssh-mitm audit check-publickey \\
+    --host 192.168.0.1 \\
+    --username alice \\
+    --public-key /path/to/id_rsa.pub
+.fi
+.if n \{\
+.RE
+.\}
+.RE
+
+.sp
+.RS 4
+.ie n \{\
+\h'-04'\(bu\h'+03'\c
+.\}
+.el \{\
+.sp -1
+.IP \(bu 2.3
+.\}
+Check if a specific \fBprivatekey\fR is allowed to login on the remote ssh server.
+.sp
+.if n \{\
+.RS 4
+.\}
+.nf
+$ ssh-mitm audit check-privatekey \\
+    --host 192.168.0.1 \\
+    --username alice \\
+    --private-key /path/to/id_rsa
+.fi
+.if n \{\
+.RE
+.\}
+.RE

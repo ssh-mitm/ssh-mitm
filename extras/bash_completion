@@ -1,0 +1,38 @@
+__python_sshmitm_argcomplete_run() {
+    local IFS=" "
+    COMP_LINE_ARRY=($COMP_LINE)
+    if [ "${COMP_LINE_ARRY[1]}" == "server" ]; then
+        array_len="${#COMP_LINE_ARRY[@]}"
+        if [ $array_len == 1 -o "${COMP_LINE: -1}" == " " ]; then
+            EV="$COMP_LINE_ARRY"
+        else
+            array_len_minus_one=$((array_len - 1))
+            EV="${COMP_LINE_ARRY[@]:0:$array_len_minus_one}"
+        fi
+        eval "$EV" 8>&1 9>&2 1>/dev/null 2>&1
+    else
+        ssh-mitm 8>&1 9>&2 1>/dev/null 2>&1
+    fi
+}
+
+_python_sshmitm_argcomplete() {
+    local IFS=$'\013'
+    local SUPPRESS_SPACE=0
+    if compopt +o nospace 2> /dev/null; then
+        SUPPRESS_SPACE=1
+    fi
+    COMPREPLY=( $(IFS="$IFS" \
+                  COMP_LINE="$COMP_LINE" \
+                  COMP_POINT="$COMP_POINT" \
+                  COMP_TYPE="$COMP_TYPE" \
+                  _ARGCOMPLETE_COMP_WORDBREAKS="$COMP_WORDBREAKS" \
+                  _ARGCOMPLETE=1 \
+                  _ARGCOMPLETE_SUPPRESS_SPACE=$SUPPRESS_SPACE \
+                  __python_sshmitm_argcomplete_run "$1") )
+    if [[ $? != 0 ]]; then
+        unset COMPREPLY
+    elif [[ $SUPPRESS_SPACE == 1 ]] && [[ "${COMPREPLY-}" =~ [=/:]$ ]]; then
+        compopt -o nospace
+    fi
+}
+complete -o nospace -o default -o bashdefault -F _python_sshmitm_argcomplete ssh-mitm

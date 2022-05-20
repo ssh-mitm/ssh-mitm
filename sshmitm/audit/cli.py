@@ -57,7 +57,7 @@ def check_privatekey(args: argparse.Namespace) -> bool:
 
 @typechecked
 def init_audit_parser(parser: ModuleParser) -> None:
-    subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='audit-command')
+    subparsers = parser.add_subparsers(title='Available commands', dest="audit_subparser_name", metavar='audit-command')
     subparsers.required = True
 
     parser_check_publickey = subparsers.add_parser('check-publickey', help='checks a username and publickey against a server')
@@ -79,13 +79,13 @@ def init_audit_parser(parser: ModuleParser) -> None:
 
 
 def run_audit(args: argparse.Namespace) -> None:
-    if args.subparser_name == 'check-publickey':
+    if args.audit_subparser_name == 'check-publickey':
         if not check_publickey(args):
             sys.exit(1)
-    if args.subparser_name == 'check-privatekey':
+    if args.audit_subparser_name == 'check-privatekey':
         if not check_privatekey(args):
             sys.exit(1)
-    elif args.subparser_name == 'get-auth':
+    elif args.audit_subparser_name == 'get-auth':
         auth_methods = Authenticator.get_auth_methods(args.host, args.port)
         if auth_methods:
             print(",".join(auth_methods))
