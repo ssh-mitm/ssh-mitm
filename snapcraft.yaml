@@ -19,7 +19,7 @@ parts:
     source: .
 apps:
   ssh-mitm:
-    command: usr/bin/python3 $SNAP/bin/ssh-mitm
+    command: bin/ssh-mitm
     environment:
       PYTHONIOENCODING: utf-8
       PYTHONOPTIMIZE: 1
