@@ -63,5 +63,5 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
             )
             self.server_interface.forwarders.append(f)
         except (paramiko.SSHException, OSError):
-            logging.warning("injector connection suffered an unexpected error")
+            logging.warning("portforward - injector connection suffered an unexpected error")
             self.tcpserver.close()

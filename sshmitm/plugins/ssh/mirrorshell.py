@@ -182,7 +182,10 @@ class SSHMirrorForwarder(SSHForwarder):
             while self.session.running:
                 readable = select.select([self.injector_sock], [], [], 0.5)[0]
                 if len(readable) == 1 and readable[0] is self.injector_sock:
-                    self.injector_client_sock, _ = self.injector_sock.accept()
+                    try:
+                        self.injector_client_sock, _ = self.injector_sock.accept()
+                    except socket.error:
+                        break
 
                     t = paramiko.Transport(self.injector_client_sock)
                     t.set_gss_host(socket.getfqdn(""))
@@ -208,7 +211,7 @@ class SSHMirrorForwarder(SSHForwarder):
                             time.sleep(0.1)
 
         except Exception:
-            logging.exception("injector connection suffered an unexpected error")
+            logging.exception("mirrorshell - injector connection suffered an unexpected error")
             if self.channel is not None:
                 self.close_session(self.channel)
 
