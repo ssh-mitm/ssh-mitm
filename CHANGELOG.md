@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [2.0.3] - 2022-05-22
 
+### Fixed
+
+- fixed appimage build script
+- only show cve information if client has vulnerabilities
+- catch error on closing mirror shell socket
+
 ## [2.0.2] - 2022-05-20
 
 ### Fixed
