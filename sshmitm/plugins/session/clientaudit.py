@@ -99,13 +99,13 @@ class SSHClientAudit():
                             cvemessagelist.append(f"    - {e1}")
                     else:
                         cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
-
-        logging.info(
-                "".join([
-                    stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
-                    "\n".join(cvemessagelist)
-                ])
-        )
+        if cvemessagelist:
+            logging.info(
+                    "".join([
+                        stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
+                        "\n".join(cvemessagelist)
+                    ])
+            )
 
     @typechecked
     def check_key_negotiation(self) -> Dict[Text, List[Text]]:
