@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- close scp channel on EOF (found by [@oddko](https://github.com/oddko))
+
 ## [2.0.3] - 2022-05-22
 
 ### Fixed

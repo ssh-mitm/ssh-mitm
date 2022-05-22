@@ -93,6 +93,9 @@ class SCPBaseForwarder(BaseForwarder):
                     logging.info("server channel closed")
                     self.close_session(self.session.scp_channel)
                     break
+                if self.session.scp_channel.eof_received:
+                    self.close_session(self.session.scp_channel)
+                    break
 
                 time.sleep(0.1)
         except Exception:
