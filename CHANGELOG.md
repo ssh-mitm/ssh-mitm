@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.4] - 2022-06-12
+
+### Fixed
+
+- close scp channel on EOF (found by [@oddko](https://github.com/oddko))
+
 ## [2.0.3] - 2022-05-22
 
 ### Fixed
@@ -275,7 +281,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.3...develop
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.4...develop
+[2.0.4]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.3...2.0.4
 [2.0.3]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.2...2.0.3
 [2.0.2]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.1...2.0.2
 [2.0.1]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.0...2.0.1
