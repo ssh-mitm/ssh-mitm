@@ -1,5 +1,17 @@
 CVE = "CVE-2020-14145"
 SERVER_HOST_KEY_ALGORITHMS = [
+    [  # client version: OpenSSH_8.9p1
+        'ssh-ed25519-cert-v01@openssh.com',
+        'ecdsa-sha2-nistp256-cert-v01@openssh.com',
+        'ecdsa-sha2-nistp384-cert-v01@openssh.com',
+        'ecdsa-sha2-nistp521-cert-v01@openssh.com',
+        'sk-ssh-ed25519-cert-v01@openssh.com',
+        'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com',
+        'rsa-sha2-512-cert-v01@openssh.com', 'rsa-sha2-256-cert-v01@openssh.com',
+        'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384',
+        'ecdsa-sha2-nistp521', 'sk-ssh-ed25519@openssh.com',
+        'sk-ecdsa-sha2-nistp256@openssh.com', 'rsa-sha2-512', 'rsa-sha2-256'
+    ],
     [  # client version: OpenSSH_8.5p1 - OpenSSH_8.6p1
         'ssh-ed25519-cert-v01@openssh.com', 'ecdsa-sha2-nistp256-cert-v01@openssh.com',
         'ecdsa-sha2-nistp384-cert-v01@openssh.com', 'ecdsa-sha2-nistp521-cert-v01@openssh.com',

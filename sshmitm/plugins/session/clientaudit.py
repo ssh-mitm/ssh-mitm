@@ -70,11 +70,17 @@ class SSHClientAudit():
         return None
 
     @typechecked
-    def between_versions(self, version_min: Union[int, float, Text], version_max: Union[int, float, Text]) -> bool:
+    def between_versions(self, version_min: Union[None, int, float, Text], version_max: Union[None, int, float, Text]) -> bool:
         try:
             version_string = self.get_version_string()
             if not version_string:
                 return False
+            if version_min is None and version_max is None:
+                return True
+            if version_min is None and version_max is not None:
+                return version.parse(version_string) <= version.parse(str(version_max))
+            if version_min is not None and version_max is None:
+                return version.parse(str(version_min)) <= version.parse(version_string)
             return version.parse(str(version_min)) <= version.parse(version_string) <= version.parse(str(version_max))
         except ValueError:
             return False
@@ -99,7 +105,7 @@ class SSHClientAudit():
                             cvemessagelist.append(f"    - {e1}")
                     else:
                         cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
-        if cvemessagelist:
+        if cvemessagelist or True:
             logging.info(
                     "".join([
                         stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),

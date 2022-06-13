@@ -7,6 +7,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- updated CVE-2020-14145 to match openSSH 8.9
+- fixed client version check for vulnerabilities when using PuTTY
+
+
 ## [2.0.4] - 2022-06-12
 
 ### Fixed
