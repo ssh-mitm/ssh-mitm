@@ -11,6 +11,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - updated CVE-2020-14145 to match openSSH 8.9
 - fixed client version check for vulnerabilities when using PuTTY
+- fixed .bumpversion.cfg to work with original bump2version command (suggested by [@FredM](https://github.com/FredM))
 
 
 ## [2.0.4] - 2022-06-12
