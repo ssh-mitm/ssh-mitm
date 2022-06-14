@@ -183,8 +183,13 @@ class ServerInterface(BaseServerInterface):
         if self.possible_auth_methods is None:
             creds: RemoteCredentials = self.session.authenticator.get_remote_host_credentials(username)
             if creds.host is not None and creds.port is not None:
-                self.possible_auth_methods = self.session.authenticator.get_auth_methods(creds.host, creds.port)
-                logging.info(f"Remote auth-methods: {str(self.possible_auth_methods)}")
+                try:
+                    self.possible_auth_methods = self.session.authenticator.get_auth_methods(creds.host, creds.port)
+                    logging.info(f"Remote auth-methods: {str(self.possible_auth_methods)}")
+                except paramiko.ssh_exception.SSHException as ex:
+                    self.session.remote_address_reachable = False
+                    logging.error(ex)
+                    return 'publickey'
         logging.debug("get_allowed_auths: username=%s", username)
         allowed_auths = []
         if self.args.extra_auth_methods:
@@ -254,6 +259,8 @@ class ServerInterface(BaseServerInterface):
             self.session.authenticator.authenticate(username, key=None)
             self.session.accepted_key = key
             return paramiko.common.AUTH_SUCCESSFUL
+        if not self.session.remote_address_reachable:
+            return paramiko.common.AUTH_FAILED
 
         auth_result: int = self.session.authenticator.authenticate(username, key=key)
         if auth_result == paramiko.common.AUTH_SUCCESSFUL:
@@ -270,6 +277,8 @@ class ServerInterface(BaseServerInterface):
         logging.debug("check_auth_password: username=%s, password=%s", username, password)
         if self.args.disable_password_auth:
             logging.warning("Password login attempt, but password auth was disabled!")
+            return paramiko.common.AUTH_FAILED
+        if not self.session.remote_address_reachable:
             return paramiko.common.AUTH_FAILED
         return self.session.authenticator.authenticate(username, password=password)
 
