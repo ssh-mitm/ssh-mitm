@@ -93,6 +93,7 @@ class SCPBaseForwarder(BaseForwarder):
                     self.close_session(self.session.scp_channel)
                     break
                 if self.session.scp_channel.eof_received:
+                    self.session.scp_channel.send_exit_status(0)
                     self.close_session(self.session.scp_channel)
                     break
 
@@ -120,6 +121,7 @@ class SCPBaseForwarder(BaseForwarder):
     def close_session(self, channel: paramiko.Channel) -> None:
         self.close_session_with_status(channel=channel, status=None)
 
+    @typechecked
     def close_session_with_status(self, channel: paramiko.Channel, status: Optional[int]) -> None:
         # pylint: disable=protected-access
         if channel.closed:
