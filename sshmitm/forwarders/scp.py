@@ -93,6 +93,7 @@ class SCPBaseForwarder(BaseForwarder):
                     self.close_session(self.session.scp_channel)
                     break
                 if self.session.scp_channel.eof_received:
+                    self.session.scp_channel.send_exit_status(0)
                     self.close_session(self.session.scp_channel)
                     break
 
