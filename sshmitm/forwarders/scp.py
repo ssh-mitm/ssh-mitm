@@ -71,8 +71,7 @@ class SCPBaseForwarder(BaseForwarder):
 
                 if self.server_channel.exit_status_ready():
                     status = self.server_channel.recv_exit_status()
-                    self.session.scp_channel.send_exit_status(status)
-                    self.close_session(self.session.scp_channel)
+                    self.close_session_with_status(self.session.scp_channel, status)
                     logging.info(
                         "remote command '%s' exited with code: %s",
                         self.session.scp_command, status
@@ -94,6 +93,11 @@ class SCPBaseForwarder(BaseForwarder):
                     self.close_session(self.session.scp_channel)
                     break
                 if self.session.scp_channel.eof_received:
+                    message = Message()
+                    message.add_byte(cMSG_CHANNEL_EOF)
+                    message.add_int(self.session.scp_channel.remote_chanid)
+                    self.session.scp_channel.transport._send_user_message(message)  # type: ignore
+                    self.session.scp_channel.send_exit_status(0)
                     self.close_session(self.session.scp_channel)
                     break
 
@@ -119,6 +123,10 @@ class SCPBaseForwarder(BaseForwarder):
 
     @typechecked
     def close_session(self, channel: paramiko.Channel) -> None:
+        self.close_session_with_status(channel=channel, status=None)
+
+    @typechecked
+    def close_session_with_status(self, channel: paramiko.Channel, status: Optional[int]) -> None:
         # pylint: disable=protected-access
         if channel.closed:
             return
@@ -129,13 +137,16 @@ class SCPBaseForwarder(BaseForwarder):
             message.add_int(channel.remote_chanid)
             channel.transport._send_user_message(message)  # type: ignore
 
+            if status is not None:
+                self.session.scp_channel.send_exit_status(status)
+
             message = Message()
             message.add_byte(cMSG_CHANNEL_REQUEST)
             message.add_int(channel.remote_chanid)
             message.add_string('eow@openssh.com')
             message.add_boolean(False)
             channel.transport._send_user_message(message)  # type: ignore
-
+        
         message = Message()
         message.add_byte(cMSG_CHANNEL_CLOSE)
         message.add_int(channel.remote_chanid)

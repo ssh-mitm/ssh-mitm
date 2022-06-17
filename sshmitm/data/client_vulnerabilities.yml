@@ -33,7 +33,7 @@ openssh:
     docs: true
   CVE-2020-14145:
     version_min: 5.7
-    version_max: 8.6
+    version_max: 8.9
     cvss: 4.3
     docs: true
   CVE-2020-12062:

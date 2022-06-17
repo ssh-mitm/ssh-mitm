@@ -7,6 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.0.5] - 2022-06-17
+
+### Fixed
+
+- updated CVE-2020-14145 to match openSSH 8.9
+- fixed client version check for vulnerabilities when using PuTTY
+- fixed .bumpversion.cfg to work with original bump2version command (suggested by [@FredM](https://github.com/FredM))
+- catch connection errors during authentication
+- fixed scp message order from client to server to match OpenSSH's behavior (found by [@oddko](https://github.com/oddko))
+- send server EOF and return code when closing scp channel (found by [@oddko](https://github.com/oddko), fixed by [@zoey-fux](https://github.com/zoey-fux))
+
+
 ## [2.0.4] - 2022-06-12
 
 ### Fixed
@@ -281,7 +293,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.4...develop
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.5...develop
+[2.0.5]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.4...2.0.5
 [2.0.4]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.3...2.0.4
 [2.0.3]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.2...2.0.3
 [2.0.2]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.1...2.0.2
