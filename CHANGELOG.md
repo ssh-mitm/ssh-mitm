@@ -13,7 +13,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - fixed client version check for vulnerabilities when using PuTTY
 - fixed .bumpversion.cfg to work with original bump2version command (suggested by [@FredM](https://github.com/FredM))
 - catch connection errors during authentication
-- fixed scp message order to match OpenSSH's behavior (found by [@oddko](https://github.com/oddko))
+- fixed scp message order from client to server to match OpenSSH's behavior (found by [@oddko](https://github.com/oddko))
+- send server EOF and return code when closing scp channel (found by [@oddko](https://github.com/oddko), fixed by [@zoey-fux](https://github.com/zoey-fux))
 
 
 ## [2.0.4] - 2022-06-12
