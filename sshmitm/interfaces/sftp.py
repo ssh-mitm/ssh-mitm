@@ -150,8 +150,8 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.stat(path)
 
-    def symlink(self, targetPath: Text, path: Text) -> int:
+    def symlink(self, target_path: Text, path: Text) -> int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
-        return self.session.sftp_client.symlink(targetPath, path)
+        return self.session.sftp_client.symlink(target_path, path)

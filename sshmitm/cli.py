@@ -23,7 +23,7 @@ class SubCommand():
         self,
         run_func: Callable[[Namespace], None],
         parser_func: Callable[[ModuleParser], None],
-        help: Text
+        help: Text  # pylint: disable=redefined-builtin
     ):
         self.run_func = run_func
         self.help = help

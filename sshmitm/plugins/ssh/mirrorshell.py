@@ -117,7 +117,7 @@ class SSHMirrorForwarder(SSHForwarder):
             )
 
             os.makedirs(self.logdir, exist_ok=True)
-            timecomponent = str(time.time()).split('.')[0]
+            timecomponent = str(time.time()).split('.', maxsplit=1)[0]
 
             self.fileIn = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_in_{timecomponent}_',

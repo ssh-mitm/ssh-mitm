@@ -6,16 +6,13 @@ from sshmitm.forwarders.base import BaseForwarder
 import sshmitm
 
 
-class SSHBaseForwarder(BaseForwarder):
+class SSHBaseForwarder(BaseForwarder):  # pylint: disable=W0223
     pass
 
 
 class SSHForwarder(SSHBaseForwarder):
     """forwards the terminal session to the remote server without modification
     """
-
-    def __init__(self, session: 'sshmitm.session.Session') -> None:
-        super(SSHForwarder, self).__init__(session)
 
     def forward(self) -> None:
         time.sleep(0.1)
