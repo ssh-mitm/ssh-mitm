@@ -69,7 +69,7 @@ class Session(BaseSession):
         )
         self._transport: Optional[paramiko.Transport] = None
 
-        self.channel = None
+        self.channel: Optional[paramiko.Channel] = None
 
         self.proxyserver: 'sshmitm.server.SSHProxyServer' = proxyserver
         self.client_socket = client_socket
@@ -82,14 +82,14 @@ class Session(BaseSession):
         self.ssh_requested: bool = False
         self.ssh_channel: Optional[paramiko.Channel] = None
         self.ssh_client: Optional[sshmitm.clients.ssh.SSHClient] = None
-        self.ssh_pty_kwargs = None
+        self.ssh_pty_kwargs: Optional[Dict[Text, Any]] = None
 
         self.scp_requested: bool = False
-        self.scp_channel = None
+        self.scp_channel: Optional[paramiko.Channel] = None
         self.scp_command: bytes = b''
 
         self.sftp_requested: bool = False
-        self.sftp_channel = None
+        self.sftp_channel: Optional[paramiko.Channel] = None
         self.sftp_client: Optional[sshmitm.clients.sftp.SFTPClient] = None
         self.sftp_client_ready = threading.Event()
 

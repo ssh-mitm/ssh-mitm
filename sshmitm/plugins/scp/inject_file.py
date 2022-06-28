@@ -73,7 +73,7 @@ class SCPInjectFile(SCPForwarder):
             self.args.scp_inject_file.split('/')[-1]
         )
         logging.debug("Sending command %s", command.strip())
-        self.session.scp_channel.sendall(command)
+        self.session.scp_channel.sendall(command.encode())
         if not wait_ok():
             logging.info("Client is not vulnerable to CVE-2019-6111")
             self.hide_tracks()
