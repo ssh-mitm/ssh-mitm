@@ -7,7 +7,6 @@ from paramiko.transport import Transport
 from paramiko.channel import Channel
 
 
-
 class AgentProxy:
 
     def __init__(self, transport: Transport) -> None:

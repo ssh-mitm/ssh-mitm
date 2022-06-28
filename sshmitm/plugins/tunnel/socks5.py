@@ -101,8 +101,8 @@ class Socks5Server():
         methods_count = int.from_bytes(clientsock.recv(1), byteorder='big')
         try:
             methods = [Socks5AuthenticationType(bytes([m])) for m in clientsock.recv(methods_count)]
-        except ValueError:
-            raise Socks5Error("Invalid methods")
+        except ValueError as exc:
+            raise Socks5Error("Invalid methods") from exc
         if len(methods) != methods_count:
             raise Socks5Error("Invalid number of methods")
         return methods
@@ -150,16 +150,16 @@ class Socks5Server():
         # get socks command
         try:
             command = Socks5Command(clientsock.recv(1))
-        except ValueError:
-            raise Socks5Error("Invalid Socks5 command")
+        except ValueError as exc:
+            raise Socks5Error("Invalid Socks5 command") from exc
 
         if clientsock.recv(1) != b"\x00":
             raise Socks5Error("Reserved byte must be 0x00")
 
         try:
             address_type: Socks5AddressType = Socks5AddressType(clientsock.recv(1))
-        except ValueError:
-            raise Socks5Error("Invalid Socks5 address type")
+        except ValueError as exc:
+            raise Socks5Error("Invalid Socks5 address type") from exc
 
         dst_addr_b: bytes
         dst_addr: Text

@@ -116,7 +116,7 @@ class SSHProxyServer:
                 self._hostkey = key_algorithm_class.generate(bits=key_algorithm_bits)  # type: ignore
             except ValueError as err:
                 logging.error(str(err))
-                raise KeyGenerationError()
+                raise KeyGenerationError() from err
         else:
             if not os.path.isfile(self.key_file):
                 raise FileNotFoundError(f"host key '{self.key_file}' file does not exist")
@@ -146,7 +146,7 @@ class SSHProxyServer:
             key_algorithm_class.__name__,
             self._hostkey.get_bits(),
             stylize(ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
-            stylize(ssh_pub_key.hash_sha256(),fg('light_blue') + attr('bold'))
+            stylize(ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold'))
         )
 
     def _key_from_filepath(self, filename: Text, klass: Type[PKey], password: Optional[Text]) -> PKey:

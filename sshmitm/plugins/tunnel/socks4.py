@@ -72,8 +72,8 @@ class Socks4Server():
         # get socks command
         try:
             command = Socks4Command(clientsock.recv(1))
-        except ValueError:
-            raise Socks4Error("Invalid Socks4 command")
+        except ValueError as exc:
+            raise Socks4Error("Invalid Socks4 command") from exc
 
         dst_addr_b: bytes
         dst_addr: Text
