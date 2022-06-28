@@ -113,7 +113,7 @@ def create_server_sock(
     host: Optional[Text]
     port: int
     host, port = address
-    if host == "" or host == "0.0.0.0":  # nosec
+    if host in ("", "0.0.0.0"):  # nosec
         # http://mail.python.org/pipermail/python-ideas/2013-March/019937.html
         host = None
     if host is None and dual_stack:

@@ -9,7 +9,7 @@ from paramiko.channel import Channel
 from typeguard import typechecked
 
 
-class AgentProxy(object):
+class AgentProxy:
 
     @typechecked
     def __init__(self, transport: Transport) -> None:
