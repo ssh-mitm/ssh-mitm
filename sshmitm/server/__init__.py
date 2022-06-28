@@ -139,7 +139,8 @@ class SSHProxyServer:
         ssh_pub_key = SSHKey(f"{self._hostkey.get_name()} {self._hostkey.get_base64()}")
         ssh_pub_key.parse()
         logging.info((
-            f"{'loaded' if self.key_file else 'generated temporary'} {key_algorithm_class.__name__} key with {self._hostkey.get_bits()} bit length and fingerprints:\n"
+            f"{'loaded' if self.key_file else 'generated temporary'} {key_algorithm_class.__name__} key "
+            f"with {self._hostkey.get_bits()} bit length and fingerprints:\n"
             f"    {stylize(ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold'))}\n"
             f"    {stylize(ssh_pub_key.hash_sha256(),fg('light_blue') + attr('bold'))}"
         ))
@@ -216,9 +217,15 @@ class SSHProxyServer:
                 )
         except PermissionError as permerror:
             if self.transparent and permerror.errno == 1:
-                logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))} Note: running SSH-MITM in transparent mode requires root privileges")
+                logging.error((
+                    f"{stylize('error creating socket!', fg('red') + attr('bold'))} "
+                    "Note: running SSH-MITM in transparent mode requires root privileges"
+                ))
             elif permerror.errno == 13 and self.listen_port < 1024:
-                logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))} Note: running SSH-MITM on a port < 1024 requires root privileges")
+                logging.error((
+                    f"{stylize('error creating socket!', fg('red') + attr('bold'))} "
+                    "Note: running SSH-MITM on a port < 1024 requires root privileges"
+                ))
             else:
                 logging.exception(f"{stylize('error creating socket!', fg('red') + attr('bold'))} - unknown error")
             return

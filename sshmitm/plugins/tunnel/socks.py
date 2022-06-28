@@ -1,7 +1,6 @@
 import logging
 import socket
 from typing import (
-    TYPE_CHECKING,
     List,
     Optional,
     Tuple,
@@ -21,9 +20,6 @@ from sshmitm.plugins.session.tcpserver import TCPServerThread
 from sshmitm.plugins.tunnel.socks4 import Socks4Server, Socks4Error
 from sshmitm.plugins.tunnel.socks5 import Socks5Server, Socks5Error
 
-if TYPE_CHECKING:
-    from sshmitm.session import Session
-
 
 class ClientTunnelHandler:
     """
@@ -38,7 +34,9 @@ class ClientTunnelHandler:
         self.session = session
 
     @typechecked
-    def handle_request(self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]) -> None:
+    def handle_request(
+        self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
+    ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
         destination: Optional[Tuple[Text, int]] = None
@@ -98,13 +96,17 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
         )
         t.start()
         cls.tcpservers.append(t)
+
+        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}'
+        netcat_cmd = f'nc -X 4 -x localhost:{t.port} address port'
+
         logging.info((
             f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
             f" - local port forwading\n"
             f"{stylize('SOCKS port:', attr('bold'))} {stylize(t.port, fg('light_blue') + attr('bold'))}\n"
             f"  {stylize('SOCKS4:', attr('bold'))}\n"
-            f"    * socat: {stylize(f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}', fg('light_blue') + attr('bold'))}\n"
-            f"    * netcat: {stylize(f'nc -X 4 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))}\n"
+            f"    * socat: {stylize(socat_cmd, fg('light_blue') + attr('bold'))}\n"
+            f"    * netcat: {stylize(netcat_cmd, fg('light_blue') + attr('bold'))}\n"
             f"  {stylize('SOCKS5:', attr('bold'))}\n"
             f"    * netcat: {stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))}"
         ))

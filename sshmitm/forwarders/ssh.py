@@ -1,16 +1,10 @@
 import logging
 import time
-from typing import (
-    TYPE_CHECKING
-)
 
 from typeguard import typechecked
 
 from sshmitm.forwarders.base import BaseForwarder
 import sshmitm
-
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class SSHBaseForwarder(BaseForwarder):

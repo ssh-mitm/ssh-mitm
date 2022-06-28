@@ -2,7 +2,6 @@ import logging
 import os
 import uuid
 from typing import (
-    TYPE_CHECKING,
     Optional,
     Text
 )
@@ -10,8 +9,6 @@ from typing import (
 from typeguard import typechecked
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class SCPStorageForwarder(SCPForwarder):

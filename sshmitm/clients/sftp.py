@@ -1,7 +1,6 @@
 import logging
 import os
 from typing import (
-    TYPE_CHECKING,
     Callable,
     List,
     Any,
@@ -19,8 +18,6 @@ from typeguard import typechecked
 
 import sshmitm
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class SFTPClient(SSHClient):
@@ -111,7 +108,10 @@ class SFTPClient(SSHClient):
         return paramiko.sftp.SFTP_OK
 
     @typechecked
-    def get(self, remotePath: Union[Text, bytes], localPath: Union[Text, bytes], callback: Optional[Callable[[int, int], Any]] = None) -> int:
+    def get(
+        self, remotePath: Union[Text, bytes], localPath: Union[Text, bytes],
+        callback: Optional[Callable[[int, int], Any]] = None
+    ) -> int:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         try:
@@ -142,7 +142,9 @@ class SFTPClient(SSHClient):
         return paramiko.sftp.SFTP_OK
 
     @typechecked
-    def put(self, localPath: Union[Text, bytes], remotePath: Union[Text, bytes], callback: Any = None, confirm: bool = True) -> None:
+    def put(
+        self, localPath: Union[Text, bytes], remotePath: Union[Text, bytes], callback: Any = None, confirm: bool = True
+    ) -> None:
         raise NotImplementedError('put not implemented')
 
     @typechecked

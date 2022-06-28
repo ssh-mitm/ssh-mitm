@@ -2,7 +2,6 @@ import logging
 from enum import Enum
 import socket
 from typing import (
-    TYPE_CHECKING,
     cast,
     List,
     Optional,
@@ -19,8 +18,6 @@ from colored.colored import stylize, fg, attr  # type: ignore
 import sshmitm
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class Socks4Error(Exception):
@@ -118,7 +115,9 @@ class Socks4Server():
         return address
 
     @typechecked
-    def get_address(self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False) -> Optional[Tuple[Text, int]]:
+    def get_address(
+        self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False
+    ) -> Optional[Tuple[Text, int]]:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks4Server.SOCKSVERSION:
@@ -142,7 +141,9 @@ class ClientTunnelHandler:
         self.session = session
 
     @typechecked
-    def handle_request(self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]) -> None:
+    def handle_request(
+        self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
+    ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
         destination: Optional[Tuple[Text, int]] = None
@@ -193,9 +194,11 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
         )
         t.start()
         cls.tcpservers.append(t)
+        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}'
         logging.info((
             f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
             " - "
             f"created Socks4 proxy server on port {stylize(t.port, fg('light_blue') + attr('bold'))}. "
-            f"connect with {stylize(f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}', fg('light_blue') + attr('bold'))}"
+            "connect with"
+            f"{stylize(socat_cmd, fg('light_blue') + attr('bold'))}"
         ))

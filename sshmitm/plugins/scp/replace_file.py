@@ -1,14 +1,8 @@
 import os
-from typing import (
-    TYPE_CHECKING
-)
-
 from typeguard import typechecked
 
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class SCPReplaceFile(SCPForwarder):

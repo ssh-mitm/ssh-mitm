@@ -2,7 +2,7 @@ from argparse import Namespace
 import logging
 import sys
 import os
-from typing import Optional, Text, cast, Callable
+from typing import Text, Callable
 
 from enhancements.modules import ModuleParser
 
@@ -30,7 +30,6 @@ class SubCommand():
         self.run_func = run_func
         self.help = help
         self.parser_func = parser_func
-
 
 
 @typechecked
@@ -82,7 +81,6 @@ def run() -> None:
         action='store_true',
         help='disable paramiko workarounds'
     )
-
 
     subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
     subparsers.required = True

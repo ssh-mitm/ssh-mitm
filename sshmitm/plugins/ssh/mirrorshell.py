@@ -9,7 +9,6 @@ import tempfile
 import pytz
 
 from typing import (
-    TYPE_CHECKING,
     Text,
     Optional,
     IO
@@ -22,8 +21,6 @@ from typeguard import typechecked
 
 import sshmitm
 from sshmitm.forwarders.ssh import SSHForwarder
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class InjectServer(paramiko.ServerInterface):
@@ -175,9 +172,10 @@ class SSHMirrorForwarder(SSHForwarder):
     @typechecked
     def injector_connect(self) -> None:
         inject_host, inject_port = self.injector_sock.getsockname()
-        logging.info(
-            f"{EMOJI['information']} created mirrorshell on port {inject_port}. connect with: {stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))}"
-        )
+        logging.info((
+            f"{EMOJI['information']} created mirrorshell on port {inject_port}. "
+            f"connect with: {stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))}"
+        ))
         try:
             while self.session.running:
                 readable = select.select([self.injector_sock], [], [], 0.5)[0]

@@ -2,7 +2,6 @@ from typing import ByteString, Optional
 import logging
 import os
 from typing import (
-    TYPE_CHECKING,
     Any,
     List,
     Text,
@@ -21,9 +20,6 @@ import sshmitm
 from sshmitm.authentication import RemoteCredentials
 from sshmitm.clients.sftp import SFTPClient
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder, RemotePortForwardingForwarder
-
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
@@ -216,7 +212,9 @@ class ServerInterface(BaseServerInterface):
         return paramiko.common.AUTH_FAILED
 
     @typechecked
-    def check_auth_interactive(self, username: Text, submethods: Union[bytes, Text]) -> Union[int, paramiko.server.InteractiveQuery]:
+    def check_auth_interactive(
+        self, username: Text, submethods: Union[bytes, Text]
+    ) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive: username=%s, submethods=%s", username, submethods)
         is_trivial_auth = self.args.enable_trivial_auth and self.session.accepted_key is not None
         logging.debug("trivial authentication possible")
@@ -243,7 +241,11 @@ class ServerInterface(BaseServerInterface):
     def check_auth_publickey(self, username: Text, key: PKey) -> int:
         ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
-        logging.debug("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
+        logging.debug(
+            "check_auth_publickey: username=%s, key=%s %s %sbits",
+            username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits
+        )
+
         if self.session.session_log_dir:
             os.makedirs(self.session.session_log_dir, exist_ok=True)
             pubkeyfile_path = os.path.join(self.session.session_log_dir, 'publickeys')
@@ -381,7 +383,8 @@ class ServerInterface(BaseServerInterface):
 
     @typechecked
     def check_channel_x11_request(
-        self, channel: paramiko.Channel, single_connection: bool, auth_protocol: Text, auth_cookie: ByteString, screen_number: int
+        self, channel: paramiko.Channel, single_connection: bool,
+        auth_protocol: Text, auth_cookie: ByteString, screen_number: int
     ) -> bool:
         logging.debug(
             "check_channel_x11_request: channel=%s, single_connection=%s, auth_protocol=%s, auth_cookie=%s, screen_number=%s",
@@ -390,7 +393,9 @@ class ServerInterface(BaseServerInterface):
         return False
 
     @typechecked
-    def check_global_request(self, kind: Text, msg: paramiko.message.Message) -> Union[bool, Tuple[Union[bool, int, Text], ...]]:
+    def check_global_request(
+        self, kind: Text, msg: paramiko.message.Message
+    ) -> Union[bool, Tuple[Union[bool, int, Text], ...]]:
         logging.debug(
             "check_global_request: kind=%s, msg=%s", kind, msg
         )

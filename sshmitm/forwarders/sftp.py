@@ -1,9 +1,9 @@
 import logging
 from typing import (
-    TYPE_CHECKING,
     Optional,
     Text,
-    Union, Type,
+    Union,
+    Type,
     cast
 )
 
@@ -13,9 +13,6 @@ from typeguard import typechecked
 
 import sshmitm
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
-
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class SFTPHandlerBasePlugin(BaseModule):

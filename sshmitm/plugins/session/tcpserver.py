@@ -20,7 +20,10 @@ class TCPServerThread(threading.Thread):
     @typechecked
     def __init__(
         self,
-        request_handler: Optional[Callable[[Tuple[Text, int], Union[socket.socket, paramiko.Channel], Tuple[Text, int]], None]] = None,
+        request_handler: Optional[Callable[
+            [Tuple[Text, int], Union[socket.socket, paramiko.Channel], Tuple[Text, int]],
+            None
+        ]] = None,
         network: Text = '127.0.0.1',
         port: int = 0,
         run_status: bool = True,

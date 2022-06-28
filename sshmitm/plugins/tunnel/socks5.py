@@ -3,7 +3,6 @@ from enum import Enum
 import socket
 import sys
 from typing import (
-    TYPE_CHECKING,
     cast,
     List,
     Optional,
@@ -20,8 +19,6 @@ from colored.colored import stylize, fg, attr  # type: ignore
 import sshmitm
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class Socks5Error(Exception):
@@ -85,7 +82,9 @@ class Socks5Server():
     AUTH_PASSWORD_VERSION = b"\x01"
 
     @typechecked
-    def __init__(self, listenaddress: Tuple[Text, int], username: Optional[Text] = None, password: Optional[Text] = None) -> None:
+    def __init__(
+        self, listenaddress: Tuple[Text, int], username: Optional[Text] = None, password: Optional[Text] = None
+    ) -> None:
         self.listenaddress = listenaddress
         self.username: Optional[Text] = username
         self.password: Optional[Text] = password
@@ -221,7 +220,9 @@ class Socks5Server():
         return username == self.username and password == self.password
 
     @typechecked
-    def get_address(self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False) -> Optional[Tuple[Text, int]]:
+    def get_address(
+        self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False
+    ) -> Optional[Tuple[Text, int]]:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks5Server.SOCKSVERSION:
@@ -250,7 +251,9 @@ class ClientTunnelHandler:
         self.password = password
 
     @typechecked
-    def handle_request(self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]) -> None:
+    def handle_request(
+        self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
+    ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
         destination: Optional[Tuple[Text, int]] = None
@@ -315,5 +318,6 @@ class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
         logging.info((
             f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
             " - "
-            f"created SOCKS5 proxy server on port {t.port}. connect with: {stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))}"
+            f"created SOCKS5 proxy server on port {t.port}."
+            f" connect with: {stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))}"
         ))

@@ -55,7 +55,7 @@ setup(
             'data/*.*',
         ]
     },
-    data_files = [
+    data_files=[
         ('man/man1', [
             'man1/ssh-mitm.1',
             'man1/ssh-mitm-audit.1',

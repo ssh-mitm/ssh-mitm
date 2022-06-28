@@ -4,7 +4,6 @@ import threading
 import time
 from socket import socket
 from typing import (
-    TYPE_CHECKING,
     Optional,
     Tuple,
     Union
@@ -15,15 +14,14 @@ from enhancements.modules import BaseModule
 from typeguard import typechecked
 
 import sshmitm
-if TYPE_CHECKING:
-    from sshmitm.interfaces.server import ServerInterface
-    from sshmitm.session import Session
 
 
 class TunnelForwarder(threading.Thread):
 
     @typechecked
-    def __init__(self, local_ch: Optional[Union[socket, paramiko.Channel]], remote_ch: Optional[Union[socket, paramiko.Channel]]) -> None:
+    def __init__(
+        self, local_ch: Optional[Union[socket, paramiko.Channel]], remote_ch: Optional[Union[socket, paramiko.Channel]]
+    ) -> None:
         super(TunnelForwarder, self).__init__()
         self.local_ch = local_ch
         self.remote_ch = remote_ch
@@ -183,7 +181,9 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
         pass
 
     @typechecked
-    def handler(self, channel: paramiko.Channel, origin: Optional[Tuple[str, int]], destination: Optional[Tuple[str, int]]) -> None:
+    def handler(
+        self, channel: paramiko.Channel, origin: Optional[Tuple[str, int]], destination: Optional[Tuple[str, int]]
+    ) -> None:
         try:
             logging.debug("Opening forwarded-tcpip channel (%s -> %s) to client", origin, destination)
             f = TunnelForwarder(

@@ -2,7 +2,6 @@ import logging
 import time
 import re
 from typing import (
-    TYPE_CHECKING,
     Callable,
     Optional,
     Text
@@ -15,9 +14,6 @@ from typeguard import typechecked
 
 import sshmitm
 from sshmitm.forwarders.base import BaseForwarder
-
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class SCPBaseForwarder(BaseForwarder):
@@ -43,7 +39,9 @@ class SCPBaseForwarder(BaseForwarder):
                 if self.session.scp_channel is not None:
                     logging.debug("[chan %d] Initiating SCP remote to remote", self.session.scp_channel.get_id())
                     if self.session.agent is None:
-                        logging.warning("[chan %d] SCP remote to remote needs a forwarded agent", self.session.scp_channel.get_id())
+                        logging.warning(
+                            "[chan %d] SCP remote to remote needs a forwarded agent", self.session.scp_channel.get_id()
+                        )
                 while not self._closed(self.server_channel):
                     time.sleep(1)
 

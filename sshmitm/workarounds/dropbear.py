@@ -29,7 +29,6 @@ from paramiko import util
 from paramiko.common import (
     xffffffff,
     DEBUG,
-    INFO,
     MSG_KEXINIT,
     MSG_IGNORE,
     MSG_DISCONNECT,

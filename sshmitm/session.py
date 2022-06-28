@@ -5,7 +5,6 @@ import os
 import socket
 
 from typing import (
-    TYPE_CHECKING,
     cast,
     Any,
     Dict,
@@ -31,9 +30,6 @@ import sshmitm
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
 from sshmitm.plugins.session import key_negotiation
-
-if TYPE_CHECKING:
-    from sshmitm.server import SSHProxyServer
 
 
 class BaseSession(BaseModule):
@@ -178,7 +174,7 @@ class Session(BaseSession):
                 logging.error("No username proviced during login!")
                 return False
             if self.authenticator.auth_fallback(self.username_provided) == paramiko.common.AUTH_SUCCESSFUL:
-                return True            
+                return True
             self.transport.close()
             return False
 
