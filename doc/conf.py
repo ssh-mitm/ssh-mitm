@@ -67,7 +67,10 @@ redirects = {
 
 header = {
     'title': 'SSH-MITM - ssh audits made simple',
-    'summary': 'man-in-the-middle (mitm) server for security audits supporting publickey authentication, session hijacking and file manipulation'
+    'summary': (
+        'man-in-the-middle (mitm) server for security audits '
+        'supporting publickey authentication, session hijacking and file manipulation'
+    )
 }
 
 footer = {
@@ -84,7 +87,9 @@ page_descriptions = {
     'trivialauth.html': 'Phishing FIDO2 Tokens and SSH-Askpass',
     'filetransfer.html': 'Description of the SCP/SFTP protocols and how to manipulate files during audits',
     'portforwarding.html': 'Introduction to port forwarding features of SSH-MITM',
-    'advanced-usage.html': 'Guide on how to setup a SSH-MITM server for advanced security audits in large networks and special use cases',
+    'advanced-usage.html': (
+        'Guide on how to setup a SSH-MITM server for advanced security audits in large networks and special use cases'
+    ),
     'ssh_vulnerabilities.html': 'Explanation of vulnerabilities related to the ssh protocol',
 }
 
