@@ -127,7 +127,7 @@ def create_server_sock(
         # preferred over IPv6
         info.sort(key=lambda x: x[0] == socket.AF_INET, reverse=True)
     for res in info:
-        af, socktype, proto, canonname, sa = res
+        af, socktype, proto, _, sa = res
         sock = None
         try:
             sock = socket.socket(af, socktype, proto)

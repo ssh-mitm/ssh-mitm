@@ -48,7 +48,7 @@ class TunnelForwarder(threading.Thread):
                 logging.error("remote channel is None")
                 break
 
-            r, w, x = select.select([self.local_ch, self.remote_ch], [], [])
+            r, _, _ = select.select([self.local_ch, self.remote_ch], [], [])
 
             if self.local_ch in r:
                 data = self.local_ch.recv(chunk_size)
