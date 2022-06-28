@@ -106,7 +106,7 @@ class SSHClientAudit():
                             cvemessagelist.append(f"    - {e1}")
                     else:
                         cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
-        if cvemessagelist or True:
+        if cvemessagelist:
             logging.info(
                     "".join([
                         stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
@@ -121,7 +121,7 @@ class SSHClientAudit():
             return {}
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_name())
-        for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS:
+        for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS or []:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
                 messages.append(stylize(
                     "client connecting for the first time or using default key order!",
