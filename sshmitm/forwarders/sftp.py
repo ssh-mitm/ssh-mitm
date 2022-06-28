@@ -33,6 +33,7 @@ class SFTPHandlerBasePlugin(BaseModule):
         pass
 
     def handle_data(self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None) -> bytes:
+        del offset, length  # unused arguments
         return data
 
 

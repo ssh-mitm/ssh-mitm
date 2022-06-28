@@ -33,6 +33,7 @@ class SCPInjectFile(SCPForwarder):
         )
 
     def __new__(cls, *args, **kwargs):  # type: ignore
+        del kwargs  # unused arguments
         if args[0].scp_command.find(b'-f') != -1:
             return super(SCPInjectFile, cls).__new__(cls)
         logging.debug("SCPClient is not downloading a file, reverting to normal SCPForwarder")

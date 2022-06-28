@@ -53,6 +53,7 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
     def handle_request(
         self, listenaddr: Tuple[Text, int], client: Union[socket, paramiko.Channel], addr: Tuple[Text, int]
     ) -> None:
+        del listenaddr  # unused arguments
         try:
             f = TunnelForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", self.destination, addr),

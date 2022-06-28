@@ -26,6 +26,7 @@ from sshmitm.exceptions import MissingHostException
 def probe_host(hostname_or_ip: Text, port: int, username: Text, public_key: paramiko.pkey.PublicBlob) -> bool:
 
     def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore
+        del msg  # unused arguments
         self.auth_event.set()
         self.authenticated = True
 

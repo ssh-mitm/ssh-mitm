@@ -113,4 +113,5 @@ class SSHClient(BaseSSHClient):
 
     def check_host_key(self, hostname: Text, keytype: Text, key: PKey) -> bool:
         """checks the host key, default always returns true"""
+        del hostname, keytype, key  # unused arguments
         return True

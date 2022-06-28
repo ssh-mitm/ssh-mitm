@@ -18,6 +18,7 @@ from sshmitm.forwarders.base import BaseForwarder
 class SCPBaseForwarder(BaseForwarder):
 
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
+        del isclient  # unused arguments
         return traffic
 
     def handle_error(self, traffic: bytes) -> bytes:
