@@ -64,7 +64,7 @@ class KeyNegotiationData:
         client_version = self.client_version.lower()
         try:
             vulndb = pkg_resources.resource_filename('sshmitm', 'data/client_vulnerabilities.yml')
-            with open(vulndb) as file:
+            with open(vulndb, 'r', encoding="utf-8") as file:
                 vulnerability_list = yaml.safe_load(file)
         except Exception:
             logging.exception("Error loading vulnerability database")

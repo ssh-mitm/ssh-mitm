@@ -12,7 +12,7 @@ from sshmitm.authentication import probe_host, Authenticator
 
 
 def check_publickey(args: argparse.Namespace) -> bool:
-    with open(args.public_key, 'rt') as key_handle:
+    with open(args.public_key, 'rt', encoding="utf-8") as key_handle:
         key = key_handle.read()
     try:
         pubkey = PublicBlob.from_string(key)

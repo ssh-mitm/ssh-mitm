@@ -400,7 +400,7 @@ class AuthenticatorPassThrough(Authenticator):
             if self.session.session_log_dir:
                 os.makedirs(self.session.session_log_dir, exist_ok=True)
                 pubkeyfile_path = os.path.join(self.session.session_log_dir, 'publickeys')
-                with open(pubkeyfile_path, 'a+') as pubkeyfile:
+                with open(pubkeyfile_path, 'a+', encoding="utf-8") as pubkeyfile:
                     pubkeyfile.write("".join([
                         f"{k[0]} {k[3]} saved-from-agent\n"
                         for k in keys_parsed

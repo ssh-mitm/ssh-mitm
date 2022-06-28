@@ -241,7 +241,7 @@ class ServerInterface(BaseServerInterface):
         if self.session.session_log_dir:
             os.makedirs(self.session.session_log_dir, exist_ok=True)
             pubkeyfile_path = os.path.join(self.session.session_log_dir, 'publickeys')
-            with open(pubkeyfile_path, 'a+') as pubkeyfile:
+            with open(pubkeyfile_path, 'a+', encoding="utf-8") as pubkeyfile:
                 pubkeyfile.write(f"{key.get_name()} {key.get_base64()} saved-from-auth-publickey\n")
         if self.args.disable_pubkey_auth:
             logging.debug("Publickey login attempt, but publickey auth was disabled!")
