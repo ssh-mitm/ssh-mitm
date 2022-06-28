@@ -4,6 +4,7 @@ import threading
 import time
 from socket import socket
 from typing import (
+    TYPE_CHECKING,
     Optional,
     Tuple,
     Union
@@ -14,6 +15,9 @@ from enhancements.modules import BaseModule
 from typeguard import typechecked
 
 import sshmitm
+
+if TYPE_CHECKING:
+    from sshmitm.session import Session  # noqa
 
 
 class TunnelForwarder(threading.Thread):

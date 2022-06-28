@@ -2,6 +2,7 @@ import logging
 from enum import Enum
 
 from typing import (
+    TYPE_CHECKING,
     Optional,
     Text
 )
@@ -16,6 +17,9 @@ from enhancements.modules import BaseModule
 import sshmitm
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.exceptions import NoAgentKeys, InvalidHostKey
+
+if TYPE_CHECKING:
+    from sshmitm.session import Session  # noqa
 
 
 class AuthenticationMethod(Enum):

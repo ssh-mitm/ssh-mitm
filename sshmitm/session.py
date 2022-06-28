@@ -5,6 +5,7 @@ import os
 import socket
 
 from typing import (
+    TYPE_CHECKING,
     cast,
     Any,
     Dict,
@@ -30,6 +31,9 @@ import sshmitm
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
 from sshmitm.plugins.session import key_negotiation
+
+if TYPE_CHECKING:
+    from sshmitm.server import SSHProxyServer  # noqa
 
 
 class BaseSession(BaseModule):

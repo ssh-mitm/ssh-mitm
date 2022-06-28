@@ -1,4 +1,5 @@
 import logging
+from typing import TYPE_CHECKING
 
 from colored.colored import stylize, fg, attr  # type: ignore
 import paramiko
@@ -15,6 +16,9 @@ from rich._emoji_codes import EMOJI
 
 import sshmitm
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
+
+if TYPE_CHECKING:
+    from sshmitm.session import Session  # noqa
 
 
 class KeyNegotiationData:
