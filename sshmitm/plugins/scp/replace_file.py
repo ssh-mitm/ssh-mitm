@@ -27,7 +27,7 @@ class SCPReplaceFile(SCPForwarder):
 
         self.data_sent = False
         self.file_stat = os.stat(self.args.scp_replacement_file)
-        self.file_to_send = open(self.args.scp_replacement_file, 'rb')
+        self.file_to_send = open(self.args.scp_replacement_file, 'rb')  # pylint: disable=consider-using-with
 
     @typechecked
     def handle_command(self, traffic: bytes) -> bytes:

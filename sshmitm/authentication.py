@@ -396,9 +396,8 @@ class AuthenticatorPassThrough(Authenticator):
         publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
         if probe_host(host, port, username, publickey):
             logging.debug((
-                f"Found valid key for host {host}:{port} "
-                f"username={username}, "
-                f"key={key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits"
+                "Found valid key for host %s:%s username=%s, key=%s %s %sbits",
+                host, port, username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits
             ))
             return paramiko.common.AUTH_SUCCESSFUL
         return paramiko.common.AUTH_FAILED

@@ -1,5 +1,6 @@
 import argparse
 import logging
+import sys
 from typing import NoReturn, Optional, Text
 
 from typeguard import typechecked
@@ -37,7 +38,7 @@ def confirm(primary_message: Text, secondary_message: Optional[Text] = None) -> 
 def main() -> NoReturn:
     if not tkinter_imported:
         logging.error("tkinter not installed!")
-        exit(1)
+        sys.exit(1)
     parser = argparse.ArgumentParser()
     parser.add_argument('messages', nargs='*')
     args = parser.parse_args()
@@ -56,16 +57,16 @@ def main() -> NoReturn:
     style = ttk.Style()
     style.theme_use('clam')
     if primary_message.endswith("?"):
-        ok = confirm(primary_message, secondary_message)
-        if not ok:
-            exit(1)
+        rvalue_ok = confirm(primary_message, secondary_message)
+        if not rvalue_ok:
+            sys.exit(1)
     else:
         result = ask_pass(primary_message, secondary_message)
         if result is None:
-            exit(1)
+            sys.exit(1)
         else:
             print(result)
-    exit(0)
+    sys.exit(0)
 
 
 if __name__ == '__main__':

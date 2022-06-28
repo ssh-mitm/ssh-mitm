@@ -39,7 +39,7 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
             os.makedirs(self.sftp_storage_dir, exist_ok=True)
 
             self.output_path = os.path.join(self.sftp_storage_dir, self.file_id)
-            self.out_file = open(self.output_path, 'wb')
+            self.out_file = open(self.output_path, 'wb')  # pylint: disable=consider-using-with
 
         logging.info("sftp file transfer: %s -> %s", filename, self.file_id)
 

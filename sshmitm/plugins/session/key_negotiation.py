@@ -44,7 +44,9 @@ class KeyNegotiationData:
     @typechecked
     def show_debug_info(self) -> None:
         logging.info(
-            f"{EMOJI['information']} connected client version: {stylize(self.client_version, fg('green') + attr('bold'))}"
+            "%s connected client version: %s",
+            EMOJI['information'],
+            stylize(self.client_version, fg('green') + attr('bold'))
         )
         logging.debug("cookie: %s", self.cookie.hex())
         logging.debug("kex_algorithms: %s", escape(str(self.kex_algorithms)))

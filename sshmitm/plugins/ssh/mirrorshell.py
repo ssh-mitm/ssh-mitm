@@ -128,13 +128,13 @@ class SSHMirrorForwarder(SSHForwarder):
             os.makedirs(self.logdir, exist_ok=True)
             timecomponent = str(time.time()).split('.')[0]
 
-            self.fileIn = tempfile.NamedTemporaryFile(
+            self.fileIn = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_in_{timecomponent}_',
                 suffix='.log',
                 dir=self.logdir,
                 delete=False
             )
-            self.fileOut = tempfile.NamedTemporaryFile(
+            self.fileOut = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_out_{timecomponent}_',
                 suffix='.log',
                 dir=self.logdir,
@@ -148,7 +148,7 @@ class SSHMirrorForwarder(SSHForwarder):
                 ).encode()
             )
             self.fileOut.flush()
-            self.timeingfile = tempfile.NamedTemporaryFile(
+            self.timeingfile = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_time_{timecomponent}_',
                 suffix='.log',
                 dir=self.logdir,
@@ -172,10 +172,12 @@ class SSHMirrorForwarder(SSHForwarder):
     @typechecked
     def injector_connect(self) -> None:
         inject_host, inject_port = self.injector_sock.getsockname()
-        logging.info((
-            f"{EMOJI['information']} created mirrorshell on port {inject_port}. "
-            f"connect with: {stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))}"
-        ))
+        logging.info(
+            "%s created mirrorshell on port %s. connect with: %s",
+            EMOJI['information'],
+            inject_port,
+            stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))
+        )
         try:
             while self.session.running:
                 readable = select.select([self.injector_sock], [], [], 0.5)[0]

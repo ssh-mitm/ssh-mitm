@@ -98,15 +98,25 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
         cls.tcpservers.append(t)
 
         socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}'
-        netcat_cmd = f'nc -X 4 -x localhost:{t.port} address port'
+        netcat4_cmd = f'nc -X 4 -x localhost:{t.port} address port'
+        netcat5_cmd = f'nc -X 5 -x localhost:{t.port} address port'
 
         logging.info((
-            f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
-            f" - local port forwading\n"
-            f"{stylize('SOCKS port:', attr('bold'))} {stylize(t.port, fg('light_blue') + attr('bold'))}\n"
-            f"  {stylize('SOCKS4:', attr('bold'))}\n"
-            f"    * socat: {stylize(socat_cmd, fg('light_blue') + attr('bold'))}\n"
-            f"    * netcat: {stylize(netcat_cmd, fg('light_blue') + attr('bold'))}\n"
-            f"  {stylize('SOCKS5:', attr('bold'))}\n"
-            f"    * netcat: {stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))}"
-        ))
+                "%s %s - local port forwading\n"
+                "%s %s\n"
+                "  %s\n"
+                "    * socat: %s\n"
+                "    * netcat: %s\n"
+                "  %s\n"
+                "    * netcat: %s"
+            ),
+            EMOJI['information'],
+            stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            stylize('SOCKS port:', attr('bold')),
+            stylize(t.port, fg('light_blue') + attr('bold')),
+            stylize('SOCKS4:', attr('bold')),
+            stylize(socat_cmd, fg('light_blue') + attr('bold')),
+            stylize(netcat4_cmd, fg('light_blue') + attr('bold')),
+            stylize('SOCKS5:', attr('bold')),
+            stylize(netcat5_cmd, fg('light_blue') + attr('bold'))
+        )

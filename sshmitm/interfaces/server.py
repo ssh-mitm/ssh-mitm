@@ -181,7 +181,10 @@ class ServerInterface(BaseServerInterface):
             if creds.host is not None and creds.port is not None:
                 try:
                     self.possible_auth_methods = self.session.authenticator.get_auth_methods(creds.host, creds.port)
-                    logging.info(f"Remote auth-methods: {str(self.possible_auth_methods)}")
+                    logging.info(
+                        "Remote auth-methods: %s",
+                        str(self.possible_auth_methods)
+                    )
                 except paramiko.ssh_exception.SSHException as ex:
                     self.session.remote_address_reachable = False
                     logging.error(ex)

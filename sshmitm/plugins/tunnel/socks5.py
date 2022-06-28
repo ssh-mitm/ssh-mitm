@@ -315,9 +315,10 @@ class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
         )
         t.start()
         cls.tcpservers.append(t)
-        logging.info((
-            f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
-            " - "
-            f"created SOCKS5 proxy server on port {t.port}."
-            f" connect with: {stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))}"
-        ))
+        logging.info(
+            "%s %s - created SOCKS5 proxy server on port %s. connect with: %s",
+            EMOJI['information'],
+            stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            t.port,
+            stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))
+        )

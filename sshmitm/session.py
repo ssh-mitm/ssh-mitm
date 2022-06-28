@@ -65,7 +65,11 @@ class Session(BaseSession):
     ) -> None:
         super().__init__()
         self.sessionid = uuid4()
-        logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} created")
+        logging.info(
+            "%s session %s created",
+            EMOJI['information'],
+            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+        )
         self._transport: Optional[paramiko.Transport] = None
 
         self.channel = None
@@ -221,7 +225,11 @@ class Session(BaseSession):
         if not self._start_channels():
             return False
 
-        logging.info(f"{EMOJI['information']} {stylize(self.sessionid, fg('light_blue') + attr('bold'))} - session started")
+        logging.info(
+            "%s %s - session started",
+            EMOJI['information'],
+            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+        )
         return True
 
     @typechecked
@@ -246,8 +254,15 @@ class Session(BaseSession):
                 f.close()
                 f.join()
         self.transport.close()
-        logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} closed")
-        logging.debug(f"({self}) session closed")
+        logging.info(
+            "%s session %s closed",
+            EMOJI['information'],
+            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+        )
+        logging.debug(
+            "(%s) session closed",
+            self
+        )
         self.closed = True
 
     @typechecked

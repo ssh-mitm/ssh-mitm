@@ -43,12 +43,14 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
             network=self.args.server_tunnel_net,
             run_status=self.session.running
         )
-        logging.info((
-            f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
-            " - "
-            "created server tunnel injector for"
-            f" host {self.tcpserver.network} on port {self.tcpserver.port} to destination {self.destination}"
-        ))
+        logging.info(
+            "%s %s - created server tunnel injector for host %s on port %s to destination %s",
+            EMOJI['information'],
+            stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            self.tcpserver.network,
+            self.tcpserver.port,
+            self.destination
+        )
         self.tcpserver.start()
 
     @typechecked

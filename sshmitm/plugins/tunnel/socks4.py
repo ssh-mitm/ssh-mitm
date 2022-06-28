@@ -195,10 +195,10 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
         t.start()
         cls.tcpservers.append(t)
         socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}'
-        logging.info((
-            f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
-            " - "
-            f"created Socks4 proxy server on port {stylize(t.port, fg('light_blue') + attr('bold'))}. "
-            "connect with"
-            f"{stylize(socat_cmd, fg('light_blue') + attr('bold'))}"
-        ))
+        logging.info(
+            "%s %s - created Socks4 proxy server on port %s. connect with %s",
+            EMOJI['information'],
+            stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            stylize(t.port, fg('light_blue') + attr('bold')),
+            stylize(socat_cmd, fg('light_blue') + attr('bold'))
+        )

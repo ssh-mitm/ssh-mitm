@@ -59,7 +59,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
         self.args.sftp_replacement_file = os.path.expanduser(self.args.sftp_replacement_file)
 
         logging.info("intercepting sftp file '%s', replacement: %s", filename, self.args.sftp_replacement_file)
-        self.replacement = open(self.args.sftp_replacement_file, "rb")
+        self.replacement = open(self.args.sftp_replacement_file, "rb")  # pylint: disable=consider-using-with
         self.file_uploaded = False
         self.data_handled = False
 
