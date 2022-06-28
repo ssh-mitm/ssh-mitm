@@ -5,7 +5,6 @@ from colored.colored import stylize, fg, attr  # type: ignore
 import paramiko
 
 import pkg_resources
-from typeguard import typechecked
 import yaml
 from paramiko.message import Message
 from paramiko import Transport, common
@@ -23,7 +22,6 @@ if TYPE_CHECKING:
 
 class KeyNegotiationData:
 
-    @typechecked
     def __init__(self, session: 'sshmitm.session.Session', m: Message) -> None:
         self.session = session
         self.client_version = session.transport.remote_version
@@ -41,7 +39,6 @@ class KeyNegotiationData:
         self.first_kex_packet_follows = m.get_boolean()
         m.rewind()
 
-    @typechecked
     def show_debug_info(self) -> None:
         logging.info(
             "%s connected client version: %s",
@@ -61,7 +58,6 @@ class KeyNegotiationData:
         logging.debug("languages_server_to_client: %s", self.languages_server_to_client)
         logging.debug("first_kex_packet_follows: %s", self.first_kex_packet_follows)
 
-    @typechecked
     def audit_client(self) -> None:
         client = None
         vulnerability_list = None

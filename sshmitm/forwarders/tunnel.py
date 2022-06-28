@@ -12,7 +12,6 @@ from typing import (
 
 import paramiko
 from enhancements.modules import BaseModule
-from typeguard import typechecked
 
 import sshmitm
 
@@ -22,7 +21,6 @@ if TYPE_CHECKING:
 
 class TunnelForwarder(threading.Thread):
 
-    @typechecked
     def __init__(
         self, local_ch: Optional[Union[socket, paramiko.Channel]], remote_ch: Optional[Union[socket, paramiko.Channel]]
     ) -> None:
@@ -31,7 +29,6 @@ class TunnelForwarder(threading.Thread):
         self.remote_ch = remote_ch
         self.start()
 
-    @typechecked
     def run(self) -> None:
         try:
             self.tunnel()
@@ -39,7 +36,6 @@ class TunnelForwarder(threading.Thread):
             logging.exception("Tunnel exception with peer")
         self.close()
 
-    @typechecked
     def tunnel(self, chunk_size: int = 1024) -> None:
         """
         Connect two SSH channels (socket like objects).
@@ -68,19 +64,15 @@ class TunnelForwarder(threading.Thread):
                     break
                 self.local_ch.send(data)
 
-    @typechecked
     def handle_data(self, data: bytes) -> bytes:
         return data
 
-    @typechecked
     def handle_data_from_remote(self, data: bytes) -> bytes:
         return self.handle_data(data)
 
-    @typechecked
     def handle_data_from_local(self, data: bytes) -> bytes:
         return self.handle_data(data)
 
-    @typechecked
     def close(self) -> None:
         """
         Comparable with Channels and Sockets
@@ -90,7 +82,6 @@ class TunnelForwarder(threading.Thread):
         if self.remote_ch:
             self.close_channel(self.remote_ch)
 
-    @typechecked
     def close_channel(self, channel: Union[socket, paramiko.Channel]) -> None:
         if not isinstance(channel, paramiko.Channel):  # socket.socket
             channel.close()
@@ -114,7 +105,6 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         - implements Proxyjump (-W / -J) feature, client side port forwarding (-L)
     """
 
-    @typechecked
     def __init__(
         self,
         session: 'sshmitm.session.Session',
@@ -132,7 +122,6 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, self.origin)
         super(LocalPortForwardingForwarder, self).__init__(None, remote_ch)
 
-    @typechecked
     def run(self) -> None:
         # Channel setup in thread start - so that transport thread can return to the session thread
         # Wait for master channel establishment
@@ -148,7 +137,6 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         super(LocalPortForwardingForwarder, self).run()
 
     @classmethod
-    @typechecked
     def setup(cls, session: 'sshmitm.session.Session') -> None:
         pass
 
@@ -164,7 +152,6 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     -> that is why it does not inherit the TunnelForwarder; it just uses it in the handler
     """
 
-    @typechecked
     def __init__(
         self,
         session: 'sshmitm.session.Session',
@@ -176,15 +163,12 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
         self.server_interface = server_interface
         self.destination = destination
 
-    @typechecked
     def join(self) -> None:
         pass
 
-    @typechecked
     def close(self) -> None:
         pass
 
-    @typechecked
     def handler(
         self, channel: paramiko.Channel, origin: Optional[Tuple[str, int]], destination: Optional[Tuple[str, int]]
     ) -> None:

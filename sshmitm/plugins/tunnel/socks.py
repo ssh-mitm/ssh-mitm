@@ -9,7 +9,6 @@ from typing import (
 )
 
 import paramiko
-from typeguard import typechecked
 from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
@@ -26,14 +25,12 @@ class ClientTunnelHandler:
     Similar to the RemotePortForwardingForwarder
     """
 
-    @typechecked
     def __init__(
         self,
         session: 'sshmitm.session.Session'
     ) -> None:
         self.session = session
 
-    @typechecked
     def handle_request(
         self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
     ) -> None:
@@ -69,7 +66,6 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
     """
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -84,7 +80,6 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
     # Setup should occur after master channel establishment
 
     @classmethod
-    @typechecked
     def setup(cls, session: 'sshmitm.session.Session') -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval

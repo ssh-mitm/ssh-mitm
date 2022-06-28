@@ -11,7 +11,6 @@ from typing import (
 )
 
 import paramiko
-from typeguard import typechecked
 from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
@@ -27,15 +26,12 @@ class Socks4Error(Exception):
 class Socks4Types(Enum):
     """Basisklasse für Socks4 Daten"""
 
-    @typechecked
     def __str__(self) -> Text:
         return str(self.value)
 
-    @typechecked
     def __add__(self, other: bytes) -> bytes:
         return cast(bytes, self.value) + other
 
-    @typechecked
     def __radd__(self, other: bytes) -> bytes:
         return other + cast(bytes, self.value)
 
@@ -57,7 +53,6 @@ class Socks4Server():
     """
     SOCKSVERSION = b"\x04"
 
-    @typechecked
     def __init__(self, listenaddress: Tuple[Text, int]) -> None:
         self.listenaddress = listenaddress
 
@@ -72,7 +67,6 @@ class Socks4Server():
         server_port = self.listenaddress[1]
         return bytes([int(server_port / 256)]) + bytes([int(server_port % 256)])
 
-    @typechecked
     def _get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[Text, int]]:
         """Ermittelt das Ziel aus der Socks Anfrage"""
         # get socks command
@@ -114,7 +108,6 @@ class Socks4Server():
         )
         return address
 
-    @typechecked
     def get_address(
         self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False
     ) -> Optional[Tuple[Text, int]]:
@@ -133,14 +126,12 @@ class ClientTunnelHandler:
     Similar to the RemotePortForwardingForwarder
     """
 
-    @typechecked
     def __init__(
         self,
         session: 'sshmitm.session.Session'
     ) -> None:
         self.session = session
 
-    @typechecked
     def handle_request(
         self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
     ) -> None:
@@ -167,7 +158,6 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
     """
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -182,7 +172,6 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
     # Setup should occur after master channel establishment
 
     @classmethod
-    @typechecked
     def setup(cls, session: 'sshmitm.session.Session') -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval

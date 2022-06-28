@@ -43,13 +43,11 @@ from typing import (
     overload
 )
 
-from typeguard import typechecked
 
 __author__ = "Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>"
 __license__ = "MIT"
 
 
-@typechecked
 def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
     """Return True if kernel allows creating a socket which is able to
     listen for both IPv4 and IPv6 connections.
@@ -68,7 +66,6 @@ def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
         return False
 
 
-@typechecked
 def create_server_sock(
     address: Tuple[Text, int],
     family: Optional[socket.AddressFamily] = None,
@@ -175,7 +172,6 @@ class MultipleSocketsListener:
     socket in the list.
     """
 
-    @typechecked
     def __init__(
         self,
         addresses: List[Tuple[Text, int]],
@@ -212,15 +208,12 @@ class MultipleSocketsListener:
             if not completed:
                 self.close()
 
-    @typechecked
     def __enter__(self) -> 'MultipleSocketsListener':
         return self
 
-    @typechecked
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.close()
 
-    @typechecked
     def __repr__(self) -> Text:
         addrs = []
         for sock in self._socks:
@@ -230,7 +223,6 @@ class MultipleSocketsListener:
                 addrs.append(())
         return '<%s (%r) at %#x>' % (self.__class__.__name__, addrs, id(self))
 
-    @typechecked
     def _poll(self) -> Optional[Any]:
         """Return the first readable fd."""
         fds_select: Optional[Tuple[List[Any], List[Any], List[Any]]] = None
@@ -255,13 +247,11 @@ class MultipleSocketsListener:
             pass  # non-blocking socket
         return None
 
-    @typechecked
     def _multicall(self, name: Text, *args: Any, **kwargs: Any) -> None:
         for sock in self._socks:
             meth = getattr(sock, name)
             meth(*args, **kwargs)
 
-    @typechecked
     def accept(self) -> Tuple[socket.socket, Any]:
         """Accept a connection from the first socket which is ready
         to do so.
@@ -270,14 +260,12 @@ class MultipleSocketsListener:
         sock = self._sockmap[fd] if fd else self._socks[0]
         return sock.accept()
 
-    @typechecked
     def filenos(self) -> List[int]:
         """Return sockets' file descriptors as a list of integers.
         This is useful with select().
         """
         return list(self._sockmap.keys())
 
-    @typechecked
     def getsockname(self) -> Any:
         """Return first registered socket's own address."""
         return self._socks[0].getsockname()
@@ -288,22 +276,18 @@ class MultipleSocketsListener:
     @overload
     def getsockopt(self, level: int, optname: int, buflen: int) -> bytes: ...
 
-    @typechecked
     def getsockopt(self, level: int, optname: int, buflen: int = 0) -> Union[int, bytes]:
         """Return first registered socket's options."""
         return self._socks[0].getsockopt(level, optname, buflen)
 
-    @typechecked
     def gettimeout(self) -> Optional[float]:
         """Return first registered socket's timeout."""
         return self._socks[0].gettimeout()
 
-    @typechecked
     def settimeout(self, timeout: float) -> None:
         """Set timeout for all registered sockets."""
         self._multicall('settimeout', timeout)
 
-    @typechecked
     def setblocking(self, flag: bool) -> None:
         """Set non/blocking mode for all registered sockets."""
         self._multicall('setblocking', flag)
@@ -313,17 +297,14 @@ class MultipleSocketsListener:
     @overload
     def setsockopt(self, level: int, optname: int, value: None, optlen: int) -> None: ...
 
-    @typechecked
     def setsockopt(self, level: int, optname: int, value: Optional[Union[int, bytes]], optlen: Optional[int]) -> None:
         """Set option for all registered sockets."""
         self._multicall('setsockopt', level, optname, value, optlen)
 
-    @typechecked
     def shutdown(self, how: int) -> None:
         """Shut down all registered sockets."""
         self._multicall('shutdown', how)
 
-    @typechecked
     def close(self) -> None:
         """Close all registered sockets."""
         self._multicall('close')

@@ -17,7 +17,6 @@ from packaging import version
 
 from paramiko import ECDSAKey
 from rich._emoji_codes import EMOJI
-from typeguard import typechecked
 
 import sshmitm
 from sshmitm.plugins.session import cve202014002, cve202014145
@@ -28,7 +27,6 @@ if TYPE_CHECKING:
 
 class Vulnerability:
 
-    @typechecked
     def __init__(self, cve: Text, indocs: bool = False) -> None:
         self.cve: Text = cve
         self.indocs: bool = indocs
@@ -47,7 +45,6 @@ class SSHClientAudit():
     SERVER_HOST_KEY_ALGORITHMS: Optional[List[List[Text]]] = None
     SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = None
 
-    @typechecked
     def __init__(
         self,
         key_negotiation_data: 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData',
@@ -57,11 +54,9 @@ class SSHClientAudit():
         self.vulnerability_list: Dict[Text, Dict[Text, Any]] = vulnerability_list
 
     @classmethod
-    @typechecked
     def client_name(cls) -> Text:
         return cls.CLIENT_NAME or cls.__name__.lower()
 
-    @typechecked
     def get_version_string(self) -> Optional[Text]:
         if not self.VERSION_REGEX:
             return None
@@ -70,7 +65,6 @@ class SSHClientAudit():
             return version_sring[1]
         return None
 
-    @typechecked
     def between_versions(self, version_min: Union[None, int, float, Text], version_max: Union[None, int, float, Text]) -> bool:
         try:
             version_string = self.get_version_string()
@@ -86,7 +80,6 @@ class SSHClientAudit():
         except ValueError:
             return False
 
-    @typechecked
     def check_cves(self, vulnerabilities: Dict[Text, List[Text]]) -> None:
         cvelist: Dict[Text, Vulnerability] = {}
         for cve, description in self.vulnerability_list.items():
@@ -114,7 +107,6 @@ class SSHClientAudit():
                     ])
             )
 
-    @typechecked
     def check_key_negotiation(self) -> Dict[Text, List[Text]]:
         messages: List[Text] = []
         if not self.SERVER_HOST_KEY_ALGORITHMS or not self.SERVER_HOST_KEY_ALGORITHMS_CVE:
@@ -138,7 +130,6 @@ class SSHClientAudit():
         )
         return {self.SERVER_HOST_KEY_ALGORITHMS_CVE: messages}
 
-    @typechecked
     def run_audit(self) -> None:
         vulnerabilities: DefaultDict[Text, List[Text]] = defaultdict(list)
         for k, v in self.check_key_negotiation().items():
@@ -156,7 +147,6 @@ class SSHClientAudit():
                 ])
             )
 
-    @typechecked
     def audit(self) -> List[Text]:
         return []
 
@@ -213,6 +203,5 @@ class RubyNetSsh(SSHClientAudit):
     ]
 
     @classmethod
-    @typechecked
     def client_name(cls) -> Text:
         return 'ruby/net::ssh'

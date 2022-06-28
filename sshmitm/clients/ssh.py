@@ -8,7 +8,6 @@ from typing import (
 )
 from paramiko.pkey import PKey
 
-from typeguard import typechecked
 import paramiko
 import paramiko.hostkeys
 from sshpubkeys import SSHKey  # type: ignore
@@ -36,7 +35,6 @@ class SSHClient(BaseSSHClient):
 
     CIPHERS = None
 
-    @typechecked
     def __init__(
         self,
         host: Text,

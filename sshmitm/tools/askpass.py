@@ -3,7 +3,6 @@ import logging
 import sys
 from typing import NoReturn, Optional, Text
 
-from typeguard import typechecked
 try:
     import tkinter
     from tkinter.simpledialog import askstring
@@ -13,7 +12,6 @@ except ImportError:
     tkinter_imported = False
 
 
-@typechecked
 def ask_pass(primary_message: Text, secondary_message: Optional[Text] = None) -> Optional[Text]:
     dialog_text = primary_message
     if secondary_message:
@@ -24,7 +22,6 @@ def ask_pass(primary_message: Text, secondary_message: Optional[Text] = None) ->
     return None
 
 
-@typechecked
 def confirm(primary_message: Text, secondary_message: Optional[Text] = None) -> bool:
     dialog_text = primary_message
     if secondary_message:

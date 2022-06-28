@@ -8,11 +8,9 @@ import paramiko
 
 from enhancements.modules import ModuleParser
 from paramiko.pkey import PublicBlob
-from typeguard import typechecked
 from sshmitm.authentication import probe_host, Authenticator
 
 
-@typechecked
 def check_publickey(args: argparse.Namespace) -> bool:
     with open(args.public_key, 'rt') as key_handle:
         key = key_handle.read()
@@ -33,7 +31,6 @@ def check_publickey(args: argparse.Namespace) -> bool:
     return False
 
 
-@typechecked
 def check_privatekey(args: argparse.Namespace) -> bool:
     ssh = paramiko.SSHClient()
 
@@ -57,7 +54,6 @@ def check_privatekey(args: argparse.Namespace) -> bool:
     return True
 
 
-@typechecked
 def init_audit_parser(parser: ModuleParser) -> None:
     subparsers = parser.add_subparsers(title='Available commands', dest="audit_subparser_name", metavar='audit-command')
     subparsers.required = True

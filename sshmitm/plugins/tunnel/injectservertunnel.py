@@ -3,7 +3,6 @@ from socket import socket
 from typing import Optional, Tuple, Text, Union
 
 import paramiko
-from typeguard import typechecked
 from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
@@ -20,7 +19,6 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
     """
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -30,7 +28,6 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
             help='local address/interface where injector sessions are served'
         )
 
-    @typechecked
     def __init__(
         self,
         session: 'sshmitm.session.Session',
@@ -53,7 +50,6 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
         )
         self.tcpserver.start()
 
-    @typechecked
     def handle_request(
         self, listenaddr: Tuple[Text, int], client: Union[socket, paramiko.Channel], addr: Tuple[Text, int]
     ) -> None:

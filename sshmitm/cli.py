@@ -10,7 +10,6 @@ from paramiko import Transport
 
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
-from typeguard import typechecked
 
 from sshmitm.workarounds import dropbear
 from sshmitm.__version__ import version as ssh_mitm_version
@@ -20,7 +19,6 @@ from sshmitm.audit.cli import init_audit_parser, run_audit
 
 class SubCommand():
 
-    @typechecked
     def __init__(
         self,
         run_func: Callable[[Namespace], None],
@@ -32,7 +30,6 @@ class SubCommand():
         self.parser_func = parser_func
 
 
-@typechecked
 def run() -> None:
 
     available_subcommands = {

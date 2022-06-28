@@ -10,7 +10,6 @@ import paramiko
 
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF
 from paramiko.message import Message
-from typeguard import typechecked
 
 import sshmitm
 from sshmitm.forwarders.base import BaseForwarder
@@ -18,15 +17,12 @@ from sshmitm.forwarders.base import BaseForwarder
 
 class SCPBaseForwarder(BaseForwarder):
 
-    @typechecked
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         return traffic
 
-    @typechecked
     def handle_error(self, traffic: bytes) -> bytes:
         return traffic
 
-    @typechecked
     def forward(self) -> None:
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
@@ -104,7 +100,6 @@ class SCPBaseForwarder(BaseForwarder):
             logging.exception('error processing scp command')
             raise
 
-    @typechecked
     def sendall(self, channel: paramiko.Channel, data: bytes, sendfunc: Callable[[bytes], int]) -> int:
         if not data:
             return 0
@@ -119,11 +114,9 @@ class SCPBaseForwarder(BaseForwarder):
             sent += newsent
         return sent
 
-    @typechecked
     def close_session(self, channel: paramiko.Channel) -> None:
         self.close_session_with_status(channel=channel, status=None)
 
-    @typechecked
     def close_session_with_status(self, channel: paramiko.Channel, status: Optional[int]) -> None:
         # pylint: disable=protected-access
         if channel.closed:
@@ -160,7 +153,6 @@ class SCPForwarder(SCPBaseForwarder):
     """forwards a file from or to the remote server
     """
 
-    @typechecked
     def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__(session)
 
@@ -175,7 +167,6 @@ class SCPForwarder(SCPBaseForwarder):
 
         self.got_c_command = False
 
-    @typechecked
     def handle_command(self, traffic: bytes) -> bytes:
         self.got_c_command = False
         command = traffic.decode('utf-8')
@@ -203,15 +194,12 @@ class SCPForwarder(SCPBaseForwarder):
         self.await_response = True
         return traffic
 
-    @typechecked
     def process_data(self, traffic: bytes) -> bytes:
         return traffic
 
-    @typechecked
     def process_response(self, traffic: bytes) -> bytes:
         return traffic
 
-    @typechecked
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         if not self.session.scp_command.startswith(b'scp'):
             return traffic

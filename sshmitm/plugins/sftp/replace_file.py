@@ -8,7 +8,6 @@ from typing import (
 )
 
 from paramiko import SFTPAttributes
-from typeguard import typechecked
 from sshmitm.exceptions import MissingClient
 
 from sshmitm.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
@@ -21,7 +20,6 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
     class SFTPInterface(SFTPProxyServerInterface):
 
-        @typechecked
         def lstat(self, path: Text) -> Union[SFTPAttributes, int]:
             self.session.sftp_client_ready.wait()
             args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
@@ -34,12 +32,10 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             stat_remote.st_size = stat_replace.st_size
             return stat_remote
 
-        @typechecked
         def stat(self, path: Text) -> Union[SFTPAttributes, int]:
             return self.lstat(path)
 
     @classmethod
-    @typechecked
     def get_interface(cls) -> Optional[Type[BaseSFTPServerInterface]]:
         return cls.SFTPInterface
 
@@ -53,7 +49,6 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             help='file that is used for replacement'
         )
 
-    @typechecked
     def __init__(self, sftp: SFTPBaseHandle, filename: Text) -> None:
         super().__init__(sftp, filename)
         self.args.sftp_replacement_file = os.path.expanduser(self.args.sftp_replacement_file)
@@ -66,7 +61,6 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
     def close(self) -> None:
         self.replacement.close()
 
-    @typechecked
     def handle_data(self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None) -> bytes:
         self.data_handled = True
         if self.file_uploaded:

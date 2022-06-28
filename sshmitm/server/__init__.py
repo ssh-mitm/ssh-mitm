@@ -22,7 +22,6 @@ from colored import stylize, attr, fg  # type: ignore
 from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key, PKey
 from paramiko.ssh_exception import SSHException
 from sshpubkeys import SSHKey  # type: ignore
-from typeguard import typechecked
 
 from sshmitm.multisocket import (
     create_server_sock,
@@ -43,7 +42,6 @@ from sshmitm.exceptions import KeyGenerationError
 class SSHProxyServer:
     SELECT_TIMEOUT = 0.5
 
-    @typechecked
     def __init__(
         self,
         listen_port: int,
@@ -94,7 +92,6 @@ class SSHProxyServer:
         except KeyGenerationError:
             sys.exit(1)
 
-    @typechecked
     def generate_host_key(self) -> None:
         key_algorithm_class: Optional[Type[PKey]] = None
         key_algorithm_bits = None
@@ -152,7 +149,6 @@ class SSHProxyServer:
             stylize(ssh_pub_key.hash_sha256(),fg('light_blue') + attr('bold'))
         )
 
-    @typechecked
     def _key_from_filepath(self, filename: Text, klass: Type[PKey], password: Optional[Text]) -> PKey:
         """
         Attempt to derive a `.PKey` from given string path ``filename``:
@@ -187,7 +183,6 @@ class SSHProxyServer:
         return self._hostkey
 
     @staticmethod
-    @typechecked
     def _clean_environment() -> None:
         for env_var in [
             'SSH_ASKPASS',
@@ -203,7 +198,6 @@ class SSHProxyServer:
             except KeyError:
                 pass
 
-    @typechecked
     def start(self) -> None:
         self._clean_environment()
         sock: Optional[Union[socket, MultipleSocketsListener]] = None
@@ -276,7 +270,6 @@ class SSHProxyServer:
             for thread in self._threads[:]:
                 thread.join()
 
-    @typechecked
     def create_session(
         self,
         client: socket,

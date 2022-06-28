@@ -1,6 +1,5 @@
 import logging
 import os
-from typeguard import typechecked
 
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
@@ -21,7 +20,6 @@ class SCPInjectFile(SCPForwarder):
     '''
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
             cls.__name__,

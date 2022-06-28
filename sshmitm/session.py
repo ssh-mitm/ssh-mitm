@@ -25,7 +25,6 @@ import paramiko
 from paramiko.pkey import PKey
 from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
-from typeguard import typechecked
 
 import sshmitm
 from sshmitm.forwarders.agent import AgentProxy
@@ -45,7 +44,6 @@ class Session(BaseSession):
     CIPHERS = None
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -54,7 +52,6 @@ class Session(BaseSession):
             help='directory to store ssh session logs'
         )
 
-    @typechecked
     def __init__(
         self,
         proxyserver: 'sshmitm.server.SSHProxyServer',
@@ -111,7 +108,6 @@ class Session(BaseSession):
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
 
-    @typechecked
     def get_session_log_dir(self) -> Optional[str]:
         if not self.args.session_log_dir:
             return None
@@ -154,7 +150,6 @@ class Session(BaseSession):
 
         return self._transport
 
-    @typechecked
     def _start_channels(self) -> bool:
         # create client or master channel
         if self.ssh_client:
@@ -195,7 +190,6 @@ class Session(BaseSession):
         self.sftp_client_ready.set()
         return True
 
-    @typechecked
     def start(self) -> bool:
         event = threading.Event()
         self.transport.start_server(
@@ -232,7 +226,6 @@ class Session(BaseSession):
         )
         return True
 
-    @typechecked
     def close(self) -> None:
         if self.agent:
             self.agent.close()
@@ -265,11 +258,9 @@ class Session(BaseSession):
         )
         self.closed = True
 
-    @typechecked
     def __str__(self) -> str:
         return self.name
 
-    @typechecked
     def __enter__(self) -> 'Session':
         return self
 
