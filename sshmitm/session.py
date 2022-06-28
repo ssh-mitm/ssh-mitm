@@ -19,10 +19,10 @@ from typing import (
 from enhancements.modules import BaseModule
 
 from colored.colored import stylize, fg, attr  # type: ignore
-import paramiko
-from paramiko.pkey import PKey
 from rich._emoji_codes import EMOJI
 
+import paramiko
+from paramiko.pkey import PKey
 from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 from typeguard import typechecked

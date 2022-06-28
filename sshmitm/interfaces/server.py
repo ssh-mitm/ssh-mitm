@@ -1,4 +1,3 @@
-from typing import ByteString, Optional
 import logging
 import os
 from typing import (
@@ -7,7 +6,9 @@ from typing import (
     Text,
     Union,
     Tuple,
-    Type
+    Type,
+    ByteString,
+    Optional
 )
 
 import paramiko
