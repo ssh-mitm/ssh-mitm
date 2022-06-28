@@ -218,5 +218,5 @@ def transport_run(self):  # type: ignore
         # wake up during interpreter shutdown. Or rather -- raise
         # everything *if* sys.modules (used as a convenient sentinel)
         # appears to still exist.
-        if self.sys.modules is not None:  # type: ignore
+        if self.sys.modules is not None:
             raise

@@ -22,7 +22,7 @@ class SubCommand():
 
     @typechecked
     def __init__(
-        self, 
+        self,
         run_func: Callable[[Namespace], None],
         parser_func: Callable[[ModuleParser], None],
         help: Text
@@ -83,7 +83,7 @@ def run() -> None:
         help='disable paramiko workarounds'
     )
 
-    
+
     subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
     subparsers.required = True
     for sc_name, sc_item in available_subcommands.items():
@@ -119,7 +119,7 @@ def run() -> None:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     try:
-        available_subcommands[args.subparser_name].run_func(args=args)
+        available_subcommands[args.subparser_name].run_func(args)
     except (AttributeError, KeyError):
         logging.exception("can not run subcommand - invalid subcommand name")
         sys.exit(1)
@@ -127,12 +127,6 @@ def run() -> None:
 
 def main() -> None:
     run()
-
-def audit() -> None:
-    run('audit')
-
-def server() -> None:
-    run('server')
 
 
 if __name__ == '__main__':

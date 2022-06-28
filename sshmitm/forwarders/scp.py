@@ -96,7 +96,7 @@ class SCPBaseForwarder(BaseForwarder):
                     message = Message()
                     message.add_byte(cMSG_CHANNEL_EOF)
                     message.add_int(self.session.scp_channel.remote_chanid)
-                    self.session.scp_channel.transport._send_user_message(message)  # type: ignore
+                    self.session.scp_channel.transport._send_user_message(message)
                     self.session.scp_channel.send_exit_status(0)
                     self.close_session(self.session.scp_channel)
                     break
@@ -137,7 +137,7 @@ class SCPBaseForwarder(BaseForwarder):
             message.add_int(channel.remote_chanid)
             channel.transport._send_user_message(message)  # type: ignore
 
-            if status is not None:
+            if status is not None and self.session.scp_channel is not None:
                 self.session.scp_channel.send_exit_status(status)
 
             message = Message()
@@ -146,7 +146,7 @@ class SCPBaseForwarder(BaseForwarder):
             message.add_string('eow@openssh.com')
             message.add_boolean(False)
             channel.transport._send_user_message(message)  # type: ignore
-        
+
         message = Message()
         message.add_byte(cMSG_CHANNEL_CLOSE)
         message.add_int(channel.remote_chanid)
