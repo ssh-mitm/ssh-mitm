@@ -1,8 +1,6 @@
 import re
 import logging
 from collections import defaultdict
-from colored.colored import attr, stylize, fg  # type: ignore
-from packaging import version
 from typing import (
     TYPE_CHECKING,
     Text,
@@ -13,6 +11,9 @@ from typing import (
     Any,
     DefaultDict
 )
+
+from colored.colored import attr, stylize, fg  # type: ignore
+from packaging import version
 
 from paramiko import ECDSAKey
 from rich._emoji_codes import EMOJI

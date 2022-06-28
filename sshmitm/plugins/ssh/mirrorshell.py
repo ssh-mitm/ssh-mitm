@@ -6,13 +6,13 @@ import socket
 import time
 import os
 import tempfile
-import pytz
-
 from typing import (
     Text,
     Optional,
     IO
 )
+
+import pytz
 
 from colored.colored import stylize, attr, fg  # type: ignore
 from rich._emoji_codes import EMOJI

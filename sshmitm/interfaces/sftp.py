@@ -1,5 +1,4 @@
 import logging
-import paramiko
 import os
 from typing import (
     cast,
@@ -8,6 +7,7 @@ from typing import (
     Union
 )
 
+import paramiko
 from enhancements.modules import BaseModule
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle

@@ -2,8 +2,9 @@
 # More Information: https://rushter.com/blog/public-ssh-keys/
 
 import argparse
-import paramiko
 import sys
+
+import paramiko
 
 from enhancements.modules import ModuleParser
 from paramiko.pkey import PublicBlob

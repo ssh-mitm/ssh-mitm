@@ -1,10 +1,10 @@
 import time
+import os
 from typing import Tuple, List, Union
 
 from paramiko.agent import Agent, AgentKey, AgentServerProxy, AgentClientProxy
 from paramiko.transport import Transport
 from paramiko.channel import Channel
-import os
 
 from typeguard import typechecked
 
