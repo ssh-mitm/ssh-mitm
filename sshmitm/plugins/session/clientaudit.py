@@ -205,3 +205,7 @@ class RubyNetSsh(SSHClientAudit):
     @classmethod
     def client_name(cls) -> Text:
         return 'ruby/net::ssh'
+
+
+class Paramiko(SSHClientAudit):
+    VERSION_REGEX = r'ssh-2.0-paramiko_([0-9]+\.[0-9]+\.[0-9]+)'
