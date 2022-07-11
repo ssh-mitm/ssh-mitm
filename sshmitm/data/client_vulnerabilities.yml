@@ -168,3 +168,25 @@ paramiko:
   CVE-2018-7750:
     version_max: 2.4.1
     cvss: 7.5
+winscp:
+  CVE-2021-3331:
+    version_max: 6.17.10
+    cvss: 10.0
+  CVE-2020-28864:
+    version_max: 5.17.8
+    cvss: 7.5
+  CVE-2018-20684:
+    version_max: 5.14
+    cvss: 6.4
+  CVE-2014-2735:
+    version_max: 5.5.3
+    cvss: 5.8
+  CVE-2013-4852:
+    version_max: 5.1.4
+    cvss: 6.8
+  CVE-2007-4909:
+    version_max: 4.0.4
+    cvss: 9.3
+  CVE-2006-3015:
+    version_max: 3.8.1
+    cvss: 7.1
