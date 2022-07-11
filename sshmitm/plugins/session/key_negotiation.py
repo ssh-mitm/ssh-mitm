@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Set, Type
 
 from colored.colored import stylize, fg, attr  # type: ignore
 import paramiko
@@ -59,6 +59,11 @@ class KeyNegotiationData:
         logging.debug("first_kex_packet_follows: %s", self.first_kex_packet_follows)
 
     def audit_client(self) -> None:
+        def all_subclasses(cls: Type['SSHClientAudit']) -> Set[Type['SSHClientAudit']]:
+            return set(cls.__subclasses__()).union(
+                [s for c in cls.__subclasses__() for s in all_subclasses(c)]
+            )
+
         client = None
         vulnerability_list = None
         client_version = self.client_version.lower()
@@ -69,7 +74,7 @@ class KeyNegotiationData:
         except Exception:
             logging.exception("Error loading vulnerability database")
             return
-        for client_cls in SSHClientAudit.__subclasses__():
+        for client_cls in all_subclasses(SSHClientAudit):
             if client_cls.client_name() in client_version:
                 client = client_cls(self, vulnerability_list.get(client_cls.client_name(), {}))
 
