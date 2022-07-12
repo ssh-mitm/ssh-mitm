@@ -190,3 +190,8 @@ winscp:
   CVE-2006-3015:
     version_max: 3.8.1
     cvss: 7.1
+motty_release:
+  CVE-2020-14145:
+    version_max:
+    cvss: 4.3
+    docs: true

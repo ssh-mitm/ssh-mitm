@@ -209,3 +209,17 @@ class RubyNetSsh(SSHClientAudit):
 
 class Paramiko(SSHClientAudit):
     VERSION_REGEX = r'ssh-2.0-paramiko_([0-9]+\.[0-9]+\.[0-9]+)'
+
+
+class MoTTY_Release(SSHClientAudit):
+    """MobaXterm ssh client implementation"""
+    VERSION_REGEX = r'ssh-2.0-motty_release_(0\.[0-9]+)'
+    SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = 'CVE-2020-14145'
+    SERVER_HOST_KEY_ALGORITHMS = [
+        [
+            'ssh-ed448', 'ssh-ed25519',
+            'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384',
+            'ecdsa-sha2-nistp521', 'rsa-sha2-512',
+            'rsa-sha2-256', 'ssh-rsa', 'ssh-dss'
+        ]
+    ]
