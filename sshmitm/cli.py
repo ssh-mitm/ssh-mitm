@@ -11,7 +11,7 @@ from paramiko import Transport
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 
-from sshmitm.workarounds import dropbear
+from sshmitm.workarounds import transport
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.server.cli import init_server_parser, run_server
 from sshmitm.audit.cli import init_audit_parser, run_audit
@@ -104,7 +104,8 @@ def run() -> None:
     ))
 
     if not args.disable_workarounds:
-        Transport.run = dropbear.transport_run  # type: ignore
+        Transport.run = transport.transport_run  # type: ignore
+        Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore
 
     if args.paramiko_log_level == 'debug':
         logging.getLogger("paramiko").setLevel(logging.DEBUG)

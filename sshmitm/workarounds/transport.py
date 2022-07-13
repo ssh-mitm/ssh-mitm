@@ -24,6 +24,7 @@ Core protocol implementation
 from __future__ import print_function
 import socket
 import sys
+import os
 
 from paramiko import util
 from paramiko.common import (
@@ -38,6 +39,7 @@ from paramiko.common import (
     cMSG_UNIMPLEMENTED,
     MSG_UNIMPLEMENTED,
     MSG_NAMES,
+    cMSG_KEXINIT
 )
 from paramiko.message import Message
 from paramiko.packet import NeedRekeyException
@@ -48,6 +50,74 @@ from paramiko.ssh_exception import (
 
 
 from paramiko.transport import _active_threads  # type: ignore
+
+def transport_send_kex_init(self):  # type: ignore
+    """
+    announce to the other side that we'd like to negotiate keys, and what
+    kind of key negotiation we support.
+    """
+    self.clear_to_send_lock.acquire()
+    try:
+        self.clear_to_send.clear()
+    finally:
+        self.clear_to_send_lock.release()
+    self.gss_kex_used = False
+    self.in_kex = True
+    kex_algos = list(self.preferred_kex)
+    if self.server_mode:
+        mp_required_prefix = "diffie-hellman-group-exchange-sha"
+        kex_mp = [k for k in kex_algos if k.startswith(mp_required_prefix)]
+        if (self._modulus_pack is None) and (len(kex_mp) > 0):
+            # can't do group-exchange if we don't have a pack of potential
+            # primes
+            kex_algos = [
+                k
+                for k in self.get_security_options().kex
+                if not k.startswith(mp_required_prefix)
+            ]
+            self.get_security_options().kex = kex_algos
+        available_server_keys = list(
+            filter(
+                list(self.server_key_dict.keys()).__contains__,
+                # TODO: ensure tests will catch if somebody streamlines
+                # this by mistake - case is the admittedly silly one where
+                # the only calls to add_server_key() contain keys which
+                # were filtered out of the below via disabled_algorithms.
+                # If this is streamlined, we would then be allowing the
+                # disabled algorithm(s) for hostkey use
+                # TODO: honestly this prob just wants to get thrown out
+                # when we make kex configuration more straightforward
+                self.preferred_keys,
+            )
+        )
+    else:
+        available_server_keys = self.preferred_keys
+        # Signal support for MSG_EXT_INFO.
+        # NOTE: doing this here handily means we don't even consider this
+        # value when agreeing on real kex algo to use (which is a common
+        # pitfall when adding this apparently).
+        if "ext-info-c" not in kex_algos:
+            kex_algos.append("ext-info-c")
+
+    m = Message()
+    m.add_byte(cMSG_KEXINIT)
+    m.add_bytes(os.urandom(16))
+    m.add_list(kex_algos)
+    m.add_list(available_server_keys)
+    m.add_list(self.preferred_ciphers)
+    m.add_list(self.preferred_ciphers)
+    m.add_list(self.preferred_macs)
+    m.add_list(self.preferred_macs)
+    m.add_list(self.preferred_compression)
+    m.add_list(self.preferred_compression)
+    m.add_string(bytes())
+    m.add_string(bytes())
+    m.add_boolean(False)
+    m.add_int(0)
+    # save a copy for later (needed to compute a hash)
+    self.local_kex_init = self._latest_kex_init = m.asbytes()
+    self._send_message(m)
+
 
 
 def transport_run(self):  # type: ignore
