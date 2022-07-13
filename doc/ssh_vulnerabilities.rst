@@ -5,6 +5,7 @@ SSH Vulnerabilities
 .. toctree::
    :maxdepth: 1
    :caption: OpenSSH
+   :hidden:
 
    CVE-2021-41617
    CVE-2016-20012
@@ -25,6 +26,7 @@ SSH Vulnerabilities
 .. toctree::
    :maxdepth: 1
    :caption: PuTTY
+   :hidden:
 
    CVE-2021-36367
    CVE-2021-33500
@@ -34,6 +36,7 @@ SSH Vulnerabilities
 .. toctree::
    :maxdepth: 1
    :caption: Dropbear
+   :hidden:
 
    CVE-2021-36369
    CVE-2018-15599
@@ -42,6 +45,7 @@ SSH Vulnerabilities
 .. toctree::
    :maxdepth: 1
    :caption: WinSCP
+   :hidden:
 
    CVE-2019-6111
    CVE-2019-6110
@@ -52,5 +56,6 @@ SSH Vulnerabilities
 .. toctree::
    :maxdepth: 1
    :caption: Midnight Commander
+   :hidden:
 
    CVE-2021-36370
