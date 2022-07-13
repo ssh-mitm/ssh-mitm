@@ -45,7 +45,8 @@ html_theme_options = {
     },
     "github_url": "https://github.com/ssh-mitm/ssh-mitm",
     "navbar_end": ["search-field.html", "navbar-icon-links.html"],
-    "page_sidebar_items": ["page-toc", "edit-this-page", "sidebar-ethical-ads"],
+
+    "page_sidebar_items": ["page-toc", "edit-this-page"],
     "footer_items": ["copyright"],
     "show_prev_next": False,
     "navigation_with_keys": False,
