@@ -7,11 +7,10 @@ The user guide describes how to use SSH-MITM during security audits.
    :maxdepth: 1
    :hidden:
 
-   quickstart
+   installation
    fingerprint
    authentication
    sshagent
    trivialauth
-   filetransfer
    portforwarding
    advanced-usage

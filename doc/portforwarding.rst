@@ -1,6 +1,10 @@
 Port Forwarding
 ===============
 
+.. warning::
+
+  This page is outdated and needs to be updated to version 2 of SSH-MITM.
+
 Plain SSH (without SSH-MITM) allows remote and local port forwarding over an existing connection.
 Port forwarding allows a host to access remote network resources while masquerading as the session endpoint.
 

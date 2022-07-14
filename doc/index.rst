@@ -1,93 +1,138 @@
 SSH-MITM - ssh audits made simple
 =================================
 
-.. image:: https://pepy.tech/badge/ssh-mitm
-   :target: https://pepy.tech/project/ssh-mitm
-.. image:: https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm/badge
-   :target: https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm
-.. image:: https://img.shields.io/github/license/ssh-mitm/ssh-mitm?color=%23434ee6
-   :target: https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE
-
 ssh man-in-the-middle (ssh-mitm) server for security audits supporting **publickey authentication**, **session hijacking** and **file manipulation**
 
+.. image:: _static/ssh-mitm-password.png
+
+Introduction
+------------
+
+**SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
+
+Password and publickey authentication are supported and SSH-MITM is able to detect, if a user is able to
+login with publickey authentication on the remote server. This allows SSH-MITM to accept the same key as
+the destination server. If publickey authentication is not possible, the authentication will fall
+back to password-authentication.
+
+When publickey authentication is possible, a forwarded agent is needed to login to the remote server.
+In cases, when no agent was forwarded, SSH-MITM can rediredt the session to a honeypot.
+
+Installation
+------------
+
+This part of the documentation covers the installation of SSH-MITM.
+The first step to using any software package is getting it properly installed.
+
+To install SSH-MITM, simply run one of those commands in your terminal of choice:
+
+.. tab-set::
+
+    .. tab-item:: Snap
+
+        .. code-block:: bash
+
+            $ sudo snap install ssh-mitm
+
+    .. tab-item:: PIP
+
+        .. code-block:: bash
+
+            $ python -m pip install ssh-mitm
+
+    .. tab-item:: AppImage
+
+        .. code-block:: bash
+
+            $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+            $ chmod +x ssh-mitm*.AppImage
+
+    .. tab-item:: Nixpkgs
+
+        For Nix or NixOS is a `package <https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm>`_
+        available. The lastest release is usually present in the ``unstable`` channel.
+
+        .. code-block:: bash
+
+            $ nix-env -iA nixos.ssh-mitm
+
+Start SSH-MITM
+--------------
+
+Let’s get started with some simple examples.
+
+Starting an intercepting mitm-ssh server with password authentication is very simple.
+
+All you have to do is run this command in your terminal of choice.
+
+.. code-block:: bash
+
+    $ ssh-mitm server --remote-host 192.168.0.x
+
+Now let's try to connect to the ssh-mitm server.
+The ssh-mitm server is listening on port 10022.
+
+.. code-block:: bash
+
+    $ ssh -p 10022 testuser@proxyserver
+
+You will see the credentials in the log output.
 
 
-How Does It Work?
------------------
+.. code-block:: none
 
-**You're only a few simple steps away**
-
-
-.. grid:: 3
-
-   .. grid-item-card::  :fas:`download;sd-text-primary` Install SSH-MITM
-
-      .. raw:: html
-
-            <p>
-                  To install SSH-MITM, simply run this command in your terminal of choice:<br/>
-                  <code>
-                     $ sudo snap install ssh-mitm
-                  </code>
-            </p>
-            <p><a href="https://snapcraft.io/ssh-mitm">
-                  <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
-            </a></p>
+    INFO     Remote authentication succeeded
+        Remote Address: 192.168.0.x:22
+        Username: testuser
+        Password: secret
+        Agent: no agent
 
 
-   .. grid-item-card:: :fas:`network-wired;sd-text-warning` Connect to the network
+Hijack a SSH terminal session
+-----------------------------
 
-      .. raw:: html
+Getting the plain text credentials is only half the fun.
+SSH-MITM proxy server is able to hijack a ssh session and allows you to interact with it.
 
-         <p>
-               To start an intercepting mitm-ssh server on Port 10022,
-               all you have to do is run a single command.<br/>
-               <code>$ ssh-mitm server --remote-host 192.168.0.x:PORT</code>
-         </p>
-         <p>
-               Now let's try to connect to the ssh-mitm server.<br/>
-               <code>$ ssh -p 10022 user@proxyserver</code>
-         </p>
+Let's get started with hijacking the session.
 
-   .. grid-item-card:: :fas:`check;sd-text-success` Hijack SSH sessions
+When a client connects, the ssh-mitm proxy server starts a new server, where you can connect with another ssh client.
+This server is used to hijack the session.
 
-        .. raw:: html
+.. code-block:: none
 
-            <p>
-                  When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.<br/>
-                  <code>[INFO]  created injector shell on port 34463</code>
-            </p><p>
-                  To hijack this session, you can use your favorite ssh client.
-                  All you have to do is to connect to the hijacked session.<br/>
-                  <code>$ ssh -p 34463 127.0.0.1</code>
-            </p>
+    INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
 
+To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
 
-Frequently Asked Questions
---------------------------
+.. code-block:: bash
 
-.. dropdown:: Why have you created SSH-MITM?
+    $ ssh -p 34463 127.0.0.1
 
-   During an audit, you will find various protocols.
-   For example there are many tools, which allows to intercept HTTP and even HTTPS traffic.
-   There are some tools, which allows to intercept ssh sessions, but none of them allows to manipulate the data.
-   This is the reason, why SSH-MITM was created.
+After you are connected, your session will only be updated with new responses, but you are able to execute commands.
 
-.. dropdown:: Does this tool break the encryption of SSH and does this mean that SSH is insecure?
+Try to execute somme commands in the hijacked session or in the original session.
 
-    **SSH is secure!**
-
-    SSH-MITM does not break the encryption. SSH is secure, as long, as you verify the fingerprint.
-    SSH-MITM is only able to intercept a session if the fingerprint was accepted.
-    If a user does not accept the fingerprint, SSH-MITM is not able to read or modify any data,
-    except the plain text parts of the protocol.
+The output will be shown in both sessions.
 
 
-.. dropdown:: Requesting extra features
+Publickey authentication
+------------------------
 
-   * Open an issue ticket or vote for an existing one. This probably won't have very much effect; if a huge number of people vote for something then it may make a difference, but one or two extra votes for a particular feature are unlikely to change our priority list immediately. Offering a new and compelling justification might help.
-   * Offer us money if we do the work sooner rather than later. This sometimes works, but not always. The SSH-MITM team all have full-time jobs and we're doing all of this work in our free time; we may sometimes be willing to give up some more of our free time in exchange for some money, but if you try to bribe us for a big feature it's entirely possible that we simply won't have the time to spare - whether you pay us or not. (Also, we don't accept bribes to add bad features, because our desire to provide high-quality software to the users comes first.)
-   * Offer to help us write the code. This is probably the only way to get a feature implemented quickly, if it's a big one that we don't have time to do ourselves.
+SSH-MITM is able to verify, if a user is able to login with publickey authentication on the remote server.
+If publickey authentication is not possible, SSH-MITM falls back to password authentication.
+This step does not require a forwarded agent.
+
+For a full login on the remote server agent forwarding is still required. When no agent was forwarded,
+SSH-MITM can redirect the connection to a honeypot.
+
+.. code-block:: bash
+
+    $ ssh-mitm server --enable-auth-fallback \
+      --fallback-host HONEYPOT \
+      --fallback-username HONEYPOT_USER \
+      --fallback-password HONEYPOT_PASSWORD
+
 
 .. toctree::
    :maxdepth: 1
@@ -95,3 +140,4 @@ Frequently Asked Questions
 
    user_guide
    ssh_vulnerabilities
+   support

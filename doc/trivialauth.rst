@@ -114,28 +114,16 @@ If that happens, the MitM server can‘t authenticate itself to the remote serve
 Phishing FIDO2 tokens / SSH-Askpass
 """""""""""""""""""""""""""""""""""
 
-**SSH-MITM >= 1.0.0**
+Since version 1.0.0 SSH-MITM has full support for phishing FIDO2 tokens.
 
-.. code-block:: bash
+.. code-block:: none
 
     ssh-mitm server --remote-host TARGET --enable-trivial-auth
 
 
-**SSH-MITM < 1.0.0**
-
-SSH-MITM < 1.0.0 does not fully support "trivial authentication", but you can configure the authentication process, to test "trivial authentication".
-
-.. code-block:: bash
-
-    ssh-mitm --remote-host TARGET \
-        --disallow-publickey-auth \
-        --enable-keyboard-interactive-auth \
-        --disable-keyboard-interactive-prompts
-
-
 Connect the client to SSH-MITM with agent forwarding:
 
-.. code-block:: bash
+.. code-block:: none
 
     ssh -A -p 10022 localhost
 
@@ -146,14 +134,14 @@ Verification without bypass
 To verify the default behavior for a login using publickey authentication on the MitM server and on the remote server,
 SSH-MITM can be started with following parameters:
 
-.. code-block:: bash
+.. code-block:: none
 
     ssh-mitm server --remote-host TARGET
 
 
 Connect the client to SSH-MITM with agent forwarding:
 
-.. code-block:: bash
+.. code-block:: none
 
     ssh -A -p 10022 localhost
 
