@@ -27,7 +27,8 @@ extensions = [
     'sphinx.ext.autosectionlabel',
     'sphinx_sitemap',
     'sphinx_reredirects',
-    'sphinx_design'
+    'sphinx_design',
+    'notfound.extension',
 ]
 
 html_theme = "pydata_sphinx_theme"
