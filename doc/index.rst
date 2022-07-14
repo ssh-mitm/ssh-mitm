@@ -138,6 +138,7 @@ SSH-MITM can redirect the connection to a honeypot.
    :maxdepth: 1
    :hidden:
 
+   get_started/index
    user_guide
    ssh_vulnerabilities
    support
