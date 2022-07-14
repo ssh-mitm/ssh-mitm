@@ -25,7 +25,7 @@ Following these steps helps you diagnose if the problem is likely from SSH-MITM 
 
          pip install ssh-mitm
 
-     3. Start JupyterLab::
+     3. Start SSH-MITM::
 
          ssh-mitm server
 

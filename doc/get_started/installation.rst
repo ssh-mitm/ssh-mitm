@@ -56,7 +56,7 @@ and ``Pipfile.lock`` live (i.e., where you ran the above commands):
     pipenv shell
     ssh-mitm server
 
-Alternatively, you can run ``jupyter lab`` inside the virtualenv with
+Alternatively, you can run ``ssh-mitm server`` inside the virtualenv with
 
 .. code:: bash
 
