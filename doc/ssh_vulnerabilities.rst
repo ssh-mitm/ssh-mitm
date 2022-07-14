@@ -3,7 +3,7 @@ SSH Vulnerabilities
 
 .. toctree::
    :maxdepth: 1
-   :caption: Midnight Commander
+   :caption: SSH Vulnerabilities
    :hidden:
 
    vuln_openssh
