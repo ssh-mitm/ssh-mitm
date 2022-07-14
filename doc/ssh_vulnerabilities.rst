@@ -1,9 +1,8 @@
-SSH Vulnerabilities
-===================
+Vulnerabilities
+===============
 
 .. toctree::
    :maxdepth: 1
-   :caption: SSH Vulnerabilities
    :hidden:
 
    vuln_openssh

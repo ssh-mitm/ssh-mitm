@@ -1,8 +1,8 @@
-Support
-=======
+Frequently Asked Questions (FAQ)
+================================
 
-Frequently Asked Questions
---------------------------
+Below are some frequently asked questions.
+Click on a question to be directed to relevant information in our documentation or our GitHub repo.
 
 .. dropdown:: Why have you created SSH-MITM?
 

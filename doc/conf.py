@@ -45,7 +45,8 @@ html_theme_options = {
         "text": "SSH-MITM",
     },
     "github_url": "https://github.com/ssh-mitm/ssh-mitm",
-    "navbar_end": ["search-field.html", "navbar-icon-links.html"],
+    "navbar_end": ["navbar-icon-links.html", "search-field.html"],
+    "navbar_align": "left",
 
     "page_sidebar_items": ["page-toc", "edit-this-page"],
     "footer_items": ["copyright"],
@@ -56,13 +57,7 @@ html_theme_options = {
             "name": "PyPI",
             "url": "https://pypi.org/project/ssh-mitm",
             "icon": "fab fa-python",
-        },
-        {
-            "name": "Twitter",
-            "url": "https://twitter.com/SshMitm",
-            "icon": "fab fa-twitter-square",
-            # The default for `type` is `fontawesome` so it is not actually required in any of the above examples as it is shown here
-        },
+        }
     ],
     "show_toc_level": 1,
     "use_edit_page_button": True,
