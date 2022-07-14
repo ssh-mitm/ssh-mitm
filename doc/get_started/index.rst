@@ -6,3 +6,4 @@ Get started
 
    installation
    issue
+   faq

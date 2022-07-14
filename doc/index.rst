@@ -141,4 +141,3 @@ SSH-MITM can redirect the connection to a honeypot.
    get_started/index
    user_guide
    ssh_vulnerabilities
-   support
