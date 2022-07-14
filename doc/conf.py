@@ -76,6 +76,7 @@ html_context = {
     "doc_path": "doc",
 }
 
+notfound_no_urls_prefix = True
 
 master_doc = 'index'
 html_permalinks = False
