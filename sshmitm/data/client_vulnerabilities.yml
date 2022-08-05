@@ -34,11 +34,7 @@ putty_release:
   CVE-2016-6167:
     version_min: 0.67
     version_max: 0.67
-    cvss: 4.4
-  CVE-2016-6167:
-    version_min: 0.51
-    version_max: 0.63
-    cvss: 2.1
+    cvss: 7.8
   CVE-2013-4852:
     version_max: 0.62
     cvss: 6.8
