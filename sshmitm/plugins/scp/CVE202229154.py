@@ -21,6 +21,8 @@ class CVE202229154(SCPForwarder):
         )
 
     def rewrite_scp_command(self, command: Text) -> Text:
+        if not command.startswith('rsync --server'):
+            return command
         new_command = f"{command}  {self.args.rsync_inject_file}"
         logging.info("replaced rsync command: %s", new_command)
         return new_command
