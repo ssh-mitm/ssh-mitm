@@ -6,49 +6,40 @@ import socket
 import time
 import os
 import tempfile
-import pytz
-
 from typing import (
-    TYPE_CHECKING,
     Text,
     Optional,
     IO
 )
 
+import pytz
+
 from colored.colored import stylize, attr, fg  # type: ignore
 from rich._emoji_codes import EMOJI
 import paramiko
-from typeguard import typechecked
 
 import sshmitm
 from sshmitm.forwarders.ssh import SSHForwarder
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class InjectServer(paramiko.ServerInterface):
 
-    @typechecked
     def __init__(self, server_channel: paramiko.channel.Channel) -> None:
         self.server_channel = server_channel
         self.injector_channel: Optional[paramiko.channel.Channel] = None
 
-    @typechecked
     def check_auth_none(self, username: Text) -> int:
         return paramiko.common.AUTH_SUCCESSFUL
 
-    @typechecked
     def check_channel_request(self, kind: Text, chanid: int) -> int:
         if kind == 'session':
             return paramiko.common.OPEN_SUCCEEDED
         return paramiko.common.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
 
-    @typechecked
     def check_channel_shell_request(self, channel: paramiko.channel.Channel) -> bool:
         self.injector_channel = channel
         return True
 
-    @typechecked
     def check_channel_pty_request(
         self,
         channel: paramiko.channel.Channel,
@@ -69,7 +60,6 @@ class SSHMirrorForwarder(SSHForwarder):
     HOST_KEY_LENGTH = 2048
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -89,7 +79,6 @@ class SSHMirrorForwarder(SSHForwarder):
             help='store ssh session in scriptreplay format'
         )
 
-    @typechecked
     def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__(session)
         if self.args.ssh_mirrorshell_key:
@@ -113,7 +102,6 @@ class SSHMirrorForwarder(SSHForwarder):
         self.conn_thread = threading.Thread(target=self.injector_connect)
         self.conn_thread.start()
 
-    @typechecked
     def _initFiles(self) -> None:
         if not self.args.store_ssh_session:
             return
@@ -129,15 +117,15 @@ class SSHMirrorForwarder(SSHForwarder):
             )
 
             os.makedirs(self.logdir, exist_ok=True)
-            timecomponent = str(time.time()).split('.')[0]
+            timecomponent = str(time.time()).split('.', maxsplit=1)[0]
 
-            self.fileIn = tempfile.NamedTemporaryFile(
+            self.fileIn = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_in_{timecomponent}_',
                 suffix='.log',
                 dir=self.logdir,
                 delete=False
             )
-            self.fileOut = tempfile.NamedTemporaryFile(
+            self.fileOut = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_out_{timecomponent}_',
                 suffix='.log',
                 dir=self.logdir,
@@ -151,7 +139,7 @@ class SSHMirrorForwarder(SSHForwarder):
                 ).encode()
             )
             self.fileOut.flush()
-            self.timeingfile = tempfile.NamedTemporaryFile(
+            self.timeingfile = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_time_{timecomponent}_',
                 suffix='.log',
                 dir=self.logdir,
@@ -160,7 +148,6 @@ class SSHMirrorForwarder(SSHForwarder):
         except Exception:
             logging.exception("Error file init")
 
-    @typechecked
     def write_timingfile(self, text: bytes) -> None:
         if self.timeingfile is None:
             return
@@ -172,11 +159,13 @@ class SSHMirrorForwarder(SSHForwarder):
         self.timeingfile.write(f"{diff.seconds}.{diff.microseconds} {len(text)}\n".encode())
         self.timeingfile.flush()
 
-    @typechecked
     def injector_connect(self) -> None:
         inject_host, inject_port = self.injector_sock.getsockname()
         logging.info(
-            f"{EMOJI['information']} created mirrorshell on port {inject_port}. connect with: {stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))}"
+            "%s created mirrorshell on port %s. connect with: %s",
+            EMOJI['information'],
+            inject_port,
+            stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))
         )
         try:
             while self.session.running:
@@ -215,7 +204,6 @@ class SSHMirrorForwarder(SSHForwarder):
             if self.channel is not None:
                 self.close_session(self.channel)
 
-    @typechecked
     def close_session(self, channel: paramiko.Channel) -> None:
         super().close_session(channel)
         self.injector_sock.close()
@@ -230,7 +218,6 @@ class SSHMirrorForwarder(SSHForwarder):
             if self.fileIn is not None:
                 self.fileIn.close()
 
-    @typechecked
     def forward_stdin(self) -> None:
         if self.session.ssh_channel is not None and self.session.ssh_channel.recv_ready():
             buf = self.session.ssh_channel.recv(self.BUF_LEN)
@@ -240,7 +227,6 @@ class SSHMirrorForwarder(SSHForwarder):
             buf = self.stdin(buf)
             self.server_channel.sendall(buf)
 
-    @typechecked
     def forward_stdout(self) -> None:
         if self.server_channel.recv_ready():
             buf = self.server_channel.recv(self.BUF_LEN)
@@ -254,7 +240,6 @@ class SSHMirrorForwarder(SSHForwarder):
             if self.inject_server is not None and self.inject_server.injector_channel is not None:
                 self.inject_server.injector_channel.sendall(buf)
 
-    @typechecked
     def forward_stderr(self) -> None:
         if self.server_channel.recv_stderr_ready():
             buf = self.server_channel.recv_stderr(self.BUF_LEN)

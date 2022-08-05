@@ -1,8 +1,6 @@
 import re
 import logging
 from collections import defaultdict
-from colored.colored import attr, stylize, fg  # type: ignore
-from packaging import version
 from typing import (
     TYPE_CHECKING,
     Text,
@@ -14,9 +12,11 @@ from typing import (
     DefaultDict
 )
 
+from colored.colored import attr, stylize, fg  # type: ignore
+from packaging import version
+
 from paramiko import ECDSAKey
 from rich._emoji_codes import EMOJI
-from typeguard import typechecked
 
 import sshmitm
 from sshmitm.plugins.session import cve202014002, cve202014145
@@ -27,7 +27,6 @@ if TYPE_CHECKING:
 
 class Vulnerability:
 
-    @typechecked
     def __init__(self, cve: Text, indocs: bool = False) -> None:
         self.cve: Text = cve
         self.indocs: bool = indocs
@@ -46,7 +45,6 @@ class SSHClientAudit():
     SERVER_HOST_KEY_ALGORITHMS: Optional[List[List[Text]]] = None
     SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = None
 
-    @typechecked
     def __init__(
         self,
         key_negotiation_data: 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData',
@@ -56,11 +54,9 @@ class SSHClientAudit():
         self.vulnerability_list: Dict[Text, Dict[Text, Any]] = vulnerability_list
 
     @classmethod
-    @typechecked
     def client_name(cls) -> Text:
         return cls.CLIENT_NAME or cls.__name__.lower()
 
-    @typechecked
     def get_version_string(self) -> Optional[Text]:
         if not self.VERSION_REGEX:
             return None
@@ -69,7 +65,6 @@ class SSHClientAudit():
             return version_sring[1]
         return None
 
-    @typechecked
     def between_versions(self, version_min: Union[None, int, float, Text], version_max: Union[None, int, float, Text]) -> bool:
         try:
             version_string = self.get_version_string()
@@ -85,7 +80,6 @@ class SSHClientAudit():
         except ValueError:
             return False
 
-    @typechecked
     def check_cves(self, vulnerabilities: Dict[Text, List[Text]]) -> None:
         cvelist: Dict[Text, Vulnerability] = {}
         for cve, description in self.vulnerability_list.items():
@@ -105,7 +99,7 @@ class SSHClientAudit():
                             cvemessagelist.append(f"    - {e1}")
                     else:
                         cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
-        if cvemessagelist or True:
+        if cvemessagelist:
             logging.info(
                     "".join([
                         stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
@@ -113,14 +107,13 @@ class SSHClientAudit():
                     ])
             )
 
-    @typechecked
     def check_key_negotiation(self) -> Dict[Text, List[Text]]:
         messages: List[Text] = []
         if not self.SERVER_HOST_KEY_ALGORITHMS or not self.SERVER_HOST_KEY_ALGORITHMS_CVE:
             return {}
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_name())
-        for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS:
+        for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS or []:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
                 messages.append(stylize(
                     "client connecting for the first time or using default key order!",
@@ -137,7 +130,6 @@ class SSHClientAudit():
         )
         return {self.SERVER_HOST_KEY_ALGORITHMS_CVE: messages}
 
-    @typechecked
     def run_audit(self) -> None:
         vulnerabilities: DefaultDict[Text, List[Text]] = defaultdict(list)
         for k, v in self.check_key_negotiation().items():
@@ -155,7 +147,6 @@ class SSHClientAudit():
                 ])
             )
 
-    @typechecked
     def audit(self) -> List[Text]:
         return []
 
@@ -212,6 +203,23 @@ class RubyNetSsh(SSHClientAudit):
     ]
 
     @classmethod
-    @typechecked
     def client_name(cls) -> Text:
         return 'ruby/net::ssh'
+
+
+class Paramiko(SSHClientAudit):
+    VERSION_REGEX = r'ssh-2.0-paramiko_([0-9]+\.[0-9]+\.[0-9]+)'
+
+
+class MoTTY_Release(SSHClientAudit):
+    """MobaXterm ssh client implementation"""
+    VERSION_REGEX = r'ssh-2.0-motty_release_(0\.[0-9]+)'
+    SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = 'CVE-2020-14145'
+    SERVER_HOST_KEY_ALGORITHMS = [
+        [
+            'ssh-ed448', 'ssh-ed25519',
+            'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384',
+            'ecdsa-sha2-nistp521', 'rsa-sha2-512',
+            'rsa-sha2-256', 'ssh-rsa', 'ssh-dss'
+        ]
+    ]

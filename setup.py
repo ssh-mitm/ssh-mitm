@@ -25,7 +25,10 @@ setup(
     version=get_version(),
     author='SSH-MITM Dev-Team',
     author_email='support@ssh-mitm.at',
-    description='ssh mitm server for security audits supporting publickey authentication, session hijacking and file manipulation',
+    description=(
+        'ssh mitm server for security audits '
+        'supporting publickey authentication, session hijacking and file manipulation'
+    ),
     long_description=long_description,
     long_description_content_type='text/markdown',
     keywords="ssh proxy mitm network security audit",
@@ -55,7 +58,7 @@ setup(
             'data/*.*',
         ]
     },
-    data_files = [
+    data_files=[
         ('man/man1', [
             'man1/ssh-mitm.1',
             'man1/ssh-mitm-audit.1',

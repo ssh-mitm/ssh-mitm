@@ -1,5 +1,4 @@
 import logging
-import paramiko
 import os
 from typing import (
     cast,
@@ -8,10 +7,10 @@ from typing import (
     Union
 )
 
+import paramiko
 from enhancements.modules import BaseModule
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
-from typeguard import typechecked
 
 from sshmitm.exceptions import MissingClient
 from sshmitm.interfaces.server import BaseServerInterface
@@ -19,7 +18,6 @@ from sshmitm.interfaces.server import BaseServerInterface
 
 class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):
 
-    @typechecked
     def __init__(self, serverinterface: BaseServerInterface) -> None:
         super().__init__(serverinterface)
         self.session = serverinterface.session
@@ -29,7 +27,6 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
     """sftp subsystem implementation for SSH-MITM
     """
 
-    @typechecked
     def chattr(self, path: Text, attr: SFTPAttributes) -> int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
@@ -48,21 +45,18 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             return paramiko.sftp.SFTP_FAILURE
         return self.session.sftp_client.chown(path, attr.st_uid, attr.st_gid)
 
-    @typechecked
     def list_folder(self, path: Text) -> Union[List[SFTPAttributes], int]:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.listdir_attr(path)
 
-    @typechecked
     def lstat(self, path: Text) -> Union[SFTPAttributes, int]:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.lstat(path)
 
-    @typechecked
     def mkdir(self, path: Text, attr: SFTPAttributes) -> int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
@@ -71,7 +65,6 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             return paramiko.sftp.SFTP_FAILURE
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
-    @typechecked
     def open(self, path: Text, flags: int, attr: SFTPAttributes) -> Union[SFTPHandle, int]:
         try:
             self.session.sftp_client_ready.wait()
@@ -127,44 +120,38 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             logging.exception("Error")
             return paramiko.sftp.SFTP_FAILURE
 
-    @typechecked
     def readlink(self, path: Text) -> Union[Text, int]:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.readlink(path)
 
-    @typechecked
     def remove(self, path: Text) -> int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.remove(path)
 
-    @typechecked
     def rename(self, oldpath: Text, newpath: Text) -> int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.rename(oldpath, newpath)
 
-    @typechecked
     def rmdir(self, path: Text) -> int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.rmdir(path)
 
-    @typechecked
     def stat(self, path: Text) -> Union[SFTPAttributes, int]:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
         return self.session.sftp_client.stat(path)
 
-    @typechecked
-    def symlink(self, targetPath: Text, path: Text) -> int:
+    def symlink(self, target_path: Text, path: Text) -> int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
-        return self.session.sftp_client.symlink(targetPath, path)
+        return self.session.sftp_client.symlink(target_path, path)

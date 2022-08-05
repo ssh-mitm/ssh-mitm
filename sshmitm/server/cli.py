@@ -3,7 +3,6 @@ import argparse
 from enhancements.modules import ModuleParser
 
 from rich import print as rich_print
-from typeguard import typechecked
 
 from paramiko import Transport
 
@@ -41,7 +40,6 @@ from sshmitm.plugins.tunnel.socks import SOCKSTunnelForwarder
 from sshmitm.session import BaseSession, Session
 
 
-@typechecked
 def init_server_parser(parser: ModuleParser) -> None:
     parser.add_argument(
         '--listen-port',
@@ -152,7 +150,6 @@ def init_server_parser(parser: ModuleParser) -> None:
     )
 
 
-@typechecked
 def run_server(args: argparse.Namespace) -> None:
     if args.request_agent_breakin:
         args.authenticator.REQUEST_AGENT_BREAKIN = True

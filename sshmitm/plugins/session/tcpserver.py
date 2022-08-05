@@ -12,15 +12,15 @@ from typing import (
 )
 import paramiko
 
-from typeguard import typechecked
-
 
 class TCPServerThread(threading.Thread):
 
-    @typechecked
     def __init__(
         self,
-        request_handler: Optional[Callable[[Tuple[Text, int], Union[socket.socket, paramiko.Channel], Tuple[Text, int]], None]] = None,
+        request_handler: Optional[Callable[
+            [Tuple[Text, int], Union[socket.socket, paramiko.Channel], Tuple[Text, int]],
+            None
+        ]] = None,
         network: Text = '127.0.0.1',
         port: int = 0,
         run_status: bool = True,
@@ -40,7 +40,6 @@ class TCPServerThread(threading.Thread):
         self.socket.listen(5)
         self.threads: List[threading.Thread] = []
 
-    @typechecked
     def run(self) -> None:
         while self.running:
             readable = select.select([self.socket], [], [], 0.5)[0]
@@ -50,12 +49,10 @@ class TCPServerThread(threading.Thread):
                 t.start()
             time.sleep(0.1)
 
-    @typechecked
     def handle_request(self, client: Union[socket.socket, paramiko.Channel], addr: Tuple[Text, int]) -> None:
         if self.handle_request_callback is not None:
             self.handle_request_callback((self.network, self.port), client, addr)
 
-    @typechecked
     def close(self) -> None:
         for t in self.threads:
             t.join()

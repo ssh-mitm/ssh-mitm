@@ -11,7 +11,9 @@ entry_points: Dict[str, List[str]] = {
         'debug_traffic = sshmitm.plugins.scp.debug_traffic:SCPDebugForwarder',
         'inject_file = sshmitm.plugins.scp.inject_file:SCPInjectFile',
         'replace_file = sshmitm.plugins.scp.replace_file:SCPReplaceFile',
-        'store_file = sshmitm.plugins.scp.store_file:SCPStorageForwarder'
+        'store_file = sshmitm.plugins.scp.store_file:SCPStorageForwarder',
+        'replace-command = sshmitm.plugins.scp.rewrite_command:SCPRewriteCommand',
+        'CVE-2022-29154 = sshmitm.plugins.scp.CVE202229154:CVE202229154'
     ],
     'BaseSFTPServerInterface': [
         'base = sshmitm.interfaces.sftp:SFTPProxyServerInterface'

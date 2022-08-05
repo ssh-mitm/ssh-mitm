@@ -3,7 +3,6 @@ from enum import Enum
 import socket
 import sys
 from typing import (
-    TYPE_CHECKING,
     cast,
     List,
     Optional,
@@ -13,15 +12,12 @@ from typing import (
 )
 
 import paramiko
-from typeguard import typechecked
 from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
 import sshmitm
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class Socks5Error(Exception):
@@ -31,15 +27,12 @@ class Socks5Error(Exception):
 class Socks5Types(Enum):
     """Basisklasse für Socks5 Daten"""
 
-    @typechecked
     def __str__(self) -> Text:
         return str(self.value)
 
-    @typechecked
     def __add__(self, other: bytes) -> bytes:
         return cast(bytes, self.value) + other
 
-    @typechecked
     def __radd__(self, other: bytes) -> bytes:
         return other + cast(bytes, self.value)
 
@@ -84,8 +77,9 @@ class Socks5Server():
     SOCKSVERSION = b"\x05"
     AUTH_PASSWORD_VERSION = b"\x01"
 
-    @typechecked
-    def __init__(self, listenaddress: Tuple[Text, int], username: Optional[Text] = None, password: Optional[Text] = None) -> None:
+    def __init__(
+        self, listenaddress: Tuple[Text, int], username: Optional[Text] = None, password: Optional[Text] = None
+    ) -> None:
         self.listenaddress = listenaddress
         self.username: Optional[Text] = username
         self.password: Optional[Text] = password
@@ -102,19 +96,17 @@ class Socks5Server():
         server_port = self.listenaddress[1]
         return bytes([int(server_port / 256)]) + bytes([int(server_port % 256)])
 
-    @typechecked
     def _get_auth_methods(self, clientsock: Union[socket.socket, paramiko.Channel]) -> List[Socks5AuthenticationType]:
         """Ermittelt die angebotenen Authentifizierungsmechanismen"""
         methods_count = int.from_bytes(clientsock.recv(1), byteorder='big')
         try:
             methods = [Socks5AuthenticationType(bytes([m])) for m in clientsock.recv(methods_count)]
-        except ValueError:
-            raise Socks5Error("Invalid methods")
+        except ValueError as exc:
+            raise Socks5Error("Invalid methods") from exc
         if len(methods) != methods_count:
             raise Socks5Error("Invalid number of methods")
         return methods
 
-    @typechecked
     def _authenticate(self, clientsock: Union[socket.socket, paramiko.Channel]) -> bool:
         """Authentifiziert den Benutzer"""
         authmethods = self._get_auth_methods(clientsock)
@@ -150,7 +142,6 @@ class Socks5Server():
         clientsock.sendall(Socks5Server.AUTH_PASSWORD_VERSION + b"\x01")
         return False
 
-    @typechecked
     def _get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[Text, int]]:
         """Ermittelt das Ziel aus der Socks Anfrage"""
         # check socks version
@@ -159,16 +150,16 @@ class Socks5Server():
         # get socks command
         try:
             command = Socks5Command(clientsock.recv(1))
-        except ValueError:
-            raise Socks5Error("Invalid Socks5 command")
+        except ValueError as exc:
+            raise Socks5Error("Invalid Socks5 command") from exc
 
         if clientsock.recv(1) != b"\x00":
             raise Socks5Error("Reserved byte must be 0x00")
 
         try:
             address_type: Socks5AddressType = Socks5AddressType(clientsock.recv(1))
-        except ValueError:
-            raise Socks5Error("Invalid Socks5 address type")
+        except ValueError as exc:
+            raise Socks5Error("Invalid Socks5 address type") from exc
 
         dst_addr_b: bytes
         dst_addr: Text
@@ -215,13 +206,13 @@ class Socks5Server():
         )
         return address
 
-    @typechecked
     def check_credentials(self, username: Text, password: Text) -> bool:
         """Prüft Benutzername und Passwort"""
         return username == self.username and password == self.password
 
-    @typechecked
-    def get_address(self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False) -> Optional[Tuple[Text, int]]:
+    def get_address(
+        self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False
+    ) -> Optional[Tuple[Text, int]]:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks5Server.SOCKSVERSION:
@@ -238,7 +229,6 @@ class ClientTunnelHandler:
     Similar to the RemotePortForwardingForwarder
     """
 
-    @typechecked
     def __init__(
         self,
         session: 'sshmitm.session.Session',
@@ -249,8 +239,9 @@ class ClientTunnelHandler:
         self.username = username
         self.password = password
 
-    @typechecked
-    def handle_request(self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]) -> None:
+    def handle_request(
+        self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
+    ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
         destination: Optional[Tuple[Text, int]] = None
@@ -274,7 +265,6 @@ class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
     """
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -300,7 +290,6 @@ class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
     # Setup should occur after master channel establishment
 
     @classmethod
-    @typechecked
     def setup(cls, session: 'sshmitm.session.Session') -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
@@ -312,8 +301,10 @@ class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
         )
         t.start()
         cls.tcpservers.append(t)
-        logging.info((
-            f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
-            " - "
-            f"created SOCKS5 proxy server on port {t.port}. connect with: {stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))}"
-        ))
+        logging.info(
+            "%s %s - created SOCKS5 proxy server on port %s. connect with: %s",
+            EMOJI['information'],
+            stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            t.port,
+            stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))
+        )

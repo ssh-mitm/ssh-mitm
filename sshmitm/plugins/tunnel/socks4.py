@@ -2,7 +2,6 @@ import logging
 from enum import Enum
 import socket
 from typing import (
-    TYPE_CHECKING,
     cast,
     List,
     Optional,
@@ -12,15 +11,12 @@ from typing import (
 )
 
 import paramiko
-from typeguard import typechecked
 from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
 import sshmitm
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class Socks4Error(Exception):
@@ -30,15 +26,12 @@ class Socks4Error(Exception):
 class Socks4Types(Enum):
     """Basisklasse für Socks4 Daten"""
 
-    @typechecked
     def __str__(self) -> Text:
         return str(self.value)
 
-    @typechecked
     def __add__(self, other: bytes) -> bytes:
         return cast(bytes, self.value) + other
 
-    @typechecked
     def __radd__(self, other: bytes) -> bytes:
         return other + cast(bytes, self.value)
 
@@ -60,7 +53,6 @@ class Socks4Server():
     """
     SOCKSVERSION = b"\x04"
 
-    @typechecked
     def __init__(self, listenaddress: Tuple[Text, int]) -> None:
         self.listenaddress = listenaddress
 
@@ -75,14 +67,13 @@ class Socks4Server():
         server_port = self.listenaddress[1]
         return bytes([int(server_port / 256)]) + bytes([int(server_port % 256)])
 
-    @typechecked
     def _get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[Text, int]]:
         """Ermittelt das Ziel aus der Socks Anfrage"""
         # get socks command
         try:
             command = Socks4Command(clientsock.recv(1))
-        except ValueError:
-            raise Socks4Error("Invalid Socks4 command")
+        except ValueError as exc:
+            raise Socks4Error("Invalid Socks4 command") from exc
 
         dst_addr_b: bytes
         dst_addr: Text
@@ -117,8 +108,9 @@ class Socks4Server():
         )
         return address
 
-    @typechecked
-    def get_address(self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False) -> Optional[Tuple[Text, int]]:
+    def get_address(
+        self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False
+    ) -> Optional[Tuple[Text, int]]:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks4Server.SOCKSVERSION:
@@ -134,15 +126,15 @@ class ClientTunnelHandler:
     Similar to the RemotePortForwardingForwarder
     """
 
-    @typechecked
     def __init__(
         self,
         session: 'sshmitm.session.Session'
     ) -> None:
         self.session = session
 
-    @typechecked
-    def handle_request(self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]) -> None:
+    def handle_request(
+        self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
+    ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
         destination: Optional[Tuple[Text, int]] = None
@@ -166,7 +158,6 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
     """
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -181,7 +172,6 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
     # Setup should occur after master channel establishment
 
     @classmethod
-    @typechecked
     def setup(cls, session: 'sshmitm.session.Session') -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
@@ -193,9 +183,11 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
         )
         t.start()
         cls.tcpservers.append(t)
-        logging.info((
-            f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
-            " - "
-            f"created Socks4 proxy server on port {stylize(t.port, fg('light_blue') + attr('bold'))}. "
-            f"connect with {stylize(f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}', fg('light_blue') + attr('bold'))}"
-        ))
+        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}'
+        logging.info(
+            "%s %s - created Socks4 proxy server on port %s. connect with %s",
+            EMOJI['information'],
+            stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            stylize(t.port, fg('light_blue') + attr('bold')),
+            stylize(socat_cmd, fg('light_blue') + attr('bold'))
+        )

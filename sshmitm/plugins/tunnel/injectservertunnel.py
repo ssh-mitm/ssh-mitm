@@ -1,19 +1,14 @@
 import logging
 from socket import socket
-from typing import TYPE_CHECKING, Optional, Tuple, Text, Union
+from typing import Optional, Tuple, Text, Union
 
 import paramiko
-from typeguard import typechecked
 from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
 import sshmitm
 from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
-
-if TYPE_CHECKING:
-    from sshmitm.interfaces.server import ServerInterface
-    from sshmitm.session import Session
 
 
 class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
@@ -24,7 +19,6 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
     """
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -34,7 +28,6 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
             help='local address/interface where injector sessions are served'
         )
 
-    @typechecked
     def __init__(
         self,
         session: 'sshmitm.session.Session',
@@ -47,15 +40,20 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
             network=self.args.server_tunnel_net,
             run_status=self.session.running
         )
-        logging.info((
-            f"{EMOJI['information']} {stylize(session.sessionid, fg('light_blue') + attr('bold'))}"
-            " - "
-            f"created server tunnel injector for host {self.tcpserver.network} on port {self.tcpserver.port} to destination {self.destination}"
-        ))
+        logging.info(
+            "%s %s - created server tunnel injector for host %s on port %s to destination %s",
+            EMOJI['information'],
+            stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            self.tcpserver.network,
+            self.tcpserver.port,
+            self.destination
+        )
         self.tcpserver.start()
 
-    @typechecked
-    def handle_request(self, listenaddr: Tuple[Text, int], client: Union[socket, paramiko.Channel], addr: Tuple[Text, int]) -> None:
+    def handle_request(
+        self, listenaddr: Tuple[Text, int], client: Union[socket, paramiko.Channel], addr: Tuple[Text, int]
+    ) -> None:
+        del listenaddr  # unused arguments
         try:
             f = TunnelForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", self.destination, addr),

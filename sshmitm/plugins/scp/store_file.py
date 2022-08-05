@@ -2,23 +2,18 @@ import logging
 import os
 import uuid
 from typing import (
-    TYPE_CHECKING,
     Optional,
     Text
 )
 
-from typeguard import typechecked
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class SCPStorageForwarder(SCPForwarder):
     """Stores transferred files to the file system
     """
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -28,7 +23,6 @@ class SCPStorageForwarder(SCPForwarder):
             help='store files from scp'
         )
 
-    @typechecked
     def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__(session)
         self.file_id: Optional[Text] = None
@@ -36,7 +30,6 @@ class SCPStorageForwarder(SCPForwarder):
         if self.session.session_log_dir:
             self.scp_storage_dir = os.path.join(self.session.session_log_dir, 'scp')
 
-    @typechecked
     def process_data(self, traffic: bytes) -> bytes:
         if not self.args.store_scp_files or not self.scp_storage_dir:
             return traffic

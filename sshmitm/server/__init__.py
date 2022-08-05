@@ -22,7 +22,6 @@ from colored import stylize, attr, fg  # type: ignore
 from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key, PKey
 from paramiko.ssh_exception import SSHException
 from sshpubkeys import SSHKey  # type: ignore
-from typeguard import typechecked
 
 from sshmitm.multisocket import (
     create_server_sock,
@@ -43,7 +42,6 @@ from sshmitm.exceptions import KeyGenerationError
 class SSHProxyServer:
     SELECT_TIMEOUT = 0.5
 
-    @typechecked
     def __init__(
         self,
         listen_port: int,
@@ -94,7 +92,6 @@ class SSHProxyServer:
         except KeyGenerationError:
             sys.exit(1)
 
-    @typechecked
     def generate_host_key(self) -> None:
         key_algorithm_class: Optional[Type[PKey]] = None
         key_algorithm_bits = None
@@ -119,7 +116,7 @@ class SSHProxyServer:
                 self._hostkey = key_algorithm_class.generate(bits=key_algorithm_bits)  # type: ignore
             except ValueError as err:
                 logging.error(str(err))
-                raise KeyGenerationError()
+                raise KeyGenerationError() from err
         else:
             if not os.path.isfile(self.key_file):
                 raise FileNotFoundError(f"host key '{self.key_file}' file does not exist")
@@ -138,13 +135,20 @@ class SSHProxyServer:
 
         ssh_pub_key = SSHKey(f"{self._hostkey.get_name()} {self._hostkey.get_base64()}")
         ssh_pub_key.parse()
-        logging.info((
-            f"{'loaded' if self.key_file else 'generated temporary'} {key_algorithm_class.__name__} key with {self._hostkey.get_bits()} bit length and fingerprints:\n"
-            f"    {stylize(ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold'))}\n"
-            f"    {stylize(ssh_pub_key.hash_sha256(),fg('light_blue') + attr('bold'))}"
-        ))
+        logging.info(
+            (
+                "%s %s key "
+                "with %s bit length and fingerprints:\n"
+                "    %s\n"
+                "    %s"
+            ),
+            'loaded' if self.key_file else 'generated temporary',
+            key_algorithm_class.__name__,
+            self._hostkey.get_bits(),
+            stylize(ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
+            stylize(ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold'))
+        )
 
-    @typechecked
     def _key_from_filepath(self, filename: Text, klass: Type[PKey], password: Optional[Text]) -> PKey:
         """
         Attempt to derive a `.PKey` from given string path ``filename``:
@@ -179,7 +183,6 @@ class SSHProxyServer:
         return self._hostkey
 
     @staticmethod
-    @typechecked
     def _clean_environment() -> None:
         for env_var in [
             'SSH_ASKPASS',
@@ -191,11 +194,10 @@ class SSHProxyServer:
         ]:
             try:
                 del os.environ[env_var]
-                logging.debug(f"removed {env_var} from environment")
+                logging.debug("removed %s from environment", env_var)
             except KeyError:
                 pass
 
-    @typechecked
     def start(self) -> None:
         self._clean_environment()
         sock: Optional[Union[socket, MultipleSocketsListener]] = None
@@ -216,19 +218,36 @@ class SSHProxyServer:
                 )
         except PermissionError as permerror:
             if self.transparent and permerror.errno == 1:
-                logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))} Note: running SSH-MITM in transparent mode requires root privileges")
+                logging.error(
+                    "%s Note: running SSH-MITM in transparent mode requires root privileges",
+                    stylize('error creating socket!', fg('red') + attr('bold'))
+                )
             elif permerror.errno == 13 and self.listen_port < 1024:
-                logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))} Note: running SSH-MITM on a port < 1024 requires root privileges")
+                logging.error(
+                    "%s Note: running SSH-MITM on a port < 1024 requires root privileges",
+                    stylize('error creating socket!', fg('red') + attr('bold'))
+                )
             else:
-                logging.exception(f"{stylize('error creating socket!', fg('red') + attr('bold'))} - unknown error")
+                logging.exception(
+                    "%s - unknown error",
+                    stylize('error creating socket!', fg('red') + attr('bold'))
+                )
             return
         if sock is None:
-            logging.error(f"{stylize('error creating socket!', fg('red') + attr('bold'))}")
+            logging.error(
+                "%s",
+                stylize('error creating socket!', fg('red') + attr('bold'))
+            )
             return
 
-        logging.info(f'listen interfaces {self.listen_address} and {self.listen_address_v6} on port {self.listen_port}')
+        logging.info(
+            'listen interfaces %s and %s on port %s',
+            self.listen_address,
+            self.listen_address_v6,
+            self.listen_port
+        )
         if self.transparent:
-            logging.info(f"{stylize('Transparent mode enabled!', attr('bold'))} (experimental)")
+            logging.info("%s (experimental)", stylize('Transparent mode enabled!', attr('bold')))
         self.running = True
         try:
             while self.running:
@@ -236,7 +255,7 @@ class SSHProxyServer:
                 if len(readable) == 1 and readable[0] is sock:
                     client, addr = sock.accept()
                     remoteaddr = client.getsockname()
-                    logging.debug(f'incoming connection from {str(addr)} to {remoteaddr}')
+                    logging.debug('incoming connection from %s to %s', str(addr), remoteaddr)
 
                     thread = threading.Thread(target=self.create_session, args=(client, addr, remoteaddr))
                     thread.start()
@@ -251,7 +270,6 @@ class SSHProxyServer:
             for thread in self._threads[:]:
                 thread.join()
 
-    @typechecked
     def create_session(
         self,
         client: socket,

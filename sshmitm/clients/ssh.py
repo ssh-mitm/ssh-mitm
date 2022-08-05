@@ -8,7 +8,6 @@ from typing import (
 )
 from paramiko.pkey import PKey
 
-from typeguard import typechecked
 import paramiko
 import paramiko.hostkeys
 from sshpubkeys import SSHKey  # type: ignore
@@ -19,7 +18,7 @@ from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.exceptions import NoAgentKeys, InvalidHostKey
 
 if TYPE_CHECKING:
-    from sshmitm.session import Session
+    from sshmitm.session import Session  # noqa
 
 
 class AuthenticationMethod(Enum):
@@ -36,7 +35,6 @@ class SSHClient(BaseSSHClient):
 
     CIPHERS = None
 
-    @typechecked
     def __init__(
         self,
         host: Text,
@@ -82,7 +80,10 @@ class SSHClient(BaseSSHClient):
                             self.transport.connect(username=self.user, password=self.password, pkey=k)
                             ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
                             ssh_pub_key.parse()
-                            logging.debug("ssh-mitm connected to remote host with username=%s, key=%s %s %sbits", self.user, k.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
+                            logging.debug(
+                                "ssh-mitm connected to remote host with username=%s, key=%s %s %sbits",
+                                self.user, k.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits
+                            )
                             break
                         except paramiko.AuthenticationException:
                             self.transport.close()
@@ -112,4 +113,5 @@ class SSHClient(BaseSSHClient):
 
     def check_host_key(self, hostname: Text, keytype: Text, key: PKey) -> bool:
         """checks the host key, default always returns true"""
+        del hostname, keytype, key  # unused arguments
         return True

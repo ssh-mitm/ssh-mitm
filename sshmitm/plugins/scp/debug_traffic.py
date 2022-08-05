@@ -1,6 +1,5 @@
 import binascii
 
-from typeguard import typechecked
 from sshmitm.forwarders.scp import SCPForwarder
 
 
@@ -9,7 +8,6 @@ class SCPDebugForwarder(SCPForwarder):
     """
 
     @staticmethod
-    @typechecked
     def print_hexdump(traffic: bytes, hexwidth: int = 16) -> None:
         result = []
 
@@ -24,7 +22,6 @@ class SCPDebugForwarder(SCPForwarder):
 
         print('\n'.join(result))
 
-    @typechecked
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         print("Client data:" if isclient else "Server data:")
         self.print_hexdump(traffic)

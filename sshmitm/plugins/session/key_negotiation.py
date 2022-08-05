@@ -1,13 +1,10 @@
 import logging
-from typing import (
-    TYPE_CHECKING
-)
+from typing import TYPE_CHECKING, Set, Type
 
 from colored.colored import stylize, fg, attr  # type: ignore
 import paramiko
 
 import pkg_resources
-from typeguard import typechecked
 import yaml
 from paramiko.message import Message
 from paramiko import Transport, common
@@ -20,12 +17,11 @@ import sshmitm
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
 
 if TYPE_CHECKING:
-    from sshmitm.session import Session
+    from sshmitm.session import Session  # noqa
 
 
 class KeyNegotiationData:
 
-    @typechecked
     def __init__(self, session: 'sshmitm.session.Session', m: Message) -> None:
         self.session = session
         self.client_version = session.transport.remote_version
@@ -43,10 +39,11 @@ class KeyNegotiationData:
         self.first_kex_packet_follows = m.get_boolean()
         m.rewind()
 
-    @typechecked
     def show_debug_info(self) -> None:
         logging.info(
-            f"{EMOJI['information']} connected client version: {stylize(self.client_version, fg('green') + attr('bold'))}"
+            "%s connected client version: %s",
+            EMOJI['information'],
+            stylize(self.client_version, fg('green') + attr('bold'))
         )
         logging.debug("cookie: %s", self.cookie.hex())
         logging.debug("kex_algorithms: %s", escape(str(self.kex_algorithms)))
@@ -61,19 +58,23 @@ class KeyNegotiationData:
         logging.debug("languages_server_to_client: %s", self.languages_server_to_client)
         logging.debug("first_kex_packet_follows: %s", self.first_kex_packet_follows)
 
-    @typechecked
     def audit_client(self) -> None:
+        def all_subclasses(cls: Type['SSHClientAudit']) -> Set[Type['SSHClientAudit']]:
+            return set(cls.__subclasses__()).union(
+                [s for c in cls.__subclasses__() for s in all_subclasses(c)]
+            )
+
         client = None
         vulnerability_list = None
         client_version = self.client_version.lower()
         try:
             vulndb = pkg_resources.resource_filename('sshmitm', 'data/client_vulnerabilities.yml')
-            with open(vulndb) as file:
+            with open(vulndb, 'r', encoding="utf-8") as file:
                 vulnerability_list = yaml.safe_load(file)
         except Exception:
             logging.exception("Error loading vulnerability database")
             return
-        for client_cls in SSHClientAudit.__subclasses__():
+        for client_cls in all_subclasses(SSHClientAudit):
             if client_cls.client_name() in client_version:
                 client = client_cls(self, vulnerability_list.get(client_cls.client_name(), {}))
 

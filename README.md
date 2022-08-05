@@ -3,8 +3,8 @@
 </div>
 <h1 align="center"> SSH-MITM - ssh audits made simple </h1>
 <p align="center">
-  <a href="https://www.ssh-mitm.at">
-    <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://www.ssh-mitm.at/img/ssh-mitm-password.png?20220211" >
+  <a href="https://docs.ssh-mitm.at">
+    <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://docs.ssh-mitm.at/_images/ssh-mitm-password.png" >
   </a>
   <p align="center">ssh man-in-the-middle (ssh-mitm) server for security audits supporting<br> <b>publickey authentication</b>, <b>session hijacking</b> and <b>file manipulation</b></p>
   <p align="center">
@@ -69,8 +69,6 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 ## Installation
 
-<img src="https://www.ssh-mitm.at/assets/images/streamline-free/monitor-loading-progress.svg" align="left" width="128">
-
 **SSH-MITM** can be installed as a [Ubuntu Snap](https://snapcraft.io/ssh-mitm), [PIP-Package](https://pypi.org/project/ssh-mitm/), [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest), [Nix](https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm) and even runs on **[Android devices](https://github.com/ssh-mitm/ssh-mitm/discussions/83#discussioncomment-1531873)**
 
     # install ssh-mitm as snap package
@@ -85,8 +83,6 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Quickstart
-
-<img src="https://www.ssh-mitm.at/assets/images/streamline-free/programmer-male.svg" align="left" width="128">
 
 To start SSH-MITM, all you have to do is run this command in your terminal of choice.
 
@@ -107,8 +103,6 @@ You will see the credentials in the log output.
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Session hijacking
-
-<img src="https://www.ssh-mitm.at/assets/images/streamline-free/monitor-window.svg" align="left" width="128">
 
 Getting the plain text credentials is only half the fun.
 When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
@@ -151,8 +145,6 @@ Using the trivial authentication attack does not break password authentication, 
 
 ## Contributing
 
-<img src="https://www.ssh-mitm.at/assets/images/streamline-free/write-paper-ink.svg" align="left" width="128">
-
 Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
 
 If you have a suggestion that would make this better, please fork the repo and create a pull request. You can also simply open an issue with the tag "enhancement".
@@ -169,8 +161,6 @@ See also the list of [contributors](https://github.com/ssh-mitm/ssh-mitm/graphs/
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Contact
-
-<img src="https://www.ssh-mitm.at/assets/images/streamline-free/customer-service-woman.svg" align="left" width="128">
 
 - E-Mail: support@ssh-mitm.at
 - [Issue Tracker](https://github.com/ssh-mitm/ssh-mitm/issues)

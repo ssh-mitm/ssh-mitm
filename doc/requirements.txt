@@ -1,2 +1,5 @@
+pydata-sphinx-theme
 sphinx-sitemap
 sphinx-reredirects
+sphinx-design
+sphinx-notfound-page

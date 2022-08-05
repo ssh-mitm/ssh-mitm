@@ -19,13 +19,12 @@ from typing import (
 from enhancements.modules import BaseModule
 
 from colored.colored import stylize, fg, attr  # type: ignore
-import paramiko
-from paramiko.pkey import PKey
 from rich._emoji_codes import EMOJI
 
+import paramiko
+from paramiko.pkey import PKey
 from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
-from typeguard import typechecked
 
 import sshmitm
 from sshmitm.forwarders.agent import AgentProxy
@@ -33,7 +32,7 @@ from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
 from sshmitm.plugins.session import key_negotiation
 
 if TYPE_CHECKING:
-    from sshmitm.server import SSHProxyServer
+    from sshmitm.server import SSHProxyServer  # noqa
 
 
 class BaseSession(BaseModule):
@@ -45,7 +44,6 @@ class Session(BaseSession):
     CIPHERS = None
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
@@ -54,7 +52,6 @@ class Session(BaseSession):
             help='directory to store ssh session logs'
         )
 
-    @typechecked
     def __init__(
         self,
         proxyserver: 'sshmitm.server.SSHProxyServer',
@@ -65,10 +62,14 @@ class Session(BaseSession):
     ) -> None:
         super().__init__()
         self.sessionid = uuid4()
-        logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} created")
+        logging.info(
+            "%s session %s created",
+            EMOJI['information'],
+            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+        )
         self._transport: Optional[paramiko.Transport] = None
 
-        self.channel = None
+        self.channel: Optional[paramiko.Channel] = None
 
         self.proxyserver: 'sshmitm.server.SSHProxyServer' = proxyserver
         self.client_socket = client_socket
@@ -81,14 +82,14 @@ class Session(BaseSession):
         self.ssh_requested: bool = False
         self.ssh_channel: Optional[paramiko.Channel] = None
         self.ssh_client: Optional[sshmitm.clients.ssh.SSHClient] = None
-        self.ssh_pty_kwargs = None
+        self.ssh_pty_kwargs: Optional[Dict[Text, Any]] = None
 
         self.scp_requested: bool = False
-        self.scp_channel = None
+        self.scp_channel: Optional[paramiko.Channel] = None
         self.scp_command: bytes = b''
 
         self.sftp_requested: bool = False
-        self.sftp_channel = None
+        self.sftp_channel: Optional[paramiko.Channel] = None
         self.sftp_client: Optional[sshmitm.clients.sftp.SFTPClient] = None
         self.sftp_client_ready = threading.Event()
 
@@ -107,7 +108,6 @@ class Session(BaseSession):
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
 
-    @typechecked
     def get_session_log_dir(self) -> Optional[str]:
         if not self.args.session_log_dir:
             return None
@@ -150,7 +150,6 @@ class Session(BaseSession):
 
         return self._transport
 
-    @typechecked
     def _start_channels(self) -> bool:
         # create client or master channel
         if self.ssh_client:
@@ -178,7 +177,7 @@ class Session(BaseSession):
                 logging.error("No username proviced during login!")
                 return False
             if self.authenticator.auth_fallback(self.username_provided) == paramiko.common.AUTH_SUCCESSFUL:
-                return True            
+                return True
             self.transport.close()
             return False
 
@@ -191,7 +190,6 @@ class Session(BaseSession):
         self.sftp_client_ready.set()
         return True
 
-    @typechecked
     def start(self) -> bool:
         event = threading.Event()
         self.transport.start_server(
@@ -221,10 +219,13 @@ class Session(BaseSession):
         if not self._start_channels():
             return False
 
-        logging.info(f"{EMOJI['information']} {stylize(self.sessionid, fg('light_blue') + attr('bold'))} - session started")
+        logging.info(
+            "%s %s - session started",
+            EMOJI['information'],
+            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+        )
         return True
 
-    @typechecked
     def close(self) -> None:
         if self.agent:
             self.agent.close()
@@ -246,15 +247,20 @@ class Session(BaseSession):
                 f.close()
                 f.join()
         self.transport.close()
-        logging.info(f"{EMOJI['information']} session {stylize(self.sessionid, fg('light_blue') + attr('bold'))} closed")
-        logging.debug(f"({self}) session closed")
+        logging.info(
+            "%s session %s closed",
+            EMOJI['information'],
+            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+        )
+        logging.debug(
+            "(%s) session closed",
+            self
+        )
         self.closed = True
 
-    @typechecked
     def __str__(self) -> str:
         return self.name
 
-    @typechecked
     def __enter__(self) -> 'Session':
         return self
 

@@ -5,7 +5,6 @@ from typing import (
 
 from enhancements.modules import BaseModule
 import paramiko
-from typeguard import typechecked
 
 import sshmitm
 from sshmitm.exceptions import MissingClient
@@ -21,7 +20,6 @@ class BaseForwarder(BaseModule):
     # Slow file transmission
     BUF_LEN = 65536*100
 
-    @typechecked
     def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__()
         if session.ssh_client is None or session.ssh_client.transport is None:
@@ -36,11 +34,9 @@ class BaseForwarder(BaseModule):
         for env_name, env_value in self.session.env_requests.items():
             self.server_channel.set_environment_variable(env_name, env_value)
 
-    @typechecked
     def forward(self) -> None:
         raise NotImplementedError
 
-    @typechecked
     def close_session(self, channel: paramiko.Channel) -> None:
         channel.lock.acquire()
         if not channel.closed:
@@ -49,7 +45,6 @@ class BaseForwarder(BaseModule):
         if channel.lock.locked():
             channel.lock.release()
 
-    @typechecked
     def _closed(self, channel: paramiko.Channel) -> bool:
         # return channel.closed or channel.eof_received or channel.eof_sent or not channel.active
         return channel.closed or not channel.active

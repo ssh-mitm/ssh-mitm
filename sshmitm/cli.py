@@ -2,7 +2,7 @@ from argparse import Namespace
 import logging
 import sys
 import os
-from typing import Optional, Text, cast, Callable
+from typing import Text, Callable
 
 from enhancements.modules import ModuleParser
 
@@ -10,9 +10,8 @@ from paramiko import Transport
 
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
-from typeguard import typechecked
 
-from sshmitm.workarounds import dropbear
+from sshmitm.workarounds import transport
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.server.cli import init_server_parser, run_server
 from sshmitm.audit.cli import init_audit_parser, run_audit
@@ -20,20 +19,17 @@ from sshmitm.audit.cli import init_audit_parser, run_audit
 
 class SubCommand():
 
-    @typechecked
     def __init__(
-        self, 
+        self,
         run_func: Callable[[Namespace], None],
         parser_func: Callable[[ModuleParser], None],
-        help: Text
+        help: Text  # pylint: disable=redefined-builtin
     ):
         self.run_func = run_func
         self.help = help
         self.parser_func = parser_func
 
 
-
-@typechecked
 def run() -> None:
 
     available_subcommands = {
@@ -83,7 +79,6 @@ def run() -> None:
         help='disable paramiko workarounds'
     )
 
-    
     subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
     subparsers.required = True
     for sc_name, sc_item in available_subcommands.items():
@@ -109,7 +104,8 @@ def run() -> None:
     ))
 
     if not args.disable_workarounds:
-        Transport.run = dropbear.transport_run  # type: ignore
+        Transport.run = transport.transport_run  # type: ignore
+        Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore
 
     if args.paramiko_log_level == 'debug':
         logging.getLogger("paramiko").setLevel(logging.DEBUG)
@@ -119,7 +115,7 @@ def run() -> None:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     try:
-        available_subcommands[args.subparser_name].run_func(args=args)
+        available_subcommands[args.subparser_name].run_func(args)
     except (AttributeError, KeyError):
         logging.exception("can not run subcommand - invalid subcommand name")
         sys.exit(1)
@@ -127,12 +123,6 @@ def run() -> None:
 
 def main() -> None:
     run()
-
-def audit() -> None:
-    run('audit')
-
-def server() -> None:
-    run('server')
 
 
 if __name__ == '__main__':

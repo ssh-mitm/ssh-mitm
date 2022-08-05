@@ -1,14 +1,14 @@
-from typing import ByteString, Optional
 import logging
 import os
 from typing import (
-    TYPE_CHECKING,
     Any,
     List,
     Text,
     Union,
     Tuple,
-    Type
+    Type,
+    ByteString,
+    Optional
 )
 
 import paramiko
@@ -16,19 +16,14 @@ from paramiko.pkey import PKey
 from sshpubkeys import SSHKey  # type: ignore
 
 from enhancements.modules import BaseModule
-from typeguard import typechecked
 import sshmitm
 from sshmitm.authentication import RemoteCredentials
 from sshmitm.clients.sftp import SFTPClient
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder, RemotePortForwardingForwarder
 
-if TYPE_CHECKING:
-    from sshmitm.session import Session
-
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
 
-    @typechecked
     def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__()
         self.session: 'sshmitm.session.Session' = session
@@ -41,7 +36,6 @@ class ServerInterface(BaseServerInterface):
     """
 
     @classmethod
-    @typechecked
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
             cls.__name__,
@@ -113,7 +107,6 @@ class ServerInterface(BaseServerInterface):
             help='extra authentication mehtod names'
         )
 
-    @typechecked
     def check_channel_exec_request(self, channel: paramiko.Channel, command: bytes) -> bool:
         logging.debug("check_channel_exec_request: channel=%s, command=%s", channel, command.decode('utf8'))
         if self.args.disable_scp:
@@ -136,13 +129,11 @@ class ServerInterface(BaseServerInterface):
         logging.warning('ssh command not allowed!')
         return False
 
-    @typechecked
     def check_channel_forward_agent_request(self, channel: paramiko.Channel) -> bool:
         logging.debug("check_channel_forward_agent_request: channel=%s", channel)
         self.session.agent_requested.set()
         return True
 
-    @typechecked
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
         logging.debug("check_channel_shell_request: channel=%s", channel)
         if not self.args.disable_ssh:
@@ -151,7 +142,6 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    @typechecked
     def check_channel_pty_request(
         self,
         channel: paramiko.channel.Channel,
@@ -178,14 +168,16 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    @typechecked
     def get_allowed_auths(self, username: Text) -> Text:
         if self.possible_auth_methods is None:
             creds: RemoteCredentials = self.session.authenticator.get_remote_host_credentials(username)
             if creds.host is not None and creds.port is not None:
                 try:
                     self.possible_auth_methods = self.session.authenticator.get_auth_methods(creds.host, creds.port)
-                    logging.info(f"Remote auth-methods: {str(self.possible_auth_methods)}")
+                    logging.info(
+                        "Remote auth-methods: %s",
+                        str(self.possible_auth_methods)
+                    )
                 except paramiko.ssh_exception.SSHException as ex:
                     self.session.remote_address_reachable = False
                     logging.error(ex)
@@ -207,7 +199,6 @@ class ServerInterface(BaseServerInterface):
         logging.warning('Authentication is set to "none", but logins are disabled!')
         return 'none'
 
-    @typechecked
     def check_auth_none(self, username: Text) -> int:
         logging.debug("check_auth_none: username=%s", username)
         if self.args.enable_none_auth:
@@ -215,8 +206,9 @@ class ServerInterface(BaseServerInterface):
             return paramiko.common.AUTH_SUCCESSFUL
         return paramiko.common.AUTH_FAILED
 
-    @typechecked
-    def check_auth_interactive(self, username: Text, submethods: Union[bytes, Text]) -> Union[int, paramiko.server.InteractiveQuery]:
+    def check_auth_interactive(
+        self, username: Text, submethods: Union[bytes, Text]
+    ) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive: username=%s, submethods=%s", username, submethods)
         is_trivial_auth = self.args.enable_trivial_auth and self.session.accepted_key is not None
         logging.debug("trivial authentication possible")
@@ -228,7 +220,6 @@ class ServerInterface(BaseServerInterface):
             iq.add_prompt("Password (kb-interactive): ", False)
         return iq
 
-    @typechecked
     def check_auth_interactive_response(self, responses: List[Text]) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive_response: responses=%s", responses)
         is_trivial_auth = self.args.enable_trivial_auth and self.session.accepted_key is not None
@@ -239,15 +230,18 @@ class ServerInterface(BaseServerInterface):
             return paramiko.common.AUTH_FAILED
         return self.session.authenticator.authenticate(self.session.username, password=responses[0])
 
-    @typechecked
     def check_auth_publickey(self, username: Text, key: PKey) -> int:
         ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
-        logging.debug("check_auth_publickey: username=%s, key=%s %s %sbits", username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits)
+        logging.debug(
+            "check_auth_publickey: username=%s, key=%s %s %sbits",
+            username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits
+        )
+
         if self.session.session_log_dir:
             os.makedirs(self.session.session_log_dir, exist_ok=True)
             pubkeyfile_path = os.path.join(self.session.session_log_dir, 'publickeys')
-            with open(pubkeyfile_path, 'a+') as pubkeyfile:
+            with open(pubkeyfile_path, 'a+', encoding="utf-8") as pubkeyfile:
                 pubkeyfile.write(f"{key.get_name()} {key.get_base64()} saved-from-auth-publickey\n")
         if self.args.disable_pubkey_auth:
             logging.debug("Publickey login attempt, but publickey auth was disabled!")
@@ -272,7 +266,6 @@ class ServerInterface(BaseServerInterface):
             return paramiko.common.AUTH_FAILED
         return auth_result
 
-    @typechecked
     def check_auth_password(self, username: Text, password: Text) -> int:
         logging.debug("check_auth_password: username=%s, password=%s", username, password)
         if self.args.disable_password_auth:
@@ -282,18 +275,15 @@ class ServerInterface(BaseServerInterface):
             return paramiko.common.AUTH_FAILED
         return self.session.authenticator.authenticate(username, password=password)
 
-    @typechecked
     def check_channel_request(self, kind: Text, chanid: int) -> int:
         logging.debug("check_channel_request: kind=%s , chanid=%s", kind, chanid)
         return paramiko.common.OPEN_SUCCEEDED
 
-    @typechecked
     def check_channel_env_request(self, channel: paramiko.Channel, name: bytes, value: bytes) -> bool:
         logging.debug("check_channel_env_request: channel=%s, name=%s, value=%s", channel, name, value)
         self.session.env_requests[name] = value
         return True
 
-    @typechecked
     def check_channel_subsystem_request(self, channel: paramiko.Channel, name: Text) -> bool:
         logging.debug("check_channel_subsystem_request: channel=%s, name=%s", channel, name)
         if name.lower() == 'sftp':
@@ -301,7 +291,6 @@ class ServerInterface(BaseServerInterface):
             self.session.sftp_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 
-    @typechecked
     def check_port_forward_request(self, address: Text, port: int) -> int:
         """
         Note that the if the client requested the port, we must handle it or
@@ -330,7 +319,6 @@ class ServerInterface(BaseServerInterface):
             logging.info("TCP forwarding request denied")
             return False
 
-    @typechecked
     def cancel_port_forward_request(self, address: Text, port: int) -> None:
         logging.info(
             "cancel_port_forward_request: address=%s, port=%s",
@@ -349,7 +337,6 @@ class ServerInterface(BaseServerInterface):
             return
         self.session.ssh_client.transport.cancel_port_forward(address, port)
 
-    @typechecked
     def check_channel_direct_tcpip_request(self, chanid: int, origin: Tuple[Text, int], destination: Tuple[Text, int]) -> int:
         username = self.session.transport.get_username()
         logging.info(
@@ -366,7 +353,6 @@ class ServerInterface(BaseServerInterface):
 
         return paramiko.common.OPEN_SUCCEEDED
 
-    @typechecked
     def check_channel_window_change_request(
         self, channel: paramiko.Channel, width: int, height: int, pixelwidth: int, pixelheight: int
     ) -> bool:
@@ -379,9 +365,9 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    @typechecked
     def check_channel_x11_request(
-        self, channel: paramiko.Channel, single_connection: bool, auth_protocol: Text, auth_cookie: ByteString, screen_number: int
+        self, channel: paramiko.Channel, single_connection: bool,
+        auth_protocol: Text, auth_cookie: ByteString, screen_number: int
     ) -> bool:
         logging.debug(
             "check_channel_x11_request: channel=%s, single_connection=%s, auth_protocol=%s, auth_cookie=%s, screen_number=%s",
@@ -389,8 +375,9 @@ class ServerInterface(BaseServerInterface):
         )
         return False
 
-    @typechecked
-    def check_global_request(self, kind: Text, msg: paramiko.message.Message) -> Union[bool, Tuple[Union[bool, int, Text], ...]]:
+    def check_global_request(
+        self, kind: Text, msg: paramiko.message.Message
+    ) -> Union[bool, Tuple[Union[bool, int, Text], ...]]:
         logging.debug(
             "check_global_request: kind=%s, msg=%s", kind, msg
         )
@@ -399,7 +386,6 @@ class ServerInterface(BaseServerInterface):
 
 class ProxySFTPServer(paramiko.SFTPServer):
 
-    @typechecked
     def __init__(
         self,
         channel: paramiko.Channel,
@@ -413,7 +399,6 @@ class ProxySFTPServer(paramiko.SFTPServer):
         super().__init__(channel, name, server, sftp_si, *largs, **kwargs)
         self.session = session
 
-    @typechecked
     def start_subsystem(
         self, name: Text, transport: paramiko.Transport, channel: paramiko.Channel
     ) -> None:
@@ -423,7 +408,6 @@ class ProxySFTPServer(paramiko.SFTPServer):
         self.session.sftp_client.subsystem_count += 1
         super().start_subsystem(name, transport, channel)
 
-    @typechecked
     def finish_subsystem(self) -> None:
         super().finish_subsystem()
         if not self.session.sftp_client:
