@@ -10,3 +10,4 @@ Vulnerabilities
    vuln_dropbear
    vuln_winscp
    vuln_mc
+   vuln_rsync
