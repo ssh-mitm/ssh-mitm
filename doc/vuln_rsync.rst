@@ -10,7 +10,7 @@ Zlib may be used for additional data compression, and SSH or stunnel can be used
 Rsync is the facility typically used for synchronizing software repositories on mirror sites used by package management systems.
 
 Rsync is typically used for synchronizing files and directories between two different systems.
-For example, if the command rsync local-file user@remote-host:remote-file is run, rsync will use SSH to connect as user to remote-host.
+For example, if the command `rsync local-file user@remote-host:remote-file` is run, rsync will use SSH to connect as user to remote-host.
 Once connected, it will invoke the remote host's rsync and then the two programs will determine what parts of the
 local file need to be transferred so that the remote file matches the local one.
 
