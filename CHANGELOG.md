@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [2.1.0] - 2022-08-05
+
 ### Added
 
 - Test for CVE-2022-29154 (rsync file injection)
@@ -310,7 +312,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.5...develop
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/2.1.0...develop
+[2.1.0]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.5...2.1.0
 [2.0.5]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.4...2.0.5
 [2.0.4]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.3...2.0.4
 [2.0.3]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.2...2.0.3
