@@ -24,11 +24,15 @@ class SCPBaseForwarder(BaseForwarder):
     def handle_error(self, traffic: bytes) -> bytes:
         return traffic
 
+    def rewrite_scp_command(self, command: Text) -> Text:
+        return command
+
     def forward(self) -> None:
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
-        self.server_channel.exec_command(self.session.scp_command.decode('utf8'))  # nosec
+        scp_command = self.rewrite_scp_command(self.session.scp_command.decode('utf8'))
+        self.server_channel.exec_command(scp_command)  # nosec
 
         # Wait for SCP remote to remote auth, command exec and copy to finish
         if self.session.scp_command.decode('utf8').startswith('scp'):
