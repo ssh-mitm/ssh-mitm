@@ -31,8 +31,8 @@ class SCPBaseForwarder(BaseForwarder):
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
-        scp_command = self.rewrite_scp_command(self.session.scp_command.decode('utf8'))
-        self.server_channel.exec_command(scp_command)  # nosec
+        self.session.scp_command = self.rewrite_scp_command(self.session.scp_command.decode('utf8')).encode()
+        self.server_channel.exec_command(self.session.scp_command)  # nosec
 
         # Wait for SCP remote to remote auth, command exec and copy to finish
         if self.session.scp_command.decode('utf8').startswith('scp'):
@@ -73,7 +73,7 @@ class SCPBaseForwarder(BaseForwarder):
                     self.close_session_with_status(self.session.scp_channel, status)
                     logging.info(
                         "remote command '%s' exited with code: %s",
-                        self.session.scp_command, status
+                        self.session.scp_command.decode('utf-8'), status
                     )
                     break
                 if self.session.scp_channel.exit_status_ready():
