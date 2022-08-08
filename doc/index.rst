@@ -38,7 +38,7 @@ To install SSH-MITM, simply run one of those commands in your terminal of choice
 
         .. code-block:: bash
 
-            $ python -m pip install ssh-mitm
+            $ python3 -m pip install ssh-mitm
 
     .. tab-item:: AppImage
 

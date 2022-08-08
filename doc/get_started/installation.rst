@@ -25,12 +25,12 @@ If you use ``pip``, you can install it with:
 
 .. code-block:: none
 
-    pip install ssh-mitm
+    python3 -m pip install ssh-mitm
 
 If you are using a macOS version that comes with Python 2,
 run ``pip3`` instead of ``pip``.
 
-If installing using ``pip install --user``, you must add the user-level ``bin`` directory
+If installing using ``python3 -m pip install --user``, you must add the user-level ``bin`` directory
 to your PATH environment variable in order to launch ``ssh-mitm``.
 If you are using a Unix derivative (FreeBSD, GNU/Linux, macOS),
 you can do this by running ``export PATH="$HOME/.local/bin:$PATH"``.
@@ -130,7 +130,7 @@ which means SSL communication will not be required for downloading Python librar
 .. code:: bash
 
     # Install ssh-mitm (without SSL)
-    pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org ssh-mitm
+    python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org ssh-mitm
 
 Using the tips from above, you can handle many network problems
 related to installing Python libraries.

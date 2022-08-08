@@ -62,3 +62,22 @@ The most important part of SSH-MITM is its community - this is a large and diver
 One of the best ways to contribute to SSH-MITM is to simply be a positive and helpful member of this community.
 Whether it participating in online conversations, offering to help others, coming to community meetings,
 or teaching others about SSH-MITM, there are many ways to improve the SSH-MITM community.
+
+
+Our contributors
+----------------
+
+Contributions are what make the open source community such an amazing place to learn, inspire, and create. Any contributions you make are **greatly appreciated**.
+
+See also the list of `contributors <https://github.com/ssh-mitm/ssh-mitm/graphs/contributors>`_ who participated in this project.
+
+.. image:: https://contrib.rocks/image?repo=ssh-mitm/ssh-mitm
+   :target: https://github.com/ssh-mitm/ssh-mitm/graphs/contributors
+
+
+.. toctree::
+   :maxdepth: 1
+   :hidden:
+
+   setup
+   docs

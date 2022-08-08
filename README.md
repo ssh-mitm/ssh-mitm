@@ -75,7 +75,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
     $ sudo snap install ssh-mitm
 
     # install ssh-mitm as python pip package
-    $ pip install ssh-mitm
+    $ python3 -m pip install ssh-mitm
 
     # install as Nix package
     $ nix-env -iA nixos.ssh-mitm
