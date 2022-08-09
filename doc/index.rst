@@ -139,6 +139,6 @@ SSH-MITM can redirect the connection to a honeypot.
    :hidden:
 
    get_started/index
-   user_guide
+   user_guide/index
    vulnerabilities/index
    develop/contributing

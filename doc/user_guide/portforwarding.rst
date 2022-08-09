@@ -11,14 +11,14 @@ Port forwarding allows a host to access remote network resources while masquerad
 
 - Local port forwarding will allow the client to access network resources over a local port while masquerading as the server.
 
-.. figure:: images/ssh_local_port_forward.png
+.. figure:: /images/ssh_local_port_forward.png
   :scale: 100
 
   ..
 
 - Remote port forwarding will allow the server to access network resources over an open port (on the server) masquerading as the client.
 
-.. figure:: images/ssh_remote_port_forward.png
+.. figure:: /images/ssh_remote_port_forward.png
   :scale: 100
 
   ..
@@ -50,12 +50,12 @@ remote host or the client.
 Using this configuration the ssh-mitm server will open ports on the designated network that will directly
 correlate to a port forward request to a given destination.
 
-.. figure:: images/ssh-mitm_client_port_inject.png
+.. figure:: /images/ssh-mitm_client_port_inject.png
   :scale: 100
 
   ..
 
-.. figure:: images/ssh-mitm_server_port_inject.png
+.. figure:: /images/ssh-mitm_server_port_inject.png
   :scale: 100
 
   ..
