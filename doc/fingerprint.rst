@@ -173,7 +173,7 @@ SSH-MITM - attacks on the fingerprint verification
 --------------------------------------------------
 
 There are SSH clients that have a flawed fingerprint check and are thus vulnerable to man in the middle attacks. An example of this is the SFTP implementation of Midnight Commander.
-This vulnerability was discovered and fixed only after 9 years. See :ref:`CVE-2021-36370`
+This vulnerability was discovered and fixed only after 9 years. See :doc:`vulnerabilities/CVE-2021-36370`
 
 However, most programs do not have fingerprint verification vulnerabilities. As long as the fingerprint is checked, it is not possible to connect to an unknown server.
 
@@ -301,5 +301,5 @@ Mitigation
 Depending on which client is used, it must be configured differently:
 
 * **Dropbear:** not vulnerable
-* **OpenSSH:** :ref:`CVE-2020-14145`
-* **PuTTY:** :ref:`CVE-2020-14002`
+* **OpenSSH:** :doc:`vulnerabilities/CVE-2020-14145`
+* **PuTTY:** :doc:`vulnerabilities/CVE-2020-14002`

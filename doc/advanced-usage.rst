@@ -127,9 +127,9 @@ SSH-MITM has some client exploits integrated, which can be used to audit various
 .. toctree::
     :maxdepth: 1
 
-    CVE-2021-33500
-    CVE-2020-14145
-    CVE-2020-14002
-    CVE-2019-6111
-    CVE-2019-6110
-    CVE-2019-6109
+    vulnerabilities/CVE-2021-33500
+    vulnerabilities/CVE-2020-14145
+    vulnerabilities/CVE-2020-14002
+    vulnerabilities/CVE-2019-6111
+    vulnerabilities/CVE-2019-6110
+    vulnerabilities/CVE-2019-6109

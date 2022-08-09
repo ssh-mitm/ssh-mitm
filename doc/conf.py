@@ -104,8 +104,29 @@ exclude_patterns = []
 html_static_path = ['_static']
 
 redirects = {
-     "puttydos": "CVE-2021-33500.html",
-     "install": "quickstart.html"
+    # CVEs
+    "puttydos": "vulnerabilities/CVE-2021-33500.html",
+    'CVE-2016-20012': 'vulnerabilities/CVE-2016-20012.html',
+    'CVE-2018-15473': 'vulnerabilities/CVE-2018-15473.html',
+    'CVE-2018-15599': 'vulnerabilities/CVE-2018-15599.html',
+    'CVE-2018-15919': 'vulnerabilities/CVE-2018-15919.html',
+    'CVE-2018-20685': 'vulnerabilities/CVE-2018-20685.html',
+    'CVE-2019-16905': 'vulnerabilities/CVE-2019-16905.html',
+    'CVE-2019-6109': 'vulnerabilities/CVE-2019-6109.html',
+    'CVE-2019-6110': 'vulnerabilities/CVE-2019-6110.html',
+    'CVE-2019-6111': 'vulnerabilities/CVE-2019-6111.html',
+    'CVE-2020-12062': 'vulnerabilities/CVE-2020-12062.html',
+    'CVE-2020-14002': 'vulnerabilities/CVE-2020-14002.html',
+    'CVE-2020-14145': 'vulnerabilities/CVE-2020-14145.html',
+    'CVE-2020-15778': 'vulnerabilities/CVE-2020-15778.html',
+    'CVE-2021-28041': 'vulnerabilities/CVE-2021-28041.html',
+    'CVE-2021-33500': 'vulnerabilities/CVE-2021-33500.html',
+    'CVE-2021-36367': 'vulnerabilities/CVE-2021-36367.html',
+    'CVE-2021-36368': 'vulnerabilities/CVE-2021-36368.html',
+    'CVE-2021-36369': 'vulnerabilities/CVE-2021-36369.html',
+    'CVE-2021-36370': 'vulnerabilities/CVE-2021-36370.html',
+    'CVE-2021-41617': 'vulnerabilities/CVE-2021-41617.html',
+    'CVE-2022-29154': 'vulnerabilities/CVE-2022-29154.html'
 }
 
 def create_sitemap(app, exception):
