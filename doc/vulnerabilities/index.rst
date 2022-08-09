@@ -14,9 +14,9 @@ This page lists vulnerabilities in SSH clients and servers as well as SSH releva
 .. toctree::
    :maxdepth: 2
 
-   vuln_openssh
-   vuln_putty
-   vuln_dropbear
-   vuln_winscp
-   vuln_mc
-   vuln_rsync
+   openssh
+   putty
+   dropbear
+   winscp
+   midnightcommander
+   rsync
