@@ -56,7 +56,6 @@ Remote Port Forwarding
 Remote port forwarding lets you connect **from the remote SSH server** to another server.
 
 For example, say you wanted to let a developer access your internal file storage (e.g. Nextcloud), using the command-line SSH client.
-You would use port number 5900 (the first VNC port), and destination server localhost:
 
 .. code-block::
 
