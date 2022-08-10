@@ -130,12 +130,6 @@ redirects = {
 }
 
 
-# -- Options for PDF output --------------------------------------------------
-
-sd_fontawesome_latex = True
-
-
-
 # -- Helper functions ----------------------------------------------------------
 
 def create_sitemap(app, exception):
