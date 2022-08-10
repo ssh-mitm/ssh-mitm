@@ -129,6 +129,15 @@ redirects = {
     'CVE-2022-29154': 'vulnerabilities/CVE-2022-29154.html'
 }
 
+
+# -- Options for PDF output --------------------------------------------------
+
+sd_fontawesome_latex = True
+
+
+
+# -- Helper functions ----------------------------------------------------------
+
 def create_sitemap(app, exception):
     """Generates the sitemap.xml from the collected HTML page links"""
     filename = app.outdir + "/sitemap-docs.xml"
