@@ -31,9 +31,9 @@ confirmation is for another server, provided that the trust sigils are appropria
 Assigned CVEs
 -------------
 
-* PuTTY: :doc:`/vulnerabilities/CVE-2021-36367`
-* OpenSSH: :doc:`/vulnerabilities/CVE-2021-36368`
-* Dropbear: :doc:`/vulnerabilities/CVE-2021-36369`
+* PuTTY: :doc:`CVE-2021-36367 </vulnerabilities/CVE-2021-36367>`
+* OpenSSH: :doc:`CVE-2021-36368 </vulnerabilities/CVE-2021-36368>`
+* Dropbear: :doc:`CVE-2021-36369 </vulnerabilities/CVE-2021-36369>`
 
 
 Authentication methods
