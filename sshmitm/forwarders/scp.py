@@ -25,6 +25,7 @@ class SCPBaseForwarder(BaseForwarder):
         return traffic
 
     def rewrite_scp_command(self, command: Text) -> Text:
+        logging.info(f"got remote command: {command}")
         return command
 
     def forward(self) -> None:

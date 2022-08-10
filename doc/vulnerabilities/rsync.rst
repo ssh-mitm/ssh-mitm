@@ -30,3 +30,4 @@ Rsync can also operate in a daemon mode (rsyncd), serving and receiving files in
    :maxdepth: 1
 
    CVE-2022-29154
+   CVE-2021-3755
