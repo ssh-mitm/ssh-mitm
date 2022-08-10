@@ -1,3 +1,4 @@
+=================================
 SSH-MITM - ssh audits made simple
 =================================
 
@@ -6,7 +7,7 @@ ssh man-in-the-middle (ssh-mitm) server for security audits supporting **publick
 .. image:: _static/ssh-mitm-password.png
 
 Introduction
-------------
+============
 
 **SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
 
@@ -19,45 +20,63 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 In cases, when no agent was forwarded, SSH-MITM can rediredt the session to a honeypot.
 
 Installation
-------------
+============
 
 This part of the documentation covers the installation of SSH-MITM.
 The first step to using any software package is getting it properly installed.
 
 To install SSH-MITM, simply run one of those commands in your terminal of choice:
 
-.. tab-set::
+:fab:`ubuntu` snap
+------------------
 
-    .. tab-item:: Snap
+If you use ``snap``, you can install it with:
 
-        .. code-block:: bash
+.. code-block:: none
 
-            $ sudo snap install ssh-mitm
+    sudo snap install ssh-mitm
 
-    .. tab-item:: PIP
+:fab:`windows` Windows
+-----------------------
 
-        .. code-block:: bash
+If you use ``Windows``, you can download SSH-MITM and start it from the cmd.
 
-            $ python3 -m pip install ssh-mitm
+:fas:`file-download` `Download Windows executable <https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm.exe>`_
 
-    .. tab-item:: AppImage
 
-        .. code-block:: bash
+:fab:`python` pip
+------------------
 
-            $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-            $ chmod +x ssh-mitm*.AppImage
+If you use ``pip``, you can install it with:
 
-    .. tab-item:: Nixpkgs
+.. code-block:: none
 
-        For Nix or NixOS is a `package <https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm>`_
-        available. The lastest release is usually present in the ``unstable`` channel.
+    python3 -m pip install ssh-mitm
 
-        .. code-block:: bash
 
-            $ nix-env -iA nixos.ssh-mitm
+:fas:`cog` AppImage
+-------------------
+
+If you use the ``AppImage``, you can install it as:
+
+.. code:: bash
+
+    wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    chmod +x ssh-mitm*.AppImage
+
+
+:fas:`box` Nixpkgs
+------------------
+
+For Nix or NixOS is a `package <https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm>`_
+available. The lastest release is usually present in the ``unstable`` channel.
+
+.. code-block:: bash
+
+    $ nix-env -iA nixos.ssh-mitm
 
 Start SSH-MITM
---------------
+==============
 
 Let’s get started with some simple examples.
 
@@ -89,7 +108,7 @@ You will see the credentials in the log output.
 
 
 Hijack a SSH terminal session
------------------------------
+=============================
 
 Getting the plain text credentials is only half the fun.
 SSH-MITM proxy server is able to hijack a ssh session and allows you to interact with it.
@@ -117,7 +136,7 @@ The output will be shown in both sessions.
 
 
 Publickey authentication
-------------------------
+========================
 
 SSH-MITM is able to verify, if a user is able to login with publickey authentication on the remote server.
 If publickey authentication is not possible, SSH-MITM falls back to password authentication.

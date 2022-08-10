@@ -3,9 +3,10 @@ Installation
 
 SSH-MITM can be installed using ``snap``, ``pip``, ``pipenv``, ``AppImage`` or ``Nixpkgs``.
 
+For Windows there are also ready-made executables available for download.
 
-snap
-----
+:fab:`ubuntu` snap
+------------------
 
 If you use ``snap``, you can install it with:
 
@@ -13,13 +14,16 @@ If you use ``snap``, you can install it with:
 
     sudo snap install ssh-mitm
 
+:fab:`windows` Windows
+-----------------------
 
-.. image:: https://snapcraft.io/static/images/badges/en/snap-store-white.svg
-    :target: https://snapcraft.io/ssh-mitm
+If you use ``Windows``, you can download SSH-MITM and start it from the cmd.
+
+:fas:`file-download` `Download Windows executable <https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm.exe>`_
 
 
-pip
----
+:fab:`python` pip
+------------------
 
 If you use ``pip``, you can install it with:
 
@@ -36,8 +40,8 @@ If you are using a Unix derivative (FreeBSD, GNU/Linux, macOS),
 you can do this by running ``export PATH="$HOME/.local/bin:$PATH"``.
 
 
-pipenv
-------
+:fab:`python` pipenv
+--------------------
 
 If you use ``pipenv``, you can install it as:
 
@@ -63,8 +67,8 @@ Alternatively, you can run ``ssh-mitm server`` inside the virtualenv with
     pipenv run ssh-mitm server
 
 
-AppImage
---------
+:fas:`cog` AppImage
+-------------------
 
 If you use the ``AppImage``, you can install it as:
 
@@ -74,8 +78,8 @@ If you use the ``AppImage``, you can install it as:
     chmod +x ssh-mitm*.AppImage
 
 
-Nixpkgs
--------
+:fas:`box` Nixpkgs
+------------------
 
 For Nix or NixOS is a `package <https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm>`_
 available. The lastest release is usually present in the ``unstable`` channel.
