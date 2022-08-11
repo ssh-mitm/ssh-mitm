@@ -39,7 +39,7 @@ class ServerInterface(BaseServerInterface):
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
-            stylize(cls.__name__, fg('red') + attr('bold')),
+            cls.__name__,
             "options for integrated ssh server"
         )
         plugin_group.add_argument(

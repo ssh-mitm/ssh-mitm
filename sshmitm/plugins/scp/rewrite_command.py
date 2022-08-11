@@ -11,7 +11,7 @@ class SCPRewriteCommand(SCPForwarder):
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
-            stylize(cls.__name__, fg('red') + attr('bold')),
+            cls.__name__,
             "Rewrite SCP Commands (can also used for rsync and git)"
         )
         plugin_group.add_argument(

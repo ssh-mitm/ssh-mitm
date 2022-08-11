@@ -22,7 +22,7 @@ class SCPInjectFile(SCPForwarder):
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
-            stylize(cls.__name__, fg('red') + attr('bold')),
+            cls.__name__,
             "Example exploit for CVE-2019-6111, CVE-2019-6110"
         )
         plugin_group.add_argument(

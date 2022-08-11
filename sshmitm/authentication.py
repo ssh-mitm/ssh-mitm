@@ -99,7 +99,7 @@ class Authenticator(BaseModule):
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
-            stylize(cls.__name__, fg('red') + attr('bold')),
+            cls.__name__,
             "options for remote authentication"
         )
         plugin_group.add_argument(
@@ -132,7 +132,7 @@ class Authenticator(BaseModule):
         )
 
         honeypot_group = cls.parser().add_argument_group(
-            stylize('Authentication Fallback', fg('red') + attr('bold'))
+            "AuthenticationFallback"
         )
         honeypot_group.add_argument(
             '--enable-auth-fallback',

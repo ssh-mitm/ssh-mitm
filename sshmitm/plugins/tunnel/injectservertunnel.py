@@ -20,7 +20,7 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(stylize(cls.__name__, fg('red') + attr('bold')))
+        plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
             '--tunnel-server-net',
             dest='server_tunnel_net',
