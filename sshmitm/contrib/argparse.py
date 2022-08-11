@@ -4,7 +4,7 @@ from typing import (
     Sequence,
     Text
 )
-import argcomplete
+import argcomplete  # type: ignore
 from enhancements.modules import ModuleParser
 
 
