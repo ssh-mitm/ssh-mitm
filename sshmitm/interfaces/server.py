@@ -11,7 +11,7 @@ from typing import (
     Optional
 )
 
-from colored import stylize, fg, attr
+from colored import stylize, fg, attr  # type: ignore
 import paramiko
 from paramiko.pkey import PKey
 from sshpubkeys import SSHKey  # type: ignore
