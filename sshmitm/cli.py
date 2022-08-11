@@ -3,13 +3,12 @@ import logging
 import sys
 from typing import Text, Callable
 
-from enhancements.modules import ModuleParser
-
 from paramiko import Transport
 
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 
+from sshmitm.contrib.argparse import SshMitmParser
 from sshmitm.workarounds import transport
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.server.cli import init_server_parser, run_server
@@ -21,7 +20,7 @@ class SubCommand():
     def __init__(
         self,
         run_func: Callable[[Namespace], None],
-        parser_func: Callable[[ModuleParser], None],
+        parser_func: Callable[[SshMitmParser], None],
         help: Text  # pylint: disable=redefined-builtin
     ):
         self.run_func = run_func
@@ -44,10 +43,9 @@ def main() -> None:
         )
     }
 
-    parser = ModuleParser(
+    parser = SshMitmParser(
         description='SSH-MITM Tools',
         version=f"SSH-MITM {ssh_mitm_version}",
-        autocomplete=True,
         modules_from_file=True,
         allow_abbrev=False
     )

@@ -1,12 +1,11 @@
 import argparse
 
-from enhancements.modules import ModuleParser
-
 from rich import print as rich_print
 
 from paramiko import Transport
 
 from sshmitm.__version__ import version as ssh_mitm_version
+from sshmitm.contrib.argparse import SshMitmParser
 from sshmitm.console import sshconsole
 from sshmitm.server import SSHProxyServer
 
@@ -40,7 +39,7 @@ from sshmitm.plugins.tunnel.socks import SOCKSTunnelForwarder
 from sshmitm.session import BaseSession, Session
 
 
-def init_server_parser(parser: ModuleParser) -> None:
+def init_server_parser(parser: SshMitmParser) -> None:
     parser.add_argument(
         '--listen-port',
         dest='listen_port',
