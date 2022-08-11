@@ -7,7 +7,6 @@ from typing import (
 )
 import uuid
 
-from colored.colored import stylize, attr, fg  # type: ignore
 from sshmitm.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
 
 

@@ -1,6 +1,5 @@
 import logging
 from typing import Text
-from colored import stylize, fg, attr  # type: ignore
 from sshmitm.forwarders.scp import SCPForwarder
 
 

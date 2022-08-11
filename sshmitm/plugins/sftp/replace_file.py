@@ -6,7 +6,6 @@ from typing import (
     Type,
     Union
 )
-from colored.colored import stylize, attr, fg  # type: ignore
 from paramiko import SFTPAttributes
 from sshmitm.exceptions import MissingClient
 

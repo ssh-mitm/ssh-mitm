@@ -5,7 +5,6 @@ from typing import (
     Optional,
     Text
 )
-from colored.colored import stylize, attr, fg  # type: ignore
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
 
