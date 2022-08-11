@@ -157,6 +157,7 @@ def run_server(args: argparse.Namespace) -> None:
     print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
     sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
     rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
+    rich_print('[bold]License:[/bold] GNU General Public License v3.0')
     rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
     rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
     sshconsole.rule(style="blue")

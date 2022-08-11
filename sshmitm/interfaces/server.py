@@ -11,6 +11,7 @@ from typing import (
     Optional
 )
 
+from colored import stylize, fg, attr
 import paramiko
 from paramiko.pkey import PKey
 from sshpubkeys import SSHKey  # type: ignore
@@ -38,7 +39,7 @@ class ServerInterface(BaseServerInterface):
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
-            cls.__name__,
+            stylize(cls.__name__, fg('red') + attr('bold')),
             "options for integrated ssh server"
         )
         plugin_group.add_argument(

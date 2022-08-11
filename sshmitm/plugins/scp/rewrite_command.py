@@ -1,4 +1,5 @@
 import logging
+from colored.colored import stylize, attr, fg  # type: ignore
 from typing import Text
 from sshmitm.forwarders.scp import SCPForwarder
 
@@ -10,7 +11,7 @@ class SCPRewriteCommand(SCPForwarder):
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
-            cls.__name__,
+            stylize(cls.__name__, fg('red') + attr('bold')),
             "Rewrite SCP Commands (can also used for rsync and git)"
         )
         plugin_group.add_argument(

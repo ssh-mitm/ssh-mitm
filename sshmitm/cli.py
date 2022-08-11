@@ -1,7 +1,6 @@
 from argparse import Namespace
 import logging
 import sys
-import os
 from typing import Text, Callable
 
 from enhancements.modules import ModuleParser
@@ -30,7 +29,7 @@ class SubCommand():
         self.parser_func = parser_func
 
 
-def run() -> None:
+def main() -> None:
 
     available_subcommands = {
         'audit': SubCommand(
@@ -44,11 +43,6 @@ def run() -> None:
             help='start the ssh-mitm server'
         )
     }
-
-    if os.environ.get('APPIMAGE', None):
-        # if running as appimage, remove empty arguments
-        if len(sys.argv) == 2 and sys.argv[-1] == '':
-            sys.argv = sys.argv[:-1]
 
     parser = ModuleParser(
         description='SSH-MITM Tools',
@@ -119,10 +113,6 @@ def run() -> None:
     except (AttributeError, KeyError):
         logging.exception("can not run subcommand - invalid subcommand name")
         sys.exit(1)
-
-
-def main() -> None:
-    run()
 
 
 if __name__ == '__main__':

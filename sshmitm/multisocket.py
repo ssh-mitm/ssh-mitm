@@ -271,10 +271,12 @@ class MultipleSocketsListener:
         return self._socks[0].getsockname()
 
     @overload
-    def getsockopt(self, level: int, optname: int) -> int: ...
+    def getsockopt(self, level: int, optname: int) -> int:
+        ...
 
     @overload
-    def getsockopt(self, level: int, optname: int, buflen: int) -> bytes: ...
+    def getsockopt(self, level: int, optname: int, buflen: int) -> bytes:
+        ...
 
     def getsockopt(self, level: int, optname: int, buflen: int = 0) -> Union[int, bytes]:
         """Return first registered socket's options."""
@@ -293,9 +295,12 @@ class MultipleSocketsListener:
         self._multicall('setblocking', flag)
 
     @overload
-    def setsockopt(self, level: int, optname: int, value: Union[int, bytes], optlen: None) -> None: ...
+    def setsockopt(self, level: int, optname: int, value: Union[int, bytes], optlen: None) -> None:
+        ...
+
     @overload
-    def setsockopt(self, level: int, optname: int, value: None, optlen: int) -> None: ...
+    def setsockopt(self, level: int, optname: int, value: None, optlen: int) -> None:
+        ...
 
     def setsockopt(self, level: int, optname: int, value: Optional[Union[int, bytes]], optlen: Optional[int]) -> None:
         """Set option for all registered sockets."""

@@ -29,6 +29,7 @@ entry_points: Dict[str, List[str]] = {
     ],
     'LocalPortForwardingBaseForwarder': [
         'base = sshmitm.forwarders.tunnel:LocalPortForwardingForwarder',
+        'socks = sshmitm.plugins.tunnel.socks:SOCKSTunnelForwarder',
         'socks4 = sshmitm.plugins.tunnel.socks4:SOCKS4TunnelForwarder',
         'socks5 = sshmitm.plugins.tunnel.socks5:SOCKS5TunnelForwarder'
     ],

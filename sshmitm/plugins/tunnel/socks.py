@@ -67,7 +67,7 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group = cls.parser().add_argument_group(stylize(cls.__name__, fg('red') + attr('bold')))
         plugin_group.add_argument(
             '--socks-listen-address',
             dest='socks_listen_address',
@@ -96,7 +96,8 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
         netcat4_cmd = f'nc -X 4 -x localhost:{t.port} address port'
         netcat5_cmd = f'nc -X 5 -x localhost:{t.port} address port'
 
-        logging.info((
+        logging.info(
+            (
                 "%s %s - local port forwading\n"
                 "%s %s\n"
                 "  %s\n"

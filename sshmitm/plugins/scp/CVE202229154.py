@@ -1,5 +1,6 @@
 import logging
 from typing import Text
+from colored import stylize, fg, attr
 from sshmitm.forwarders.scp import SCPForwarder
 
 
@@ -10,7 +11,7 @@ class CVE202229154(SCPForwarder):
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
-            cls.__name__,
+            stylize(cls.__name__, fg('red') + attr('bold')),
             "Inject an additional file in rsync"
         )
         plugin_group.add_argument(

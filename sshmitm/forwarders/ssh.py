@@ -3,7 +3,6 @@ import time
 
 
 from sshmitm.forwarders.base import BaseForwarder
-import sshmitm
 
 
 class SSHBaseForwarder(BaseForwarder):  # pylint: disable=W0223

@@ -51,6 +51,7 @@ from paramiko.ssh_exception import (
 
 from paramiko.transport import _active_threads  # type: ignore
 
+
 def transport_send_kex_init(self):  # type: ignore
     """
     announce to the other side that we'd like to negotiate keys, and what
@@ -117,7 +118,6 @@ def transport_send_kex_init(self):  # type: ignore
     # save a copy for later (needed to compute a hash)
     self.local_kex_init = self._latest_kex_init = m.asbytes()
     self._send_message(m)
-
 
 
 def transport_run(self):  # type: ignore

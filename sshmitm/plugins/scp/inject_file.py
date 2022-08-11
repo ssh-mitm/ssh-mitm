@@ -1,6 +1,6 @@
 import logging
 import os
-
+from colored import stylize, fg, attr
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
 
@@ -22,7 +22,7 @@ class SCPInjectFile(SCPForwarder):
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
-            cls.__name__,
+            stylize(cls.__name__, fg('red') + attr('bold')),
             "Example exploit for CVE-2019-6111, CVE-2019-6110"
         )
         plugin_group.add_argument(

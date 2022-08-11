@@ -18,7 +18,7 @@ class BaseForwarder(BaseModule):
     """
 
     # Slow file transmission
-    BUF_LEN = 65536*100
+    BUF_LEN = 65536 * 100
 
     def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__()

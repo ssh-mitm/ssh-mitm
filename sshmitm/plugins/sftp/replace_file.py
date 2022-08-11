@@ -6,7 +6,7 @@ from typing import (
     Type,
     Union
 )
-
+from colored.colored import stylize, attr, fg  # type: ignore
 from paramiko import SFTPAttributes
 from sshmitm.exceptions import MissingClient
 
@@ -41,7 +41,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group = cls.parser().add_argument_group(stylize(cls.__name__, fg('red') + attr('bold')))
         plugin_group.add_argument(
             '--sftp-replace',
             dest='sftp_replacement_file',
