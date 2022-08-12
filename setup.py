@@ -81,8 +81,6 @@ setup(
         'pyyaml',
         'packaging',
         'colored',
-        'rich',
-        'requests',
-        'typeguard'
+        'rich'
     ]
 )
