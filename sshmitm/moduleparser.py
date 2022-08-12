@@ -2,23 +2,21 @@
 
 """BaseModule parsing library
 
-Dieses Modul ist eine Erweiterung zum Standard-Argparse Modul, welches die Möglichkeit bietet
-Klassen als BaseModule zu laden.
+This module is an extension to the standard Argparse module, which offers the possibility to load to load classes as BaseModule.
 
-Dieses Modul beinhaltet folgende öffentliche Klassen:
+This module contains the following public classes:
 
-    - ModuleParser -- Einstiegspunkt um Kommandozeilenparameter zu parsen.
-        Diese Klasse bietet die gleiche Funktionalität wie der ArgumentParser
-        aus dem argparse Modul. Jedoch ist es möglich BaseModule und Plugins anzugeben,
-        die die Funktionalität des Parsers bzw. der Applikation erweitern
-    - BaseModule -- Basisklasse für BaseModule, die in der Applikation verwendet werden können.
-        Alle BaseModule müssen von dieser Klasse abstammen. Stammt ein Modul nicht von dieser Klasse ab, kommt es zu
-        einem ModuleError.
-    - ModuleError -- Exception, die geworfen wird, wenn es beim initialisieren von Modulen oder Plugins zu Fehlern kommt.
-        Diese Exception wird geworfen, wenn es zu einem Fehler gekommen ist. Details sind der Exception zu entnehmen.
+    - ModuleParser -- entry point to parse command line parameters.
+        This class provides the same functionality as the ArgumentParser
+        from the argparse module. However, it is possible to specify BaseModules and Plugins,
+        which extend the functionality of the parser and the application respectively.
+    - BaseModule -- base class for BaseModules that can be used in the application.
+        All BaseModules must be derived from this class. If a module does not originate from this class, a ModuleError occurs.
+    - ModuleError -- Exception thrown when errors occur when initializing modules or plugins.
+        This exception is thrown when an error has occurred. Details can be found in the exception.
 
-Alle anderen Klassen und Funktionen in diesem Modul sind entweder aus Legacy Gründen vorhanden oder sind
-implemntationsspezifisch und sollten in Produktivanwendungen nicht verwendet werden.
+All other classes and functions in this module are either legacy or are
+implementation specific and should not be used in production applications.
 """
 
 import logging
@@ -26,7 +24,6 @@ import argparse
 import inspect
 
 from typing import (
-    cast,
     Any,
     List,
     Optional,
@@ -44,15 +41,8 @@ import pkg_resources
 from colored.colored import attr, fg, stylize  # type: ignore
 
 
-def load_entry_point(entrypoint: str, name: str) -> Optional[Type['BaseModule']]:
-    for entry_point in pkg_resources.iter_entry_points(entrypoint):
-        if name in (entry_point.name, entry_point.module_name):
-            return cast(Type['BaseModule'], entry_point.load())
-    return None
-
-
 def load_module(entry_point_class: Type['BaseModule']) -> Type['argparse.Action']:
-    """Action, um BaseModule mit der Methode "add_module" des ModuleParsers als Kommandozeilenparameter definieren zu können
+    """Action to be able to define BaseModule with the "add_module" method of the ModuleParser as command line parameter
     """
     class ModuleLoaderAction(argparse.Action):
         def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Union[Text, Sequence[Any], None], option_string: Optional[Text] = None) -> None:
@@ -67,38 +57,45 @@ def load_module(entry_point_class: Type['BaseModule']) -> Type['argparse.Action'
     return ModuleLoaderAction
 
 
-def get_entrypoint_modules(entry_point_name: Text) -> Dict[Text, Text]:
-    entrypoints = {}
-    for entry_point in pkg_resources.iter_entry_points(entry_point_name):
-        entry_point_cls = entry_point.load()
-        entry_point_desc = "" if entry_point_cls.__doc__ is None else entry_point_cls.__doc__.split("\n")[0]
+def set_module_kwargs(entry_point_class: Type['BaseModule'], **kwargs: Any) -> Dict[Text, Any]:
+
+    entry_points = sorted(
+        pkg_resources.iter_entry_points(entry_point_class.__name__),
+        key=lambda x: x.name
+    )
+    if not entry_points:
+        return kwargs
+
+    choices = []
+    descriptions = []
+    default_value = kwargs.get('default', None)
+    default_name = None
+    for entry_point in entry_points:
+        choices.append(entry_point.name)
+
+        loaded_class = entry_point.load()
+        if default_value is loaded_class:
+            default_name = entry_point.name
+        entry_point_desc = "" if not loaded_class.__doc__ else loaded_class.__doc__.split("\n")[0]
         if entry_point_desc:
             entry_point_description = f"\t* {stylize(entry_point.name, fg('blue'))} -> {entry_point_desc}"
         else:
             entry_point_description = f"\t* {stylize(entry_point.name, fg('blue'))}"
-        entrypoints[entry_point.name] = entry_point_description
-    return entrypoints
+        descriptions.append(entry_point_description)
 
-
-def set_module_kwargs(entry_point_class: Type['BaseModule'], **kwargs: Any) -> Dict[Text, Any]:
-    entrypoints = get_entrypoint_modules(entry_point_class.__name__)
-    entrypoint_classes = {
-        entry_point.load(): entry_point.name
-        for entry_point
-        in pkg_resources.iter_entry_points(entry_point_class.__name__)
-    }
-    if entrypoints:
-        kwargs['choices'] = entrypoints.keys()
-        kwargs['help'] = kwargs.get('help') or ""
-        default_value = kwargs.get('default', None)
-        if default_value in entrypoint_classes:
-            default_name = entrypoint_classes[default_value]
-            kwargs['help'] += f"\ndefault module: {stylize(default_name, fg('blue') + attr('bold'))}"
-        kwargs['help'] += "\navailable modules:\n{}".format("\n".join(entrypoints.values()))
+    kwargs['choices'] = sorted(choices)
+    kwargs['help'] = kwargs.get('help') or ""
+    if default_name:
+        kwargs['help'] += f"\ndefault module: {stylize(default_name, fg('blue') + attr('bold'))}"
+    kwargs['help'] += "\navailable modules:\n{}".format("\n".join(descriptions))
     return kwargs
 
 
-class ModuleError(Exception):
+class BaseModuleError(Exception):
+    pass
+
+
+class ModuleError(BaseModuleError):
 
     def __init__(
         self,
@@ -112,7 +109,7 @@ class ModuleError(Exception):
         self.message = message
 
 
-class InvalidModuleArguments(Exception):
+class InvalidModuleArguments(BaseModuleError):
     pass
 
 
@@ -240,15 +237,6 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
         self._extra_modules: List[Tuple[argparse.Action, type]] = []
         self._module_parsers: Set[argparse.ArgumentParser] = {self}
 
-    def _add_parser(self, parser: argparse.ArgumentParser) -> None:
-        for module_parser in self._module_parsers:
-            if module_parser.description == parser.description:
-                return
-        # remove help action from parser
-        parser._actions[:] = [x for x in parser._actions if not isinstance(x, argparse._HelpAction)]  # pylint: disable=protected-access
-        # append parser to list
-        self._module_parsers.add(parser)
-
     def _get_sub_modules_args(
         self,
         *,
@@ -258,12 +246,10 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
         modules: List[Tuple[argparse.Action, Type[BaseModule]]],
     ) -> List[argparse.ArgumentParser]:
         modulelist = [getattr(parsed_args, m[0].dest) for m in modules if hasattr(parsed_args, m[0].dest)]
-        modulebasecls: List[Tuple[Type[BaseModule], ...]] = [(m[1], ) for m in modules]
         return self._get_sub_modules(
             args=args,
             namespace=namespace,
-            modules=modulelist,
-            baseclasses=modulebasecls
+            modules=modulelist
         )
 
     def _get_sub_modules(
@@ -271,17 +257,13 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
         *,
         args: Optional[Sequence[Text]],
         namespace: Optional[argparse.Namespace],
-        modules: Optional[List[Type[BaseModule]]],
-        baseclasses: List[Tuple[Type[BaseModule], ...]],
+        modules: Optional[List[Type[BaseModule]]]
     ) -> List[argparse.ArgumentParser]:
         moduleparsers: List[argparse.ArgumentParser] = []
         if not modules:
             return moduleparsers
 
-        for module, baseclass in zip(modules, baseclasses):
-            if not issubclass(module, baseclass):
-                logging.error('module %s is not an instance of baseclass %s', module, baseclass)
-                raise ModuleError(module, baseclass)
+        for module in modules:
             moduleparsers.append(module.parser())
 
             try:
@@ -305,22 +287,25 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
         namespace: Optional[argparse.Namespace] = None
     ) -> 'argparse.ArgumentParser':
         parsed_args_tuple = super().parse_known_args(args=args, namespace=namespace)
-        if not parsed_args_tuple:
-            self.exit_on_error = False
-            super().parse_known_args(args=args, namespace=namespace)
 
         # load modules from add_module method
-        moduleparsers = self._get_sub_modules_args(
-            parsed_args=parsed_args_tuple[0],
-            args=args,
-            namespace=namespace,
-            modules=self._extra_modules
+        self._module_parsers.update(
+            self._get_sub_modules_args(
+                parsed_args=parsed_args_tuple[0],
+                args=args,
+                namespace=namespace,
+                modules=self._extra_modules
+            )
         )
-        for moduleparser in moduleparsers:
-            self._add_parser(moduleparser)
 
         # create complete argument parser and return arguments
-        parser = argparse.ArgumentParser(parents=list(self._module_parsers), **self.__kwargs)
+        parser = argparse.ArgumentParser(
+            parents=sorted(
+                self._module_parsers,
+                key=lambda x: x.description or ''
+            ),
+            **self.__kwargs
+        )
         argcomplete.autocomplete(parser)
         return parser
 
