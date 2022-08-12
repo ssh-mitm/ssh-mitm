@@ -8,7 +8,7 @@ from paramiko import Transport
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 
-from sshmitm.contrib.argparse import SshMitmParser
+from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import transport
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.server.cli import init_server_parser, run_server
@@ -20,7 +20,7 @@ class SubCommand():
     def __init__(
         self,
         run_func: Callable[[Namespace], None],
-        parser_func: Callable[[SshMitmParser], None],
+        parser_func: Callable[[ModuleParser], None],
         help: Text  # pylint: disable=redefined-builtin
     ):
         self.run_func = run_func
@@ -43,11 +43,14 @@ def main() -> None:
         )
     }
 
-    parser = SshMitmParser(
+    parser = ModuleParser(
         description='SSH-MITM Tools',
-        version=f"SSH-MITM {ssh_mitm_version}",
-        modules_from_file=True,
         allow_abbrev=False
+    )
+    parser.add_argument(
+        '-V', '--version',
+        action='version',
+        version=f"SSH-MITM {ssh_mitm_version}"
     )
     parser.add_argument(
         '-d',

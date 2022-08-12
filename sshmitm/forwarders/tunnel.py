@@ -11,9 +11,9 @@ from typing import (
 )
 
 import paramiko
-from enhancements.modules import BaseModule
 
 import sshmitm
+from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     from sshmitm.session import Session  # noqa

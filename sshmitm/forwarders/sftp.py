@@ -8,9 +8,9 @@ from typing import (
 )
 
 import paramiko
-from enhancements.modules import BaseModule
 
 import sshmitm
+from sshmitm.moduleparser import BaseModule
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
 
 

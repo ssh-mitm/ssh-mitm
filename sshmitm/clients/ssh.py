@@ -12,8 +12,8 @@ import paramiko
 import paramiko.hostkeys
 from sshpubkeys import SSHKey  # type: ignore
 
-from enhancements.modules import BaseModule
 import sshmitm
+from sshmitm.moduleparser import BaseModule
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.exceptions import NoAgentKeys, InvalidHostKey
 

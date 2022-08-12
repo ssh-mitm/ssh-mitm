@@ -8,10 +8,10 @@ from typing import (
 )
 
 import paramiko
-from enhancements.modules import BaseModule
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 
+from sshmitm.moduleparser import BaseModule
 from sshmitm.exceptions import MissingClient
 from sshmitm.interfaces.server import BaseServerInterface
 

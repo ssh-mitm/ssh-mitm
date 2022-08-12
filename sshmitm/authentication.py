@@ -14,11 +14,11 @@ from colored.colored import stylize, attr, fg  # type: ignore
 from paramiko import PKey
 from rich._emoji_codes import EMOJI
 
-from enhancements.modules import BaseModule
 import paramiko
 from sshpubkeys import SSHKey  # type: ignore
 
 import sshmitm
+from sshmitm.moduleparser import BaseModule
 from sshmitm.clients.ssh import SSHClient, AuthenticationMethod
 from sshmitm.exceptions import MissingHostException
 

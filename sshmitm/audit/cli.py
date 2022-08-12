@@ -7,7 +7,7 @@ import sys
 import paramiko
 
 from paramiko.pkey import PublicBlob
-from sshmitm.contrib.argparse import SshMitmParser
+from sshmitm.moduleparser import ModuleParser
 from sshmitm.authentication import probe_host, Authenticator
 
 
@@ -54,7 +54,7 @@ def check_privatekey(args: argparse.Namespace) -> bool:
     return True
 
 
-def init_audit_parser(parser: SshMitmParser) -> None:
+def init_audit_parser(parser: ModuleParser) -> None:
     subparsers = parser.add_subparsers(title='Available commands', dest="audit_subparser_name", metavar='audit-command')
     subparsers.required = True
 

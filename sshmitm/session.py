@@ -16,8 +16,6 @@ from typing import (
     Type
 )
 
-from enhancements.modules import BaseModule
-
 from colored.colored import stylize, fg, attr  # type: ignore
 from rich._emoji_codes import EMOJI
 
@@ -27,6 +25,7 @@ from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
 import sshmitm
+from sshmitm.moduleparser import BaseModule
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
 from sshmitm.plugins.session import key_negotiation
