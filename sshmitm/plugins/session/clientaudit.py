@@ -34,7 +34,7 @@ class Vulnerability:
     @property
     def url(self) -> Text:
         if self.indocs:
-            return f"https://docs.ssh.mitm.at/{self.cve}.html"
+            return f"https://docs.ssh-mitm.at/vulnerabilities/{self.cve}.html"
         return f"https://nvd.nist.gov/vuln/detail/{self.cve}"
 
 
