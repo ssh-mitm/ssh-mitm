@@ -48,10 +48,14 @@ class SSHClientAudit():
     def __init__(
         self,
         key_negotiation_data: 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData',
-        vulnerability_list: Dict[Text, Dict[Text, Any]]
+        client_version: Text,
+        client_info: Dict[Text, Dict[Text, Any]]
     ) -> None:
         self.key_negotiation_data: 'KeyNegotiationData' = key_negotiation_data
-        self.vulnerability_list: Dict[Text, Dict[Text, Any]] = vulnerability_list
+        self.client_version: Text = client_version
+        self.client_info: Dict[Text, Dict[Text, Any]] = client_info
+        self.product_name: Optional[Text] = self.client_info.get('name', "")
+        self.vendor_url: Optional[Text] = self.client_info.get('url', "")
 
     @classmethod
     def client_name(cls) -> Text:
@@ -82,7 +86,7 @@ class SSHClientAudit():
 
     def check_cves(self, vulnerabilities: Dict[Text, List[Text]]) -> None:
         cvelist: Dict[Text, Vulnerability] = {}
-        for cve, description in self.vulnerability_list.items():
+        for cve, description in self.client_info.get('vulnerabilities', {}).items():
             version_min = description.get('version_min', "")
             version_max = description.get('version_max', "")
             indocs = description.get('docs', False)
@@ -99,13 +103,7 @@ class SSHClientAudit():
                             cvemessagelist.append(f"    - {e1}")
                     else:
                         cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
-        if cvemessagelist:
-            logging.info(
-                "".join([
-                    stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
-                    "\n".join(cvemessagelist)
-                ])
-            )
+        return cvemessagelist
 
     def check_key_negotiation(self) -> Dict[Text, List[Text]]:
         messages: List[Text] = []
@@ -137,15 +135,32 @@ class SSHClientAudit():
 
         vulnerabilities["clientaudit"].extend(self.audit())
 
-        self.check_cves(vulnerabilities)
+        log_output = []
+        log_output.extend([
+            stylize(EMOJI['information'] + " client information:", fg('blue') + attr('bold')),
+            f"  - client version: {stylize(self.client_version, fg('green') + attr('bold'))}",
+            f"  - product name: {self.product_name}",
+            f"  - vendor url:  {self.vendor_url}"
+        ])
+
+        cvemessagelist = self.check_cves(vulnerabilities)
+        if cvemessagelist:
+            log_output.append(
+                "".join([
+                    stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
+                    "\n".join(cvemessagelist)
+                ])
+            )
+
         client_audits = vulnerabilities.get("clientaudit", [])
         if client_audits:
-            logging.info(
+            log_output.append(
                 "".join([
                     stylize(EMOJI['warning'] + " client audit tests:\n", fg('yellow') + attr('bold')),
                     "\n".join([f"  * {v}" for v in client_audits])
                 ])
             )
+        logging.info("%s", "\n".join(log_output))
 
     def audit(self) -> List[Text]:
         return []
@@ -214,7 +229,7 @@ class Paramiko(SSHClientAudit):
 class MoTTY_Release(SSHClientAudit):
     """MobaXterm ssh client implementation"""
     VERSION_REGEX = r'ssh-2.0-motty_release_(0\.[0-9]+)'
-    SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = 'CVE-2020-14145'
+    SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = 'CVE-2020-14002'
     SERVER_HOST_KEY_ALGORITHMS = [
         [
             'ssh-ed448', 'ssh-ed25519',

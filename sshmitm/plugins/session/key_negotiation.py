@@ -14,7 +14,7 @@ from rich.markup import escape
 from rich._emoji_codes import EMOJI
 
 import sshmitm
-from sshmitm.plugins.session.clientaudit import SSHClientAudit
+from sshmitm.plugins.session.clientaudit import SSHClientAudit, Vulnerability
 
 if TYPE_CHECKING:
     from sshmitm.session import Session  # noqa
@@ -40,7 +40,7 @@ class KeyNegotiationData:
         m.rewind()
 
     def show_debug_info(self) -> None:
-        logging.info(
+        logging.debug(
             "%s connected client version: %s",
             EMOJI['information'],
             stylize(self.client_version, fg('green') + attr('bold'))
@@ -76,7 +76,11 @@ class KeyNegotiationData:
             return
         for client_cls in all_subclasses(SSHClientAudit):
             if client_cls.client_name() in client_version:
-                client = client_cls(self, vulnerability_list.get(client_cls.client_name(), {}))
+                client_info = vulnerability_list.get(client_cls.client_name(), {})
+                client = client_cls(self, client_version, client_info)
+                break
+        else:
+            client = SSHClientAudit(self, client_version, {})
 
         if client:
             client.run_audit()

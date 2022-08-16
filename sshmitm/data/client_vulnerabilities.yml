@@ -1,200 +1,218 @@
 putty_release:
-  CVE-2021-36367:
-    version_max: 0.71
-    cvss: N/A
-    docs: true
-  CVE-2021-33500:
-    version_min:
-    version_max: 0.74
-    cvss: 5.0
-    docs: true
-  CVE-2020-14002:
-    version_min: 0.68
-    version_max: 0.73
-    cvss: 4.3
-    docs: true
-  CVE-2019-17069:
-    version_max: 0.73
-    cvss: 5.0
-  CVE-2019-17068:
-    version_max: 0.73
-    cvss: 5.0
-  CVE-2019-9898:
-    version_max: 0.71
-    cvss: 7.5
-  CVE-2019-9897:
-    version_max: 0.71
-    cvss: 5.0
-  CVE-2019-9894:
-    version_max: 0.71
-    cvss: 6.4
-  CVE-2017-6542:
-    version_max: 0.68
-    cvss: 7.5
-  CVE-2016-6167:
-    version_min: 0.67
-    version_max: 0.67
-    cvss: 7.8
-  CVE-2013-4852:
-    version_max: 0.62
-    cvss: 6.8
-  CVE-2013-4208:
-    version_max: 0.63
-    cvss: 2.1
-  CVE-2013-4207:
-    version_max: 0.63
-    cvss: 4.3
-  CVE-2013-4206:
-    version_max: 0.63
-    cvss: 6.8
-  CVE-2011-4607:
-    version_max: 0.61
-    cvss: 2.1
-  CVE-2006-7162:
-    version_max: 0.59
-    cvss: 1.9
-  CVE-2005-0467:
-    version_max: 0.56
-    cvss: 7.5
-  CVE-2004-1440:
-    version_max: 0.55
-    cvss: 7.5
-  CVE-2004-1008:
-    version_max: 0.56
-    cvss: 10
-  CVE-2003-0069:
-    version_max: 0.53
-    cvss: 7.5
-  CVE-2003-0048:
-    version_max: 0.53
-    cvss: 4.6
-  CVE-2000-0476:
-    version_max: 0.48
-    cvss: 5.0
+  name: PuTTY
+  url: https://www.chiark.greenend.org.uk/~sgtatham/putty/
+  vulnerabilities:
+    CVE-2021-36367:
+      version_max: 0.71
+      cvss: N/A
+      docs: true
+    CVE-2021-33500:
+      version_min:
+      version_max: 0.74
+      cvss: 5.0
+      docs: true
+    CVE-2020-14002:
+      version_min: 0.68
+      version_max: 0.73
+      cvss: 4.3
+      docs: true
+    CVE-2019-17069:
+      version_max: 0.73
+      cvss: 5.0
+    CVE-2019-17068:
+      version_max: 0.73
+      cvss: 5.0
+    CVE-2019-9898:
+      version_max: 0.71
+      cvss: 7.5
+    CVE-2019-9897:
+      version_max: 0.71
+      cvss: 5.0
+    CVE-2019-9894:
+      version_max: 0.71
+      cvss: 6.4
+    CVE-2017-6542:
+      version_max: 0.68
+      cvss: 7.5
+    CVE-2016-6167:
+      version_min: 0.67
+      version_max: 0.67
+      cvss: 7.8
+    CVE-2013-4852:
+      version_max: 0.62
+      cvss: 6.8
+    CVE-2013-4208:
+      version_max: 0.63
+      cvss: 2.1
+    CVE-2013-4207:
+      version_max: 0.63
+      cvss: 4.3
+    CVE-2013-4206:
+      version_max: 0.63
+      cvss: 6.8
+    CVE-2011-4607:
+      version_max: 0.61
+      cvss: 2.1
+    CVE-2006-7162:
+      version_max: 0.59
+      cvss: 1.9
+    CVE-2005-0467:
+      version_max: 0.56
+      cvss: 7.5
+    CVE-2004-1440:
+      version_max: 0.55
+      cvss: 7.5
+    CVE-2004-1008:
+      version_max: 0.56
+      cvss: 10
+    CVE-2003-0069:
+      version_max: 0.53
+      cvss: 7.5
+    CVE-2003-0048:
+      version_max: 0.53
+      cvss: 4.6
+    CVE-2000-0476:
+      version_max: 0.48
+      cvss: 5.0
 openssh:
-  CVE-2016-20012:
-    version_max: 8.7
-    cvss: N/A
-    docs: true
-  CVE-2021-36368:
-    version_max: 8.7
-    cvss: N/A
-    docs: true
-  CVE-2021-28041:
-    version_min: 8.2
-    version_max: 8.4
-    cvss: 4.6
-    docs: true
-  CVE-2020-15778:
-    version_max: 8.2
-    cvss: 6.8
-    docs: true
-  CVE-2020-14145:
-    version_min: 5.7
-    version_max: 8.9
-    cvss: 4.3
-    docs: true
-  CVE-2020-12062:
-    version_min: 8.2
-    version_max: 8.2
-    cvss: 5.0
-  CVE-2019-16905:
-    version_min: 7.7
-    version_max: 8.0
-    cvss: 4.4
-  CVE-2019-6111:
-    version_max: 7.9
-    cvss: 5.8
-    docs: true
-  CVE-2019-6110:
-    version_max: 7.9
-    cvss: 4.0
-    docs: true
-  CVE-2019-6109:
-    version_max: 7.9
-    cvss: 4.0
-    docs: true
-  CVE-2018-20685:
-    version_max: 7.9
-    cvss: 2.6
-    docs: true
-  CVE-2018-15919:
-    version_min: 5.9
-    version_max: 7.8
-    cvss: 5.0
-    docs: true
-  CVE-2018-15473:
-    version_max: 7.7
-    cvss: 5.0
-    docs: true
-  CVE-2017-15906:
-    version_max: 7.5
-    cvss: 5.0
-  CVE-2016-10708:
-    version_max: 7.3
-    cvss: 5.0
-  CVE-2016-10012:
-    version_max: 7.3
-    cvss: 7.2
-  CVE-2016-10011:
-    version_max: 7.3
-    cvss: 2.1
-  CVE-2016-10010:
-    version_max: 7.3
-    cvss: 6.9
-  CVE-2016-10009:
-    version_max: 7.3
-    cvss: 7.5
+  name: OpenSSH
+  url: https://www.openssh.com/
+  vulnerabilities:
+    CVE-2016-20012:
+      version_max: 8.7
+      cvss: N/A
+      docs: true
+    CVE-2021-36368:
+      version_max: 8.7
+      cvss: N/A
+      docs: true
+    CVE-2021-28041:
+      version_min: 8.2
+      version_max: 8.4
+      cvss: 4.6
+      docs: true
+    CVE-2020-15778:
+      version_max: 8.2
+      cvss: 6.8
+      docs: true
+    CVE-2020-14145:
+      version_min: 5.7
+      version_max: 8.9
+      cvss: 4.3
+      docs: true
+    CVE-2020-12062:
+      version_min: 8.2
+      version_max: 8.2
+      cvss: 5.0
+    CVE-2019-16905:
+      version_min: 7.7
+      version_max: 8.0
+      cvss: 4.4
+    CVE-2019-6111:
+      version_max: 7.9
+      cvss: 5.8
+      docs: true
+    CVE-2019-6110:
+      version_max: 7.9
+      cvss: 4.0
+      docs: true
+    CVE-2019-6109:
+      version_max: 7.9
+      cvss: 4.0
+      docs: true
+    CVE-2018-20685:
+      version_max: 7.9
+      cvss: 2.6
+      docs: true
+    CVE-2018-15919:
+      version_min: 5.9
+      version_max: 7.8
+      cvss: 5.0
+      docs: true
+    CVE-2018-15473:
+      version_max: 7.7
+      cvss: 5.0
+      docs: true
+    CVE-2017-15906:
+      version_max: 7.5
+      cvss: 5.0
+    CVE-2016-10708:
+      version_max: 7.3
+      cvss: 5.0
+    CVE-2016-10012:
+      version_max: 7.3
+      cvss: 7.2
+    CVE-2016-10011:
+      version_max: 7.3
+      cvss: 2.1
+    CVE-2016-10010:
+      version_max: 7.3
+      cvss: 6.9
+    CVE-2016-10009:
+      version_max: 7.3
+      cvss: 7.5
 dropbear:
-  CVE-2021-36369:
-    version_max: 2020.81
-    cvss: N/A
-    docs: true
-  CVE-2018-15599:
-    version_max: 2018.76
-    cvss: 5.0
-    docs: true
+  name:
+  url: https://matt.ucc.asn.au/dropbear/dropbear.html
+  vulnerabilities:
+    CVE-2021-36369:
+      version_max: 2020.81
+      cvss: N/A
+      docs: true
+    CVE-2018-15599:
+      version_max: 2018.76
+      cvss: 5.0
+      docs: true
 paramiko:
-  CVE-2022-24302:
-    version_max: 2.10.1
-    cvss: 4.3
-  CVE-2018-1000805:
-    version_max: 2.4.1
-    cvss: 6.5
-  CVE-2018-7750:
-    version_max: 2.4.1
-    cvss: 7.5
+  name: Paramiko
+  url: https://www.paramiko.org/
+  vulnerabilities:
+    CVE-2022-24302:
+      version_max: 2.10.1
+      cvss: 4.3
+    CVE-2018-1000805:
+      version_max: 2.4.1
+      cvss: 6.5
+    CVE-2018-7750:
+      version_max: 2.4.1
+      cvss: 7.5
 winscp:
-  CVE-2021-3331:
-    version_max: 6.17.10
-    cvss: 10.0
-  CVE-2020-28864:
-    version_max: 5.17.8
-    cvss: 7.5
-  CVE-2018-20684:
-    version_max: 5.14
-    cvss: 6.4
-  CVE-2014-2735:
-    version_max: 5.5.3
-    cvss: 5.8
-  CVE-2013-4852:
-    version_max: 5.1.4
-    cvss: 6.8
-  CVE-2007-4909:
-    version_max: 4.0.4
-    cvss: 9.3
-  CVE-2006-3015:
-    version_max: 3.8.1
-    cvss: 7.1
+  name: WinSCP
+  url: https://winscp.net
+  vulnerabilities:
+    CVE-2021-3331:
+      version_max: 6.17.10
+      cvss: 10.0
+    CVE-2020-28864:
+      version_max: 5.17.8
+      cvss: 7.5
+    CVE-2018-20684:
+      version_max: 5.14
+      cvss: 6.4
+    CVE-2014-2735:
+      version_max: 5.5.3
+      cvss: 5.8
+    CVE-2013-4852:
+      version_max: 5.1.4
+      cvss: 6.8
+    CVE-2007-4909:
+      version_max: 4.0.4
+      cvss: 9.3
+    CVE-2006-3015:
+      version_max: 3.8.1
+      cvss: 7.1
 motty_release:
-  CVE-2021-36367:
-    version-max:
-    cvss: 8.1
-    docs: true
-  CVE-2021-28847:
-    version-max: 0.73
-    cvss: 7.5
-  CVE-2020-14002:
-    version_max:
-    cvss: 4.3
-    docs: true
+  name: MobaXterm
+  url: https://mobaxterm.mobatek.net/
+  vulnerabilities:
+    CVE-2021-36367:
+      version-max:
+      cvss: 8.1
+      docs: true
+    CVE-2021-28847:
+      version-max: 0.73
+      cvss: 7.5
+    CVE-2020-14002:
+      version_max:
+      cvss: 4.3
+      docs: true
