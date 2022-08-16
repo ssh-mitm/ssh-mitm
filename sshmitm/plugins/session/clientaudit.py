@@ -2,6 +2,7 @@ import re
 import logging
 from collections import defaultdict
 from typing import (
+    cast,
     TYPE_CHECKING,
     Text,
     List,
@@ -54,8 +55,8 @@ class SSHClientAudit():
         self.key_negotiation_data: 'KeyNegotiationData' = key_negotiation_data
         self.client_version: Text = client_version
         self.client_info: Dict[Text, Dict[Text, Any]] = client_info
-        self.product_name: Optional[Text] = self.client_info.get('name', "")
-        self.vendor_url: Optional[Text] = self.client_info.get('url', "")
+        self.product_name: Optional[Text] = cast(str, self.client_info.get('name', ""))
+        self.vendor_url: Optional[Text] = cast(str, self.client_info.get('url', ""))
 
     @classmethod
     def client_name(cls) -> Text:
@@ -84,7 +85,7 @@ class SSHClientAudit():
         except ValueError:
             return False
 
-    def check_cves(self, vulnerabilities: Dict[Text, List[Text]]) -> None:
+    def check_cves(self, vulnerabilities: Dict[Text, List[Text]]) -> List[Text]:
         cvelist: Dict[Text, Vulnerability] = {}
         for cve, description in self.client_info.get('vulnerabilities', {}).items():
             version_min = description.get('version_min', "")

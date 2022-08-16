@@ -14,7 +14,7 @@ from rich.markup import escape
 from rich._emoji_codes import EMOJI
 
 import sshmitm
-from sshmitm.plugins.session.clientaudit import SSHClientAudit, Vulnerability
+from sshmitm.plugins.session.clientaudit import SSHClientAudit
 
 if TYPE_CHECKING:
     from sshmitm.session import Session  # noqa
