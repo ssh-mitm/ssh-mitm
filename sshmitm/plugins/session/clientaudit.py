@@ -239,3 +239,14 @@ class MoTTY_Release(SSHClientAudit):
             'rsa-sha2-256', 'ssh-rsa', 'ssh-dss'
         ]
     ]
+
+
+class TeraTermVT(SSHClientAudit):
+    VERSION_REGEX: Optional[Text] = "ssh-2.0-ttssh/([0-9]+\.[0-9]+).*"
+
+    @classmethod
+    def client_name(cls) -> Text:
+        return 'ttssh/'
+
+class WolfSSH(SSHClientAudit):
+    VERSION_REGEX: Optional[Text] = "ssh-2.0-wolfsshv([0-9]+\.[0-9]+\.[0-9]+)"

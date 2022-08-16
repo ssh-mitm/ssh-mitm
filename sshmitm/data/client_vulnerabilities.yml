@@ -216,3 +216,13 @@ motty_release:
       version_max:
       cvss: 4.3
       docs: true
+TeraTermVT:
+  name: Tera Term
+  url: http://ttssh2.osdn.jp/
+WolfSSH:
+  name: WolfSSH
+  url: https://www.wolfssl.com/products/wolfssh/
+  vulnerabilities:
+    CVE-2022-32073:
+      version-max: 1.4.7
+      cvss: 9.8

@@ -76,7 +76,9 @@ class KeyNegotiationData:
             return
         for client_cls in all_subclasses(SSHClientAudit):
             if client_cls.client_name() in client_version:
-                client_info = vulnerability_list.get(client_cls.client_name(), {})
+                client_info = vulnerability_list.get(client_cls.client_name(), None)
+                if client_info is None:
+                    client_info = vulnerability_list.get(client_cls.__name__, {})
                 client = client_cls(self, client_version, client_info)
                 break
         else:
