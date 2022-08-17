@@ -104,7 +104,7 @@ class SSHClientAudit():
             return {}
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_info.get('name', ''))
-        for host_key_algo in SERVER_HOST_KEY_ALGORITHMS.get(self.client_name):
+        for host_key_algo in SERVER_HOST_KEY_ALGORITHMS.get(self.client_name, []):
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
                 messages.append(stylize(
                     "client connecting for the first time or using default key order!",

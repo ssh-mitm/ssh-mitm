@@ -1,4 +1,3 @@
-from ensurepip import version
 import logging
 import re
 from typing import TYPE_CHECKING, Set, Type
