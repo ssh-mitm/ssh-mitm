@@ -98,13 +98,34 @@ class SSHClientAudit():
                         cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
         return cvemessagelist
 
-    def check_key_negotiation(self) -> Dict[Text, List[Text]]:
+    def _find_known_server_host_key_algos(self) -> List[Text]:
         messages: List[Text] = []
-        if self.client_name not in SERVER_HOST_KEY_ALGORITHMS:
-            return {}
-        if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
-            logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_info.get('name', ''))
-        for host_key_algo in SERVER_HOST_KEY_ALGORITHMS.get(self.client_name, []):
+        for client_name, server_host_key_algorithms_list in SERVER_HOST_KEY_ALGORITHMS.items():
+            if not isinstance(server_host_key_algorithms_list, list):
+                continue
+            for host_key_algo in server_host_key_algorithms_list:
+                if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
+                    messages.append(
+                        f"client uses same server_host_key_algorithms as {client_name}"
+                    )
+                    messages.append(stylize(
+                        "client seems to connect for the first time or using a default key order",
+                        fg('green')
+                    ))
+                    break
+        return messages
+
+    def _check_known_clients(self, client_name: Text) -> List[Text]:
+        messages: List[Text] = []
+        if client_name not in SERVER_HOST_KEY_ALGORITHMS:
+            return self._find_known_server_host_key_algos()
+        server_host_key_algorithms = SERVER_HOST_KEY_ALGORITHMS.get(client_name)
+        if server_host_key_algorithms is None:
+            messages.append("client uses same list for unknown and known hosts")
+            return messages
+        if isinstance(server_host_key_algorithms, str):
+            return self._check_known_clients(server_host_key_algorithms)
+        for host_key_algo in server_host_key_algorithms:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
                 messages.append(stylize(
                     "client connecting for the first time or using default key order!",
@@ -116,6 +137,17 @@ class SSHClientAudit():
                 "client has a locally cached remote fingerprint.",
                 fg('yellow')
             ))
+        return messages
+
+    def check_key_negotiation(self) -> Dict[Text, List[Text]]:
+        if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
+            logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_info.get('name', ''))
+
+        messages: List[Text] = []
+        if self.client_name not in SERVER_HOST_KEY_ALGORITHMS:
+            messages.extend(self._find_known_server_host_key_algos())
+        else:
+            messages.extend(self._check_known_clients(self.client_name))
         messages.append(
             f"Preferred server host key algorithm: {self.key_negotiation_data.server_host_key_algorithms[0]}"
         )

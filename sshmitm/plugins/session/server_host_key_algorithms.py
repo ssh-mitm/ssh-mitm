@@ -13,10 +13,12 @@ SERVER_HOST_KEY_ALGORITHMS = {
             'ssh-rsa-sha384@ssh.com', 'ssh-rsa-sha512@ssh.com', 'ssh-rsa'
         ]
     ],
-    'MoTTY_Release': cve202014002.SERVER_HOST_KEY_ALGORITHMS,  # based on PuTTY
+    'Dropbear': None,  # same list for known hosts
+    'MoTTY_Release': 'PuTTY_Release',
     'OpenSSH': cve202014145.SERVER_HOST_KEY_ALGORITHMS,
-    'PuTTY_Release': cve202014002.SERVER_HOST_KEY_ALGORITHMS,  # based on PuTTY
-    'PuTTYFileZilla': cve202014002.SERVER_HOST_KEY_ALGORITHMS,  # based on PuTTY
+    'Paramiko': None,  # same list for known hosts
+    'PuTTYFileZilla': 'PuTTY_Release',
+    'PuTTY_Release': cve202014002.SERVER_HOST_KEY_ALGORITHMS,
     'RubyNetSsh': [
         [  # ruby/net::ssh_5.2.0 x86_64-linux-gnu
             'ssh-ed25519-cert-v01@openssh.com', 'ssh-ed25519', 'ecdsa-sha2-nistp521-cert-v01@openssh.com',
@@ -25,5 +27,7 @@ SERVER_HOST_KEY_ALGORITHMS = {
             'ssh-rsa-cert-v00@openssh.com', 'ssh-rsa', 'ssh-dss'
         ]
     ],
-    'WinSCP': cve202014002.SERVER_HOST_KEY_ALGORITHMS,   # based on PuTTY
+    'TeraTermVT': None,  # same list for known hosts
+    'WinSCP': 'PuTTY_Release',
+    'WolfSSH': None,  # same list for known hosts
 }
