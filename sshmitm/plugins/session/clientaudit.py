@@ -44,14 +44,14 @@ class SSHClientAudit():
     def __init__(
         self,
         key_negotiation_data: 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData',
-        client_name: Text,
         client_version: Text,
-        client_info: Dict[Text, Dict[Text, Any]]
+        client_name: Optional[Text] = None,
+        client_info: Optional[Dict[Text, Dict[Text, Any]]] = None
     ) -> None:
         self.key_negotiation_data: 'KeyNegotiationData' = key_negotiation_data
-        self.client_name: Text = client_name
+        self.client_name: Optional[Text] = client_name
         self.client_version: Text = client_version
-        self.client_info: Dict[Text, Dict[Text, Any]] = client_info
+        self.client_info: Dict[Text, Dict[Text, Any]] = client_info or {}
         self.product_name: Optional[Text] = cast(str, self.client_info.get('name', ""))
         self.vendor_url: Optional[Text] = cast(str, self.client_info.get('url', ""))
 
@@ -144,7 +144,7 @@ class SSHClientAudit():
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_info.get('name', ''))
 
         messages: List[Text] = []
-        if self.client_name not in SERVER_HOST_KEY_ALGORITHMS:
+        if self.client_name is None or self.client_name not in SERVER_HOST_KEY_ALGORITHMS:
             messages.extend(self._find_known_server_host_key_algos())
         else:
             messages.extend(self._check_known_clients(self.client_name))

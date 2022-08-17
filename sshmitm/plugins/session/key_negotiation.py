@@ -1,6 +1,6 @@
 import logging
 import re
-from typing import TYPE_CHECKING, Set, Type
+from typing import TYPE_CHECKING
 
 from colored.colored import stylize, fg, attr  # type: ignore
 import paramiko
@@ -60,33 +60,26 @@ class KeyNegotiationData:
         logging.debug("first_kex_packet_follows: %s", self.first_kex_packet_follows)
 
     def audit_client(self) -> None:
-        def all_subclasses(cls: Type['SSHClientAudit']) -> Set[Type['SSHClientAudit']]:
-            return set(cls.__subclasses__()).union(
-                [s for c in cls.__subclasses__() for s in all_subclasses(c)]
-            )
-
         client = None
         vulnerability_list = None
         client_version = self.client_version.lower()
         try:
-            vulndb = pkg_resources.resource_filename('sshmitm', 'data/client_infos.yml')
+            vulndb = pkg_resources.resource_filename('sshmitm', 'data/client_info.yml')
             with open(vulndb, 'r', encoding="utf-8") as file:
                 vulnerability_list = yaml.safe_load(file)
         except Exception:
             logging.exception("Error loading vulnerability database")
             return
-        client_classes = {x.__name__: x for x in all_subclasses(SSHClientAudit)}
         for client_name, client_info in vulnerability_list.items():
             for version_regex in client_info.get('version_regex'):
                 if re.search(version_regex, client_version):
-                    client_class = client_classes.get(client_name, SSHClientAudit)
-                    client = client_class(self, client_name, client_version, client_info)
+                    client = SSHClientAudit(self, client_version, client_name, client_info)
                     break
             else:
                 continue
             break
         else:
-            client = SSHClientAudit(self, client_name, client_version, {})
+            client = SSHClientAudit(self, client_version)
 
         client.run_audit()
 

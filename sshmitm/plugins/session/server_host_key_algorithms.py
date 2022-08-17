@@ -1,6 +1,7 @@
 from sshmitm.plugins.session import cve202014002, cve202014145
 
 SERVER_HOST_KEY_ALGORITHMS = {
+    'AbsoluteTelnet': None,  # same list for known hosts
     'AsyncSSH': [
         [  # asyncssh 2.7.0
             'sk-ssh-ed25519-cert-v01@openssh.com', 'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com',
@@ -14,6 +15,7 @@ SERVER_HOST_KEY_ALGORITHMS = {
         ]
     ],
     'Dropbear': None,  # same list for known hosts
+    'KiTTY': 'PuTTY_Release',
     'MoTTY_Release': 'PuTTY_Release',
     'OpenSSH': cve202014145.SERVER_HOST_KEY_ALGORITHMS,
     'Paramiko': None,  # same list for known hosts
@@ -28,6 +30,7 @@ SERVER_HOST_KEY_ALGORITHMS = {
         ]
     ],
     'TeraTermVT': None,  # same list for known hosts
+    'TTYEmulator': None,  # same list for known hosts
     'WinSCP': 'PuTTY_Release',
     'WolfSSH': None,  # same list for known hosts
 }
