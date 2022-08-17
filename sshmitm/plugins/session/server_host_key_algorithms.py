@@ -29,6 +29,7 @@ SERVER_HOST_KEY_ALGORITHMS = {
             'ssh-rsa-cert-v00@openssh.com', 'ssh-rsa', 'ssh-dss'
         ]
     ],
+    'SecureBlackbox': None,  # same list for known hosts
     'TeraTermVT': None,  # same list for known hosts
     'TTYEmulator': None,  # same list for known hosts
     'WinSCP': 'PuTTY_Release',

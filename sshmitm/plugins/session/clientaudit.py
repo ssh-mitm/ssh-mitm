@@ -113,6 +113,11 @@ class SSHClientAudit():
                         fg('green')
                     ))
                     break
+        if not messages:
+            messages.extend([
+                "client does not use a known server_host_key_algorithms list",
+                f"offered algorithms: {self.key_negotiation_data.server_host_key_algorithms}"
+            ])
         return messages
 
     def _check_known_clients(self, client_name: Text) -> List[Text]:
@@ -121,7 +126,7 @@ class SSHClientAudit():
             return self._find_known_server_host_key_algos()
         server_host_key_algorithms = SERVER_HOST_KEY_ALGORITHMS.get(client_name)
         if server_host_key_algorithms is None:
-            messages.append("client uses same list for unknown and known hosts")
+            messages.append("client uses same server_host_key_algorithms list for unknown and known hosts")
             return messages
         if isinstance(server_host_key_algorithms, str):
             return self._check_known_clients(server_host_key_algorithms)
