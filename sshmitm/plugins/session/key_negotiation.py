@@ -1,4 +1,6 @@
+from ensurepip import version
 import logging
+import re
 from typing import TYPE_CHECKING, Set, Type
 
 from colored.colored import stylize, fg, attr  # type: ignore
@@ -74,12 +76,12 @@ class KeyNegotiationData:
         except Exception:
             logging.exception("Error loading vulnerability database")
             return
-        for client_cls in all_subclasses(SSHClientAudit):
-            if client_cls.client_name() in client_version:
-                client_info = vulnerability_list.get(client_cls.client_name(), None)
-                if client_info is None:
-                    client_info = vulnerability_list.get(client_cls.__name__, {})
-                client = client_cls(self, client_version, client_info)
+        client_classes = {x.__name__: x for x in all_subclasses(SSHClientAudit)}
+        for client_name, client_info in vulnerability_list.items():
+            version_regex = re.compile(client_info.get('version_regex'))
+            if version_regex.search(client_version):
+                client_class = client_classes.get(client_name, SSHClientAudit)
+                client = client_class(self, client_version, client_info)
                 break
         else:
             client = SSHClientAudit(self, client_version, {})

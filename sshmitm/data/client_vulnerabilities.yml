@@ -1,82 +1,40 @@
-putty_release:
-  name: PuTTY
-  url: https://www.chiark.greenend.org.uk/~sgtatham/putty/
+AsyncSSH:
+  name: AsyncSSH
+  url: https://asyncssh.readthedocs.io/en/latest/
+  version_regex: ssh-2.0-asyncssh_([0-9]+\.[0-9]+\.[0-9]+)
+Dropbear:
+  name: Dropbear
+  url: https://matt.ucc.asn.au/dropbear/dropbear.html
+  version_regex: ssh-2.0-dropbear_([0-9]+\.[0-9]+)
   vulnerabilities:
-    CVE-2021-36367:
-      version_max: 0.71
+    CVE-2021-36369:
+      version_max: 2020.81
       cvss: N/A
       docs: true
-    CVE-2021-33500:
-      version_min:
-      version_max: 0.74
+    CVE-2018-15599:
+      version_max: 2018.76
       cvss: 5.0
       docs: true
+MoTTY_Release:
+  name: MobaXterm
+  url: https://mobaxterm.mobatek.net/
+  version_regex: ssh-2.0-motty_release_(0\.[0-9]+)
+  vulnerabilities:
+    CVE-2021-36367:
+      version-max:
+      cvss: 8.1
+      docs: true
+    CVE-2021-28847:
+      version-max: 0.73
+      cvss: 7.5
     CVE-2020-14002:
-      version_min: 0.68
-      version_max: 0.73
+      version_max:
       cvss: 4.3
       docs: true
-    CVE-2019-17069:
-      version_max: 0.73
-      cvss: 5.0
-    CVE-2019-17068:
-      version_max: 0.73
-      cvss: 5.0
-    CVE-2019-9898:
-      version_max: 0.71
-      cvss: 7.5
-    CVE-2019-9897:
-      version_max: 0.71
-      cvss: 5.0
-    CVE-2019-9894:
-      version_max: 0.71
-      cvss: 6.4
-    CVE-2017-6542:
-      version_max: 0.68
-      cvss: 7.5
-    CVE-2016-6167:
-      version_min: 0.67
-      version_max: 0.67
-      cvss: 7.8
-    CVE-2013-4852:
-      version_max: 0.62
-      cvss: 6.8
-    CVE-2013-4208:
-      version_max: 0.63
-      cvss: 2.1
-    CVE-2013-4207:
-      version_max: 0.63
-      cvss: 4.3
-    CVE-2013-4206:
-      version_max: 0.63
-      cvss: 6.8
-    CVE-2011-4607:
-      version_max: 0.61
-      cvss: 2.1
-    CVE-2006-7162:
-      version_max: 0.59
-      cvss: 1.9
-    CVE-2005-0467:
-      version_max: 0.56
-      cvss: 7.5
-    CVE-2004-1440:
-      version_max: 0.55
-      cvss: 7.5
-    CVE-2004-1008:
-      version_max: 0.56
-      cvss: 10
-    CVE-2003-0069:
-      version_max: 0.53
-      cvss: 7.5
-    CVE-2003-0048:
-      version_max: 0.53
-      cvss: 4.6
-    CVE-2000-0476:
-      version_max: 0.48
-      cvss: 5.0
-openssh:
+OpenSSH:
   name: OpenSSH
   url: https://www.openssh.com/
+  version_regex: ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*
   vulnerabilities:
     CVE-2016-20012:
       version_max: 8.7
@@ -151,21 +109,10 @@ openssh:
     CVE-2016-10009:
       version_max: 7.3
       cvss: 7.5
-dropbear:
-  name:
-  url: https://matt.ucc.asn.au/dropbear/dropbear.html
-  vulnerabilities:
-    CVE-2021-36369:
-      version_max: 2020.81
-      cvss: N/A
-      docs: true
-    CVE-2018-15599:
-      version_max: 2018.76
-      cvss: 5.0
-      docs: true
-paramiko:
+Paramiko:
   name: Paramiko
   url: https://www.paramiko.org/
+  version_regex: ssh-2.0-paramiko_([0-9]+\.[0-9]+\.[0-9]+)
   vulnerabilities:
     CVE-2022-24302:
       version_max: 2.10.1
@@ -176,9 +123,99 @@ paramiko:
     CVE-2018-7750:
       version_max: 2.4.1
       cvss: 7.5
-winscp:
+PuTTYFileZilla:
+  name: FileZilla
+  url: https://filezilla-project.org/
+  version_regex: ssh-2.0-puttyfilezilla_([0-9]+\.[0-9]+\.[0-9]+)
+PuTTY_Release:
+  name: PuTTY
+  url: https://www.chiark.greenend.org.uk/~sgtatham/putty/
+  version_regex: ssh-2.0-putty_release_(0\.[0-9]+)
+  vulnerabilities:
+    CVE-2021-36367:
+      version_max: 0.71
+      cvss: N/A
+      docs: true
+    CVE-2021-33500:
+      version_min:
+      version_max: 0.74
+      cvss: 5.0
+      docs: true
+    CVE-2020-14002:
+      version_min: 0.68
+      version_max: 0.73
+      cvss: 4.3
+      docs: true
+    CVE-2019-17069:
+      version_max: 0.73
+      cvss: 5.0
+    CVE-2019-17068:
+      version_max: 0.73
+      cvss: 5.0
+    CVE-2019-9898:
+      version_max: 0.71
+      cvss: 7.5
+    CVE-2019-9897:
+      version_max: 0.71
+      cvss: 5.0
+    CVE-2019-9894:
+      version_max: 0.71
+      cvss: 6.4
+    CVE-2017-6542:
+      version_max: 0.68
+      cvss: 7.5
+    CVE-2016-6167:
+      version_min: 0.67
+      version_max: 0.67
+      cvss: 7.8
+    CVE-2013-4852:
+      version_max: 0.62
+      cvss: 6.8
+    CVE-2013-4208:
+      version_max: 0.63
+      cvss: 2.1
+    CVE-2013-4207:
+      version_max: 0.63
+      cvss: 4.3
+    CVE-2013-4206:
+      version_max: 0.63
+      cvss: 6.8
+    CVE-2011-4607:
+      version_max: 0.61
+      cvss: 2.1
+    CVE-2006-7162:
+      version_max: 0.59
+      cvss: 1.9
+    CVE-2005-0467:
+      version_max: 0.56
+      cvss: 7.5
+    CVE-2004-1440:
+      version_max: 0.55
+      cvss: 7.5
+    CVE-2004-1008:
+      version_max: 0.56
+      cvss: 10
+    CVE-2003-0069:
+      version_max: 0.53
+      cvss: 7.5
+    CVE-2003-0048:
+      version_max: 0.53
+      cvss: 4.6
+    CVE-2000-0476:
+      version_max: 0.48
+      cvss: 5.0
+RubyNetSsh:
+  name: Net::SSH
+  url: http://net-ssh.github.io/net-ssh/
+  version_regex: ssh-2.0-ruby/net::ssh_([0-9]+\.[0-9]+\.[0-9]+)\s+.*
+TeraTermVT:
+  name: Tera Term
+  url: http://ttssh2.osdn.jp/
+  version_regex: ssh-2.0-ttssh/([0-9]+\.[0-9]+).*
+WinSCP:
   name: WinSCP
   url: https://winscp.net
+  version_regex: ssh-2.0-winscp_release_([0-9]+\.[0-9]+\.[0-9]+)
   vulnerabilities:
     CVE-2021-3331:
       version_max: 6.17.10
@@ -201,27 +238,10 @@ winscp:
     CVE-2006-3015:
       version_max: 3.8.1
       cvss: 7.1
-motty_release:
-  name: MobaXterm
-  url: https://mobaxterm.mobatek.net/
-  vulnerabilities:
-    CVE-2021-36367:
-      version-max:
-      cvss: 8.1
-      docs: true
-    CVE-2021-28847:
-      version-max: 0.73
-      cvss: 7.5
-    CVE-2020-14002:
-      version_max:
-      cvss: 4.3
-      docs: true
-TeraTermVT:
-  name: Tera Term
-  url: http://ttssh2.osdn.jp/
 WolfSSH:
   name: WolfSSH
   url: https://www.wolfssl.com/products/wolfssh/
+  version_regex: ssh-2.0-wolfsshv([0-9]+\.[0-9]+\.[0-9]+)
   vulnerabilities:
     CVE-2022-32073:
       version-max: 1.4.7

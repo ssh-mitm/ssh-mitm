@@ -41,8 +41,6 @@ class Vulnerability:
 
 class SSHClientAudit():
 
-    CLIENT_NAME: Optional[Text] = None
-    VERSION_REGEX: Optional[Text] = None
     SERVER_HOST_KEY_ALGORITHMS: Optional[List[List[Text]]] = None
     SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = None
 
@@ -58,14 +56,11 @@ class SSHClientAudit():
         self.product_name: Optional[Text] = cast(str, self.client_info.get('name', ""))
         self.vendor_url: Optional[Text] = cast(str, self.client_info.get('url', ""))
 
-    @classmethod
-    def client_name(cls) -> Text:
-        return cls.CLIENT_NAME or cls.__name__.lower()
-
     def get_version_string(self) -> Optional[Text]:
-        if not self.VERSION_REGEX:
+        version_regex = self.client_info.get('version_regex', None)
+        if not version_regex:
             return None
-        version_sring = re.match(self.VERSION_REGEX, self.key_negotiation_data.client_version.lower())
+        version_sring = re.match(version_regex, self.key_negotiation_data.client_version.lower())
         if version_sring:
             return version_sring[1]
         return None
@@ -111,7 +106,7 @@ class SSHClientAudit():
         if not self.SERVER_HOST_KEY_ALGORITHMS or not self.SERVER_HOST_KEY_ALGORITHMS_CVE:
             return {}
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
-            logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_name())
+            logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_info.get('name', ''))
         for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS or []:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
                 messages.append(stylize(
@@ -168,31 +163,16 @@ class SSHClientAudit():
 
 
 class PuTTY_Release(SSHClientAudit):
-    VERSION_REGEX = r'ssh-2.0-putty_release_(0\.[0-9]+)'
     SERVER_HOST_KEY_ALGORITHMS = cve202014002.SERVER_HOST_KEY_ALGORITHMS
     SERVER_HOST_KEY_ALGORITHMS_CVE = cve202014002.CVE
 
 
-class PuTTYFileZilla(PuTTY_Release):
-    VERSION_REGEX = r'ssh-2.0-puttyfilezilla_([0-9]+\.[0-9]+\.[0-9]+)'
-
-
-class WinSCP(PuTTY_Release):
-    VERSION_REGEX = r'ssh-2.0-winscp_release_([0-9]+\.[0-9]+\.[0-9]+)'
-
-
 class OpenSSH(SSHClientAudit):
-    VERSION_REGEX = r'ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*'
     SERVER_HOST_KEY_ALGORITHMS = cve202014145.SERVER_HOST_KEY_ALGORITHMS
     SERVER_HOST_KEY_ALGORITHMS_CVE = cve202014145.CVE
 
 
-class Dropbear(SSHClientAudit):
-    VERSION_REGEX = r'ssh-2.0-dropbear_([0-9]+\.[0-9]+)'
-
-
 class AsyncSSH(SSHClientAudit):
-    VERSION_REGEX = r'ssh-2.0-asyncssh_([0-9]+\.[0-9]+\.[0-9]+)'
     SERVER_HOST_KEY_ALGORITHMS = [
         [  # asyncssh 2.7.0
             'sk-ssh-ed25519-cert-v01@openssh.com', 'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com',
@@ -208,7 +188,6 @@ class AsyncSSH(SSHClientAudit):
 
 
 class RubyNetSsh(SSHClientAudit):
-    VERSION_REGEX = r'ssh-2.0-ruby/net::ssh_([0-9]+\.[0-9]+\.[0-9]+)\s+.*'
     SERVER_HOST_KEY_ALGORITHMS = [
         [  # ruby/net::ssh_5.2.0 x86_64-linux-gnu
             'ssh-ed25519-cert-v01@openssh.com', 'ssh-ed25519', 'ecdsa-sha2-nistp521-cert-v01@openssh.com',
@@ -218,18 +197,9 @@ class RubyNetSsh(SSHClientAudit):
         ]
     ]
 
-    @classmethod
-    def client_name(cls) -> Text:
-        return 'ruby/net::ssh'
-
-
-class Paramiko(SSHClientAudit):
-    VERSION_REGEX = r'ssh-2.0-paramiko_([0-9]+\.[0-9]+\.[0-9]+)'
-
 
 class MoTTY_Release(SSHClientAudit):
     """MobaXterm ssh client implementation"""
-    VERSION_REGEX = r'ssh-2.0-motty_release_(0\.[0-9]+)'
     SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = 'CVE-2020-14002'
     SERVER_HOST_KEY_ALGORITHMS = [
         [
@@ -239,15 +209,3 @@ class MoTTY_Release(SSHClientAudit):
             'rsa-sha2-256', 'ssh-rsa', 'ssh-dss'
         ]
     ]
-
-
-class TeraTermVT(SSHClientAudit):
-    VERSION_REGEX: Optional[Text] = r"ssh-2.0-ttssh/([0-9]+\.[0-9]+).*"
-
-    @classmethod
-    def client_name(cls) -> Text:
-        return 'ttssh/'
-
-
-class WolfSSH(SSHClientAudit):
-    VERSION_REGEX: Optional[Text] = r"ssh-2.0-wolfsshv([0-9]+\.[0-9]+\.[0-9]+)"
