@@ -104,6 +104,7 @@ exclude_patterns = []
 html_static_path = ['_static']
 
 redirects = {
+    "trivialauth": "user_guide/trivialauth.html",
     # CVEs
     "puttydos": "vulnerabilities/CVE-2021-33500.html",
     'CVE-2016-20012': 'vulnerabilities/CVE-2016-20012.html',
