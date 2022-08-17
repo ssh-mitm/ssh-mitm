@@ -1,4 +1,3 @@
-CVE = "CVE-2020-14145"
 SERVER_HOST_KEY_ALGORITHMS = [
     [  # client version: OpenSSH_8.9p1
         'ssh-ed25519-cert-v01@openssh.com',

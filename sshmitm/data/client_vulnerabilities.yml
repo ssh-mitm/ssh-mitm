@@ -1,11 +1,13 @@
 AsyncSSH:
   name: AsyncSSH
   url: https://asyncssh.readthedocs.io/en/latest/
-  version_regex: ssh-2.0-asyncssh_([0-9]+\.[0-9]+\.[0-9]+)
+  version_regex:
+    - ssh-2.0-asyncssh_([0-9]+\.[0-9]+\.[0-9]+)
 Dropbear:
   name: Dropbear
   url: https://matt.ucc.asn.au/dropbear/dropbear.html
-  version_regex: ssh-2.0-dropbear_([0-9]+\.[0-9]+)
+  version_regex:
+    - ssh-2.0-dropbear_([0-9]+\.[0-9]+)
   vulnerabilities:
     CVE-2021-36369:
       version_max: 2020.81
@@ -18,7 +20,8 @@ Dropbear:
 MoTTY_Release:
   name: MobaXterm
   url: https://mobaxterm.mobatek.net/
-  version_regex: ssh-2.0-motty_release_(0\.[0-9]+)
+  version_regex:
+    - ssh-2.0-motty_release_(0\.[0-9]+)
   vulnerabilities:
     CVE-2021-36367:
       version-max:
@@ -34,7 +37,8 @@ MoTTY_Release:
 OpenSSH:
   name: OpenSSH
   url: https://www.openssh.com/
-  version_regex: ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*
+  version_regex:
+    - ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*
   vulnerabilities:
     CVE-2016-20012:
       version_max: 8.7
@@ -112,7 +116,8 @@ OpenSSH:
 Paramiko:
   name: Paramiko
   url: https://www.paramiko.org/
-  version_regex: ssh-2.0-paramiko_([0-9]+\.[0-9]+\.[0-9]+)
+  version_regex:
+    - ssh-2.0-paramiko_([0-9]+\.[0-9]+\.[0-9]+)
   vulnerabilities:
     CVE-2022-24302:
       version_max: 2.10.1
@@ -126,11 +131,14 @@ Paramiko:
 PuTTYFileZilla:
   name: FileZilla
   url: https://filezilla-project.org/
-  version_regex: ssh-2.0-puttyfilezilla_([0-9]+\.[0-9]+\.[0-9]+)
+  version_regex:
+    - ssh-2.0-puttyfilezilla_([0-9]+\.[0-9]+\.[0-9]+)
+    - ssh-2.0-filezilla_([0-9]+\.[0-9]+\.[0-9]+)
 PuTTY_Release:
   name: PuTTY
   url: https://www.chiark.greenend.org.uk/~sgtatham/putty/
-  version_regex: ssh-2.0-putty_release_(0\.[0-9]+)
+  version_regex:
+    - ssh-2.0-putty_release_(0\.[0-9]+)
   vulnerabilities:
     CVE-2021-36367:
       version_max: 0.71
@@ -207,15 +215,18 @@ PuTTY_Release:
 RubyNetSsh:
   name: Net::SSH
   url: http://net-ssh.github.io/net-ssh/
-  version_regex: ssh-2.0-ruby/net::ssh_([0-9]+\.[0-9]+\.[0-9]+)\s+.*
+  version_regex:
+    - ssh-2.0-ruby/net::ssh_([0-9]+\.[0-9]+\.[0-9]+)\s+.*
 TeraTermVT:
   name: Tera Term
   url: http://ttssh2.osdn.jp/
-  version_regex: ssh-2.0-ttssh/([0-9]+\.[0-9]+).*
+  version_regex:
+    - ssh-2.0-ttssh/([0-9]+\.[0-9]+).*
 WinSCP:
   name: WinSCP
   url: https://winscp.net
-  version_regex: ssh-2.0-winscp_release_([0-9]+\.[0-9]+\.[0-9]+)
+  version_regex:
+    - ssh-2.0-winscp_release_([0-9]+\.[0-9]+\.[0-9]+)
   vulnerabilities:
     CVE-2021-3331:
       version_max: 6.17.10
@@ -241,7 +252,8 @@ WinSCP:
 WolfSSH:
   name: WolfSSH
   url: https://www.wolfssl.com/products/wolfssh/
-  version_regex: ssh-2.0-wolfsshv([0-9]+\.[0-9]+\.[0-9]+)
+  version_regex:
+    - ssh-2.0-wolfsshv([0-9]+\.[0-9]+\.[0-9]+)
   vulnerabilities:
     CVE-2022-32073:
       version-max: 1.4.7

@@ -78,16 +78,18 @@ class KeyNegotiationData:
             return
         client_classes = {x.__name__: x for x in all_subclasses(SSHClientAudit)}
         for client_name, client_info in vulnerability_list.items():
-            version_regex = re.compile(client_info.get('version_regex'))
-            if version_regex.search(client_version):
-                client_class = client_classes.get(client_name, SSHClientAudit)
-                client = client_class(self, client_version, client_info)
-                break
+            for version_regex in client_info.get('version_regex'):
+                if re.search(version_regex, client_version):
+                    client_class = client_classes.get(client_name, SSHClientAudit)
+                    client = client_class(self, client_name, client_version, client_info)
+                    break
+            else:
+                continue
+            break
         else:
-            client = SSHClientAudit(self, client_version, {})
+            client = SSHClientAudit(self, client_name, client_version, {})
 
-        if client:
-            client.run_audit()
+        client.run_audit()
 
 
 def handle_key_negotiation(session: 'sshmitm.session.Session') -> None:

@@ -20,7 +20,7 @@ from paramiko import ECDSAKey
 from rich._emoji_codes import EMOJI
 
 import sshmitm
-from sshmitm.plugins.session import cve202014002, cve202014145
+from sshmitm.plugins.session.server_host_key_algorithms import SERVER_HOST_KEY_ALGORITHMS
 
 if TYPE_CHECKING:
     from sshmitm.plugins.session.key_negotiation import KeyNegotiationData
@@ -41,28 +41,25 @@ class Vulnerability:
 
 class SSHClientAudit():
 
-    SERVER_HOST_KEY_ALGORITHMS: Optional[List[List[Text]]] = None
-    SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = None
-
     def __init__(
         self,
         key_negotiation_data: 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData',
+        client_name: Text,
         client_version: Text,
         client_info: Dict[Text, Dict[Text, Any]]
     ) -> None:
         self.key_negotiation_data: 'KeyNegotiationData' = key_negotiation_data
+        self.client_name: Text = client_name
         self.client_version: Text = client_version
         self.client_info: Dict[Text, Dict[Text, Any]] = client_info
         self.product_name: Optional[Text] = cast(str, self.client_info.get('name', ""))
         self.vendor_url: Optional[Text] = cast(str, self.client_info.get('url', ""))
 
     def get_version_string(self) -> Optional[Text]:
-        version_regex = self.client_info.get('version_regex', None)
-        if not version_regex:
-            return None
-        version_sring = re.match(version_regex, self.key_negotiation_data.client_version.lower())
-        if version_sring:
-            return version_sring[1]
+        for version_regex in self.client_info.get('version_regex', []):
+            version_sring = re.match(version_regex, self.key_negotiation_data.client_version.lower())
+            if version_sring:
+                return version_sring[1]
         return None
 
     def between_versions(self, version_min: Union[None, int, float, Text], version_max: Union[None, int, float, Text]) -> bool:
@@ -103,11 +100,11 @@ class SSHClientAudit():
 
     def check_key_negotiation(self) -> Dict[Text, List[Text]]:
         messages: List[Text] = []
-        if not self.SERVER_HOST_KEY_ALGORITHMS or not self.SERVER_HOST_KEY_ALGORITHMS_CVE:
+        if self.client_name not in SERVER_HOST_KEY_ALGORITHMS:
             return {}
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_info.get('name', ''))
-        for host_key_algo in self.SERVER_HOST_KEY_ALGORITHMS or []:
+        for host_key_algo in SERVER_HOST_KEY_ALGORITHMS.get(self.client_name):
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
                 messages.append(stylize(
                     "client connecting for the first time or using default key order!",
@@ -122,7 +119,7 @@ class SSHClientAudit():
         messages.append(
             f"Preferred server host key algorithm: {self.key_negotiation_data.server_host_key_algorithms[0]}"
         )
-        return {self.SERVER_HOST_KEY_ALGORITHMS_CVE: messages}
+        return {'clientaudit': messages}
 
     def run_audit(self) -> None:
         vulnerabilities: DefaultDict[Text, List[Text]] = defaultdict(list)
@@ -152,7 +149,7 @@ class SSHClientAudit():
         if client_audits:
             log_output.append(
                 "".join([
-                    stylize(EMOJI['warning'] + " client audit tests:\n", fg('yellow') + attr('bold')),
+                    stylize(EMOJI['warning'] + " client audit tests:\n", fg('blue') + attr('bold')),
                     "\n".join([f"  * {v}" for v in client_audits])
                 ])
             )
@@ -160,52 +157,3 @@ class SSHClientAudit():
 
     def audit(self) -> List[Text]:
         return []
-
-
-class PuTTY_Release(SSHClientAudit):
-    SERVER_HOST_KEY_ALGORITHMS = cve202014002.SERVER_HOST_KEY_ALGORITHMS
-    SERVER_HOST_KEY_ALGORITHMS_CVE = cve202014002.CVE
-
-
-class OpenSSH(SSHClientAudit):
-    SERVER_HOST_KEY_ALGORITHMS = cve202014145.SERVER_HOST_KEY_ALGORITHMS
-    SERVER_HOST_KEY_ALGORITHMS_CVE = cve202014145.CVE
-
-
-class AsyncSSH(SSHClientAudit):
-    SERVER_HOST_KEY_ALGORITHMS = [
-        [  # asyncssh 2.7.0
-            'sk-ssh-ed25519-cert-v01@openssh.com', 'sk-ecdsa-sha2-nistp256-cert-v01@openssh.com',
-            'ssh-ed25519-cert-v01@openssh.com', 'ssh-ed448-cert-v01@openssh.com',
-            'ecdsa-sha2-nistp521-cert-v01@openssh.com', 'ecdsa-sha2-nistp384-cert-v01@openssh.com',
-            'ecdsa-sha2-nistp256-cert-v01@openssh.com', 'ecdsa-sha2-1.3.132.0.10-cert-v01@openssh.com',
-            'ssh-rsa-cert-v01@openssh.com', 'sk-ssh-ed25519@openssh.com', 'sk-ecdsa-sha2-nistp256@openssh.com',
-            'ssh-ed25519', 'ssh-ed448', 'ecdsa-sha2-nistp521', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp256',
-            'ecdsa-sha2-1.3.132.0.10', 'rsa-sha2-256', 'rsa-sha2-512', 'ssh-rsa-sha224@ssh.com', 'ssh-rsa-sha256@ssh.com',
-            'ssh-rsa-sha384@ssh.com', 'ssh-rsa-sha512@ssh.com', 'ssh-rsa'
-        ]
-    ]
-
-
-class RubyNetSsh(SSHClientAudit):
-    SERVER_HOST_KEY_ALGORITHMS = [
-        [  # ruby/net::ssh_5.2.0 x86_64-linux-gnu
-            'ssh-ed25519-cert-v01@openssh.com', 'ssh-ed25519', 'ecdsa-sha2-nistp521-cert-v01@openssh.com',
-            'ecdsa-sha2-nistp384-cert-v01@openssh.com', 'ecdsa-sha2-nistp256-cert-v01@openssh.com',
-            'ecdsa-sha2-nistp521', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp256', 'ssh-rsa-cert-v01@openssh.com',
-            'ssh-rsa-cert-v00@openssh.com', 'ssh-rsa', 'ssh-dss'
-        ]
-    ]
-
-
-class MoTTY_Release(SSHClientAudit):
-    """MobaXterm ssh client implementation"""
-    SERVER_HOST_KEY_ALGORITHMS_CVE: Optional[Text] = 'CVE-2020-14002'
-    SERVER_HOST_KEY_ALGORITHMS = [
-        [
-            'ssh-ed448', 'ssh-ed25519',
-            'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384',
-            'ecdsa-sha2-nistp521', 'rsa-sha2-512',
-            'rsa-sha2-256', 'ssh-rsa', 'ssh-dss'
-        ]
-    ]
