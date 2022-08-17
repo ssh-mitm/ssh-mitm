@@ -13,25 +13,10 @@ SERVER_HOST_KEY_ALGORITHMS = {
             'ssh-rsa-sha384@ssh.com', 'ssh-rsa-sha512@ssh.com', 'ssh-rsa'
         ]
     ],
-    'MoTTY_Release': [
-        [
-            'ssh-ed448', 'ssh-ed25519',
-            'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384',
-            'ecdsa-sha2-nistp521', 'rsa-sha2-512',
-            'rsa-sha2-256', 'ssh-rsa', 'ssh-dss'
-        ]
-    ],
+    'MoTTY_Release': cve202014002.SERVER_HOST_KEY_ALGORITHMS,  # based on PuTTY
     'OpenSSH': cve202014145.SERVER_HOST_KEY_ALGORITHMS,
-    'PuTTY_Release': cve202014002.SERVER_HOST_KEY_ALGORITHMS,
-    'PuTTYFileZilla': [
-        [
-            'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'
-        ],
-        [  # FileZilla 3.58.0
-            'ssh-ed448', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384',
-            'ecdsa-sha2-nistp521', 'rsa-sha2-512', 'rsa-sha2-256', 'ssh-rsa', 'ssh-dss'
-        ]
-    ],
+    'PuTTY_Release': cve202014002.SERVER_HOST_KEY_ALGORITHMS,  # based on PuTTY
+    'PuTTYFileZilla': cve202014002.SERVER_HOST_KEY_ALGORITHMS,  # based on PuTTY
     'RubyNetSsh': [
         [  # ruby/net::ssh_5.2.0 x86_64-linux-gnu
             'ssh-ed25519-cert-v01@openssh.com', 'ssh-ed25519', 'ecdsa-sha2-nistp521-cert-v01@openssh.com',
@@ -40,14 +25,5 @@ SERVER_HOST_KEY_ALGORITHMS = {
             'ssh-rsa-cert-v00@openssh.com', 'ssh-rsa', 'ssh-dss'
         ]
     ],
-    'WinSCP': [
-        [
-            'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'ssh-rsa', 'ssh-dss'
-        ],
-        [  # WinSCP-5.21.2-Portable
-            'ssh-ed448', 'ssh-ed25519', 'ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384',
-            'ecdsa-sha2-nistp521', 'rsa-sha2-512',
-            'rsa-sha2-256', 'ssh-rsa', 'ssh-dss'
-        ]
-    ]
+    'WinSCP': cve202014002.SERVER_HOST_KEY_ALGORITHMS,   # based on PuTTY
 }
