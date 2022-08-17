@@ -69,7 +69,7 @@ class KeyNegotiationData:
         vulnerability_list = None
         client_version = self.client_version.lower()
         try:
-            vulndb = pkg_resources.resource_filename('sshmitm', 'data/client_vulnerabilities.yml')
+            vulndb = pkg_resources.resource_filename('sshmitm', 'data/client_infos.yml')
             with open(vulndb, 'r', encoding="utf-8") as file:
                 vulnerability_list = yaml.safe_load(file)
         except Exception:
