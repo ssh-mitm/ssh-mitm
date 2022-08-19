@@ -160,7 +160,7 @@ class Session(BaseSession):
                         EMOJI['information'],
                         stylize(self.sessionid, fg('light_blue') + attr('bold'))
                     )
-            except ChannelException as exc:
+            except ChannelException:
                 logging.info(
                     "%s %s - ssh-agent breakin not successfull!",
                     EMOJI['warning'],
