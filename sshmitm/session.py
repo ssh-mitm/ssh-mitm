@@ -149,31 +149,45 @@ class Session(BaseSession):
 
         return self._transport
 
+    def _request_agent(self) -> bool:
+        requested_agent = None
+        if self.agent is None or self.authenticator.REQUEST_AGENT_BREAKIN:
+            try:
+                if self.agent_requested.wait(1) or self.authenticator.REQUEST_AGENT_BREAKIN:
+                    requested_agent = AgentProxy(self.transport)
+                    logging.info(
+                        "%s %s - successfully requested ssh-agent",
+                        EMOJI['information'],
+                        stylize(self.sessionid, fg('light_blue') + attr('bold'))
+                    )
+            except ChannelException as exc:
+                logging.info(
+                    "%s %s - ssh-agent breakin not successfull!",
+                    EMOJI['warning'],
+                    stylize(self.sessionid, fg('light_blue') + attr('bold'))
+                )
+                return False
+        self.agent = requested_agent or self.agent
+        return self.agent is not None
+
     def _start_channels(self) -> bool:
+        self._request_agent()
+
         # create client or master channel
         if self.ssh_client:
             self.sftp_client_ready.set()
             return True
 
-        if not self.agent or self.authenticator.REQUEST_AGENT_BREAKIN:
-            try:
-                if self.agent_requested.wait(1) or self.authenticator.REQUEST_AGENT_BREAKIN:
-                    self.agent = AgentProxy(self.transport)
-            except ChannelException:
-                logging.error("Breakin not successful! Closing ssh connection to client")
-                self.agent = None
-                self.close()
-                return False
         # Connect method start
         if not self.agent:
             if self.username_provided is None:
-                logging.error("No username proviced during login!")
+                logging.error("No username provided during login!")
                 return False
             return self.authenticator.auth_fallback(self.username_provided) == paramiko.common.AUTH_SUCCESSFUL
 
         if self.authenticator.authenticate(store_credentials=False) != paramiko.common.AUTH_SUCCESSFUL:
             if self.username_provided is None:
-                logging.error("No username proviced during login!")
+                logging.error("No username provided during login!")
                 return False
             if self.authenticator.auth_fallback(self.username_provided) == paramiko.common.AUTH_SUCCESSFUL:
                 return True
