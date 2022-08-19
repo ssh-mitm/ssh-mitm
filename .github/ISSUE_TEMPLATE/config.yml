@@ -1,0 +1,8 @@
+blank_issues_enabled: true
+contact_links:
+  - name: 📘 Whant to know how to use SSH-MITM?
+    url: https://docs.ssh-mitm.at
+    about: The documentation covers most of SSH-MITMs use cases.
+  - name: ⁉️ Need help with SSH-MITM?
+    url: https://github.com/ssh-mitm/ssh-mitm/discussions
+    about: Please start a discussion before opening a bug.

@@ -1,0 +1,64 @@
+name: "\U0001F41B Bug report"
+description: Create a report to help us improve
+body:
+  - type: markdown
+    attributes:
+      value: |
+        Thank you for reporting an issue.
+
+        This issue tracker is for bugs and issues found within SSH-MITM.
+        If you require more general support please start a discussion on our discussion board https://github.com/ssh-mitm/ssh-mitm/discussions
+
+        Please fill in as much of the form below as you're able.
+
+        Before continue, make sure you are using the latest release: check https://github.com/ssh-mitm/ssh-mitm/releases for latest release.
+
+  - type: input
+    attributes:
+      label: SSH-MITM Version
+      description: |
+        To get the version please run: `ssh-mitm --version`
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Platform detail
+      description: |
+        windows 7/8/10/11, mac os(ARM or x64), or linux
+        UNIX: output of `uname -a`
+        Windows: output of `"$([Environment]::OSVersion | ForEach-Object VersionString) $(if ([Environment]::Is64BitOperatingSystem) { "x64" } else { "x86" })"` in PowerShell console
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: Arguments used to start SSH-MITM
+      description: |
+        Which command line arguments are used to start SSH-MITM.
+    validations:
+      required: true
+  - type: input
+    attributes:
+      label: SSH client used
+      description: |
+        Please provide the name and version of the **ssh client**, which was used
+  - type: input
+    attributes:
+      label: SSH server used
+      description: |
+        Please provide the name and version of the ssh server, which was used
+  - type: textarea
+    attributes:
+      label: What steps will reproduce the bug?
+      description: Enter details about your bug and your scenario.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: What should have happened?
+      description: If possible please provide screenshots.
+    validations:
+      required: true
+  - type: textarea
+    attributes:
+      label: Additional information
+      description: Tell us anything else you think we should know.
