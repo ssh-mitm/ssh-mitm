@@ -1,0 +1,9 @@
+name: "💡 Proposal / Feature"
+description: Propose a non-trivial change or new feature for SSH-MITM
+body:
+  - type: textarea
+    attributes:
+      label: What feature you'd like to see or proposal
+      description: A clear and concise description of what the proposal or feature is.
+    validations:
+      required: true
