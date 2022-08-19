@@ -32,6 +32,11 @@ libssh:
   url: https://www.libssh.org/
   version_regex:
     - ssh-2.0-libssh_([0-9]+\.[0-9]+\.[0-9]+)
+libssh2:
+  name: libssh2
+  url: https://www.libssh2.org/
+  version_regex:
+    - ssh-2.0-libssh2_([0-9]+\.[0-9]+\.[0-9]+)
 MoTTY_Release:
   name: MobaXterm
   url: https://mobaxterm.mobatek.net/
