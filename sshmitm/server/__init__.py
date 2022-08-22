@@ -23,6 +23,7 @@ from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key, PKey
 from paramiko.ssh_exception import SSHException
 from sshpubkeys import SSHKey  # type: ignore
 
+from sshmitm.console import sshconsole
 from sshmitm.multisocket import (
     create_server_sock,
     has_dual_stack,
@@ -135,18 +136,21 @@ class SSHProxyServer:
 
         ssh_pub_key = SSHKey(f"{self._hostkey.get_name()} {self._hostkey.get_base64()}")
         ssh_pub_key.parse()
-        logging.info(
+        print(
             (
-                "%s %s key "
-                "with %s bit length and fingerprints:\n"
-                "    %s\n"
-                "    %s"
-            ),
-            'loaded' if self.key_file else 'generated temporary',
-            key_algorithm_class.__name__,
-            self._hostkey.get_bits(),
-            stylize(ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
-            stylize(ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold'))
+                "{} {} key "
+                "with {} bit length and fingerprints:\n"
+                "   {}\n"
+                "   {}\n"
+                "   {}"
+            ).format(
+                'loaded' if self.key_file else 'generated temporary',
+                key_algorithm_class.__name__,
+                self._hostkey.get_bits(),
+                stylize(ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
+                stylize(ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold')),
+                stylize(ssh_pub_key.hash_sha512(), fg('light_blue') + attr('bold'))
+            )
         )
 
     def _key_from_filepath(self, filename: Text, klass: Type[PKey], password: Optional[Text]) -> PKey:
@@ -240,14 +244,17 @@ class SSHProxyServer:
             )
             return
 
-        logging.info(
-            'listen interfaces %s and %s on port %s',
-            self.listen_address,
-            self.listen_address_v6,
-            self.listen_port
+        print(
+            'listen interfaces {} and {} on port {}'.format(
+                self.listen_address,
+                self.listen_address_v6,
+                self.listen_port
+            )
         )
         if self.transparent:
-            logging.info("%s (experimental)", stylize('Transparent mode enabled!', attr('bold')))
+            print(f"{stylize('Transparent mode enabled!', attr('bold'))} (experimental)")
+        sshconsole.rule("[red]waiting for connections", style="red")
+
         self.running = True
         try:
             while self.running:
