@@ -15,6 +15,7 @@ SERVER_HOST_KEY_ALGORITHMS = {
         ]
     ],
     'Dropbear': None,  # same list for known hosts
+    'JSCH': ['ecdsa-sha2-nistp256', 'ecdsa-sha2-nistp384', 'ecdsa-sha2-nistp521', 'rsa-sha2-512', 'rsa-sha2-256', 'ssh-rsa'],
     'KiTTY': 'PuTTY_Release',
     'MoTTY_Release': 'PuTTY_Release',
     'OpenSSH': cve202014145.SERVER_HOST_KEY_ALGORITHMS,

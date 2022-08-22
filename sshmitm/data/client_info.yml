@@ -8,6 +8,11 @@ AsyncSSH:
   url: https://asyncssh.readthedocs.io/en/latest/
   version_regex:
     - ssh-2.0-asyncssh_([0-9]+\.[0-9]+\.[0-9]+)
+TrileadSSH2:
+  name: Trilead SSH2
+  url: https://github.com/connectbot/sshlib
+  version_regex:
+    -  ssh-2.0-trileadssh2java_([0-9]+)
 Dropbear:
   name: Dropbear
   url: https://matt.ucc.asn.au/dropbear/dropbear.html
@@ -22,6 +27,11 @@ Dropbear:
       version_max: 2018.76
       cvss: 5.0
       docs: true
+JSCH:
+  name: JSch - Java Secure Channel
+  url: https://github.com/mwiede/jsch
+  version_regex:
+    - ssh-2.0-jsch-([0-9]+\.[0-9]+\.[0-9]+)
 KiTTY:
   name: KiTTY
   url: http://www.9bis.net/kitty
@@ -252,6 +262,11 @@ TeraTermVT:
   url: http://ttssh2.osdn.jp/
   version_regex:
     - ssh-2.0-ttssh/([0-9]+\.[0-9]+).*
+TotalCommander:
+  name: TotalCommander SFTP Plugin (Android)
+  url: https://www.ghisler.com/androidplugins/googleplay/
+  version_regex:
+    - ssh-2.0-sshj_version_unknown
 TTYEmulator:
   name: TTYEmulator
   url: https://www.ttyemulator.com/
