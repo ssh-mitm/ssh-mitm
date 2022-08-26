@@ -122,6 +122,14 @@ class ServerInterface(BaseServerInterface):
         if not self.args.disable_ssh:
             # we can use the scp forwarder for command executions
             logging.info("got ssh command: %s", command.decode('utf8'))
+
+            # check if client want's to execute mosh-server
+            # disable the requested shell and the pty to prevent
+            # intercepting the wrong shell
+            if command.startswith(b"mosh-server"):
+                self.session.ssh_requested = False
+                self.session.ssh_pty_kwargs = None
+
             self.session.scp_requested = True
             self.session.scp_command = command
             self.session.scp_channel = channel
