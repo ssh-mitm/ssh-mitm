@@ -252,6 +252,11 @@ SecureBlackbox:
   url: https://www.nsoftware.com/ipworks/ssh/
   version_regex:
     - 'ssh-2\.0-secureblackbox\.([0-9]+)'
+SSH.NET:
+  name: SSH.NET
+  url: https://github.com/sshnet/SSH.NET/
+  version_regex:
+    - 'ssh-2.0-renci.sshnet.sshclient.([0-9]+.[0-9]+.[0-9]+)'
 ssh2-streams:
   name: ssh2-streams.
   url: https://github.com/mscdex/ssh2-streams
