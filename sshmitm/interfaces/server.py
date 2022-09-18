@@ -106,6 +106,12 @@ class ServerInterface(BaseServerInterface):
             dest='extra_auth_methods',
             help='extra authentication mehtod names'
         )
+        plugin_group.add_argument(
+            '--disable-auth-method-lookup',
+            dest='disable_auth_method_lookup',
+            action='store_true',
+            help='disable auth method lookup on remote server during authentication'
+        )
 
     def check_channel_exec_request(self, channel: paramiko.Channel, command: bytes) -> bool:
         logging.debug("check_channel_exec_request: channel=%s, command=%s", channel, command.decode('utf8'))
@@ -177,7 +183,7 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def get_allowed_auths(self, username: Text) -> Text:
-        if self.possible_auth_methods is None:
+        if self.possible_auth_methods is None and not self.args.disable_auth_method_lookup:
             creds: RemoteCredentials = self.session.authenticator.get_remote_host_credentials(username)
             if creds.host is not None and creds.port is not None:
                 try:
