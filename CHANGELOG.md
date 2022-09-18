@@ -7,6 +7,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- get mosh connection info
+- added new function to get client information about used libraries
+- added option to disable auth method lookup
+- added indicator to docs, if vulnerability check is included in SSH-MITM
+- added CVSS scores to vulnerability list in documentation
+- added SHA512 fingerprint for server key
+- added custom help formatter for cli arguments
+
+### Fixed
+
+- fixed documentation about port forwarding to match SSH-MITM v2
+- fixed description of CVE-2022-29154
+- updated  description of CVE-2020-15778
+
+### Changed
+
+- changed documentation folder structure
+- if mosh is detected, pty will be disabled
+
+### Removed
+
+- removed dependancy to python enhancements module
+- remove unused methods and code
+- removed unused update check
+
+
 ## [2.1.0] - 2022-08-05
 
 ### Added
