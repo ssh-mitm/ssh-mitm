@@ -20,7 +20,7 @@ import xml.etree.ElementTree as ET
 # -- Project information -----------------------------------------------------
 
 project = 'SSH-MITM'
-author = 'SSH-MITM Dev-Team'
+author = 'Manfred Kaiser'
 copyright = f'{datetime.datetime.now().year}, {author}'  # pylint: disable=redefined-builtin
 
 extensions = [
@@ -57,6 +57,11 @@ html_theme_options = {
             "name": "PyPI",
             "url": "https://pypi.org/project/ssh-mitm",
             "icon": "fab fa-python",
+        },
+        {
+            "name": "LinkedIn",
+            "url": "https://www.linkedin.com/in/manfred-kaiser/",
+            "icon": "fab fa-linkedin"
         }
     ],
     "show_toc_level": 1,
