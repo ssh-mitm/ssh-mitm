@@ -1,4 +1,4 @@
-pydata-sphinx-theme0.<10
+pydata-sphinx-theme<0.10
 sphinx-sitemap
 sphinx-reredirects
 sphinx-design
