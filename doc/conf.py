@@ -57,11 +57,6 @@ html_theme_options = {
             "name": "PyPI",
             "url": "https://pypi.org/project/ssh-mitm",
             "icon": "fab fa-python",
-        },
-        {
-            "name": "LinkedIn",
-            "url": "https://www.linkedin.com/in/manfred-kaiser/",
-            "icon": "fab fa-linkedin"
         }
     ],
     "show_toc_level": 1,
