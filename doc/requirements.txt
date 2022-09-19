@@ -1,6 +1,7 @@
-pydata-sphinx-theme
+pydata-sphinx-theme<10
 sphinx-sitemap
 sphinx-reredirects
 sphinx-design
 sphinx-notfound-page
 sphinx-copybutton
+sphinxcontrib-mermaid
