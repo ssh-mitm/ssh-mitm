@@ -15,19 +15,19 @@ Following these steps helps you diagnose if the problem is likely from SSH-MITM 
 
      1. create a new environment::
 
-         python3 -m venv new_env
+         $ python3 -m venv new_env
 
      2. Activate the environment::
 
-         source new_env/bin/activate
+         $ source new_env/bin/activate
 
      3. Install SSH-MITM::
 
-         python3 -m pip install ssh-mitm
+         $ python3 -m pip install ssh-mitm
 
      3. Start SSH-MITM::
 
-         ssh-mitm server
+         $ ssh-mitm server
 
 - I cannot reproduce this issue in a clean environment: The problem is probably not in SSH-MITM itself.
 - I can reproduce this issue in a clean environment: This might be a problem in SSH-MITM. Go to 2.
@@ -36,7 +36,7 @@ Following these steps helps you diagnose if the problem is likely from SSH-MITM 
    SSH-MITM uses paramiko as SSH library which is not compatible to all clients and servers.
    This helps to find out, if the issue is part of the workarround, which are needed for compatibility with less known clients and servers.
 
-    ssh-mitm --disable-workarounds server
+    $ ssh-mitm --disable-workarounds server
 
 - I cannot reproduce this issue: One of the workarrounds has errors. Go to :ref:`create-issue`.
 - I can reproduce this issue with disabled workarrounds: This might be a problem in SSH-MITM or paramiko. Go to :ref:`create-issue`.

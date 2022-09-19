@@ -29,6 +29,7 @@ extensions = [
     'sphinx_reredirects',
     'sphinx_design',
     'notfound.extension',
+    'sphinx_copybutton',
 ]
 
 html_theme = "pydata_sphinx_theme"
@@ -78,6 +79,14 @@ html_permalinks = False
 html_baseurl = 'https://docs.ssh-mitm.at/'
 autosectionlabel_maxdepth = 1
 html_extra_path = ['robots.txt']
+
+# -- CopyButton --------------------------------------------------------------
+
+copybutton_prompt_text = r"\$ |> "
+copybutton_prompt_is_regexp = True
+copybutton_only_copy_prompt_lines = True
+copybutton_selector = "div:not(.no-copybutton) > div.highlight > pre"
+copybutton_line_continuation_character = "\\"
 
 # -- General configuration ---------------------------------------------------
 

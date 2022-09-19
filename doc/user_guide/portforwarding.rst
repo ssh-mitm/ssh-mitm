@@ -36,7 +36,7 @@ You would use source port number :samp:`8443` (the alternate https port), destin
 
 .. code-block::
 
-  ssh -L 8443:docs.ssh-mitm.at:443 <host>
+  $ ssh -L 8443:docs.ssh-mitm.at:443 <host>
 
 Where <host> should be replaced by the name of your ssh server. The -L option specifies local port forwarding.
 For the duration of the SSH session, pointing your browser at :samp:`https://localhost:8443/` would send you to :samp:`https://docs.ssh-mitm.at/`.
@@ -59,7 +59,7 @@ For example, say you wanted to let a developer access your internal file storage
 
 .. code-block::
 
-  ssh -R 8443:filestorage:443 remoteuser@remoteserver
+  $ ssh -R 8443:filestorage:443 remoteuser@remoteserver
 
 The -R option specifies remote port forwarding.
 For the duration of the SSH session, the developer would be able to access
@@ -92,7 +92,7 @@ For example, say you wanted Firefox to connect to every web page through your SS
 
 .. code-block::
 
-  ssh -D 1080 laptop
+  $ ssh -D 1080 laptop
 
 The -D option specifies dynamic port forwarding. 1080 is the standard SOCKS port.
 Although you can use any port number, some programs will only work if you use 1080.
@@ -176,7 +176,8 @@ Local port forwading
 Local port forwarding can be established at any time by the man in the middle server.
 The corresponding commands are displayed in the output of SSH-MITM.
 
-.. code-block::
+.. code-block:: none
+  :class: no-copybutton
 
   INFO     ℹ a9ed77c5-ef1b-42ec-b0f7-57594f4a7b42 - local port forwading
       SOCKS port: 39859
@@ -213,7 +214,8 @@ The reason for this is that the client manages the connections and only the alre
 If SSH-MITM detects that a remote port forwarding request has been made, appropriate connection information is output. This information can then be used to establish the connection itself and to use this connection for further tests.
 
 .. code-block::
+  :class: no-copybutton
 
-   created server tunnel injector for host 127.0.0.1 on port 38763 to destination ('google.com', 80)
+  created server tunnel injector for host 127.0.0.1 on port 38763 to destination ('google.com', 80)
 
 Any number of connections to the defined destination can be established. Thus, it is possible that the connection can be used by the intercepted client as well as by a vulnerability scanner during an audit.

@@ -120,14 +120,14 @@ Since version 1.0.0 SSH-MITM has full support for phishing FIDO2 tokens.
 
 .. code-block:: none
 
-    ssh-mitm server --remote-host TARGET --enable-trivial-auth
+    $ ssh-mitm server --remote-host TARGET --enable-trivial-auth
 
 
 Connect the client to SSH-MITM with agent forwarding:
 
 .. code-block:: none
 
-    ssh -A -p 10022 localhost
+    $ ssh -A -p 10022 localhost
 
 
 Verification without bypass
@@ -138,14 +138,14 @@ SSH-MITM can be started with following parameters:
 
 .. code-block:: none
 
-    ssh-mitm server --remote-host TARGET
+    $ ssh-mitm server --remote-host TARGET
 
 
 Connect the client to SSH-MITM with agent forwarding:
 
 .. code-block:: none
 
-    ssh -A -p 10022 localhost
+    $ ssh -A -p 10022 localhost
 
 
 In this case, the client must authenticate to the SSH-MITM server using "publickey", which requires a confirmation.

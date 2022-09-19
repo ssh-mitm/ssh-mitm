@@ -41,7 +41,7 @@ To setup SSH-MITM in transparent mode, the system has to be prepared.
 
 .. code-block:: none
 
-    firewall-cmd --direct --permanent --add-rule ipv4 mangle PREROUTING 1 -p tcp --dport 22 --j TPROXY --tproxy-mark 0x1/0x1 --on-port=10022 --on-ip=127.0.0.1
+    $ firewall-cmd --direct --permanent --add-rule ipv4 mangle PREROUTING 1 -p tcp --dport 22 --j TPROXY --tproxy-mark 0x1/0x1 --on-port=10022 --on-ip=127.0.0.1
 
 .. warning::
 
@@ -80,9 +80,9 @@ Performing a ``git pull`` or ``rsync`` with a remote server only executes a remo
 
 There is also a new plugin ``debug_traffic`` to debug the traffic of ssh commands.
 
-.. code-block:: bash
+.. code-block:: none
 
-    ssh-mitm server --scp-interface debug_traffic
+    $ ssh-mitm server --scp-interface debug_traffic
 
 
 .. note::
@@ -97,39 +97,26 @@ In most cased, when git is used over ssh, publickey authentication is used. The 
 
 To enable agent forwarding, git has to be executed with the ``GIT_SSH_COMMAND`` environment variable.
 
-.. code-block:: bash
+.. code-block:: none
 
     # start the ssh server
-    ssh-mitm server --remote-host github.com --scp-interface debug_traffic
+    $ ssh-mitm server --remote-host github.com --scp-interface debug_traffic
+
+.. code-block:: none
 
     # invoke git commands
-    GIT_SSH_COMMAND="ssh -A" git clone ssh://git@127.0.0.1:10022/ssh-mitm/ssh-mitm.git
+    $ GIT_SSH_COMMAND="ssh -A" git clone ssh://git@127.0.0.1:10022/ssh-mitm/ssh-mitm.git
 
 
 Intercept rsync
 """""""""""""""
 
-When SSH-MITM is used to intercept rsync, the port must be provided as a parameter to rsync. Also the agent can be forwarded, if needed.
+When SSH-MITM is used to intercept rsync, the port must be provided as a parameter to rsync.
+Also the agent can be forwarded, if needed.
 
 
 To sync a local directory with a remote directory, rsync can be executed with following parameters.
 
-.. code-block:: bash
+.. code-block:: none
 
-    rsync -r -e 'ssh -p 10022 -A' /local/folder/ user@127.0.0.1:/remote/folder/
-
-
-Further steps
--------------
-
-SSH-MITM has some client exploits integrated, which can be used to audit various ssh clients like OpenSSH and PuTTY.
-
-.. toctree::
-    :maxdepth: 1
-
-    /vulnerabilities/CVE-2021-33500
-    /vulnerabilities/CVE-2020-14145
-    /vulnerabilities/CVE-2020-14002
-    /vulnerabilities/CVE-2019-6111
-    /vulnerabilities/CVE-2019-6110
-    /vulnerabilities/CVE-2019-6109
+    $ rsync -r -e 'ssh -p 10022 -A' /local/folder/ user@127.0.0.1:/remote/folder/

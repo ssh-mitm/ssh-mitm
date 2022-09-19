@@ -12,7 +12,7 @@ If you use ``snap``, you can install it with:
 
 .. code-block:: none
 
-    sudo snap install ssh-mitm
+    $ sudo snap install ssh-mitm
 
 :fab:`windows` Windows
 -----------------------
@@ -29,7 +29,7 @@ If you use ``pip``, you can install it with:
 
 .. code-block:: none
 
-    python3 -m pip install ssh-mitm
+    $ python3 -m pip install ssh-mitm
 
 If you are using a macOS version that comes with Python 2,
 run ``pip3`` instead of ``pip``.
@@ -47,8 +47,8 @@ If you use ``pipenv``, you can install it as:
 
 .. code-block:: none
 
-    pipenv install ssh-mitm
-    pipenv shell
+    $ pipenv install ssh-mitm
+    $ pipenv shell
 
 When using ``pipenv``, in order to launch ``ssh-mitm``,
 you must activate the project's virtualenv.
@@ -57,14 +57,14 @@ and ``Pipfile.lock`` live (i.e., where you ran the above commands):
 
 .. code:: bash
 
-    pipenv shell
-    ssh-mitm server
+    $ pipenv shell
+    $ ssh-mitm server
 
 Alternatively, you can run ``ssh-mitm server`` inside the virtualenv with
 
 .. code:: bash
 
-    pipenv run ssh-mitm server
+    $ pipenv run ssh-mitm server
 
 
 :fas:`cog` AppImage
@@ -74,8 +74,8 @@ If you use the ``AppImage``, you can install it as:
 
 .. code:: bash
 
-    wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-    chmod +x ssh-mitm*.AppImage
+    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    $ chmod +x ssh-mitm*.AppImage
 
 
 :fas:`box` Nixpkgs
@@ -96,6 +96,7 @@ HTTP and SSL errors due to the proxy or firewall blocking connections to widely-
 For example, you might see this error if pip cannot connect to its own repositories:
 
 .. code-block:: none
+    :class: no-copybutton
 
     WARNING: Retrying (Retry(total=4, connect=None, read=None, redirect=None, status=None)) after connection broken by
     'NewConnectionError('<pip._vendor.urllib3.connection.HTTPSConnection object at 0x7ff04f4dbeb0>:
@@ -119,6 +120,8 @@ These variables are automatically used by many open-source tools (like ``pip``) 
     set HTTP_PROXY=http://USER:PWD@proxy.company.com:PORT
     set HTTPS_PROXY=https://USER:PWD@proxy.company.com:PORT
 
+.. code:: bash
+
     # For Linux / MacOS
     export HTTP_PROXY=http://USER:PWD@proxy.company.com:PORT
     export HTTPS_PROXY=https://USER:PWD@proxy.company.com:PORT
@@ -134,7 +137,7 @@ which means SSL communication will not be required for downloading Python librar
 .. code:: bash
 
     # Install ssh-mitm (without SSL)
-    python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org ssh-mitm
+    $ python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org ssh-mitm
 
 Using the tips from above, you can handle many network problems
 related to installing Python libraries.

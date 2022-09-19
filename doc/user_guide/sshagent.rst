@@ -59,6 +59,7 @@ Using ssh agent forwarding comes with some security risks and should not be used
 when the integrity of a machine is not trusted. (https://tools.ietf.org/html/draft-ietf-secsh-agent-02)
 
 .. code-block:: none
+    :class: no-copybutton
 
     6.  Security Considerations
 
@@ -129,4 +130,4 @@ This feature allowes an auditor the check if the client is resistant against age
 
 .. code-block:: bash
 
-    ssh -mitm --remote-host 192.168.0.x:PORT --request-agent-breakin
+    $ ssh -mitm --remote-host 192.168.0.x:PORT --request-agent-breakin

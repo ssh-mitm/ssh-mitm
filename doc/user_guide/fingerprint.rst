@@ -49,6 +49,7 @@ Warning for changed fingerprints
 However, for all further contacts from now on, the ssh program uses asymmetric cryptography to ensure that the server also has the correct private key that matches the public one stored in the ~/.ssh/known_hosts file, and refuses to establish the connection if in doubt. Here is a sample output:
 
 .. code-block:: none
+    :class: no-copybutton
 
     @@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@@
     @    WARNING: REMOTE HOST IDENTIFICATION HAS CHANGED!     @
@@ -74,13 +75,13 @@ If the fingerprint has changed for a legitimate reason, you can remove the old f
 
 .. code-block:: none
 
-    ssh-keygen -f <DATEI> -R <HOST>
+    $ ssh-keygen -f <DATEI> -R <HOST>
 
 So in the above example
 
 .. code-block:: none
 
-    ssh-keygen -f "/home/tux/.ssh/known_hosts" -R 172.217.22.227
+    $ ssh-keygen -f "/home/tux/.ssh/known_hosts" -R 172.217.22.227
 
 
 Determine fingerprint of the server
@@ -96,20 +97,20 @@ MD5 and SHA256 are supported as formats for the fingerprints. Currently SHA256 i
 
 .. code-block:: none
 
-    ssh-keygen -f /etc/ssh/ssh_host_ecdsa_key.pub -l -E md5
-    ssh-keygen -f /etc/ssh/ssh_host_ecdsa_key.pub -l -E sha256
+    $ ssh-keygen -f /etc/ssh/ssh_host_ecdsa_key.pub -l -E md5
+    $ ssh-keygen -f /etc/ssh/ssh_host_ecdsa_key.pub -l -E sha256
 
 In most cases, multiple keys are generated for an SSH server. The following one-liner determines the SHA256 fingerprints for all keys.
 
 .. code-block:: none
 
-    find /etc/ssh/ -name 'ssh_*.pub' -exec ssh-keygen -f {} -l -E sha256 \;
+    $ find /etc/ssh/ -name 'ssh_*.pub' -exec ssh-keygen -f {} -l -E sha256 \;
 
 Analogously, you can also calculate the MD5 fingerprints:
 
 .. code-block:: none
 
-    find /etc/ssh/ -name 'ssh_*.pub' -exec ssh-keygen -f {} -l -E md5 \;
+    $ find /etc/ssh/ -name 'ssh_*.pub' -exec ssh-keygen -f {} -l -E md5 \;
 
 SSHFP Records - The fingerprint in DNS
 --------------------------------------
@@ -139,7 +140,7 @@ To check whether the new DNS records work, you can check this with the program d
 
 .. code-block:: none
 
-    dig SSHFP examplehost.example.org +short
+    $ dig SSHFP examplehost.example.org +short
 
 Client configuration
 """"""""""""""""""""
@@ -158,6 +159,7 @@ Troubleshooting
 If the SSH client still asks for confirmation, it may be because DNSSEC is not being used or has been configured incorrectly.
 
 .. code-block:: none
+    :class: no-copybutton
 
     The authenticity of host 'examplehost.example.org (192.0.2.123)' can't be established.
     ECDSA key fingerprint is SHA256:MH85JK0yq+JNl1lPKUlxit+dGFqWMS/MmohcINp/e9Q.
@@ -229,6 +231,7 @@ The more extensive the character set with which the fingerprint can be represent
 With a SHA256 hash, however, this is no longer represented in hex format, but as Base64.
 
 .. code-block:: none
+    :class: no-copybutton
 
     SHA256:G+rKuLGk+8Z1oxUV3cox0baNsH0qGQWm/saWPr4qZMM
 

@@ -34,7 +34,7 @@ If you use ``snap``, you can install it with:
 
 .. code-block:: none
 
-    sudo snap install ssh-mitm
+    $ sudo snap install ssh-mitm
 
 :fab:`windows` Windows
 -----------------------
@@ -51,7 +51,7 @@ If you use ``pip``, you can install it with:
 
 .. code-block:: none
 
-    python3 -m pip install ssh-mitm
+    $ python3 -m pip install ssh-mitm
 
 
 :fas:`cog` AppImage
@@ -61,8 +61,8 @@ If you use the ``AppImage``, you can install it as:
 
 .. code:: bash
 
-    wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-    chmod +x ssh-mitm*.AppImage
+    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    $ chmod +x ssh-mitm*.AppImage
 
 
 :fas:`box` Nixpkgs
@@ -99,6 +99,7 @@ You will see the credentials in the log output.
 
 
 .. code-block:: none
+    :class: no-copybutton
 
     INFO     Remote authentication succeeded
         Remote Address: 192.168.0.x:22
@@ -119,6 +120,7 @@ When a client connects, the ssh-mitm proxy server starts a new server, where you
 This server is used to hijack the session.
 
 .. code-block:: none
+    :class: no-copybutton
 
     INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
 

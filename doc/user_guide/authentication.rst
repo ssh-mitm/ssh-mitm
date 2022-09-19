@@ -20,6 +20,7 @@ For this reason, none-Authentication is executed before all other authentication
 However, it can also be used to give a user access to a system without requiring an explicit login.
 
 .. code-block:: none
+    :class: no-copybutton
 
     5.2.  The "none" Authentication Request
 
@@ -41,7 +42,7 @@ break ssh-mitm attacks, if the remote server does not allow logins with **none**
 
 .. code-block::
 
-    ssh-mitm server --remote-host 192.168.0.x --enable-none-auth
+    $ ssh-mitm server --remote-host 192.168.0.x --enable-none-auth
 
 
 **publickey** authentication - `RFC-4252/7 <https://datatracker.ietf.org/doc/html/rfc4252#section-7>`_
@@ -125,7 +126,7 @@ Support in SSH-MITM
 
 Example SSH-MITM session intercepting password authentication:
 
-.. code-block:: bash
+.. code-block:: none
 
     $ ssh-mitm server --remote-host 192.168.0.x
     2021-09-02 09:51:35,354 [INFO]  starting SSH-MITM 0.5.13
