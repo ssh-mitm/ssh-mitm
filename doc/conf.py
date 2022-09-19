@@ -31,6 +31,7 @@ extensions = [
     'notfound.extension',
     'sphinx_copybutton',
     'sphinxcontrib.mermaid',
+    'sphinx_togglebutton'
 ]
 
 html_theme = "pydata_sphinx_theme"

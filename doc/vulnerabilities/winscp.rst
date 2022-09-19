@@ -1,5 +1,5 @@
-WinSCP
-======
+:fas:`desktop` WinSCP
+=====================
 
 WinSCP (Windows Secure Copy) is a free and open-source SSH File Transfer Protocol (SFTP),
 File Transfer Protocol (FTP), WebDAV, Amazon S3, and secure copy protocol (SCP) client for Microsoft Windows.
@@ -14,14 +14,14 @@ Since July 16, 2003, it is licensed under the GNU GPL. It is hosted on SourceFor
 WinSCP is based on the implementation of the SSH protocol from PuTTY and FTP protocol from FileZilla.
 It is also available as a plugin for Altap Salamander file manager, and there exists a third-party plugin for the FAR file manager.
 
-.. note::
 
-   The vulnerabilities are divided into 3 categories. At the CVE numbers you can see an icon to identify the support by SSH-MITM.
+Vulnerabilities
+---------------
 
-   * :fas:`check;sd-text-success` Integrated in SSH-MITM - A test or exploit is integrated in SSH-MITM and relevant information is available in the documentation.
-   * :fas:`info;sd-text-primary` extended information describing how the vulnerability works or vulnerabilities can be exploited without SSH-MITM
-   * :fas:`question;sd-text-warning` disputed vulnerabilities - it's not clear if this is a security issue or not
-   * :fas:`ban;sd-text-info` rejected CVE number - the CVE Number was rejected because of no security issues
+.. admonition:: **Only vulnerabilities, which are included in SSH-MITM, are listed.**
+   :class: dropdown
+
+   For a full list you should use `cvedetails.com <https://www.cvedetails.com/vendor/1327/Winscp.html>`_
 
 .. toctree::
    :maxdepth: 1
@@ -29,4 +29,3 @@ It is also available as a plugin for Altap Salamander file manager, and there ex
    CVE-2019-6111
    CVE-2019-6110
    CVE-2019-6109
-   CVE-2018-20685

@@ -1,5 +1,5 @@
-rsync
-=====
+:fas:`desktop` rsync
+====================
 
 rsync is a utility for efficiently transferring and synchronizing files between a computer and a storage
 drive and across networked computers by comparing the modification times and sizes of files.
@@ -16,14 +16,14 @@ local file need to be transferred so that the remote file matches the local one.
 
 Rsync can also operate in a daemon mode (rsyncd), serving and receiving files in the native rsync protocol (using the "rsync://" syntax).
 
-.. note::
 
-   The vulnerabilities are divided into 3 categories. At the CVE numbers you can see an icon to identify the support by SSH-MITM.
+Vulnerabilities
+---------------
 
-   * :fas:`check;sd-text-success` Integrated in SSH-MITM - A test or exploit is integrated in SSH-MITM and relevant information is available in the documentation.
-   * :fas:`info;sd-text-primary` extended information describing how the vulnerability works or vulnerabilities can be exploited without SSH-MITM
-   * :fas:`question;sd-text-warning` disputed vulnerabilities - it's not clear if this is a security issue or not
-   * :fas:`ban;sd-text-info` rejected CVE number - the CVE Number was rejected because of no security issues
+.. admonition:: **Only vulnerabilities, which are included in SSH-MITM, are listed.**
+   :class: dropdown
+
+   For a full list you should use `cvedetails.com <https://www.cvedetails.com/vendor/7059/Rsync.html>`_
 
 .. toctree::
    :maxdepth: 1

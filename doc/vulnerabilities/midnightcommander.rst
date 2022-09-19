@@ -1,16 +1,30 @@
-Midnight Commander
-==================
+:fas:`desktop` Midnight Commander
+=================================
 
-.. note::
+GNU Midnight Commander is a free cross-platform orthodox file manager.
+It was started by Miguel de Icaza in 1994 as a clone of the then-popular Norton Commander.
 
-   The vulnerabilities are divided into 3 categories. At the CVE numbers you can see an icon to identify the support by SSH-MITM.
+GNU Midnight Commander is part of the GNU project and is licensed under the terms of the GNU General Public License.
 
-   * :fas:`check;sd-text-success` Integrated in SSH-MITM - A test or exploit is integrated in SSH-MITM and relevant information is available in the documentation.
-   * :fas:`info;sd-text-primary` extended information describing how the vulnerability works or vulnerabilities can be exploited without SSH-MITM
-   * :fas:`question;sd-text-warning` disputed vulnerabilities - it's not clear if this is a security issue or not
-   * :fas:`ban;sd-text-info` rejected CVE number - the CVE Number was rejected because of no security issues
+
+Vulnerabilities
+---------------
+
+.. admonition:: **Only vulnerabilities, which are included in SSH-MITM, are listed.**
+   :class: dropdown
+
+   For a full list you should use `cvedetails.com <https://www.cvedetails.com/vendor/219/Midnight-Commander.html>`_
+
+
 
 .. toctree::
    :maxdepth: 1
 
    CVE-2021-36370
+
+
+External links
+--------------
+
+* `Official website <https://midnight-commander.org/>`_
+* `Official page on GNU.org <https://www.gnu.org/software/mc>`_
