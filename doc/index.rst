@@ -59,7 +59,7 @@ If you use ``pip``, you can install it with:
 
 If you use the ``AppImage``, you can install it as:
 
-.. code:: bash
+.. code:: none
 
     $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
     $ chmod +x ssh-mitm*.AppImage
@@ -71,7 +71,7 @@ If you use the ``AppImage``, you can install it as:
 For Nix or NixOS is a `package <https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm>`_
 available. The lastest release is usually present in the ``unstable`` channel.
 
-.. code-block:: bash
+.. code-block:: none
 
     $ nix-env -iA nixos.ssh-mitm
 
@@ -84,14 +84,14 @@ Starting an intercepting mitm-ssh server with password authentication is very si
 
 All you have to do is run this command in your terminal of choice.
 
-.. code-block:: bash
+.. code-block:: none
 
     $ ssh-mitm server --remote-host 192.168.0.x
 
 Now let's try to connect to the ssh-mitm server.
 The ssh-mitm server is listening on port 10022.
 
-.. code-block:: bash
+.. code-block:: none
 
     $ ssh -p 10022 testuser@proxyserver
 
@@ -126,7 +126,7 @@ This server is used to hijack the session.
 
 To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
 
-.. code-block:: bash
+.. code-block:: none
 
     $ ssh -p 34463 127.0.0.1
 
@@ -147,7 +147,7 @@ This step does not require a forwarded agent.
 For a full login on the remote server agent forwarding is still required. When no agent was forwarded,
 SSH-MITM can redirect the connection to a honeypot.
 
-.. code-block:: bash
+.. code-block:: none
 
     $ ssh-mitm server --enable-auth-fallback \
       --fallback-host HONEYPOT \

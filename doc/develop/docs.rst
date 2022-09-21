@@ -19,7 +19,7 @@ change renders correctly, it is good practice to test it locally.
 
 #. Install the packages required to build the docs.
 
-   .. code-block:: bash
+   .. code-block:: none
 
       python3 -m pip install -r doc/requirements.txt
 
@@ -27,7 +27,7 @@ change renders correctly, it is good practice to test it locally.
    output format, so verifying it renders as you should is usually good
    enough.
 
-   .. code-block:: bash
+   .. code-block:: none
 
       python setup.py build_sphinx
 
@@ -61,7 +61,7 @@ so help in making it so would be appreciated!
 There are many ways to invoke a ``pip`` command, we recommend the following
 approach:
 
-.. code-block:: bash
+.. code-block:: none
 
    python3 -m pip
 

@@ -55,14 +55,14 @@ you must activate the project's virtualenv.
 For example, in the directory where ``pipenv``'s ``Pipfile``
 and ``Pipfile.lock`` live (i.e., where you ran the above commands):
 
-.. code:: bash
+.. code:: none
 
     $ pipenv shell
     $ ssh-mitm server
 
 Alternatively, you can run ``ssh-mitm server`` inside the virtualenv with
 
-.. code:: bash
+.. code:: none
 
     $ pipenv run ssh-mitm server
 
@@ -72,7 +72,7 @@ Alternatively, you can run ``ssh-mitm server`` inside the virtualenv with
 
 If you use the ``AppImage``, you can install it as:
 
-.. code:: bash
+.. code:: none
 
     $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
     $ chmod +x ssh-mitm*.AppImage
@@ -84,7 +84,7 @@ If you use the ``AppImage``, you can install it as:
 For Nix or NixOS is a `package <https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm>`_
 available. The lastest release is usually present in the ``unstable`` channel.
 
-.. code-block:: bash
+.. code-block:: none
 
     $ nix-env -iA nixos.ssh-mitm
 
@@ -114,13 +114,13 @@ that is allowed to communicate via network. This can be easily achieved
 by setting two common environment variables: ``HTTP_PROXY`` and ``HTTPS_PROXY``.
 These variables are automatically used by many open-source tools (like ``pip``) if set correctly.
 
-.. code:: bash
+.. code:: none
 
     # For Windows
     set HTTP_PROXY=http://USER:PWD@proxy.company.com:PORT
     set HTTPS_PROXY=https://USER:PWD@proxy.company.com:PORT
 
-.. code:: bash
+.. code:: none
 
     # For Linux / MacOS
     export HTTP_PROXY=http://USER:PWD@proxy.company.com:PORT
@@ -134,7 +134,7 @@ on connectivity problems to HTTPS servers, you can disable using SSL for ``pip``
 The approach here is to mark repository servers as trusted hosts,
 which means SSL communication will not be required for downloading Python libraries.
 
-.. code:: bash
+.. code:: none
 
     # Install ssh-mitm (without SSL)
     $ python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org ssh-mitm

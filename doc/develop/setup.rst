@@ -45,7 +45,7 @@ happen.
 1. Clone the `SSH-MITM git repository <https://github.com/ssh-mitm/ssh-mitm>`_
    to your computer.
 
-   .. code:: bash
+   .. code:: none
 
       git clone https://github.com/ssh-mitm/ssh-mitm
       cd ssh-mitm
@@ -53,7 +53,7 @@ happen.
 2. Make sure the ``python`` you installed
    is available to you on the command line.
 
-   .. code:: bash
+   .. code:: none
 
       python -V
 
@@ -64,19 +64,19 @@ happen.
    SSH-MITM code in a text editor & restart the SSH-MITM process to
    see your code changes immediately.
 
-   .. code:: bash
+   .. code:: none
 
       python3 -m pip install --editable .
 
 4. You are now ready to start SSH-MITM!
 
-   .. code:: bash
+   .. code:: none
 
       ssh-mitm server
 
 5. Access SSH-MITM from your local ssh client:
 
-   .. code:: bash
+   .. code:: none
 
       ssh -P 10022 localhost
 
