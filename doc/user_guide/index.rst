@@ -1,5 +1,5 @@
-User guide
-==========
+:fas:`book` User guide
+======================
 
 The user guide explains the SSH protocol and describes how to use SSH-MITM during security audits.
 

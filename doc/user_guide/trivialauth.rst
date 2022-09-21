@@ -1,7 +1,7 @@
 .. _trivialauth:
 
-Trivial Authentication
-======================
+:fas:`handshake-slash` Trivial Authentication
+=============================================
 
 The "trivial authentication" phishing attack was found by **Manfred Kaiser (AUT-milCERT)**
 in cooperation with **Simon Tatham (PuTTY)** and **Matt Johnston (Dropbear)** during an security audit.

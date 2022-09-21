@@ -1,5 +1,5 @@
-Reporting an issue
-==================
+:fas:`bug` Reporting an issue
+=============================
 
 Thank you for providing feedback about SSH-MITM.
 

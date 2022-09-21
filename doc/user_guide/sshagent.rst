@@ -1,5 +1,5 @@
-SSH Agent
-=========
+:fas:`user-secret` SSH Agent
+============================
 
 There are several ways in which SSH keys can be managed locally. One of the most common use cases is to store a key in the file system. SSH clients are able to read them from specific directories. For example, an RSA key may be stored as .ssh/id_rsa in the user's home directory.
 

@@ -1,5 +1,5 @@
-Contribute
-==========
+:fas:`code` Contribute
+======================
 
 If you're reading this section, you're probably interested in
 contributing to SSH-MITM. Welcome and thanks for your interest in

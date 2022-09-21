@@ -1,5 +1,5 @@
-SSH Fingerprints
-================
+:fas:`fingerprint` SSH Fingerprints
+===================================
 
 With SSH, unlike HTTPS secured websites, there are no central certificate providers to ensure that you are connecting to the correct server.
 

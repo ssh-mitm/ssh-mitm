@@ -1,6 +1,6 @@
-==========================
-Contributing Documentation
-==========================
+============================================
+:fas:`pencil-alt` Contributing Documentation
+============================================
 
 Documentation is often more important than code. This page helps
 you get set up on how to contribute documentation to SSH-MITM.

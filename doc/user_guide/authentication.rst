@@ -1,5 +1,5 @@
-Authentication
-==============
+:fas:`users` Authentication
+===========================
 
 The choice of the right authentication method against SSH-MITM can have a decisive influence on the success of a Man in the Middle attack.
 

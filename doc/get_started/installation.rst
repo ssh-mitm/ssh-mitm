@@ -1,5 +1,5 @@
-Installation
-============
+:fas:`cloud-download-alt` Installation
+======================================
 
 SSH-MITM can be installed using ``snap``, ``pip``, ``pipenv``, ``AppImage`` or ``Nixpkgs``.
 

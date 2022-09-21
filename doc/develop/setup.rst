@@ -1,8 +1,8 @@
 .. _develop/setup:
 
-================================
-Setting up a development install
-================================
+==============================================
+:fas:`wrench` Setting up a development install
+==============================================
 
 System requirements
 ===================

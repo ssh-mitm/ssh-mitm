@@ -1,6 +1,6 @@
-===============
-Port Forwarding
-===============
+====================================
+:fas:`network-wired` Port Forwarding
+====================================
 
 Port forwarding via SSH (SSH tunneling) creates a secure connection between a local computer
 and a remote machine through which services can be relayed. Because the connection is encrypted,

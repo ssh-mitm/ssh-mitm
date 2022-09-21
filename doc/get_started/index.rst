@@ -1,5 +1,5 @@
-Get started
-===========
+:fas:`walking` Get started
+==========================
 
 .. toctree::
    :maxdepth: 1
