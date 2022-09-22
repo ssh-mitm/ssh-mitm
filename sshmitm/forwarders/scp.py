@@ -6,8 +6,6 @@ from typing import (
     Optional,
     Text
 )
-from colored.colored import stylize, attr, fg  # type: ignore
-from rich._emoji_codes import EMOJI
 
 import paramiko
 from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF
@@ -15,6 +13,7 @@ from paramiko.message import Message
 
 import sshmitm
 from sshmitm.forwarders.base import BaseForwarder
+from sshmitm.apps.mosh import handle_mosh
 
 
 class SCPBaseForwarder(BaseForwarder):
@@ -225,27 +224,9 @@ class SCPForwarder(SCPBaseForwarder):
         self.got_c_command = False
         return self.process_data(traffic)
 
-    def handle_mosh(self, traffic: bytes, isclient: bool) -> bytes:
-        if not isclient:
-            try:
-                mosh_connect = traffic.decode("utf8")
-                mosh_connect_parts = mosh_connect.strip().split(" ")
-                mosh_info = "\n".join([
-                    stylize(
-                        EMOJI['information'] + " MOSH connection info",
-                        fg('blue') + attr('bold')
-                    ),
-                    f"  * MOSH-port: {mosh_connect_parts[2]}",
-                    f"  * MOSH-shared-secret: {mosh_connect_parts[3]}"
-                ])
-                logging.info(mosh_info)
-            except Exception:
-                pass
-        return traffic
-
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         if self.session.scp_command.startswith(b'scp'):
             return self.handle_scp(traffic)
         elif self.session.scp_command.startswith(b"mosh-server"):
-            return self.handle_mosh(traffic, isclient)
+            return handle_mosh(self.session, traffic, isclient)
         return traffic
