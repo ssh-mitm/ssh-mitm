@@ -1,4 +1,5 @@
 import logging
+import binascii
 import socket
 import threading
 from typing import cast, List, Tuple
@@ -39,12 +40,26 @@ class UdpProxy:
         self.pair_list.append([addr, destination_addr])
         return destination_addr
 
+    @staticmethod
+    def format_hex(data: bytes, hexwidth: int = 19) -> str:
+        result = []
+        for i in range(0, len(data), hexwidth):
+            s = data[i:i + hexwidth]
+            hexa = list(map(''.join, zip(*[iter(binascii.hexlify(s).decode('utf-8'))] * 2)))
+            while hexwidth - len(hexa) > 0:
+                hexa.append(' ' * 2)
+            text = ''.join([chr(x) if 0x20 <= x < 0x7F else '.' for x in s])
+            addr = '%04X:    %s    %s' % (i, " ".join(hexa), text)
+            result.append(addr)
+
+        return '\n'.join(result)
+
     def receive(self, buff_size: int) -> None:
         data, addr = self.socket.recvfrom(buff_size)
         if addr and data:
             destination_addr = self.check_pairing(addr)
 
-            # print(f"{destination_addr}\n{data}\n--------------------------")
+            print(f"{destination_addr}\n{self.format_hex(data)}\n--------------------------")
             self.socket.sendto(data, destination_addr)
 
     def thread_receive(self) -> None:
