@@ -5,7 +5,7 @@ import threading
 from typing import cast, List, Tuple
 import base64
 
-from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
+from cryptography.hazmat.primitives.ciphers.aead import AESOCB3  # type: ignore
 from colored.colored import stylize, attr, fg  # type: ignore
 from rich._emoji_codes import EMOJI
 
@@ -62,13 +62,12 @@ class UdpProxy:
         if addr and data:
             destination_addr = self.check_pairing(addr)
 
-            #print(f"{destination_addr}\n{self.format_hex(data)}\n--------------------------")
             nonce = b"\x00\x00\x00\x00" + data[:8]
-
             message = data[8:]
             aesocb = AESOCB3(self.key)
             dec_message = aesocb.decrypt(nonce, message, None)
             print(f"{destination_addr}\n{self.format_hex(dec_message)}\n--------------------------")
+
             self.socket.sendto(data, destination_addr)
 
     def thread_receive(self) -> None:
