@@ -3,7 +3,9 @@ import binascii
 import socket
 import threading
 from typing import cast, List, Tuple
+import base64
 
+from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 from colored.colored import stylize, attr, fg  # type: ignore
 from rich._emoji_codes import EMOJI
 
@@ -11,7 +13,8 @@ from sshmitm.session import Session
 
 
 class UdpProxy:
-    def __init__(self, target_ip: str, target_port: int, listen_ip: str = '', listen_port: int = 0, buf_size: int = 1024):
+    def __init__(self, key: str, target_ip: str, target_port: int, listen_ip: str = '', listen_port: int = 0, buf_size: int = 1024):
+        self.key = base64.b64decode(key + "==")
         self.listen_ip = listen_ip
         self.listen_port = listen_port
         self.target_ip = target_ip
@@ -59,7 +62,13 @@ class UdpProxy:
         if addr and data:
             destination_addr = self.check_pairing(addr)
 
-            print(f"{destination_addr}\n{self.format_hex(data)}\n--------------------------")
+            #print(f"{destination_addr}\n{self.format_hex(data)}\n--------------------------")
+            nonce = b"\x00\x00\x00\x00" + data[:8]
+
+            message = data[8:]
+            aesocb = AESOCB3(self.key)
+            dec_message = aesocb.decrypt(nonce, message, None)
+            print(f"{destination_addr}\n{self.format_hex(dec_message)}\n--------------------------")
             self.socket.sendto(data, destination_addr)
 
     def thread_receive(self) -> None:
@@ -85,6 +94,7 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
 
             if session.remote_address[0] is not None:
                 mosh_proxy = UdpProxy(
+                    key=mosh_connect_parts[3],
                     target_ip=session.remote_address[0],
                     target_port=int(mosh_connect_parts[2]),
                     listen_ip="0.0.0.0",
