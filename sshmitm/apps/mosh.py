@@ -67,10 +67,15 @@ class UdpProxy:
             aesocb = AESOCB3(self.key)
             dec_message = aesocb.decrypt(nonce, message, None)
 
-            print(f"Data from->to: {addr} -> {destination_addr}")
-            print(f"timestamp (ms): {int.from_bytes(dec_message[:2], 'big')}")
-            print(f"timestamp_reply (ms): {int.from_bytes(dec_message[2:4], 'big')}")
-            print(f"Payload:\n{self.format_hex(dec_message[4:])}\n--------------------------")
+            data_to_print = [
+                f"{stylize('MOSH Data', attr('bold'))}",
+                f"from->to: {addr} -> {destination_addr}",
+                f"timestamp (ms): {int.from_bytes(dec_message[:2], 'big')}",
+                f"timestamp_reply (ms): {int.from_bytes(dec_message[2:4], 'big')}",
+                f"Payload:\n{self.format_hex(dec_message[4:])}",
+                "-" * 89
+            ]
+            logging.info("\n".join(data_to_print))
 
             self.socket.sendto(data, destination_addr)
 
