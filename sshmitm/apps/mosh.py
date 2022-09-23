@@ -66,7 +66,11 @@ class UdpProxy:
             message = data[8:]
             aesocb = AESOCB3(self.key)
             dec_message = aesocb.decrypt(nonce, message, None)
-            print(f"{destination_addr}\n{self.format_hex(dec_message)}\n--------------------------")
+
+            print(f"Data from->to: {addr} -> {destination_addr}")
+            print(f"timestamp (ms): {int.from_bytes(dec_message[:2], 'big')}")
+            print(f"timestamp_reply (ms): {int.from_bytes(dec_message[2:4], 'big')}")
+            print(f"Payload:\n{self.format_hex(dec_message[4:])}\n--------------------------")
 
             self.socket.sendto(data, destination_addr)
 
