@@ -79,5 +79,6 @@ See also the list of `contributors <https://github.com/ssh-mitm/ssh-mitm/graphs/
    :maxdepth: 1
    :hidden:
 
+   issue
    setup
    docs

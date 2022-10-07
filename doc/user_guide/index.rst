@@ -36,5 +36,4 @@ Contents
    authentication
    sshagent
    trivialauth
-   portforwarding
    advanced-usage

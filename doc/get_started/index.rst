@@ -15,5 +15,5 @@ Quickly find answers in the following sections or expand the table of contents b
    installation
    terminal_session
    file_transfer
-   issue
+   portforwarding
    faq
