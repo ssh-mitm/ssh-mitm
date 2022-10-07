@@ -80,7 +80,7 @@ Start SSH-MITM
 
 Let’s get started with some simple examples.
 
-Starting an intercepting mitm-ssh server with password authentication is very simple.
+Starting an intercepting mitm-ssh server is very simple.
 
 All you have to do is run this command in your terminal of choice.
 
