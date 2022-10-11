@@ -1,21 +1,29 @@
 AbsoluteTelnet:
   name: AbsoluteTelnet
   url: http://www.celestialsoftware.net/
+  client: true
+  server: false
   version_regex:
     - 'SSH-2.0-([0-9]+\.[0-9]+) sshlib: AbsoluteTelnet'
 AsyncSSH:
   name: AsyncSSH
   url: https://asyncssh.readthedocs.io/en/latest/
+  client: true
+  server: true
   version_regex:
     - ssh-2.0-asyncssh_([0-9]+\.[0-9]+\.[0-9]+)
 TrileadSSH2:
   name: Trilead SSH2
   url: https://github.com/connectbot/sshlib
+  client: true
+  server: false
   version_regex:
     -  ssh-2.0-trileadssh2java_([0-9]+)
 Dropbear:
   name: Dropbear
   url: https://matt.ucc.asn.au/dropbear/dropbear.html
+  client: true
+  server: true
   version_regex:
     - ssh-2.0-dropbear_([0-9]+\.[0-9]+)
   vulnerabilities:
@@ -26,30 +34,40 @@ Dropbear:
     CVE-2018-15599:
       version_max: 2018.76
       cvss: 5.0
-      docs: true
+      description: remote users may enumerate users on the system
 JSCH:
   name: JSch - Java Secure Channel
   url: https://github.com/mwiede/jsch
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-jsch-([0-9]+\.[0-9]+\.[0-9]+)
 KiTTY:
   name: KiTTY
   url: http://www.9bis.net/kitty
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-putty_kitty
 libssh:
   name: libssh
   url: https://www.libssh.org/
+  client: true
+  server: true
   version_regex:
     - ssh-2.0-libssh_([0-9]+\.[0-9]+\.[0-9]+)
 libssh2:
   name: libssh2
   url: https://www.libssh2.org/
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-libssh2_([0-9]+\.[0-9]+\.[0-9]+)
 MoTTY_Release:
   name: MobaXterm
   url: https://mobaxterm.mobatek.net/
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-motty_release_(0\.[0-9]+)
   vulnerabilities:
@@ -67,6 +85,8 @@ MoTTY_Release:
 OpenSSH:
   name: OpenSSH
   url: https://www.openssh.com/
+  client: true
+  server: true
   version_regex:
     - ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*
   vulnerabilities:
@@ -74,60 +94,69 @@ OpenSSH:
       version_max: 8.7
       cvss: N/A
       docs: true
+      description: enumerate usernames via challenge response
     CVE-2021-36368:
       version_max: 8.7
-      cvss: N/A
+      cvss: 3.7
       docs: true
     CVE-2021-28041:
       version_min: 8.2
       version_max: 8.4
       cvss: 4.6
-      docs: true
+      description: double free via ssh-agent
     CVE-2020-15778:
       version_max: 8.2
       cvss: 6.8
       docs: true
+      description: command injection via anomalous argument transfers
     CVE-2020-14145:
       version_min: 5.7
       version_max: 8.9
       cvss: 4.3
       docs: true
+      description: information leak via algorithm negotiation
     CVE-2020-12062:
       version_min: 8.2
       version_max: 8.2
       cvss: 5.0
+      description: arbitrary files overwrite via scp
     CVE-2019-16905:
       version_min: 7.7
       version_max: 8.0
       cvss: 4.4
+      description: memory corruption and local code execution via pre-authentication integer overflow
     CVE-2019-6111:
       version_max: 7.9
       cvss: 5.8
       docs: true
+      description: arbitrary files overwrite via scp
     CVE-2019-6110:
       version_max: 7.9
       cvss: 4.0
       docs: true
+      description: output manipulation
     CVE-2019-6109:
       version_max: 7.9
       cvss: 4.0
       docs: true
+      description: output manipulation
     CVE-2018-20685:
       version_max: 7.9
       cvss: 2.6
-      docs: true
+      description: directory permissions modification via scp
     CVE-2018-15919:
       version_min: 5.9
       version_max: 7.8
       cvss: 5.0
-      docs: true
+      description: username enumeration via GS2
     CVE-2018-15473:
       version_max: 7.7
       cvss: 5.0
-      docs: true
+      description: enumerate usernames due to timing discrepancies
     CVE-2017-15906:
       version_max: 7.5
       cvss: 5.0
+      description: readonly bypass via sftp
     CVE-2016-10708:
       version_max: 7.3
       cvss: 5.0
@@ -146,6 +175,8 @@ OpenSSH:
 Paramiko:
   name: Paramiko
   url: https://www.paramiko.org/
+  client: true
+  server: true
   version_regex:
     - ssh-2.0-paramiko_([0-9]+\.[0-9]+\.[0-9]+)
   vulnerabilities:
@@ -161,12 +192,16 @@ Paramiko:
 PuTTYFileZilla:
   name: FileZilla
   url: https://filezilla-project.org/
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-puttyfilezilla_([0-9]+\.[0-9]+\.[0-9]+)
     - ssh-2.0-filezilla_([0-9]+\.[0-9]+\.[0-9]+)
 PuTTY_Release:
   name: PuTTY
   url: https://www.chiark.greenend.org.uk/~sgtatham/putty/
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-putty_release_(0\.[0-9]+)
   vulnerabilities:
@@ -187,21 +222,27 @@ PuTTY_Release:
     CVE-2019-17069:
       version_max: 0.73
       cvss: 5.0
+      description: potential DOS by remote SSHv1 server
     CVE-2019-17068:
       version_max: 0.73
       cvss: 5.0
+      description: xterm bracketed paste mode command injection
     CVE-2019-9898:
       version_max: 0.71
       cvss: 7.5
+      description: potential recycling of random numbers
     CVE-2019-9897:
       version_max: 0.71
       cvss: 5.0
+      description: multiple denial-of-service issues from writing to the terminal
     CVE-2019-9894:
       version_max: 0.71
       cvss: 6.4
+      description: buffer overflow in RSA key exchange
     CVE-2017-6542:
       version_max: 0.68
       cvss: 7.5
+      description: buffer overflow in UNIX client that can result in privilege escalation or denial-of-service
     CVE-2016-6167:
       version_min: 0.67
       version_max: 0.67
@@ -245,53 +286,72 @@ PuTTY_Release:
 RubyNetSsh:
   name: Net::SSH
   url: http://net-ssh.github.io/net-ssh/
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-ruby/net::ssh_([0-9]+\.[0-9]+\.[0-9]+)\s+.*
 SecureBlackbox:
   name: /n software, Inc.
   url: https://www.nsoftware.com/ipworks/ssh/
+  client: true
+  server: false
   version_regex:
     - 'ssh-2\.0-secureblackbox\.([0-9]+)'
 SSH.NET:
   name: SSH.NET
   url: https://github.com/sshnet/SSH.NET/
+  client: true
+  server: false
   version_regex:
     - 'ssh-2.0-renci.sshnet.sshclient.([0-9]+.[0-9]+.[0-9]+)'
 ssh2-streams:
   name: ssh2-streams.
   url: https://github.com/mscdex/ssh2-streams
+  client: true
+  server: false
   version_regex:
     - 'ssh-2.0-ssh2js([0-9]+\.[0-9]+\.[0-9]+)'
 TeraTermVT:
   name: Tera Term
   url: http://ttssh2.osdn.jp/
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-ttssh/([0-9]+\.[0-9]+).*
 TotalCommander:
   name: TotalCommander SFTP Plugin (Android)
   url: https://www.ghisler.com/androidplugins/googleplay/
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-sshj_version_unknown
 TTYEmulator:
   name: TTYEmulator
   url: https://www.ttyemulator.com/
+  client: true
+  server: false
   version_regex:
     - SSH-2.0-TTYEmul_([0-9]+\.[0-9]+\.[0-9]+\.[0-9]+)
 WinSCP:
   name: WinSCP
   url: https://winscp.net
+  client: true
+  server: false
   version_regex:
     - ssh-2.0-winscp_release_
   vulnerabilities:
     CVE-2021-3331:
       version_max: 6.17.10
       cvss: 10.0
+      description: execute arbitrary programs when the URL handler encounters a crafted URL that loads session settings
     CVE-2020-28864:
       version_max: 5.17.8
       cvss: 7.5
+      description: A buffer overflow allows a malicious FTP server to cause a denial of service or possibly have other unspecified impact via a long file name
     CVE-2018-20684:
       version_max: 5.14
       cvss: 6.4
+      description: due to missing validation, the scp implementation would accept arbitrary files sent by the server
     CVE-2014-2735:
       version_max: 5.5.3
       cvss: 5.8
@@ -304,12 +364,16 @@ WinSCP:
     CVE-2006-3015:
       version_max: 3.8.1
       cvss: 7.1
+      description: Argument injection vulnerability allows remote attackers to upload or download arbitrary files
 WolfSSH:
   name: WolfSSH
   url: https://www.wolfssl.com/products/wolfssh/
+  client: true
+  server: true
   version_regex:
     - ssh-2.0-wolfsshv([0-9]+\.[0-9]+\.[0-9]+)
   vulnerabilities:
     CVE-2022-32073:
       version-max: 1.4.7
       cvss: 9.8
+      description: integer overflow via the function wolfSSH_SFTP_RecvRMDIR
