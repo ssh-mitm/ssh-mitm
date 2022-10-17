@@ -29,8 +29,9 @@ Dropbear:
   vulnerabilities:
     CVE-2021-36369:
       version_max: 2020.81
-      cvss: N/A
+      cvss: 7.5
       docs: true
+      description: trivial authentication attack to bypass FIDO tokens and SSH-ASKPASS
     CVE-2018-15599:
       version_max: 2018.76
       cvss: 5.0
@@ -96,7 +97,7 @@ OpenSSH:
       docs: true
       description: enumerate usernames via challenge response
     CVE-2021-36368:
-      version_max: 8.7
+      version_max: 8.8
       cvss: 3.7
       docs: true
     CVE-2021-28041:
@@ -207,7 +208,7 @@ PuTTY_Release:
   vulnerabilities:
     CVE-2021-36367:
       version_max: 0.71
-      cvss: N/A
+      cvss: 8.1
       docs: true
     CVE-2021-33500:
       version_min:
