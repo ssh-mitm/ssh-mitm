@@ -1,5 +1,4 @@
 import logging
-from typing import Text
 from sshmitm.forwarders.scp import SCPForwarder
 
 
@@ -24,7 +23,7 @@ class SCPRewriteCommand(SCPForwarder):
             help='replace the command with another command'
         )
 
-    def rewrite_scp_command(self, command: Text) -> Text:
+    def rewrite_scp_command(self, command: str) -> str:
         if self.args.scp_append_string:
             new_command = f"{command}{self.args.scp_append_string}"
             logging.info("scp command added string: %s", new_command)

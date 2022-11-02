@@ -3,8 +3,7 @@ import time
 import re
 from typing import (
     Callable,
-    Optional,
-    Text
+    Optional
 )
 
 import paramiko
@@ -25,7 +24,7 @@ class SCPBaseForwarder(BaseForwarder):
     def handle_error(self, traffic: bytes) -> bytes:
         return traffic
 
-    def rewrite_scp_command(self, command: Text) -> Text:
+    def rewrite_scp_command(self, command: str) -> str:
         logging.info(f"got remote command: {command}")
         return command
 
@@ -172,10 +171,10 @@ class SCPForwarder(SCPBaseForwarder):
         self.bytes_remaining = 0
         self.bytes_to_write = 0
 
-        self.file_command: Optional[Text] = None
-        self.file_mode: Optional[Text] = None
+        self.file_command: Optional[str] = None
+        self.file_mode: Optional[str] = None
         self.file_size: int = 0
-        self.file_name: Text = ''
+        self.file_name: str = ''
 
         self.got_c_command = False
 

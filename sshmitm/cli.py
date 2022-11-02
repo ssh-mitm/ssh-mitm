@@ -1,7 +1,7 @@
 from argparse import Namespace
 import logging
 import sys
-from typing import Text, Callable
+from typing import Callable
 
 from paramiko import Transport
 
@@ -21,7 +21,7 @@ class SubCommand():
         self,
         run_func: Callable[[Namespace], None],
         parser_func: Callable[[ModuleParser], None],
-        help: Text  # pylint: disable=redefined-builtin
+        help: str  # pylint: disable=redefined-builtin
     ):
         self.run_func = run_func
         self.help = help

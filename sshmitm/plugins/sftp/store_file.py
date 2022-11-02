@@ -1,7 +1,6 @@
 import logging
 import os
 from typing import (
-    Text,
     BinaryIO,
     Optional
 )
@@ -23,7 +22,7 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
             help='store files from sftp'
         )
 
-    def __init__(self, sftp: SFTPBaseHandle, filename: Text) -> None:
+    def __init__(self, sftp: SFTPBaseHandle, filename: str) -> None:
         super().__init__(sftp, filename)
         self.file_id = str(uuid.uuid4())
         self.sftp_storage_dir = None

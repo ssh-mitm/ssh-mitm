@@ -6,8 +6,7 @@ import socket
 from typing import (
     Optional,
     List,
-    Tuple,
-    Text
+    Tuple
 )
 
 from colored.colored import stylize, attr, fg  # type: ignore
@@ -23,7 +22,7 @@ from sshmitm.clients.ssh import SSHClient, AuthenticationMethod
 from sshmitm.exceptions import MissingHostException
 
 
-def probe_host(hostname_or_ip: Text, port: int, username: Text, public_key: paramiko.pkey.PublicBlob) -> bool:
+def probe_host(hostname_or_ip: str, port: int, username: str, public_key: paramiko.pkey.PublicBlob) -> bool:
 
     def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore
         del msg  # unused arguments
@@ -79,16 +78,16 @@ class RemoteCredentials():
 
     def __init__(
         self, *,
-        username: Text,
-        password: Optional[Text] = None,
+        username: str,
+        password: Optional[str] = None,
         key: Optional[PKey] = None,
-        host: Optional[Text] = None,
+        host: Optional[str] = None,
         port: Optional[int] = None
     ) -> None:
-        self.username: Text = username
-        self.password: Optional[Text] = password
+        self.username: str = username
+        self.password: Optional[str] = password
         self.key: Optional[PKey] = key
-        self.host: Optional[Text] = host
+        self.host: Optional[str] = host
         self.port: Optional[int] = port
 
 
@@ -172,8 +171,8 @@ class Authenticator(BaseModule):
 
     def get_remote_host_credentials(
         self,
-        username: Text,
-        password: Optional[Text] = None,
+        username: str,
+        password: Optional[str] = None,
         key: Optional[PKey] = None
     ) -> RemoteCredentials:
         if self.session.proxyserver.transparent:
@@ -193,7 +192,7 @@ class Authenticator(BaseModule):
         )
 
     @classmethod
-    def get_auth_methods(cls, host: Text, port: int) -> Optional[List[Text]]:
+    def get_auth_methods(cls, host: str, port: int) -> Optional[List[str]]:
         auth_methods = None
         t = paramiko.Transport((host, port))
         try:
@@ -211,8 +210,8 @@ class Authenticator(BaseModule):
 
     def authenticate(
         self,
-        username: Optional[Text] = None,
-        password: Optional[Text] = None,
+        username: Optional[str] = None,
+        password: Optional[str] = None,
         key: Optional[PKey] = None,
         store_credentials: bool = True
     ) -> int:
@@ -259,16 +258,16 @@ class Authenticator(BaseModule):
             logging.exception("internal error, abort authentication!")
         return paramiko.common.AUTH_FAILED
 
-    def auth_agent(self, username: Text, host: Text, port: int) -> int:
+    def auth_agent(self, username: str, host: str, port: int) -> int:
         raise NotImplementedError("authentication must be implemented")
 
-    def auth_password(self, username: Text, host: Text, port: int, password: Text) -> int:
+    def auth_password(self, username: str, host: str, port: int, password: str) -> int:
         raise NotImplementedError("authentication must be implemented")
 
-    def auth_publickey(self, username: Text, host: Text, port: int, key: PKey) -> int:
+    def auth_publickey(self, username: str, host: str, port: int, key: PKey) -> int:
         raise NotImplementedError("authentication must be implemented")
 
-    def auth_fallback(self, username: Text) -> int:
+    def auth_fallback(self, username: str) -> int:
         if not self.args.fallback_host:
             if self.session.agent:
                 logging.error("\n".join([
@@ -320,8 +319,8 @@ class Authenticator(BaseModule):
         return auth_status
 
     def connect(
-        self, user: Text, host: Text, port: int, method: AuthenticationMethod,
-        password: Optional[Text] = None, key: Optional[PKey] = None, *, run_post_auth: bool = True
+        self, user: str, host: str, port: int, method: AuthenticationMethod,
+        password: Optional[str] = None, key: Optional[PKey] = None, *, run_post_auth: bool = True
     ) -> int:
         if not host:
             raise MissingHostException()
@@ -358,13 +357,13 @@ class AuthenticatorPassThrough(Authenticator):
     """pass the authentication to the remote server (reuses the credentials)
     """
 
-    def auth_agent(self, username: Text, host: Text, port: int) -> int:
+    def auth_agent(self, username: str, host: str, port: int) -> int:
         return self.connect(username, host, port, AuthenticationMethod.agent)
 
-    def auth_password(self, username: Text, host: Text, port: int, password: Text) -> int:
+    def auth_password(self, username: str, host: str, port: int, password: str) -> int:
         return self.connect(username, host, port, AuthenticationMethod.password, password=password)
 
-    def auth_publickey(self, username: Text, host: Text, port: int, key: PKey) -> int:
+    def auth_publickey(self, username: str, host: str, port: int, key: PKey) -> int:
         ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
         if key.can_sign():
@@ -386,10 +385,10 @@ class AuthenticatorPassThrough(Authenticator):
         return paramiko.common.AUTH_FAILED
 
     def post_auth_action(self, success: bool) -> None:
-        def get_agent_pubkeys() -> List[Tuple[Text, SSHKey, bool, Text]]:
+        def get_agent_pubkeys() -> List[Tuple[str, SSHKey, bool, str]]:
             pubkeyfile_path = None
 
-            keys_parsed: List[Tuple[Text, SSHKey, bool, Text]] = []
+            keys_parsed: List[Tuple[str, SSHKey, bool, str]] = []
             if self.session.agent is None:
                 return keys_parsed
 

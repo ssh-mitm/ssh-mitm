@@ -1,7 +1,7 @@
 import argparse
 import logging
 import sys
-from typing import NoReturn, Optional, Text
+from typing import NoReturn, Optional
 
 try:
     import tkinter
@@ -12,7 +12,7 @@ except ImportError:
     tkinter_imported = False
 
 
-def ask_pass(primary_message: Text, secondary_message: Optional[Text] = None) -> Optional[Text]:
+def ask_pass(primary_message: str, secondary_message: Optional[str] = None) -> Optional[str]:
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
@@ -22,7 +22,7 @@ def ask_pass(primary_message: Text, secondary_message: Optional[Text] = None) ->
     return None
 
 
-def confirm(primary_message: Text, secondary_message: Optional[Text] = None) -> bool:
+def confirm(primary_message: str, secondary_message: Optional[str] = None) -> bool:
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
@@ -45,7 +45,7 @@ def main() -> NoReturn:
     if primary_message == "":
         primary_message = "ssh-askpass"
 
-    secondary_message: Optional[Text] = "\n".join(lines[1:]).strip()
+    secondary_message: Optional[str] = "\n".join(lines[1:]).strip()
     if secondary_message == "":
         secondary_message = None
 

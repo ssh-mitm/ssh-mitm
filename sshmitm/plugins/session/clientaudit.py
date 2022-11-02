@@ -4,7 +4,6 @@ from collections import defaultdict
 from typing import (
     cast,
     TYPE_CHECKING,
-    Text,
     List,
     Optional,
     Dict,
@@ -28,12 +27,12 @@ if TYPE_CHECKING:
 
 class Vulnerability:
 
-    def __init__(self, cve: Text, indocs: bool = False) -> None:
-        self.cve: Text = cve
+    def __init__(self, cve: str, indocs: bool = False) -> None:
+        self.cve: str = cve
         self.indocs: bool = indocs
 
     @property
-    def url(self) -> Text:
+    def url(self) -> str:
         if self.indocs:
             return f"https://docs.ssh-mitm.at/vulnerabilities/{self.cve}.html"
         return f"https://nvd.nist.gov/vuln/detail/{self.cve}"
@@ -44,25 +43,25 @@ class SSHClientAudit():
     def __init__(
         self,
         key_negotiation_data: 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData',
-        client_version: Text,
-        client_name: Optional[Text] = None,
-        client_info: Optional[Dict[Text, Dict[Text, Any]]] = None
+        client_version: str,
+        client_name: Optional[str] = None,
+        client_info: Optional[Dict[str, Dict[str, Any]]] = None
     ) -> None:
         self.key_negotiation_data: 'KeyNegotiationData' = key_negotiation_data
-        self.client_name: Optional[Text] = client_name
-        self.client_version: Text = client_version
-        self.client_info: Dict[Text, Dict[Text, Any]] = client_info or {}
-        self.product_name: Optional[Text] = cast(str, self.client_info.get('name', ""))
-        self.vendor_url: Optional[Text] = cast(str, self.client_info.get('url', ""))
+        self.client_name: Optional[str] = client_name
+        self.client_version: str = client_version
+        self.client_info: Dict[str, Dict[str, Any]] = client_info or {}
+        self.product_name: Optional[str] = cast(str, self.client_info.get('name', ""))
+        self.vendor_url: Optional[str] = cast(str, self.client_info.get('url', ""))
 
-    def get_version_string(self) -> Optional[Text]:
+    def get_version_string(self) -> Optional[str]:
         for version_regex in self.client_info.get('version_regex', []):
             version_sring = re.match(version_regex, self.key_negotiation_data.client_version.lower())
             if version_sring:
                 return version_sring[1]
         return None
 
-    def between_versions(self, version_min: Union[None, int, float, Text], version_max: Union[None, int, float, Text]) -> bool:
+    def between_versions(self, version_min: Union[None, int, float, str], version_max: Union[None, int, float, str]) -> bool:
         try:
             version_string = self.get_version_string()
             if not version_string:
@@ -77,8 +76,8 @@ class SSHClientAudit():
         except ValueError:
             return False
 
-    def check_cves(self, vulnerabilities: Dict[Text, List[Text]]) -> List[Text]:
-        cvelist: Dict[Text, Vulnerability] = {}
+    def check_cves(self, vulnerabilities: Dict[str, List[str]]) -> List[str]:
+        cvelist: Dict[str, Vulnerability] = {}
         for cve, description in self.client_info.get('vulnerabilities', {}).items():
             version_min = description.get('version_min', "")
             version_max = description.get('version_max', "")
@@ -86,7 +85,7 @@ class SSHClientAudit():
             if self.between_versions(version_min, version_max):
                 cvelist[cve] = Vulnerability(cve, indocs)
 
-        cvemessagelist: List[Text] = []
+        cvemessagelist: List[str] = []
         if cvelist:
             for e in cvelist.values():
                 cvemessagelist.append(f"  * {e.cve}: {e.url}")
@@ -98,8 +97,8 @@ class SSHClientAudit():
                         cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
         return cvemessagelist
 
-    def _find_known_server_host_key_algos(self) -> List[Text]:
-        messages: List[Text] = []
+    def _find_known_server_host_key_algos(self) -> List[str]:
+        messages: List[str] = []
         for client_name, server_host_key_algorithms_list in SERVER_HOST_KEY_ALGORITHMS.items():
             if not isinstance(server_host_key_algorithms_list, list):
                 continue
@@ -120,8 +119,8 @@ class SSHClientAudit():
             ])
         return messages
 
-    def _check_known_clients(self, client_name: Text) -> List[Text]:
-        messages: List[Text] = []
+    def _check_known_clients(self, client_name: str) -> List[str]:
+        messages: List[str] = []
         if client_name not in SERVER_HOST_KEY_ALGORITHMS:
             return self._find_known_server_host_key_algos()
         server_host_key_algorithms = SERVER_HOST_KEY_ALGORITHMS.get(client_name)
@@ -144,11 +143,11 @@ class SSHClientAudit():
             ))
         return messages
 
-    def check_key_negotiation(self) -> Dict[Text, List[Text]]:
+    def check_key_negotiation(self) -> Dict[str, List[str]]:
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_info.get('name', ''))
 
-        messages: List[Text] = []
+        messages: List[str] = []
         if self.client_name is None or self.client_name not in SERVER_HOST_KEY_ALGORITHMS:
             messages.extend(self._find_known_server_host_key_algos())
         else:
@@ -159,7 +158,7 @@ class SSHClientAudit():
         return {'clientaudit': messages}
 
     def run_audit(self) -> None:
-        vulnerabilities: DefaultDict[Text, List[Text]] = defaultdict(list)
+        vulnerabilities: DefaultDict[str, List[str]] = defaultdict(list)
         for k, v in self.check_key_negotiation().items():
             vulnerabilities[k].extend(v)
 
@@ -192,5 +191,5 @@ class SSHClientAudit():
             )
         logging.info("%s", "\n".join(log_output))
 
-    def audit(self) -> List[Text]:
+    def audit(self) -> List[str]:
         return []

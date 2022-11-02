@@ -3,7 +3,6 @@ import os
 from typing import (
     Any,
     List,
-    Text,
     Union,
     Tuple,
     Type,
@@ -28,7 +27,7 @@ class BaseServerInterface(paramiko.ServerInterface, BaseModule):
         super().__init__()
         self.session: 'sshmitm.session.Session' = session
         self.forwarders: List[Union[TunnelForwarder, LocalPortForwardingForwarder, RemotePortForwardingForwarder]] = []
-        self.possible_auth_methods: Optional[List[Text]] = None
+        self.possible_auth_methods: Optional[List[str]] = None
 
 
 class ServerInterface(BaseServerInterface):
@@ -182,7 +181,7 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    def get_allowed_auths(self, username: Text) -> Text:
+    def get_allowed_auths(self, username: str) -> str:
         if self.possible_auth_methods is None and not self.args.disable_auth_method_lookup:
             creds: RemoteCredentials = self.session.authenticator.get_remote_host_credentials(username)
             if creds.host is not None and creds.port is not None:
@@ -213,7 +212,7 @@ class ServerInterface(BaseServerInterface):
         logging.warning('Authentication is set to "none", but logins are disabled!')
         return 'none'
 
-    def check_auth_none(self, username: Text) -> int:
+    def check_auth_none(self, username: str) -> int:
         logging.debug("check_auth_none: username=%s", username)
         if self.args.enable_none_auth:
             self.session.authenticator.authenticate(username, key=None)
@@ -221,7 +220,7 @@ class ServerInterface(BaseServerInterface):
         return paramiko.common.AUTH_FAILED
 
     def check_auth_interactive(
-        self, username: Text, submethods: Union[bytes, Text]
+        self, username: str, submethods: Union[bytes, str]
     ) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive: username=%s, submethods=%s", username, submethods)
         is_trivial_auth = self.args.enable_trivial_auth and self.session.accepted_key is not None
@@ -234,7 +233,7 @@ class ServerInterface(BaseServerInterface):
             iq.add_prompt("Password (kb-interactive): ", False)
         return iq
 
-    def check_auth_interactive_response(self, responses: List[Text]) -> Union[int, paramiko.server.InteractiveQuery]:
+    def check_auth_interactive_response(self, responses: List[str]) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive_response: responses=%s", responses)
         is_trivial_auth = self.args.enable_trivial_auth and self.session.accepted_key is not None
         if self.args.disable_keyboard_interactive_prompts or is_trivial_auth:
@@ -244,7 +243,7 @@ class ServerInterface(BaseServerInterface):
             return paramiko.common.AUTH_FAILED
         return self.session.authenticator.authenticate(self.session.username, password=responses[0])
 
-    def check_auth_publickey(self, username: Text, key: PKey) -> int:
+    def check_auth_publickey(self, username: str, key: PKey) -> int:
         ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
         logging.debug(
@@ -280,7 +279,7 @@ class ServerInterface(BaseServerInterface):
             return paramiko.common.AUTH_FAILED
         return auth_result
 
-    def check_auth_password(self, username: Text, password: Text) -> int:
+    def check_auth_password(self, username: str, password: str) -> int:
         logging.debug("check_auth_password: username=%s, password=%s", username, password)
         if self.args.disable_password_auth:
             logging.warning("Password login attempt, but password auth was disabled!")
@@ -289,7 +288,7 @@ class ServerInterface(BaseServerInterface):
             return paramiko.common.AUTH_FAILED
         return self.session.authenticator.authenticate(username, password=password)
 
-    def check_channel_request(self, kind: Text, chanid: int) -> int:
+    def check_channel_request(self, kind: str, chanid: int) -> int:
         logging.debug("check_channel_request: kind=%s , chanid=%s", kind, chanid)
         return paramiko.common.OPEN_SUCCEEDED
 
@@ -298,14 +297,14 @@ class ServerInterface(BaseServerInterface):
         self.session.env_requests[name] = value
         return True
 
-    def check_channel_subsystem_request(self, channel: paramiko.Channel, name: Text) -> bool:
+    def check_channel_subsystem_request(self, channel: paramiko.Channel, name: str) -> bool:
         logging.debug("check_channel_subsystem_request: channel=%s, name=%s", channel, name)
         if name.lower() == 'sftp':
             self.session.sftp_requested = True
             self.session.sftp_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 
-    def check_port_forward_request(self, address: Text, port: int) -> int:
+    def check_port_forward_request(self, address: str, port: int) -> int:
         """
         Note that the if the client requested the port, we must handle it or
         return false.
@@ -333,7 +332,7 @@ class ServerInterface(BaseServerInterface):
             logging.info("TCP forwarding request denied")
             return False
 
-    def cancel_port_forward_request(self, address: Text, port: int) -> None:
+    def cancel_port_forward_request(self, address: str, port: int) -> None:
         logging.info(
             "cancel_port_forward_request: address=%s, port=%s",
             address, port
@@ -351,7 +350,7 @@ class ServerInterface(BaseServerInterface):
             return
         self.session.ssh_client.transport.cancel_port_forward(address, port)
 
-    def check_channel_direct_tcpip_request(self, chanid: int, origin: Tuple[Text, int], destination: Tuple[Text, int]) -> int:
+    def check_channel_direct_tcpip_request(self, chanid: int, origin: Tuple[str, int], destination: Tuple[str, int]) -> int:
         username = self.session.transport.get_username()
         logging.info(
             "channel_direct_tcpip_request: chanid=%s, origin=%s, destination=%s, username=%s",
@@ -381,7 +380,7 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_x11_request(
         self, channel: paramiko.Channel, single_connection: bool,
-        auth_protocol: Text, auth_cookie: ByteString, screen_number: int
+        auth_protocol: str, auth_cookie: ByteString, screen_number: int
     ) -> bool:
         logging.debug(
             "check_channel_x11_request: channel=%s, single_connection=%s, auth_protocol=%s, auth_cookie=%s, screen_number=%s",
@@ -390,8 +389,8 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def check_global_request(
-        self, kind: Text, msg: paramiko.message.Message
-    ) -> Union[bool, Tuple[Union[bool, int, Text], ...]]:
+        self, kind: str, msg: paramiko.message.Message
+    ) -> Union[bool, Tuple[Union[bool, int, str], ...]]:
         logging.debug(
             "check_global_request: kind=%s, msg=%s", kind, msg
         )
@@ -403,7 +402,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
     def __init__(
         self,
         channel: paramiko.Channel,
-        name: Text,
+        name: str,
         server: ServerInterface,
         sftp_si: Type[paramiko.SFTPServerInterface],
         session: 'sshmitm.session.Session',
@@ -414,7 +413,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
         self.session = session
 
     def start_subsystem(
-        self, name: Text, transport: paramiko.Transport, channel: paramiko.Channel
+        self, name: str, transport: paramiko.Transport, channel: paramiko.Channel
     ) -> None:
         self.session.sftp_client = SFTPClient.from_client(self.session.ssh_client)
         if not self.session.sftp_client:

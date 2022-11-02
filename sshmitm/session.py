@@ -12,7 +12,6 @@ from typing import (
     Optional,
     Union,
     Tuple,
-    Text,
     Type
 )
 
@@ -55,9 +54,9 @@ class Session(BaseSession):
         self,
         proxyserver: 'sshmitm.server.SSHProxyServer',
         client_socket: socket.socket,
-        client_address: Union[Tuple[Text, int], Tuple[Text, int, int, int]],
+        client_address: Union[Tuple[str, int], Tuple[str, int, int, int]],
         authenticator: Type['sshmitm.authentication.Authenticator'],
-        remoteaddr: Union[Tuple[Text, int], Tuple[Text, int, int, int]]
+        remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]]
     ) -> None:
         super().__init__()
         self.sessionid = uuid4()
@@ -81,7 +80,7 @@ class Session(BaseSession):
         self.ssh_requested: bool = False
         self.ssh_channel: Optional[paramiko.Channel] = None
         self.ssh_client: Optional[sshmitm.clients.ssh.SSHClient] = None
-        self.ssh_pty_kwargs: Optional[Dict[Text, Any]] = None
+        self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
 
         self.scp_requested: bool = False
         self.scp_channel: Optional[paramiko.Channel] = None
@@ -97,7 +96,7 @@ class Session(BaseSession):
         self.password: Optional[str] = None
         self.password_provided: Optional[str] = None
         self.socket_remote_address = remoteaddr
-        self.remote_address: Tuple[Optional[Text], Optional[int]] = (None, None)
+        self.remote_address: Tuple[Optional[str], Optional[int]] = (None, None)
         self.remote_address_reachable: bool = True
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None

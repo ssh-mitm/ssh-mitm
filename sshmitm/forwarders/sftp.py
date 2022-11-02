@@ -1,7 +1,6 @@
 import logging
 from typing import (
     Optional,
-    Text,
     Union,
     Type,
     cast
@@ -16,9 +15,9 @@ from sshmitm.interfaces.sftp import BaseSFTPServerInterface
 
 class SFTPHandlerBasePlugin(BaseModule):
 
-    def __init__(self, sftp: 'SFTPBaseHandle', filename: Text) -> None:
+    def __init__(self, sftp: 'SFTPBaseHandle', filename: str) -> None:
         super().__init__()
-        self.filename: Text = filename
+        self.filename: str = filename
         self.sftp: 'SFTPBaseHandle' = sftp
 
     @classmethod
@@ -48,7 +47,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         self,
         session: 'sshmitm.session.Session',
         plugin: Type[SFTPHandlerBasePlugin],
-        filename: Text,
+        filename: str,
         flags: int = 0
     ) -> None:
         super().__init__(flags)

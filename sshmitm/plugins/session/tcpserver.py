@@ -5,7 +5,6 @@ import time
 from typing import (
     Callable,
     List,
-    Text,
     Union,
     Tuple,
     Optional
@@ -18,10 +17,10 @@ class TCPServerThread(threading.Thread):
     def __init__(
         self,
         request_handler: Optional[Callable[
-            [Tuple[Text, int], Union[socket.socket, paramiko.Channel], Tuple[Text, int]],
+            [Tuple[str, int], Union[socket.socket, paramiko.Channel], Tuple[str, int]],
             None
         ]] = None,
-        network: Text = '127.0.0.1',
+        network: str = '127.0.0.1',
         port: int = 0,
         run_status: bool = True,
         daemon: bool = False
@@ -49,7 +48,7 @@ class TCPServerThread(threading.Thread):
                 t.start()
             time.sleep(0.1)
 
-    def handle_request(self, client: Union[socket.socket, paramiko.Channel], addr: Tuple[Text, int]) -> None:
+    def handle_request(self, client: Union[socket.socket, paramiko.Channel], addr: Tuple[str, int]) -> None:
         if self.handle_request_callback is not None:
             self.handle_request_callback((self.network, self.port), client, addr)
 

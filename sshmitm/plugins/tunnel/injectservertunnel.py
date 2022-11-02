@@ -1,6 +1,6 @@
 import logging
 from socket import socket
-from typing import Optional, Tuple, Text, Union
+from typing import Optional, Tuple, Union
 
 import paramiko
 from rich._emoji_codes import EMOJI
@@ -51,7 +51,7 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
         self.tcpserver.start()
 
     def handle_request(
-        self, listenaddr: Tuple[Text, int], client: Union[socket, paramiko.Channel], addr: Tuple[Text, int]
+        self, listenaddr: Tuple[str, int], client: Union[socket, paramiko.Channel], addr: Tuple[str, int]
     ) -> None:
         del listenaddr  # unused arguments
         try:

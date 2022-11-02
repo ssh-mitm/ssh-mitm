@@ -6,8 +6,7 @@ from typing import (
     Any,
     Optional,
     Tuple,
-    Union,
-    Text
+    Union
 )
 
 import paramiko
@@ -23,11 +22,11 @@ class SFTPClient(SSHClient):
 
     def __init__(
         self,
-        host: Text,
+        host: str,
         port: int,
         method: AuthenticationMethod,
-        password: Optional[Text],
-        user: Text,
+        password: Optional[str],
+        user: str,
         key: Optional[PKey],
         session: 'sshmitm.session.Session'
     ) -> None:
@@ -83,25 +82,25 @@ class SFTPClient(SSHClient):
             logging.exception('error creating sftp client')
         return False
 
-    def open(self, filename: Union[Text, bytes], mode: Text = 'r', bufsize: int = -1) -> SFTPFile:
+    def open(self, filename: Union[str, bytes], mode: str = 'r', bufsize: int = -1) -> SFTPFile:
         if self._sftp is None:
             raise paramiko.SFTPError("Expected handle")
         return self._sftp.open(filename, mode, bufsize)
 
-    def chmod(self, path: Union[Text, bytes], mode: int) -> int:
+    def chmod(self, path: Union[str, bytes], mode: int) -> int:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         self._sftp.chmod(path, mode)
         return paramiko.sftp.SFTP_OK
 
-    def chown(self, path: Union[Text, bytes], uid: int, gid: int) -> int:
+    def chown(self, path: Union[str, bytes], uid: int, gid: int) -> int:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         self._sftp.chown(path, uid, gid)
         return paramiko.sftp.SFTP_OK
 
     def get(
-        self, remotePath: Union[Text, bytes], localPath: Union[Text, bytes],
+        self, remotePath: Union[str, bytes], localPath: Union[str, bytes],
         callback: Optional[Callable[[int, int], Any]] = None
     ) -> int:
         if self._sftp is None:
@@ -114,62 +113,62 @@ class SFTPClient(SSHClient):
             os.remove(localPath)
         return paramiko.sftp.SFTP_FAILURE
 
-    def listdir_attr(self, path: Text = '.') -> Union[int, List[SFTPAttributes]]:
+    def listdir_attr(self, path: str = '.') -> Union[int, List[SFTPAttributes]]:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         return self._sftp.listdir_attr(path)
 
-    def lstat(self, path: Union[Text, bytes]) -> Union[int, SFTPAttributes]:
+    def lstat(self, path: Union[str, bytes]) -> Union[int, SFTPAttributes]:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         return self._sftp.lstat(path)
 
-    def mkdir(self, path: Union[Text, bytes], mode: int = 511) -> int:
+    def mkdir(self, path: Union[str, bytes], mode: int = 511) -> int:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         self._sftp.mkdir(path, mode)
         return paramiko.sftp.SFTP_OK
 
     def put(
-        self, localPath: Union[Text, bytes], remotePath: Union[Text, bytes], callback: Any = None, confirm: bool = True
+        self, localPath: Union[str, bytes], remotePath: Union[str, bytes], callback: Any = None, confirm: bool = True
     ) -> None:
         raise NotImplementedError('put not implemented')
 
-    def readlink(self, path: Union[Text, bytes]) -> Union[int, Text]:
+    def readlink(self, path: Union[str, bytes]) -> Union[int, str]:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         return self._sftp.readlink(path) or paramiko.sftp.SFTP_FAILURE
 
-    def remove(self, path: Union[Text, bytes]) -> int:
+    def remove(self, path: Union[str, bytes]) -> int:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         self._sftp.remove(path)
         return paramiko.sftp.SFTP_OK
 
-    def rename(self, oldpath: Union[Text, bytes], newpath: Union[Text, bytes]) -> int:
+    def rename(self, oldpath: Union[str, bytes], newpath: Union[str, bytes]) -> int:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         self._sftp.rename(oldpath, newpath)
         return paramiko.sftp.SFTP_OK
 
-    def rmdir(self, path: Union[Text, bytes]) -> int:
+    def rmdir(self, path: Union[str, bytes]) -> int:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         self._sftp.rmdir(path)
         return paramiko.sftp.SFTP_OK
 
-    def stat(self, path: Union[Text, bytes]) -> Union[int, SFTPAttributes]:
+    def stat(self, path: Union[str, bytes]) -> Union[int, SFTPAttributes]:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         return self._sftp.stat(path)
 
-    def utime(self, path: Union[Text, bytes], times: Tuple[float, float]) -> int:
+    def utime(self, path: Union[str, bytes], times: Tuple[float, float]) -> int:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         self._sftp.utime(path, times)
         return paramiko.sftp.SFTP_OK
 
-    def symlink(self, source: Union[Text, bytes], dest: Union[Text, bytes]) -> int:
+    def symlink(self, source: Union[str, bytes], dest: Union[str, bytes]) -> int:
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         self._sftp.symlink(source, dest)

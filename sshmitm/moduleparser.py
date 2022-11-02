@@ -32,7 +32,6 @@ from typing import (
     Dict,
     Type,
     Set,
-    Text,
     Union
 )
 
@@ -45,7 +44,7 @@ def load_module(entry_point_class: Type['BaseModule']) -> Type['argparse.Action'
     """Action to be able to define BaseModule with the "add_module" method of the ModuleParser as command line parameter
     """
     class ModuleLoaderAction(argparse.Action):
-        def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Union[Text, Sequence[Any], None], option_string: Optional[Text] = None) -> None:
+        def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Union[str, Sequence[Any], None], option_string: Optional[str] = None) -> None:
             if values:
                 entry_point_list = []
                 for entry_point in pkg_resources.iter_entry_points(entry_point_class.__name__):
@@ -57,7 +56,7 @@ def load_module(entry_point_class: Type['BaseModule']) -> Type['argparse.Action'
     return ModuleLoaderAction
 
 
-def set_module_kwargs(entry_point_class: Type['BaseModule'], **kwargs: Any) -> Dict[Text, Any]:
+def set_module_kwargs(entry_point_class: Type['BaseModule'], **kwargs: Any) -> Dict[str, Any]:
 
     entry_points = sorted(
         pkg_resources.iter_entry_points(entry_point_class.__name__),
@@ -101,7 +100,7 @@ class ModuleError(BaseModuleError):
         self,
         moduleclass: Optional[Union[Type['BaseModule'], Tuple[Type['BaseModule'], ...]]] = None,
         baseclass: Optional[Union[Type['BaseModule'], Tuple[Type['BaseModule'], ...]]] = None,
-        message: Optional[Text] = None
+        message: Optional[str] = None
     ):
         super().__init__()
         self.moduleclass = moduleclass
@@ -120,7 +119,7 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
         super().__init__(*args, **kwargs)
         self.exit_on_error = True
 
-    def error(self, message: Text) -> None:  # type: ignore
+    def error(self, message: str) -> None:  # type: ignore
         if self.exit_on_error:
             return
         super().error(message)
@@ -132,7 +131,7 @@ class BaseModule():
 
     def __init__(
         self,
-        args: Optional[Sequence[Text]] = None,
+        args: Optional[Sequence[str]] = None,
         namespace: Optional[argparse.Namespace] = None,
         **kwargs: Any
     ) -> None:
@@ -192,13 +191,13 @@ class ModuleFormatter(argparse.HelpFormatter):
 
     class _Section():  # pylint: disable=too-few-public-methods
 
-        def __init__(self, formatter: argparse.HelpFormatter, parent: Any, heading: Optional[Text] = None) -> None:
+        def __init__(self, formatter: argparse.HelpFormatter, parent: Any, heading: Optional[str] = None) -> None:
             self.formatter = formatter
             self.parent = parent
             self.heading = heading
             self.items = []  # type: ignore
 
-        def format_help(self) -> Text:
+        def format_help(self) -> str:
             # format the indented section
             if self.parent is not None:
                 self.formatter._indent()  # pylint: disable=protected-access
@@ -221,7 +220,7 @@ class ModuleFormatter(argparse.HelpFormatter):
             # join the section-initial newline, the heading and the help
             return join(['\n', heading, item_help, '\n'])
 
-    def _split_lines(self, text: Text, width: int) -> List[Text]:
+    def _split_lines(self, text: str, width: int) -> List[str]:
         return text.splitlines()
 
 
@@ -241,7 +240,7 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
         self,
         *,
         parsed_args: argparse.Namespace,
-        args: Optional[Sequence[Text]],
+        args: Optional[Sequence[str]],
         namespace: Optional[argparse.Namespace],
         modules: List[Tuple[argparse.Action, Type[BaseModule]]],
     ) -> List[argparse.ArgumentParser]:
@@ -255,7 +254,7 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
     def _get_sub_modules(
         self,
         *,
-        args: Optional[Sequence[Text]],
+        args: Optional[Sequence[str]],
         namespace: Optional[argparse.Namespace],
         modules: Optional[List[Type[BaseModule]]]
     ) -> List[argparse.ArgumentParser]:
@@ -283,7 +282,7 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
 
     def _create_parser(
         self,
-        args: Optional[Sequence[Text]] = None,
+        args: Optional[Sequence[str]] = None,
         namespace: Optional[argparse.Namespace] = None
     ) -> 'argparse.ArgumentParser':
         parsed_args_tuple = super().parse_known_args(args=args, namespace=namespace)

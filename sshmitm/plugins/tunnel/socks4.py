@@ -6,8 +6,7 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
-    Text
+    Union
 )
 
 import paramiko
@@ -26,7 +25,7 @@ class Socks4Error(Exception):
 class Socks4Types(Enum):
     """Basisklasse für Socks4 Daten"""
 
-    def __str__(self) -> Text:
+    def __str__(self) -> str:
         return str(self.value)
 
     def __add__(self, other: bytes) -> bytes:
@@ -53,7 +52,7 @@ class Socks4Server():
     """
     SOCKSVERSION = b"\x04"
 
-    def __init__(self, listenaddress: Tuple[Text, int]) -> None:
+    def __init__(self, listenaddress: Tuple[str, int]) -> None:
         self.listenaddress = listenaddress
 
     @property
@@ -67,7 +66,7 @@ class Socks4Server():
         server_port = self.listenaddress[1]
         return bytes([int(server_port / 256)]) + bytes([int(server_port % 256)])
 
-    def _get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[Text, int]]:
+    def _get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[str, int]]:
         """Ermittelt das Ziel aus der Socks Anfrage"""
         # get socks command
         try:
@@ -76,7 +75,7 @@ class Socks4Server():
             raise Socks4Error("Invalid Socks4 command") from exc
 
         dst_addr_b: bytes
-        dst_addr: Text
+        dst_addr: str
         dst_port_b: bytes
         dst_port: int
 
@@ -94,7 +93,7 @@ class Socks4Server():
                 break
             userid += nextchr
 
-        address: Optional[Tuple[Text, int]] = None
+        address: Optional[Tuple[str, int]] = None
         reply = Socks4CommandReply.FAILED
         if command is Socks4Command.CONNECT:
             address = (dst_addr, dst_port)
@@ -110,7 +109,7 @@ class Socks4Server():
 
     def get_address(
         self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False
-    ) -> Optional[Tuple[Text, int]]:
+    ) -> Optional[Tuple[str, int]]:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks4Server.SOCKSVERSION:
@@ -133,11 +132,11 @@ class ClientTunnelHandler:
         self.session = session
 
     def handle_request(
-        self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
+        self, listenaddr: Tuple[str, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
     ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
-        destination: Optional[Tuple[Text, int]] = None
+        destination: Optional[Tuple[str, int]] = None
         Socks4connection = Socks4Server(listenaddr)
         destination = Socks4connection.get_address(client)
         if destination is None:

@@ -7,8 +7,7 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
-    Text
+    Union
 )
 
 import paramiko
@@ -27,7 +26,7 @@ class Socks5Error(Exception):
 class Socks5Types(Enum):
     """Basisklasse für Socks5 Daten"""
 
-    def __str__(self) -> Text:
+    def __str__(self) -> str:
         return str(self.value)
 
     def __add__(self, other: bytes) -> bytes:
@@ -78,11 +77,11 @@ class Socks5Server():
     AUTH_PASSWORD_VERSION = b"\x01"
 
     def __init__(
-        self, listenaddress: Tuple[Text, int], username: Optional[Text] = None, password: Optional[Text] = None
+        self, listenaddress: Tuple[str, int], username: Optional[str] = None, password: Optional[str] = None
     ) -> None:
         self.listenaddress = listenaddress
-        self.username: Optional[Text] = username
-        self.password: Optional[Text] = password
+        self.username: Optional[str] = username
+        self.password: Optional[str] = password
         self.auth_required: bool = self.username is not None and self.password is not None
 
     @property
@@ -125,12 +124,12 @@ class Socks5Server():
             raise Socks5Error('Wrong Authentication Version')
 
         username_len: int = int.from_bytes(clientsock.recv(1), byteorder='big')
-        username: Text = clientsock.recv(username_len).decode("utf8")
+        username: str = clientsock.recv(username_len).decode("utf8")
         if len(username) != username_len:
             raise Socks5Error("Invalid username length")
 
         password_len: int = int.from_bytes(clientsock.recv(1), byteorder='big')
-        password: Text = clientsock.recv(password_len).decode("utf8")
+        password: str = clientsock.recv(password_len).decode("utf8")
         if len(password) != password_len:
             raise Socks5Error("Invalid password length")
 
@@ -142,7 +141,7 @@ class Socks5Server():
         clientsock.sendall(Socks5Server.AUTH_PASSWORD_VERSION + b"\x01")
         return False
 
-    def _get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[Text, int]]:
+    def _get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[str, int]]:
         """Ermittelt das Ziel aus der Socks Anfrage"""
         # check socks version
         if clientsock.recv(1) != Socks5Server.SOCKSVERSION:
@@ -162,7 +161,7 @@ class Socks5Server():
             raise Socks5Error("Invalid Socks5 address type") from exc
 
         dst_addr_b: bytes
-        dst_addr: Text
+        dst_addr: str
         dst_port_b: bytes
         dst_port: int
 
@@ -190,7 +189,7 @@ class Socks5Server():
 
         dst_port = dst_port_b[0] * 256 + dst_port_b[1]
 
-        address: Optional[Tuple[Text, int]] = None
+        address: Optional[Tuple[str, int]] = None
         reply = Socks5CommandReply.COMMAND_NOT_SUPPORTED
         if command is Socks5Command.CONNECT:
             address = (dst_addr, dst_port)
@@ -206,13 +205,13 @@ class Socks5Server():
         )
         return address
 
-    def check_credentials(self, username: Text, password: Text) -> bool:
+    def check_credentials(self, username: str, password: str) -> bool:
         """Prüft Benutzername und Passwort"""
         return username == self.username and password == self.password
 
     def get_address(
         self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False
-    ) -> Optional[Tuple[Text, int]]:
+    ) -> Optional[Tuple[str, int]]:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks5Server.SOCKSVERSION:
@@ -232,19 +231,19 @@ class ClientTunnelHandler:
     def __init__(
         self,
         session: 'sshmitm.session.Session',
-        username: Optional[Text] = None,
-        password: Optional[Text] = None
+        username: Optional[str] = None,
+        password: Optional[str] = None
     ) -> None:
         self.session = session
         self.username = username
         self.password = password
 
     def handle_request(
-        self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
+        self, listenaddr: Tuple[str, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
     ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
-        destination: Optional[Tuple[Text, int]] = None
+        destination: Optional[Tuple[str, int]] = None
         socks5connection = Socks5Server(listenaddr, self.username, self.password)
         destination = socks5connection.get_address(client)
         if destination is None:

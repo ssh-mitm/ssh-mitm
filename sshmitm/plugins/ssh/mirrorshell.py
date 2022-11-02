@@ -7,7 +7,6 @@ import time
 import os
 import tempfile
 from typing import (
-    Text,
     Optional,
     IO
 )
@@ -28,10 +27,10 @@ class InjectServer(paramiko.ServerInterface):
         self.server_channel = server_channel
         self.injector_channel: Optional[paramiko.channel.Channel] = None
 
-    def check_auth_none(self, username: Text) -> int:
+    def check_auth_none(self, username: str) -> int:
         return paramiko.common.AUTH_SUCCESSFUL
 
-    def check_channel_request(self, kind: Text, chanid: int) -> int:
+    def check_channel_request(self, kind: str, chanid: int) -> int:
         if kind == 'session':
             return paramiko.common.OPEN_SUCCEEDED
         return paramiko.common.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
@@ -84,7 +83,7 @@ class SSHMirrorForwarder(SSHForwarder):
         if self.args.ssh_mirrorshell_key:
             self.args.ssh_mirrorshell_key = os.path.expanduser(self.args.ssh_mirrorshell_key)
 
-        self.logdir: Optional[Text] = None
+        self.logdir: Optional[str] = None
         self.timestamp: Optional[datetime.datetime] = None
         self.fileIn: Optional[IO[bytes]] = None
         self.fileOut: Optional[IO[bytes]] = None

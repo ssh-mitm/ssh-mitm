@@ -37,7 +37,6 @@ from typing import (
     Dict,
     Tuple,
     Optional,
-    Text,
     List,
     Union,
     overload
@@ -67,7 +66,7 @@ def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
 
 
 def create_server_sock(
-    address: Tuple[Text, int],
+    address: Tuple[str, int],
     family: Optional[socket.AddressFamily] = None,
     reuse_addr: Optional[bool] = None,
     transparent: bool = False,
@@ -107,7 +106,7 @@ def create_server_sock(
     ...     # handle new sock connection
     """
     AF_INET6 = getattr(socket, 'AF_INET6', 0)
-    host: Optional[Text]
+    host: Optional[str]
     port: int
     host, port = address
     if host in ("", "0.0.0.0"):  # nosec
@@ -174,7 +173,7 @@ class MultipleSocketsListener:
 
     def __init__(
         self,
-        addresses: List[Tuple[Text, int]],
+        addresses: List[Tuple[str, int]],
         family: Optional[socket.AddressFamily] = None,
         reuse_addr: Optional[bool] = None,
         transparent: bool = False,
@@ -214,7 +213,7 @@ class MultipleSocketsListener:
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
         self.close()
 
-    def __repr__(self) -> Text:
+    def __repr__(self) -> str:
         addrs = []
         for sock in self._socks:
             try:
@@ -247,7 +246,7 @@ class MultipleSocketsListener:
             pass  # non-blocking socket
         return None
 
-    def _multicall(self, name: Text, *args: Any, **kwargs: Any) -> None:
+    def _multicall(self, name: str, *args: Any, **kwargs: Any) -> None:
         for sock in self._socks:
             meth = getattr(sock, name)
             meth(*args, **kwargs)

@@ -1,7 +1,6 @@
 import logging
 import os
 from typing import (
-    Text,
     Optional,
     Type,
     Union
@@ -19,7 +18,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
     class SFTPInterface(SFTPProxyServerInterface):
 
-        def lstat(self, path: Text) -> Union[SFTPAttributes, int]:
+        def lstat(self, path: str) -> Union[SFTPAttributes, int]:
             self.session.sftp_client_ready.wait()
             args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
             if self.session.sftp_client is None:
@@ -31,7 +30,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             stat_remote.st_size = stat_replace.st_size
             return stat_remote
 
-        def stat(self, path: Text) -> Union[SFTPAttributes, int]:
+        def stat(self, path: str) -> Union[SFTPAttributes, int]:
             return self.lstat(path)
 
     @classmethod
@@ -48,7 +47,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             help='file that is used for replacement'
         )
 
-    def __init__(self, sftp: SFTPBaseHandle, filename: Text) -> None:
+    def __init__(self, sftp: SFTPBaseHandle, filename: str) -> None:
         super().__init__(sftp, filename)
         self.args.sftp_replacement_file = os.path.expanduser(self.args.sftp_replacement_file)
 

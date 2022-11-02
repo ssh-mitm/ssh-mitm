@@ -10,7 +10,6 @@ from socket import socket
 
 from typing import (
     Optional,
-    Text,
     Type,
     Tuple,
     List,
@@ -47,8 +46,8 @@ class SSHProxyServer:
         self,
         listen_port: int,
         *,
-        key_file: Optional[Text] = None,
-        key_algorithm: Text = 'rsa',
+        key_file: Optional[str] = None,
+        key_algorithm: str = 'rsa',
         key_length: int = 2048,
         ssh_interface: Type[SSHBaseForwarder] = SSHForwarder,
         scp_interface: Type[SCPBaseForwarder] = SCPForwarder,
@@ -72,8 +71,8 @@ class SSHProxyServer:
         self.listen_address_v6 = '::'
         self.running = False
 
-        self.key_file: Optional[Text] = key_file
-        self.key_algorithm: Text = key_algorithm
+        self.key_file: Optional[str] = key_file
+        self.key_algorithm: str = key_algorithm
         self.key_length: int = key_length
 
         self.ssh_interface: Type[SSHBaseForwarder] = ssh_interface
@@ -153,7 +152,7 @@ class SSHProxyServer:
             )
         )
 
-    def _key_from_filepath(self, filename: Text, klass: Type[PKey], password: Optional[Text]) -> PKey:
+    def _key_from_filepath(self, filename: str, klass: Type[PKey], password: Optional[str]) -> PKey:
         """
         Attempt to derive a `.PKey` from given string path ``filename``:
         - If ``filename`` appears to be a cert, the matching private key is
@@ -280,8 +279,8 @@ class SSHProxyServer:
     def create_session(
         self,
         client: socket,
-        addr: Union[Tuple[Text, int], Tuple[Text, int, int, int]],
-        remoteaddr: Union[Tuple[Text, int], Tuple[Text, int, int, int]]
+        addr: Union[Tuple[str, int], Tuple[str, int, int, int]],
+        remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]]
     ) -> None:
         try:
             with self.session_class(self, client, addr, self.authenticator, remoteaddr) as session:

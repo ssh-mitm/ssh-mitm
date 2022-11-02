@@ -3,8 +3,7 @@ from enum import Enum
 
 from typing import (
     TYPE_CHECKING,
-    Optional,
-    Text
+    Optional
 )
 from paramiko.pkey import PKey
 
@@ -37,20 +36,20 @@ class SSHClient(BaseSSHClient):
 
     def __init__(
         self,
-        host: Text,
+        host: str,
         port: int,
         method: AuthenticationMethod,
-        password: Optional[Text],
-        user: Text,
+        password: Optional[str],
+        user: str,
         key: Optional[PKey],
         session: 'sshmitm.session.Session'
     ) -> None:
         self.session: 'sshmitm.session.Session' = session
-        self.host: Text = host
+        self.host: str = host
         self.port: int = port
         self.method: AuthenticationMethod = method
-        self.user: Text = user
-        self.password: Optional[Text] = password
+        self.user: str = user
+        self.password: Optional[str] = password
         self.agent: Optional[AgentProxy] = self.session.agent
         self.key: Optional[PKey] = key
         self.transport: Optional[paramiko.Transport] = None
@@ -111,7 +110,7 @@ class SSHClient(BaseSSHClient):
 
         return False
 
-    def check_host_key(self, hostname: Text, keytype: Text, key: PKey) -> bool:
+    def check_host_key(self, hostname: str, keytype: str, key: PKey) -> bool:
         """checks the host key, default always returns true"""
         del hostname, keytype, key  # unused arguments
         return True

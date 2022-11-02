@@ -4,8 +4,7 @@ from typing import (
     List,
     Optional,
     Tuple,
-    Union,
-    Text
+    Union
 )
 
 import paramiko
@@ -32,11 +31,11 @@ class ClientTunnelHandler:
         self.session = session
 
     def handle_request(
-        self, listenaddr: Tuple[Text, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
+        self, listenaddr: Tuple[str, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
     ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
-        destination: Optional[Tuple[Text, int]] = None
+        destination: Optional[Tuple[str, int]] = None
         socksconnection: Optional[Union[Socks4Server, Socks5Server]] = None
         try:
             socksversion = client.recv(1)
