@@ -30,3 +30,4 @@ This page lists vulnerabilities in SSH clients and servers as well as SSH releva
    winscp
    midnightcommander
    rsync
+   mobaxterm
