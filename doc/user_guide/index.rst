@@ -36,4 +36,5 @@ Contents
    authentication
    sshagent
    trivialauth
+   transparent
    advanced-usage

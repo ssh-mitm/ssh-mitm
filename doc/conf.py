@@ -51,7 +51,7 @@ html_theme_options = {
     "navbar_end": ["navbar-icon-links.html", "search-field.html"],
     "navbar_align": "left",
 
-    "page_sidebar_items": ["page-toc", "edit-this-page"],
+    "secondary_sidebar_items": ["page-toc", "edit-this-page"],
     "footer_items": ["copyright"],
     "show_prev_next": False,
     "navigation_with_keys": False,
