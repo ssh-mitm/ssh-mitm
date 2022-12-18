@@ -9,16 +9,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- get mosh connection info
+- intercept MOSH connection and print decrypted data as hexdump
 - added new function to get client information about used libraries
 - added option to disable auth method lookup
 - added indicator to docs, if vulnerability check is included in SSH-MITM
 - added CVSS scores to vulnerability list in documentation
 - added SHA512 fingerprint for server key
 - added custom help formatter for cli arguments
+- added option to disable auth method lookup
 
 ### Fixed
 
+- fixed reace condition when tools like pyinfra are intercepted
 - fixed documentation about port forwarding to match SSH-MITM v2
 - fixed description of CVE-2022-29154
 - updated  description of CVE-2020-15778
@@ -27,6 +29,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - changed documentation folder structure
 - if mosh is detected, pty will be disabled
+- replaced typing.text with str
+- removed support for Python 3.6
 
 ### Removed
 
