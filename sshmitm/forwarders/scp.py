@@ -80,6 +80,7 @@ class SCPBaseForwarder(BaseForwarder):
                         "remote command '%s' exited with code: %s",
                         self.session.scp_command.decode('utf-8'), status
                     )
+                    time.sleep(0.1)
                     break
                 if self.session.scp_channel.exit_status_ready():
                     status = self.session.scp_channel.recv_exit_status()
