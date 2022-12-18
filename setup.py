@@ -74,6 +74,7 @@ setup(
         **get_entry_points()
     },
     install_requires=[
+        'argcomplete',
         'paramiko',
         'pytz',
         'sshpubkeys',
