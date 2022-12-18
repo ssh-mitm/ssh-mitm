@@ -62,6 +62,7 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 * store and replace files during SCP/SFTP file transferes
 * port porwarding
   * SOCKS 4/5 support for dynamic port forwarding
+* intercept MOSH connections
 * audit clients against known vulnerabilities
 * plugin support
 
