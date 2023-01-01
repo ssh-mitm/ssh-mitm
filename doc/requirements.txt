@@ -1,5 +1,5 @@
 pydata-sphinx-theme
-sphinx-sitemap
+sphinx-sitemap==2.3.0
 sphinx-reredirects
 sphinx-design
 sphinx-notfound-page
