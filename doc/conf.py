@@ -60,6 +60,15 @@ html_theme_options = {
             "name": "PyPI",
             "url": "https://pypi.org/project/ssh-mitm",
             "icon": "fab fa-python",
+        },
+        {
+            "name": "Mastodon",
+            "url": "https://defcon.social/@sshmitm",
+            "icon": "fa-brands fa-mastodon",
+            "attributes": {
+               "target" : "_blank",
+               "rel" : "noopener me"
+            }
         }
     ],
     "show_toc_level": 1,
