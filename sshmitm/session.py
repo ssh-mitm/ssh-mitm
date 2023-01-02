@@ -211,7 +211,8 @@ class Session(BaseSession):
 
         while not self.channel:
             self.channel = self.transport.accept(0.5)
-            if not self.running:
+            transport_error = self.transport.get_exception()
+            if transport_error is not None or not self.running:
                 self.transport.close()
                 return False
 
