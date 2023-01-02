@@ -384,7 +384,7 @@ class AuthenticatorPassThrough(Authenticator):
                 ))
                 return paramiko.common.AUTH_SUCCESSFUL
         except EOFError:
-            logging.debug(
+            logging.warning(
                 "%s - faild to check if client is allowed to login with publickey authentication",
                 self.session.sessionid
             )
