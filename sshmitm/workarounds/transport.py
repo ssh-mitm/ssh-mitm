@@ -144,7 +144,11 @@ def transport_run(self):  # type: ignore
                 DEBUG,
                 "Local version/idstring: {}".format(self.local_version),
             )  # noqa
-            self._check_banner()
+            try:
+                self._check_banner()
+            except SSHException:
+                self._log(DEBUG, "error reading ssh protocol banner {}".format(tid))
+                pass
             # The above is actually very much part of the handshake, but
             # sometimes the banner can be read but the machine is not
             # responding, for example when the remote ssh daemon is loaded
