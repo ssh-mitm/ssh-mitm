@@ -12,7 +12,7 @@ build:
     python: "3.10"
   jobs:
     pre_build:
-      - sphinx-apidoc -T -d 1 -o doc/api sshmitm
+      - sphinx-apidoc -T -e -M -d 1 -o doc/api sshmitm
     
 
 # Build documentation in the docs/ directory with Sphinx
