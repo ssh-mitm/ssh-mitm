@@ -140,3 +140,4 @@ AppDir
 appimage-builder-cache
 *.AppImage*
 appimage-build
+doc/api/

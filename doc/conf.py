@@ -24,7 +24,8 @@ author = 'Manfred Kaiser'
 copyright = f'{datetime.datetime.now().year}, {author}'  # pylint: disable=redefined-builtin
 
 extensions = [
-    'sphinx.ext.autosectionlabel',
+    'sphinx.ext.autosectionlabel',    
+    'sphinx.ext.autodoc',
     'sphinx_sitemap',
     'sphinx_reredirects',
     'sphinx_design',
