@@ -21,6 +21,7 @@ implementation specific and should not be used in production applications.
 
 import logging
 import argparse
+import configparser
 import inspect
 
 from typing import (
@@ -38,6 +39,12 @@ from typing import (
 import argcomplete  # type: ignore
 import pkg_resources
 from colored.colored import attr, fg, stylize  # type: ignore
+
+
+def load_module_from_entrypoint(name, entry_point_class):
+    for entry_point in pkg_resources.iter_entry_points(entry_point_class.__name__):
+        if name in (entry_point.name, entry_point.module_name):
+            return entry_point.load()
 
 
 def load_module(entry_point_class: Type['BaseModule']) -> Type['argparse.Action']:
@@ -112,17 +119,61 @@ class InvalidModuleArguments(BaseModuleError):
     pass
 
 
+class AddArgumentMethod:
+
+    def __init__(self, parser: "_ModuleArgumentParser", container: argparse._ActionsContainer = None) -> None:
+        self.parser = parser
+        self.container = container or parser
+        self.config = configparser.ConfigParser()
+        self.config.read(pkg_resources.resource_filename('sshmitm', 'data/default.ini'))
+        self._add_argument = self.container.add_argument
+
+    def _get_dest(self, *args: Any, **kwargs: Any) -> Any:
+        dest_1 =  None
+        if len(args) >= 1:
+            dest_1 = args[0].lstrip(self.container.prefix_chars)
+            dest_1.replace('-', '_')
+        return kwargs.get('dest') or dest_1
+
+    def __call__(self, *args: Any, **kwargs: Any) -> Any:
+        default_value = kwargs.get('default')
+        arg_dest = self._get_dest(*args, **kwargs)
+        arg_action = kwargs.get('action', 'store')
+
+        config_section = self.parser.config_section
+
+        if config_section and not self.config.has_option(config_section, arg_dest) and arg_action != 'version':
+            logging.error("Missing config value -  %s - %s (%s) = %s",config_section, arg_dest, arg_action, default_value)
+
+        if not default_value and arg_dest and self.config.has_option(config_section, arg_dest):
+            if arg_action in ('store', 'store_const'):
+                kwargs['default'] = self.config.get(config_section, arg_dest)
+            elif arg_action in ('store_true', 'store_false'):
+                kwargs['default'] = self.config.getboolean(config_section, arg_dest)
+        return self._add_argument(*args, **kwargs)
+
+
 class _ModuleArgumentParser(argparse.ArgumentParser):
     """Enhanced ArgumentParser to suppress warnings and error during module parsing"""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
+        self.config_section = kwargs.pop('config_section') if 'config_section' in kwargs else None
         super().__init__(*args, **kwargs)
         self.exit_on_error = True
+        self.config = configparser.ConfigParser()
+        self.config.read(pkg_resources.resource_filename('sshmitm', 'data/default.ini'))
+        self.add_argument = AddArgumentMethod(self, self)
 
     def error(self, message: str) -> None:  # type: ignore
         if self.exit_on_error:
             return
         super().error(message)
+
+    def add_argument_group(self, *args, **kwargs):
+        group = argparse._ArgumentGroup(self, *args, **kwargs)
+        group.add_argument = AddArgumentMethod(self, group)
+        self._action_groups.append(group)
+        return group
 
 
 class BaseModule():
@@ -176,7 +227,11 @@ class BaseModule():
     @classmethod
     def parser(cls) -> _ModuleArgumentParser:
         if '_parser' not in cls.__dict__:
-            cls._parser = _ModuleArgumentParser(add_help=False, description=cls.__name__)
+            cls._parser = _ModuleArgumentParser(
+                add_help=False,
+                description=cls.__name__,
+                config_section=cls.__name__
+            )
             cls.parser_arguments()
         if not cls._parser:
             raise ValueError(f'failed to create ModuleParser for {cls}')
@@ -298,6 +353,9 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
         )
 
         # create complete argument parser and return arguments
+
+        if 'config_section' in self.__kwargs:
+            del self.__kwargs['config_section']
         parser = argparse.ArgumentParser(
             parents=sorted(
                 self._module_parsers,
@@ -311,13 +369,25 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
     def add_module(self, *args: Any, **kwargs: Any) -> None:
         # remove "baseclass" from arguments
         baseclass = kwargs.pop('baseclass', BaseModule)
+        default_value = kwargs.get('default')
+        if default_value:
+            if isinstance(default_value, str):
+                kwargs['default'] = load_module_from_entrypoint(default_value, baseclass)
+        else:
+            arg_dest = self.add_argument._get_dest(*args, **kwargs)
+            if arg_dest and self.config.has_option(self.config_section, arg_dest):
+                kwargs['default'] = load_module_from_entrypoint(
+                    self.config.get(self.config_section, arg_dest),
+                    baseclass
+                )
+
         if not inspect.isclass(baseclass) or not issubclass(baseclass, BaseModule):
             logging.error('Baseclass %s mast be subclass of %s not %s', baseclass, BaseModule, type(baseclass))
             raise ModuleError()
         # add "action" to new arguments
         kwargs['action'] = load_module(baseclass)
-
-        self._extra_modules.append((self.add_argument(*args, **set_module_kwargs(baseclass, **kwargs)), baseclass))
+        action = self.add_argument(*args, **set_module_kwargs(baseclass, **kwargs))
+        self._extra_modules.append((action, baseclass))
         logging.debug("Baseclass: %s", baseclass)
 
     def parse_args(  # type: ignore

@@ -41,5 +41,8 @@ entry_points: Dict[str, List[str]] = {
     ],
     'Authenticator': [
         'passthrough = sshmitm.authentication:AuthenticatorPassThrough'
+    ],
+    'BaseSession': [
+        'base = sshmitm.session:Session'
     ]
 }

@@ -7,7 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-## Fixed
+### Added
+
+- added configuration file for cmd arg defaults
+
+### Fixed
 
 - fixed infinite loop when client closes connection during authentication
 - fixed errors when too much connection attemps happen for the same server

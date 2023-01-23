@@ -11,11 +11,9 @@ from sshmitm.server import SSHProxyServer
 
 from sshmitm.authentication import (
     Authenticator,
-    AuthenticatorPassThrough
 )
 from sshmitm.interfaces.server import (
     BaseServerInterface,
-    ServerInterface
 )
 from sshmitm.forwarders.scp import SCPBaseForwarder
 from sshmitm.forwarders.ssh import SSHBaseForwarder
@@ -23,7 +21,6 @@ from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin
 
 from sshmitm.interfaces.sftp import (
     BaseSFTPServerInterface,
-    SFTPProxyServerInterface
 )
 
 from sshmitm.forwarders.tunnel import (
@@ -31,19 +28,13 @@ from sshmitm.forwarders.tunnel import (
     LocalPortForwardingBaseForwarder
 )
 
-from sshmitm.plugins.ssh.mirrorshell import SSHMirrorForwarder
-from sshmitm.plugins.scp.store_file import SCPStorageForwarder
-from sshmitm.plugins.sftp.store_file import SFTPHandlerStoragePlugin
-from sshmitm.plugins.tunnel.injectservertunnel import InjectableRemotePortForwardingForwarder
-from sshmitm.plugins.tunnel.socks import SOCKSTunnelForwarder
-from sshmitm.session import BaseSession, Session
+from sshmitm.session import BaseSession
 
 
 def init_server_parser(parser: ModuleParser) -> None:
     parser.add_argument(
         '--listen-port',
         dest='listen_port',
-        default=10022,
         type=int,
         help='listen port'
     )
@@ -61,70 +52,60 @@ def init_server_parser(parser: ModuleParser) -> None:
     parser.add_argument(
         '--host-key-algorithm',
         dest='host_key_algorithm',
-        default='rsa',
         choices=['dss', 'rsa', 'ecdsa', 'ed25519'],
         help='host key algorithm (default rsa)'
     )
     parser.add_argument(
         '--host-key-length',
         dest='host_key_length',
-        default=2048,
         type=int,
         help='host key length for dss and rsa (default 2048)'
     )
     parser.add_module(
         '--ssh-interface',
         dest='ssh_interface',
-        default=SSHMirrorForwarder,
         help='interface to handle terminal sessions',
         baseclass=SSHBaseForwarder
     )
     parser.add_module(
         '--scp-interface',
         dest='scp_interface',
-        default=SCPStorageForwarder,
         help='interface to handle scp file transfers',
         baseclass=SCPBaseForwarder
     )
     parser.add_module(
         '--sftp-interface',
         dest='sftp_interface',
-        default=SFTPProxyServerInterface,
         help='SFTP Handler to handle sftp file transfers',
         baseclass=BaseSFTPServerInterface
     )
     parser.add_module(
         '--sftp-handler',
         dest='sftp_handler',
-        default=SFTPHandlerStoragePlugin,
         help='SFTP Handler to handle sftp file transfers',
         baseclass=SFTPHandlerBasePlugin
     )
     parser.add_module(
         '--remote-port-forwarder',
         dest='server_tunnel_interface',
-        default=InjectableRemotePortForwardingForwarder,
         help='interface to handle tunnels from the server',
         baseclass=RemotePortForwardingBaseForwarder
     )
     parser.add_module(
         '--local-port-forwarder',
         dest='client_tunnel_interface',
-        default=SOCKSTunnelForwarder,
         help='interface to handle tunnels from the client',
         baseclass=LocalPortForwardingBaseForwarder
     )
     parser.add_module(
         '--auth-interface',
         dest='auth_interface',
-        default=ServerInterface,
         baseclass=BaseServerInterface,
         help='interface for authentication'
     )
     parser.add_module(
         '--authenticator',
         dest='authenticator',
-        default=AuthenticatorPassThrough,
         baseclass=Authenticator,
         help='module for user authentication'
     )
@@ -143,7 +124,6 @@ def init_server_parser(parser: ModuleParser) -> None:
     parser.add_module(
         '--session-class',
         dest='session_class',
-        default=Session,
         baseclass=BaseSession,
         help=argparse.SUPPRESS
     )

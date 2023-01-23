@@ -45,7 +45,8 @@ def main() -> None:
 
     parser = ModuleParser(
         description='SSH-MITM Tools',
-        allow_abbrev=False
+        allow_abbrev=False,
+        config_section='SSH-MITM'
     )
     parser.add_argument(
         '-V', '--version',
@@ -81,7 +82,8 @@ def main() -> None:
             subparsers.add_parser(
                 sc_name,
                 allow_abbrev=False,
-                help=sc_item.help
+                help=sc_item.help,
+                config_section=sc_name.title()
             )
         )
 
