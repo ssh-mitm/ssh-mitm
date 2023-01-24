@@ -32,35 +32,6 @@ from sshmitm.session import BaseSession
 
 
 def init_server_parser(parser: ModuleParser) -> None:
-    parser.add_argument(
-        '--listen-port',
-        dest='listen_port',
-        type=int,
-        help='listen port'
-    )
-    parser.add_argument(
-        '--transparent',
-        dest='transparent',
-        action='store_true',
-        help='enables transparent mode (requires root)'
-    )
-    parser.add_argument(
-        '--host-key',
-        dest='host_key',
-        help='host key file'
-    )
-    parser.add_argument(
-        '--host-key-algorithm',
-        dest='host_key_algorithm',
-        choices=['dss', 'rsa', 'ecdsa', 'ed25519'],
-        help='host key algorithm (default rsa)'
-    )
-    parser.add_argument(
-        '--host-key-length',
-        dest='host_key_length',
-        type=int,
-        help='host key length for dss and rsa (default 2048)'
-    )
     parser.add_module(
         '--ssh-interface',
         dest='ssh_interface',
@@ -109,23 +80,57 @@ def init_server_parser(parser: ModuleParser) -> None:
         baseclass=Authenticator,
         help='module for user authentication'
     )
-    parser.add_argument(
+    parser.add_module(
+        '--session-class',
+        dest='session_class',
+        baseclass=BaseSession,
+        help='custom session class for SSH-MITM'
+    )
+
+    parser_group = parser.add_argument_group(
+        'Server',
+        'options for the integrated ssh server'
+    )
+    parser_group.add_argument(
+        '--listen-port',
+        dest='listen_port',
+        type=int,
+        help='listen port'
+    )
+    parser_group.add_argument(
+        '--transparent',
+        dest='transparent',
+        action='store_true',
+        help='enables transparent mode (requires root)'
+    )
+    parser_group.add_argument(
+        '--host-key',
+        dest='host_key',
+        help='host key file'
+    )
+    parser_group.add_argument(
+        '--host-key-algorithm',
+        dest='host_key_algorithm',
+        choices=['dss', 'rsa', 'ecdsa', 'ed25519'],
+        help='host key algorithm (default rsa)'
+    )
+    parser_group.add_argument(
+        '--host-key-length',
+        dest='host_key_length',
+        type=int,
+        help='host key length for dss and rsa (default 2048)'
+    )
+    parser_group.add_argument(
         '--request-agent-breakin',
         dest='request_agent_breakin',
         action='store_true',
         help='enables agent forwarding and tryies to break in to the agent, if not forwarded'
     )
-    parser.add_argument(
+    parser_group.add_argument(
         '--banner-name',
         dest='banner_name',
         default=f'SSHMITM_{ssh_mitm_version}',
         help='set a custom string as server banner'
-    )
-    parser.add_module(
-        '--session-class',
-        dest='session_class',
-        baseclass=BaseSession,
-        help=argparse.SUPPRESS
     )
 
 

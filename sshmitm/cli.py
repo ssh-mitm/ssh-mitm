@@ -48,12 +48,16 @@ def main() -> None:
         allow_abbrev=False,
         config_section='SSH-MITM'
     )
-    parser.add_argument(
+    parser_group = parser.add_argument_group(
+        'SSH-MITM',
+        'global options for SSH-MITM'
+    )
+    parser_group.add_argument(
         '-V', '--version',
         action='version',
         version=f"SSH-MITM {ssh_mitm_version}"
     )
-    parser.add_argument(
+    parser_group.add_argument(
         '-d',
         '--debug',
         dest='debug',
@@ -61,14 +65,14 @@ def main() -> None:
         action='store_true',
         help='More verbose output of status information'
     )
-    parser.add_argument(
+    parser_group.add_argument(
         '--paramiko-log-level',
         dest='paramiko_log_level',
         default='warning',
         choices=['warning', 'info', 'debug'],
         help='set paramikos log level'
     )
-    parser.add_argument(
+    parser_group.add_argument(
         '--disable-workarounds',
         dest='disable_workarounds',
         action='store_true',

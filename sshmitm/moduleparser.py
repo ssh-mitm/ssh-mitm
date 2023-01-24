@@ -130,10 +130,13 @@ class AddArgumentMethod:
 
     def _get_dest(self, *args: Any, **kwargs: Any) -> Any:
         dest_1 =  None
+        dest_2 = None
+        if kwargs.get('dest') is not None:
+            dest_1 = kwargs.get('dest').replace('_', '-')
         if len(args) >= 1:
-            dest_1 = args[0].lstrip(self.container.prefix_chars)
-            dest_1.replace('-', '_')
-        return kwargs.get('dest') or dest_1
+            dest_2 = args[0].lstrip(self.container.prefix_chars)
+            dest_2 = dest_2.replace('_', '-')
+        return dest_1 or dest_2
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
         default_value = kwargs.get('default')
@@ -291,6 +294,11 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
         self._extra_modules: List[Tuple[argparse.Action, type]] = []
         self._module_parsers: Set[argparse.ArgumentParser] = {self}
 
+        self.plugin_group_name = 'Plugins'
+        self.plugin_group = self.add_argument_group(
+            self.plugin_group_name
+        )
+
     def _get_sub_modules_args(
         self,
         *,
@@ -375,9 +383,16 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
                 kwargs['default'] = load_module_from_entrypoint(default_value, baseclass)
         else:
             arg_dest = self.add_argument._get_dest(*args, **kwargs)
-            if arg_dest and self.config.has_option(self.config_section, arg_dest):
+            logging.error(self.plugin_group_name)
+            if arg_dest and self.config.has_option(
+                self.plugin_group_name,
+                arg_dest
+            ):
                 kwargs['default'] = load_module_from_entrypoint(
-                    self.config.get(self.config_section, arg_dest),
+                    self.config.get(
+                        self.plugin_group_name, 
+                        arg_dest
+                    ),
                     baseclass
                 )
 
@@ -386,7 +401,7 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
             raise ModuleError()
         # add "action" to new arguments
         kwargs['action'] = load_module(baseclass)
-        action = self.add_argument(*args, **set_module_kwargs(baseclass, **kwargs))
+        action = self.plugin_group.add_argument(*args, **set_module_kwargs(baseclass, **kwargs))
         self._extra_modules.append((action, baseclass))
         logging.debug("Baseclass: %s", baseclass)
 
