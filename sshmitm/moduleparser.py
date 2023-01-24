@@ -152,7 +152,7 @@ class AddArgumentMethod:
         if self.config_section and not self.config.has_option(self.config_section, arg_dest) and arg_action != 'version':
             logging.error("Missing config value -  %s - %s (%s) = %s", self.config_section, arg_dest, arg_action, default_value)
 
-        if not default_value and arg_dest and self.config.has_option(self.config_section, arg_dest):
+        if arg_dest and self.config.has_option(self.config_section, arg_dest) and self.config.get(self.config_section, arg_dest):
             if arg_action in ('store', 'store_const'):
                 kwargs['default'] = self.config.get(self.config_section, arg_dest)
             elif arg_action in ('store_true', 'store_false'):
