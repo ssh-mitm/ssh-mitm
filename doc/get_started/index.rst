@@ -13,6 +13,7 @@ Quickly find answers in the following sections or expand the table of contents b
    :maxdepth: 1
 
    installation
+   configuration
    terminal_session
    file_transfer
    portforwarding

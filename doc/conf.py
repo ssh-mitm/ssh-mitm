@@ -16,6 +16,8 @@
 
 import datetime
 import xml.etree.ElementTree as ET
+from sphinx.application import Sphinx
+from sphinx.util.docfields import Field
 
 # -- Project information -----------------------------------------------------
 
@@ -171,3 +173,15 @@ def create_sitemap(app, exception):
 
 def setup(app):
     app.connect('build-finished', create_sitemap)
+    app.add_object_type(
+        'confval',
+        'confval',
+        objname='configuration value',
+        indextemplate='pair: %s; configuration value',
+        doc_field_types=[
+            Field('type', label='Type', has_arg=False, names=('type',)),
+            Field('values', label='Values', has_arg=False, names=('values',)),
+            Field('default', label='Default', has_arg=False, names=('default',)),
+
+        ]
+    )
