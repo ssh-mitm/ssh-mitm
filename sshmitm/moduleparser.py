@@ -121,11 +121,17 @@ class InvalidModuleArguments(BaseModuleError):
 
 class AddArgumentMethod:
 
-    def __init__(self, parser: "_ModuleArgumentParser", container: argparse._ActionsContainer = None) -> None:
+    def __init__(
+        self, 
+        parser: "_ModuleArgumentParser", 
+        container: argparse._ActionsContainer = None,
+        config_section: Optional[str] = None
+    ) -> None:
         self.parser = parser
         self.container = container or parser
         self.config = configparser.ConfigParser()
         self.config.read(pkg_resources.resource_filename('sshmitm', 'data/default.ini'))
+        self.config_section = config_section or self.parser.config_section
         self._add_argument = self.container.add_argument
 
     def _get_dest(self, *args: Any, **kwargs: Any) -> Any:
@@ -143,16 +149,14 @@ class AddArgumentMethod:
         arg_dest = self._get_dest(*args, **kwargs)
         arg_action = kwargs.get('action', 'store')
 
-        config_section = self.parser.config_section
+        if self.config_section and not self.config.has_option(self.config_section, arg_dest) and arg_action != 'version':
+            logging.error("Missing config value -  %s - %s (%s) = %s", self.config_section, arg_dest, arg_action, default_value)
 
-        if config_section and not self.config.has_option(config_section, arg_dest) and arg_action != 'version':
-            logging.error("Missing config value -  %s - %s (%s) = %s",config_section, arg_dest, arg_action, default_value)
-
-        if not default_value and arg_dest and self.config.has_option(config_section, arg_dest):
+        if not default_value and arg_dest and self.config.has_option(self.config_section, arg_dest):
             if arg_action in ('store', 'store_const'):
-                kwargs['default'] = self.config.get(config_section, arg_dest)
+                kwargs['default'] = self.config.get(self.config_section, arg_dest)
             elif arg_action in ('store_true', 'store_false'):
-                kwargs['default'] = self.config.getboolean(config_section, arg_dest)
+                kwargs['default'] = self.config.getboolean(self.config_section, arg_dest)
         return self._add_argument(*args, **kwargs)
 
 
@@ -160,7 +164,7 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
     """Enhanced ArgumentParser to suppress warnings and error during module parsing"""
 
     def __init__(self, *args: Any, **kwargs: Any) -> None:
-        self.config_section = kwargs.pop('config_section') if 'config_section' in kwargs else None
+        self.config_section = kwargs.pop('config_section', None)
         super().__init__(*args, **kwargs)
         self.exit_on_error = True
         self.config = configparser.ConfigParser()
@@ -173,8 +177,9 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
         super().error(message)
 
     def add_argument_group(self, *args, **kwargs):
+        config_section = kwargs.pop('config_section', None)
         group = argparse._ArgumentGroup(self, *args, **kwargs)
-        group.add_argument = AddArgumentMethod(self, group)
+        group.add_argument = AddArgumentMethod(self, group, config_section)
         self._action_groups.append(group)
         return group
 
@@ -293,10 +298,8 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
         self.__kwargs = kwargs
         self._extra_modules: List[Tuple[argparse.Action, type]] = []
         self._module_parsers: Set[argparse.ArgumentParser] = {self}
-
-        self.plugin_group_name = 'Plugins'
         self.plugin_group = self.add_argument_group(
-            self.plugin_group_name
+            self.config_section
         )
 
     def _get_sub_modules_args(
@@ -383,14 +386,13 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
                 kwargs['default'] = load_module_from_entrypoint(default_value, baseclass)
         else:
             arg_dest = self.add_argument._get_dest(*args, **kwargs)
-            logging.error(self.plugin_group_name)
             if arg_dest and self.config.has_option(
-                self.plugin_group_name,
+                self.config_section,
                 arg_dest
             ):
                 kwargs['default'] = load_module_from_entrypoint(
                     self.config.get(
-                        self.plugin_group_name, 
+                        self.config_section, 
                         arg_dest
                     ),
                     baseclass

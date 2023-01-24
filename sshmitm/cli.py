@@ -21,9 +21,11 @@ class SubCommand():
         self,
         run_func: Callable[[Namespace], None],
         parser_func: Callable[[ModuleParser], None],
+        config_section: str,
         help: str  # pylint: disable=redefined-builtin
     ):
         self.run_func = run_func
+        self.config_section = config_section
         self.help = help
         self.parser_func = parser_func
 
@@ -34,11 +36,13 @@ def main() -> None:
         'audit': SubCommand(
             run_func=run_audit,
             parser_func=init_audit_parser,
+            config_section='Audit',
             help='audit tools for ssh servers'
         ),
         'server': SubCommand(
             run_func=run_server,
             parser_func=init_server_parser,
+            config_section='SSH-Server-Modules',
             help='start the ssh-mitm server'
         )
     }
@@ -87,7 +91,7 @@ def main() -> None:
                 sc_name,
                 allow_abbrev=False,
                 help=sc_item.help,
-                config_section=sc_name.title()
+                config_section=sc_item.config_section
             )
         )
 

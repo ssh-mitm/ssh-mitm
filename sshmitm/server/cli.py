@@ -88,8 +88,9 @@ def init_server_parser(parser: ModuleParser) -> None:
     )
 
     parser_group = parser.add_argument_group(
-        'Server',
-        'options for the integrated ssh server'
+        'SSH-Server-Options',
+        'options for the integrated ssh server',
+        config_section='SSH-Server-Options'
     )
     parser_group.add_argument(
         '--listen-port',
