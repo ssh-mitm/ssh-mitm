@@ -1,45 +1,53 @@
 :fas:`file-lines` Configuration
 ===============================
 
-``[SSH-MITM]``
---------------
+.. |br| raw:: html
 
-.. confval:: debug
-
-   :type: boolean
-   :values: ``True``, ``False``
-   :default: ``False``
-
-   Enables SSH-MITM's debug moe
-
-.. confval:: paramiko-log-level
-
-   :type: string
-   :values: ``debug``, ``info``, ``warning```, ``error``
-   :default: ``warning``
-
-   Set log level for paramiko (ssh library)
-
-.. confval:: disable-workarounds
-
-   :type: boolean
-   :values: ``True``, ``False``
-   :default: ``False``
-
-   Disable workarrounds, which are needed for some special clients
+   <br />
 
 
-``[SSH-Server-Options]``
-------------------------
+.. |default| raw:: html
 
-.. confval:: listen-port
+    <i>Default:</i>
 
-   :type: integer
-   :default: ``10022``
 
-   Port which is used to listen for incoming ssh connections.
-   
-   **Note:** Wehn using a port <=1024, SSH-MITM must be started with root privileges.
+.. confval:: [SSH-MITM]
+
+   .. code-block:: ini
+
+      [SSH-MITM]
+      debug = False
+      paramiko-log-level = warning
+      disable-workarounds = False
+
+   :option boolean debug: :bdg-primary-line:`True` :bdg-primary:`False` |br|
+      Enables SSH-MITM's debug mode
+   :option string paramiko-log-level: :bdg-primary-line:`debug` :bdg-primary-line:`info` :bdg-primary:`warning` |br|
+      Set log level for paramiko (ssh library)
+   :option boolean disable-workarounds: :bdg-primary-line:`True` :bdg-primary:`False` |br|
+      Disable workarrounds, which are needed for some special clients
+
+
+
+.. confval:: [SSH-Server-Options]
+
+   .. code-block:: ini
+
+      [SSH-Server-Options]
+      listen-port = 10022
+      transparent = False
+      host-key =
+      host-key-algorithm = rsa
+      host-key-length = 2048
+      request-agent-breakin = False
+      banner-name =
+
+   :option integer listen-port: :bdg-primary:`10022` |br|
+      Port which is used to listen for incoming ssh connections. |br|
+      **Note:** Wehn using a port <=1024, SSH-MITM must be started with root privileges.
+   :option boolean transparent: :bdg-primary-line:`True` :bdg-primary:`False` |br|
+      Starts SSH-MITM in a transparent mode, which uses Linux TProxy for incoming connections.
+      Tansparent mode requires root privileges.
 
 .. confval:: transparent
 
@@ -47,9 +55,7 @@
    :values: ``True``, ``False``
    :default: ``False``
 
-   Starts SSH-MITM in a transparent mode, which uses Linux TProxy for incoming connections.
-   
-   **Note:** transparent mode requires to start SSH-MITM with root privileges.
+
 
 .. confval:: host-key
 

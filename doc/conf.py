@@ -16,8 +16,7 @@
 
 import datetime
 import xml.etree.ElementTree as ET
-from sphinx.application import Sphinx
-from sphinx.util.docfields import Field
+from sphinx.util.docfields import TypedField
 
 # -- Project information -----------------------------------------------------
 
@@ -26,7 +25,7 @@ author = 'Manfred Kaiser'
 copyright = f'{datetime.datetime.now().year}, {author}'  # pylint: disable=redefined-builtin
 
 extensions = [
-    'sphinx.ext.autosectionlabel',    
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.autodoc',
     'sphinx_sitemap',
     'sphinx_reredirects',
@@ -177,11 +176,12 @@ def setup(app):
         'confval',
         'confval',
         objname='configuration value',
-        indextemplate='pair: %s; configuration value',
         doc_field_types=[
-            Field('type', label='Type', has_arg=False, names=('type',)),
-            Field('values', label='Values', has_arg=False, names=('values',)),
-            Field('default', label='Default', has_arg=False, names=('default',)),
-
+            TypedField(
+                'parameter',
+                label='Options',
+                names=('option',),
+                can_collapse=True
+            )
         ]
     )
