@@ -26,7 +26,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             stat_remote = self.session.sftp_client.lstat(path)
             if isinstance(stat_remote, int):
                 return stat_remote
-            stat_replace = SFTPAttributes.from_stat(os.stat(args.sftp_replacement_file))
+            stat_replace = SFTPAttributes.from_stat(os.stat(args.sftp_replace_file))
             stat_remote.st_size = stat_replace.st_size
             return stat_remote
 
@@ -41,18 +41,18 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
-            '--sftp-replace',
-            dest='sftp_replacement_file',
+            '--sftp-replace-file',
+            dest='sftp_replace_file',
             required=True,
             help='file that is used for replacement'
         )
 
     def __init__(self, sftp: SFTPBaseHandle, filename: str) -> None:
         super().__init__(sftp, filename)
-        self.args.sftp_replacement_file = os.path.expanduser(self.args.sftp_replacement_file)
+        self.args.sftp_replace_file = os.path.expanduser(self.args.sftp_replace_file)
 
-        logging.info("intercepting sftp file '%s', replacement: %s", filename, self.args.sftp_replacement_file)
-        self.replacement = open(self.args.sftp_replacement_file, "rb")  # pylint: disable=consider-using-with
+        logging.info("intercepting sftp file '%s', replacement: %s", filename, self.args.sftp_replace_file)
+        self.replacement = open(self.args.sftp_replace_file, "rb")  # pylint: disable=consider-using-with
         self.file_uploaded = False
         self.data_handled = False
 

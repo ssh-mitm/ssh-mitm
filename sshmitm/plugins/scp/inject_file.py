@@ -25,7 +25,7 @@ class SCPInjectFile(SCPForwarder):
             "Example exploit for CVE-2019-6111, CVE-2019-6110"
         )
         plugin_group.add_argument(
-            '--scp-inject',
+            '--scp-inject-file',
             dest='scp_inject_file',
             required=True,
             help='file that is used for injection'

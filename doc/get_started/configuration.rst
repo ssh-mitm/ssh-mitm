@@ -6,11 +6,6 @@
    <br />
 
 
-.. |default| raw:: html
-
-    <i>Default:</i>
-
-
 .. confval:: [SSH-MITM]
 
    .. code-block:: ini
@@ -28,6 +23,21 @@
       Disable workarrounds, which are needed for some special clients
 
 
+.. confval:: [SSH-Server-Modules]
+
+   .. code-block:: ini
+
+      [SSH-Server-Modules]
+      ssh-interface = mirrorshell
+      scp-interface = store_file
+      sftp-interface = base
+      sftp-handler = store_file
+      server-tunnel-interface = inject
+      client-tunnel-interface = socks
+      auth-interface = base
+      authenticator = passthrough
+      session-class = base
+
 
 .. confval:: [SSH-Server-Options]
 
@@ -44,58 +54,159 @@
 
    :option integer listen-port: :bdg-primary:`10022` |br|
       Port which is used to listen for incoming ssh connections. |br|
-      **Note:** Wehn using a port <=1024, SSH-MITM must be started with root privileges.
+      Wehn using a port <=1024, SSH-MITM must be started with root privileges.
    :option boolean transparent: :bdg-primary-line:`True` :bdg-primary:`False` |br|
       Starts SSH-MITM in a transparent mode, which uses Linux TProxy for incoming connections.
       Tansparent mode requires root privileges.
+   :option string host-key: |br|
+      Optional private ssh key, which is used as SSH-MITM's host key.|br|
+      When no host-key was provided, a random host key will be generated.
+   :option string host-key-algorithm: :bdg-primary-line:`dss` :bdg-primary:`rsa` :bdg-primary-line:`ecdsa` :bdg-primary-line:`ed25519` |br|
+      Algorithm, which is used to generate the random host-key.
+   :option integer host-key-length: :bdg-primary:`2048` |br|
+      The length for the random host key.
+   :option boolean request-agent-breakin: :bdg-primary-line:`True` :bdg-primary:`False` |br|
+      SSH-MITM tries to request the ssh agent, even if the client does not forward the agent.
+   :option string banner-name: |br|
+      Custom ssh banner name, which is presented the client on the first connection attempt.|br|
+      If no banner name is configured, the default banner name is ``SSH-2.0-SSHMITM_3.0.1`` 
 
-.. confval:: transparent
+.. confval:: [Session]
 
-   :type: boolean
-   :values: ``True``, ``False``
-   :default: ``False``
+   .. code-block:: ini
 
+      [Session]
+      session-log-dir =
 
+Authentication-Plugins
+----------------------
 
-.. confval:: host-key
+.. confval:: [AuthenticatorPassThrough]
 
-   :type: string
-   :values: path to private ssh key
-   :default: ``None``
+   .. code-block:: ini
 
-   Path to a private ssh key file. If no path is provided, a random key is generated.
+      [AuthenticatorPassThrough]
+      remote-host =
+      remote-port = 22
+      auth-username =
+      auth-password =
+      auth-hide-credentials = False
+      enable-auth-fallback = False
+      fallback-host =
+      fallback-port = 22
+      fallback-username =
+      fallback-password =
 
-.. confval:: host-key-algorithm
+.. confval:: [ServerInterface]
 
-   :type: string
-   :values: ``dss``, ``rsa``, ``ecdsa``, ``ed25519``
-   :default: ``rsa``
+   .. code-block:: ini
 
-   Algorithm, which is used to generate the random host key.
-
-.. confval:: host-key-length
-
-   :type: integer
-   :default: ``2048``
-
-   Key length, which is used to generate the random host key.
-
-.. confval:: request-agent-breakin
-
-   :type: boolean
-   :values: ``True``, ``false``
-   :default: ``False``
-
-   Request the ssh agent, even if the client does not forward it to the server.
-
-.. confval:: banner-name
-
-   :type: string
-   :default: ``None``
-
-   Custom SSH banner name for SSH-MITM. If no banner name is provided, it will use ``SSH-2.0-SSHMITM_3.0.1``
+      [ServerInterface]
+      disable-ssh = False
+      disable-scp = False
+      disable-password-auth = False
+      disable-pubkey-auth = False
+      accept-first-publickey = False
+      disallow-publickey-auth = False
+      enable-none-auth = False
+      enable-trivial-auth = False
+      enable-keyboard-interactive-auth = False
+      disable-keyboard-interactive-prompts = False
+      extra-auth-methods =
+      disable-auth-method-lookup = False
 
 
+Terminal-Session-Plugins
+------------------------
+
+.. confval:: [SSHMirrorForwarder]
+
+   .. code-block:: ini
+
+      [SSHMirrorForwarder]
+      ssh-mirrorshell-net = 127.0.0.1
+      ssh-mirrorshell-key =
+      store-ssh-session = False
+
+SCP-Plugins
+-----------
+
+.. confval:: [CVE202229154]
+
+   .. code-block:: ini
+
+      [CVE202229154]
+      rsync-inject-file = 
 
 
+.. confval:: [SCPReplaceFile]
 
+   .. code-block:: ini
+
+      [SCPReplaceFile]
+      scp_replace_file = 
+
+.. confval:: [SCPRewriteCommand]
+
+   .. code-block:: ini
+
+      [SCPRewriteCommand]
+      scp-append-string = 
+      scp-replace-string = 
+
+.. confval:: [SCPStorageForwarder]
+
+   .. code-block:: ini
+
+      [SCPStorageForwarder]
+      store-scp-files = False
+
+
+SFTP-Plugins
+------------
+
+.. confval:: [SFTPHandlerStoragePlugin]
+
+   .. code-block:: ini
+
+      [SFTPHandlerStoragePlugin]
+      store-sftp-files = False
+
+.. confval:: [SFTPProxyReplaceHandler]
+
+   .. code-block:: ini
+
+      [SFTPProxyReplaceHandler]
+      sftp-replace-file = 
+
+
+Port-Forwarding-Plugins
+-----------------------
+
+.. confval:: [InjectableRemotePortForwardingForwarder]
+
+   .. code-block:: ini
+
+      [InjectableRemotePortForwardingForwarder]
+      server-tunnel-net = 127.0.0.1
+
+.. confval:: [SOCKSTunnelForwarder]
+
+   .. code-block:: ini
+
+      [SOCKSTunnelForwarder]
+      socks-listen-address = 127.0.0.1
+
+.. confval:: [SOCKS4TunnelForwarder]
+
+   .. code-block:: ini
+
+      [SOCKS4TunnelForwarder]
+      socks-listen-address = 127.0.0.1
+
+.. confval:: [SOCKS5TunnelForwarder]
+
+   .. code-block:: ini
+
+      [SOCKS5TunnelForwarder]
+      socks-listen-address = 127.0.0.1
