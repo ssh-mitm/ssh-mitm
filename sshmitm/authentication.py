@@ -23,13 +23,41 @@ from sshmitm.exceptions import MissingHostException
 
 
 def probe_host(hostname_or_ip: str, port: int, username: str, public_key: paramiko.pkey.PublicBlob) -> bool:
+    """
+    Probe a remote host to determine if the provided public key is authorized for the provided username.
+
+    :param hostname_or_ip: Hostname or IP address of the remote host to probe.
+    :type hostname: str
+    :param port: Port of the remote host.
+    :type port: int
+    :param username: The username to probe authorization for.
+    :type username: str
+    :param public_key: The public key to use for the probe.
+    :type public_key: paramiko.pkey.PublicBlob
+
+    :returns: True if the provided public key is authorized, False otherwise.
+    :rtype: bool
+
+    """
 
     def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore
+        """
+        A helper function that is called when authentication is successful.
+
+        Args:
+            msg (paramiko.message.Message): The message that was sent.
+        """
         del msg  # unused arguments
         self.auth_event.set()
         self.authenticated = True
 
     def parse_service_accept(self, m: paramiko.message.Message) -> None:  # type: ignore
+        """
+        A helper function that parses the service accept message.
+
+        Args:
+            m (paramiko.message.Message): The message to parse.
+        """
         # https://tools.ietf.org/html/rfc4252#section-7
         service = m.get_text()
         if not (service == "ssh-userauth" and self.auth_method == "publickey"):
@@ -74,7 +102,10 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
     return valid_key
 
 
-class RemoteCredentials():
+class RemoteCredentials:
+    """
+    The `RemoteCredentials` class represents the credentials required to access a remote host.
+    """
 
     def __init__(
         self, *,
@@ -84,19 +115,58 @@ class RemoteCredentials():
         host: Optional[str] = None,
         port: Optional[int] = None
     ) -> None:
+        """
+        The `__init__` method is the constructor of the class and it is used to initialize the attributes of the class.
+
+        :param username: (str) a string representing the username of the remote host. This is a required argument and must be specified when creating an instance of the class.
+        :param password: (str) an optional string representing the password of the remote host. This argument is optional and if not specified, the value will be `None`.
+        :param key: (PKey) an optional `PKey` object representing a private key used to authenticate with the remote host. This argument is optional and if not specified, the value will be `None`.
+        :param host: (str) an optional string representing the hostname or IP address of the remote host. This argument is optional and if not specified, the value will be `None`.
+        :param port: (int) an optional integer representing the port number used to connect to the remote host. This argument is optional and if not specified, the value will be `None`.
+        :return: None
+        """
         self.username: str = username
+        """
+        (str) a string representing the username of the remote host.
+        """
+
         self.password: Optional[str] = password
+        """
+        (str) an optional string representing the password of the remote host. This argument is optional and if not specified, the value will be `None`.
+        """
+
         self.key: Optional[PKey] = key
+        """
+        (PKey) an optional `PKey` object representing a private key used to authenticate with the remote host. This argument is optional and if not specified, the value will be `None`.
+        """
+
         self.host: Optional[str] = host
+        """
+        (str) an optional string representing the hostname or IP address of the remote host. This argument is optional and if not specified, the value will be `None`.
+        """
+
         self.port: Optional[int] = port
+        """
+        (int) an optional integer representing the port number used to connect to the remote host. This argument is optional and if not specified, the value will be `None`.
+        """
 
 
 class Authenticator(BaseModule):
 
     REQUEST_AGENT_BREAKIN = False
+    """
+    This flag indicates if SSH-MITM should do a breakin to the client's ssh agent, even in cases where the agent is not forwarded.
+
+    :param session: an object of sshmitm.session.Session class to store session information.
+    """
 
     @classmethod
     def parser_arguments(cls) -> None:
+        """
+        Adds the options for remote authentication using argparse.
+
+        :return: None
+        """
         plugin_group = cls.parser().add_argument_group(
             cls.__name__,
             "options for remote authentication"
@@ -166,6 +236,9 @@ class Authenticator(BaseModule):
         )
 
     def __init__(self, session: 'sshmitm.session.Session') -> None:
+        """
+        Initializes Authenticator instance.
+        """
         super().__init__()
         self.session = session
 
@@ -175,6 +248,14 @@ class Authenticator(BaseModule):
         password: Optional[str] = None,
         key: Optional[PKey] = None
     ) -> RemoteCredentials:
+        """
+        Get the credentials for remote host.
+
+        :param username: remote host username.
+        :param password: remote host password.
+        :param key: remote host private key.
+        :return: an object of RemoteCredentials class.
+        """
         if self.session.proxyserver.transparent:
             return RemoteCredentials(
                 username=self.args.auth_username or username,
@@ -193,6 +274,13 @@ class Authenticator(BaseModule):
 
     @classmethod
     def get_auth_methods(cls, host: str, port: int) -> Optional[List[str]]:
+        """
+        Get the available authentication methods for a remote host.
+
+        :param host: remote host address.
+        :param port: remote host port.
+        :return: a list of strings representing the available authentication methods.
+        """
         auth_methods = None
         t = paramiko.Transport((host, port))
         try:
@@ -215,6 +303,15 @@ class Authenticator(BaseModule):
         key: Optional[PKey] = None,
         store_credentials: bool = True
     ) -> int:
+        """
+        Authenticate with the remote host using provided credentials.
+
+        :param username: remote host username.
+        :param password: remote host password.
+        :param key: remote host private key.
+        :param store_credentials: boolean flag to indicate if provided credentials should be stored.
+        :return: integer representing authentication success or failure.
+        """
         if store_credentials:
             self.session.username_provided = username
             self.session.password_provided = password
@@ -259,15 +356,28 @@ class Authenticator(BaseModule):
         return paramiko.common.AUTH_FAILED
 
     def auth_agent(self, username: str, host: str, port: int) -> int:
+        """
+        Performs authentication using the ssh-agent.
+        """
         raise NotImplementedError("authentication must be implemented")
 
     def auth_password(self, username: str, host: str, port: int, password: str) -> int:
+        """
+        Performs authentication using a password.
+        """
         raise NotImplementedError("authentication must be implemented")
 
     def auth_publickey(self, username: str, host: str, port: int, key: PKey) -> int:
+        """
+        Performs authentication using public key authentication.
+        """
         raise NotImplementedError("authentication must be implemented")
 
     def auth_fallback(self, username: str) -> int:
+        """
+        This method is executed when the intercepted client would be allowed to log in to the server,
+        but due to the interception, the login is not possible.
+        """
         if not self.args.fallback_host:
             if self.session.agent:
                 logging.error("\n".join([
@@ -322,6 +432,9 @@ class Authenticator(BaseModule):
         self, user: str, host: str, port: int, method: AuthenticationMethod,
         password: Optional[str] = None, key: Optional[PKey] = None, *, run_post_auth: bool = True
     ) -> int:
+        """
+        Connects to the SSH server and performs the necessary authentication.
+        """
         if not host:
             raise MissingHostException()
 
@@ -347,14 +460,27 @@ class Authenticator(BaseModule):
         return auth_status
 
     def pre_auth_action(self) -> None:
-        pass
+        """Perform any pre-authentication actions.
+
+        This method is called before the authentication process starts.
+
+        :return: None
+        """
 
     def post_auth_action(self, success: bool) -> None:
-        pass
+        """Perform any post-authentication actions.
+
+        This method is called after the authentication process is completed, whether successfully or not.
+
+        :param success: indicates if the authentication was successful or not
+        :return: None
+        """
 
 
 class AuthenticatorPassThrough(Authenticator):
-    """pass the authentication to the remote server (reuses the credentials)
+    """A subclass of `Authenticator` which passes the authentication to the remote server.
+
+    This class reuses the credentials received from the client and sends it directly to the remote server for authentication.
     """
 
     def auth_agent(self, username: str, host: str, port: int) -> int:
