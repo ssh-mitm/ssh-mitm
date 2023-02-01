@@ -1,3 +1,38 @@
+"""
+This module provides a set of tools for SSH Man-In-The-Middle attacks. The module provides a main method that parses the provided command line arguments and invokes the corresponding subcommand.
+
+Class: SubCommand
+=================
+
+The SubCommand class represents a subcommand in the SSH-MITM tool. It holds the implementation of the subcommand and the initialization of the corresponding parser for command line arguments.
+
+Properties
+----------
+
+* run_func: function to run for the subcommand. It takes in the parsed command line arguments as input.
+* parser_func: function to initialize the command line argument parser for the subcommand.
+* help: help string for the subcommand.
+
+
+Function: main
+--------------
+
+The main function is the entry point of the SSH-MITM tools. It provides a high-level overview of all available subcommands, parses the command line arguments, sets up logging, initializes the subcommand and executes the corresponding run function.
+
+The main method takes in no inputs and returns nothing. It only has side effects such as setting up logging, parsing the command line arguments, and invoking the appropriate subcommand implementation.
+Arguments
+
+The following command line arguments are supported by the main method:
+
+* -V, --version: prints the version information of the SSH-MITM tools.
+* -d, --debug: provides more verbose output of status information.
+* --paramiko-log-level: sets the log level for the paramiko library.
+* --disable-workarounds: disables the paramiko workarounds.
+
+The main method also supports subcommands. The specific subcommands and their arguments
+are defined by the parser_func properties of the corresponding SubCommand instances.
+"""
+
 from argparse import Namespace
 import logging
 import sys
@@ -16,6 +51,16 @@ from sshmitm.audit.cli import init_audit_parser, run_audit
 
 
 class SubCommand():
+    """
+    This class represents a subcommand, which contains a function that is run and a parser that is used to parse arguments.
+
+    :param run_func: A callable function that runs the subcommand
+    :type run_func: Callable[[Namespace], None]
+    :param parser_func: A callable function that generates the argument parser for the subcommand
+    :type parser_func: Callable[[ModuleParser], None]
+    :param help: A string that describes the subcommand
+    :type help: str
+    """
 
     def __init__(
         self,
@@ -29,7 +74,12 @@ class SubCommand():
 
 
 def main() -> None:
+    """
+    Main function of the SSH-MITM tools, it provides a CLI interface to use the `audit` and `server` subcommands.
 
+    :return: None
+    :rtype: None
+    """
     available_subcommands = {
         'audit': SubCommand(
             run_func=run_audit,

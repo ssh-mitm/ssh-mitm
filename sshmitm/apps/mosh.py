@@ -13,6 +13,26 @@ from sshmitm.session import Session
 
 
 class UdpProxy:
+    """
+    UdpProxy is a class to act as a proxy server for MOSH (Mobile shell) protocol
+
+    This class provides the functionality of a proxy server for the MOSH protocol. MOSH is a protocol for mobile shell sessions, which helps maintain shell sessions when network connection is disrupted.
+
+    :param key: Base64 encoded key to be used for decryption of incoming messages
+    :type key: str
+    :param target_ip: IP of target server
+    :type target_ip: str
+    :param target_port: Port number of target server
+    :type target_port: int
+    :param listen_ip: IP to bind the proxy server (default '')
+    :type listen_ip: str
+    :param listen_port: Port number to bind the proxy server (default 0)
+    :type listen_port: int
+    :param buf_size: buffer size for incoming data (default 1024)
+    :type buf_size: int
+    """
+
+
     def __init__(self, key: str, target_ip: str, target_port: int, listen_ip: str = '', listen_port: int = 0, buf_size: int = 1024):
         self.key = base64.b64decode(key + "==")
         self.listen_ip = listen_ip
@@ -25,14 +45,33 @@ class UdpProxy:
         self.socket.bind((self.listen_ip, self.listen_port))
 
     def get_bind_port(self) -> int:
+        """
+        Get the port number that the proxy server is bound to.
+
+        :return: Port number
+        :rtype: int
+        """
         return cast(int, self.socket.getsockname()[1])
 
     def start(self) -> None:
+        """
+        Start the proxy server.
+
+        :return: None
+        """
         th = threading.Timer(0, self.thread_receive)
         th.daemon = True
         th.start()
 
     def check_pairing(self, addr: Tuple[str, int]) -> Tuple[str, int]:
+        """
+        Get the destination address to forward incoming messages to.
+
+        :param addr: Address of incoming message
+        :type addr: Tuple[str, int]
+        :return: Destination address
+        :rtype: Tuple[str, int]
+        """
         for i in range(len(self.pair_list)):
             if addr == self.pair_list[i][0]:
                 return self.pair_list[i][1]
@@ -45,6 +84,16 @@ class UdpProxy:
 
     @staticmethod
     def format_hex(data: bytes, hexwidth: int = 19) -> str:
+        """
+        Format the data in hexadecimal format.
+
+        :param data: Data to be formatted
+        :type data: bytes
+        :param hexwidth: Width of hexadecimal data (default 19)
+        :type hexwidth: int
+        :return: Formatted hexadecimal data
+        :rtype: str
+        """
         result = []
         for i in range(0, len(data), hexwidth):
             s = data[i:i + hexwidth]
@@ -58,6 +107,13 @@ class UdpProxy:
         return '\n'.join(result)
 
     def receive(self, buff_size: int) -> None:
+        """
+        Receive incoming messages, decrypt and log the data, and forward it to the target server.
+
+        :param buff_size: buffer size for incoming data
+        :type buff_size: int
+        :return: None
+        """
         data, addr = self.socket.recvfrom(buff_size)
         if addr and data:
             destination_addr = self.check_pairing(addr)
@@ -80,11 +136,28 @@ class UdpProxy:
             self.socket.sendto(data, destination_addr)
 
     def thread_receive(self) -> None:
+        """
+        Start a separate thread to receive incoming messages.
+
+        :return: None
+        """
         while True:
             self.receive(self.buf_size)
 
 
 def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
+    """
+    Handle encrypted traffic from Mosh, a mobile shell that serves as a replacement for ssh.
+
+    :param session: A Session object representing the Mosh connection.
+    :type session: Session
+    :param traffic: Encrypted traffic from Mosh.
+    :type traffic: bytes
+    :param isclient: A boolean value indicating whether the current session is a client session.
+    :type isclient: bool
+    :return: The processed traffic.
+    :rtype: bytes
+    """
     if not isclient:
         try:
             mosh_connect = traffic.decode("utf8")
