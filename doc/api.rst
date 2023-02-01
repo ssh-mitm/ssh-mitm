@@ -3,6 +3,9 @@ API Documentation
 
 Information on specific functions, classes, and methods.
 
+How to create docstrings with ChatGPT
+-------------------------------------
+
 This API documentation was created with the assistance of OpenAI's ChatGPT for research purposes.
 The use of ChatGPT allowed for quick and efficient generation of docstrings for the classes and methods within the API.
 
@@ -43,18 +46,21 @@ For example, when asked to create a docstring for a method, the conversation mig
 
    .. code-block:: python
 
-      def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
+      def probe_host(hostname_or_ip: str, port: int, username: str, public_key: paramiko.pkey.PublicBlob) -> bool:
          """
-         Handle encrypted traffic from Mosh, a mobile shell that serves as a replacement for ssh.
+         Probe a remote host to determine if the provided public key is authorized for the provided username.
 
-         :param session: A Session object representing the Mosh connection.
-         :type session: Session
-         :param traffic: Encrypted traffic from Mosh.
-         :type traffic: bytes
-         :param isclient: A boolean value indicating whether the current session is a client session.
-         :type isclient: bool
-         :return: The processed traffic.
-         :rtype: bytes
+         :param hostname_or_ip: Hostname or IP address of the remote host to probe.
+         :type hostname: str
+         :param port: Port of the remote host.
+         :type port: int
+         :param username: The username to probe authorization for.
+         :type username: str
+         :param public_key: The public key to use for the probe.
+         :type public_key: paramiko.pkey.PublicBlob
+
+         :returns: True if the provided public key is authorized, False otherwise.
+         :rtype: bool
          """
 
 
