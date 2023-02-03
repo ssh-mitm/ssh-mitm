@@ -1,9 +1,15 @@
 :fas:`cloud-download-alt` Installation
 ======================================
 
-SSH-MITM can be installed using ``snap``, ``pip``, ``pipenv``, ``AppImage`` or ``Nixpkgs``.
+Installing SSH-MITM is the first step to leveraging its capabilities for your technical projects.
+This guide will provide you with the information and resources you need to get SSH-MITM up and
+running on your system, whether it be **Linux** or **Windows**.
 
-For Windows there are also ready-made executables available for download.
+SSH-MITM offers flexible and convenient installation options, including pre-built packages for
+Windows and package managers such as ``snap``, ``pip``, ``pipenv``, ``AppImage`` or ``Nixpkgs``.
+
+These options provide a simple and efficient way for users to get SSH-MITM installed
+and ready to use for various purposes such as malware analysis, forensics, security audits, and more.
 
 :fab:`ubuntu` snap
 ------------------
