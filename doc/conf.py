@@ -24,7 +24,7 @@ author = 'Manfred Kaiser'
 copyright = f'{datetime.datetime.now().year}, {author}'  # pylint: disable=redefined-builtin
 
 extensions = [
-    'sphinx.ext.autosectionlabel',    
+    'sphinx.ext.autosectionlabel',
     'sphinx.ext.autodoc',
     'sphinx_sitemap',
     'sphinx_reredirects',
@@ -58,6 +58,12 @@ html_theme_options = {
     "navigation_with_keys": False,
     "icon_links": [
         {
+            "name": "Codeberg",
+            "url": "https://codeberg.org/ssh-mitm/ssh-mitm",
+            "icon": "_static/codeberg-logo_icon_blue.svg",
+            "type": "local"
+        },
+        {
             "name": "PyPI",
             "url": "https://pypi.org/project/ssh-mitm",
             "icon": "fab fa-python",
@@ -90,7 +96,7 @@ master_doc = 'index'
 html_permalinks = False
 html_baseurl = 'https://docs.ssh-mitm.at/'
 autosectionlabel_maxdepth = 1
-html_extra_path = ['robots.txt']
+html_extra_path = ['robots.txt', '_static/codeberg-logo_icon_blue.svg']
 
 # -- CopyButton --------------------------------------------------------------
 

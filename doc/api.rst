@@ -1,70 +1,22 @@
-API Documentation
-=================
+:fas:`box` API Documentation
+============================
 
-Information on specific functions, classes, and methods.
+The SSH-MITM API documentation serves as a comprehensive guide for utilizing the features of the SSH Man-in-the-Middle tool.
+The tool is written in Python and offers a range of capabilities for intercepting and manipulating SSH connections.
 
-How to create docstrings with ChatGPT
--------------------------------------
+This documentation is designed to be easy to follow, with a clear explanation of each interface and its functionality.
+All important concepts and their usage are covered in detail, allowing you to fully utilize the capabilities of the tool.
 
-This API documentation was created with the assistance of OpenAI's ChatGPT for research purposes.
-The use of ChatGPT allowed for quick and efficient generation of docstrings for the classes and methods within the API.
+Whether you are a seasoned developer or just starting out, the SSH-MITM API documentation provides the information you need
+to get started with the tool and integrate it into your projects. The documentation is kept up-to-date with the latest developments
+in the tool, ensuring that you always have access to the latest information.
 
-For example, when asked to create a docstring for a method, the conversation might have gone something like this:
-
-**User**
-
-.. code-block:: none
-
-   Please create docstrings for the given functions.
-
-   Following format must be used:
-
-   Example method signature: def myfunc(a: int, b: int) -> int
-
-   Example docstring format:
-
-   def myfunc(a: int, b: int) -> int:
-      """
-      description for this function
-
-      :param a: fist parameter
-      :type a: int
-      :param b: second parameter
-      :type b: int
-      :return: sum of a+b
-      :rtype: int
-      """
-
-   Provided functions:
-
-   def probe_host(hostname_or_ip: str, port: int, username: str, public_key: paramiko.pkey.PublicBlob) -> bool:
-
-
-**ChatGPT**
-
-   Here's the updated docstring for the function probe_host:
-
-   .. code-block:: python
-
-      def probe_host(hostname_or_ip: str, port: int, username: str, public_key: paramiko.pkey.PublicBlob) -> bool:
-         """
-         Probe a remote host to determine if the provided public key is authorized for the provided username.
-
-         :param hostname_or_ip: Hostname or IP address of the remote host to probe.
-         :type hostname: str
-         :param port: Port of the remote host.
-         :type port: int
-         :param username: The username to probe authorization for.
-         :type username: str
-         :param public_key: The public key to use for the probe.
-         :type public_key: paramiko.pkey.PublicBlob
-
-         :returns: True if the provided public key is authorized, False otherwise.
-         :rtype: bool
-         """
+With the information provided in this documentation, you will be able to fully leverage the capabilities of the SSH-MITM tool to
+perform powerful and effective man-in-the-middle attacks.
 
 
 .. toctree::
    :maxdepth: 1
+   :hidden:
 
    api/sshmitm
