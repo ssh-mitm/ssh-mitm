@@ -26,6 +26,25 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
     """
     Probe a remote host to determine if the provided public key is authorized for the provided username.
 
+    The function takes four arguments: hostname_or_ip (a string representing hostname
+    or IP address), port (an integer representing the port number), username (a string
+    representing the username), and public_key (a public key in paramiko.pkey.PublicBlob format).
+    The function returns a boolean indicating if the provided public key is authorized or not.
+
+    The function uses the paramiko library to perform the probe by creating a secure shell (SSH)
+    connection to the remote host and performing authentication using the provided username and
+    public key. Two helper functions, valid and parse_service_accept, are defined inside the
+    probe_host function to assist with the authentication process.
+
+    The probe_host function opens a socket connection to the remote host and starts an
+    SSH transport using the paramiko library. The function then generates a random private
+    key, replaces the public key with the provided key, and performs the public key
+     using transport.auth_publickey. The result of the authentication is stored in the
+     valid_key variable. If the authentication fails, an exception of type
+     paramiko.ssh_exception.AuthenticationException is raised and caught, leaving the
+     valid_key variable as False. Finally, the function returns the value of valid_key,
+     which indicates whether the provided public key is authorized or not.
+
     :param hostname_or_ip: Hostname or IP address of the remote host to probe.
     :type hostname: str
     :param port: Port of the remote host.
@@ -377,6 +396,12 @@ class Authenticator(BaseModule):
         """
         This method is executed when the intercepted client would be allowed to log in to the server,
         but due to the interception, the login is not possible.
+
+        The method checks if a fallback host (a honeypot) has been provided and if not,
+        it closes the session, and logs that authentication is not possible.
+        If the fallback host has been provided, it attempts to log in to the honeypot using
+        the username and password provided, and reports success or failure accordingly.
+        If authentication against the honeypot fails, it logs an error message.
         """
         if not self.args.fallback_host:
             if self.session.agent:
@@ -490,6 +515,19 @@ class AuthenticatorPassThrough(Authenticator):
         return self.connect(username, host, port, AuthenticationMethod.password, password=password)
 
     def auth_publickey(self, username: str, host: str, port: int, key: PKey) -> int:
+        """
+        Performs authentication using public key authentication.
+
+        This method is checking if a user with a specific public key is allowed to log into a server
+        using the SSH protocol. If the key can sign, the method will try to connect to the server
+        using the public key. If the connection is successful, the user is considered authenticated.
+
+        If the key cannot sign, the method will check if the key is valid for the host and port
+        specified for the user. If the key is valid, the user is considered authenticated.
+
+        If the key is not valid, or if there is any error while checking if the key is valid,
+        the user will not be authenticated and will not be able to log in.
+        """
         ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
         if key.can_sign():
@@ -498,9 +536,8 @@ class AuthenticatorPassThrough(Authenticator):
                 username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits
             )
             return self.connect(username, host, port, AuthenticationMethod.publickey, key=key)
-        # Ein Publickey wird nur direkt von check_auth_publickey
-        # übergeben. In dem Fall müssen wir den Client authentifizieren,
-        # damit wir auf den Agent warten können!
+        # A public key is only passed directly from check_auth_publickey.
+        # In that case, we need to authenticate the client so that we can wait for the agent!
         publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
         try:
             if probe_host(host, port, username, publickey):
@@ -517,6 +554,22 @@ class AuthenticatorPassThrough(Authenticator):
         return paramiko.common.AUTH_FAILED
 
     def post_auth_action(self, success: bool) -> None:
+        """
+        This method logs information about an authentication event.
+
+        The success parameter determines whether the authentication was successful or not.
+        If the authentication was successful, the log will show a message saying
+        "Remote authentication succeeded".
+
+        If not, the log will show "Remote authentication failed". The log will also show
+        the remote address, username, and password used for authentication
+        (if provided). Information about the accepted public key and remote public key
+        (if any) will also be included in the log. If there is an agent available,
+        the number of keys it has will be displayed, along with details about each key
+        (name, hash, number of bits, and whether it can sign).
+
+        All this information can be saved to a log file for later review.
+        """
         def get_agent_pubkeys() -> List[Tuple[str, SSHKey, bool, str]]:
             pubkeyfile_path = None
 

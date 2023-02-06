@@ -13,6 +13,17 @@ except ImportError:
 
 
 def ask_pass(primary_message: str, secondary_message: Optional[str] = None) -> Optional[str]:
+    """
+    This function displays a dialog box for the user to enter a password.
+     The dialog box has a primary message, and an optional secondary message.
+
+    :param primary_message: The primary message to be displayed in the dialog box
+    :type primary_message: str
+    :param secondary_message: An optional secondary message to be displayed in the dialog box
+    :type secondary_message: Optional[str]
+    :return: The password entered by the user
+    :rtype: Optional[str]
+    """
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
@@ -23,6 +34,16 @@ def ask_pass(primary_message: str, secondary_message: Optional[str] = None) -> O
 
 
 def confirm(primary_message: str, secondary_message: Optional[str] = None) -> bool:
+    """
+    Confirms a question with yes or no answer.
+
+    :param primary_message: The main message to be displayed
+    :type primary_message: str
+    :param secondary_message: An optional secondary message to be displayed
+    :type secondary_message: Optional[str]
+    :return: True if answer is yes, False otherwise.
+    :rtype: bool
+    """
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
@@ -33,6 +54,9 @@ def confirm(primary_message: str, secondary_message: Optional[str] = None) -> bo
 
 
 def main() -> NoReturn:
+    """
+    Main function to run the SSH-ASKPASS implementation.
+    """
     if not tkinter_imported:
         logging.error("tkinter not installed!")
         sys.exit(1)

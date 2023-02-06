@@ -12,6 +12,15 @@ from sshmitm.authentication import probe_host, Authenticator
 
 
 def check_publickey(args: argparse.Namespace) -> bool:
+    """
+    This function is used to check the validity of a public key file by
+    using the probe_host function.
+
+    :param args: Namespace object that contains the necessary parameters.
+    :type args: argparse.Namespace
+    :return: True if the public key is valid, False otherwise
+    :rtype: bool
+    """
     with open(args.public_key, 'rt', encoding="utf-8") as key_handle:
         key = key_handle.read()
     try:
@@ -32,6 +41,14 @@ def check_publickey(args: argparse.Namespace) -> bool:
 
 
 def check_privatekey(args: argparse.Namespace) -> bool:
+    """
+    Check if the given private key is valid.
+
+    :param args: Namespace object that contains the necessary parameters.
+    :type args: argparse.Namespace
+    :return: True if the private key is valid, False otherwise
+    :rtype: bool
+    """
     ssh = paramiko.SSHClient()
 
     ssh.set_missing_host_key_policy(paramiko.AutoAddPolicy())
