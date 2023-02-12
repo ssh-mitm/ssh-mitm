@@ -43,7 +43,7 @@ from paramiko.common import (
 )
 from paramiko.message import Message
 from paramiko.packet import NeedRekeyException
-from paramiko.py3compat import long, b
+from paramiko.util import b
 from paramiko.ssh_exception import (
     SSHException
 )
@@ -132,7 +132,7 @@ def transport_run(self):  # type: ignore
 
     # active=True occurs before the thread is launched, to avoid a race
     _active_threads.append(self)
-    tid = hex(long(id(self)) & xffffffff)
+    tid = hex(id(self) & xffffffff)
     if self.server_mode:
         self._log(DEBUG, "starting thread (server mode): {}".format(tid))
     else:

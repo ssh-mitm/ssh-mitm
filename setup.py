@@ -75,7 +75,7 @@ setup(
     },
     install_requires=[
         'argcomplete',
-        'paramiko>=2.7,<3',
+        'paramiko>=3,<4',
         'pytz',
         'sshpubkeys',
         'pyyaml',
