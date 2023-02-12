@@ -7,9 +7,9 @@ try:
     import tkinter
     from tkinter.simpledialog import askstring
     from tkinter import ttk
-    tkinter_imported = True
+    TKINTER_IMPORTED = True
 except ImportError:
-    tkinter_imported = False
+    TKINTER_IMPORTED = False
 
 
 def ask_pass(primary_message: str, secondary_message: Optional[str] = None) -> Optional[str]:
@@ -57,7 +57,7 @@ def main() -> NoReturn:
     """
     Main function to run the SSH-ASKPASS implementation.
     """
-    if not tkinter_imported:
+    if not TKINTER_IMPORTED:
         logging.error("tkinter not installed!")
         sys.exit(1)
     parser = argparse.ArgumentParser()

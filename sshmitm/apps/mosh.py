@@ -182,7 +182,7 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                 )
                 mosh_port = mosh_proxy.get_bind_port()
                 mosh_proxy.start()
-                logging.info(f"started mosh proxy with port {mosh_port}")
+                logging.info("started mosh proxy with  %s", mosh_port)
                 return f"MOSH CONNECT {mosh_port} {mosh_connect_parts[3]}".encode()
         except Exception:
             logging.exception("Error starting mosh proxy")

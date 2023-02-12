@@ -24,7 +24,7 @@ class TunnelForwarder(threading.Thread):
     def __init__(
         self, local_ch: Optional[Union[socket, paramiko.Channel]], remote_ch: Optional[Union[socket, paramiko.Channel]]
     ) -> None:
-        super(TunnelForwarder, self).__init__()
+        super().__init__()
         self.local_ch = local_ch
         self.remote_ch = remote_ch
         self.start()
@@ -120,7 +120,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             raise ValueError("No SSH client!")
         remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, self.origin)
-        super(LocalPortForwardingForwarder, self).__init__(None, remote_ch)
+        super().__init__(None, remote_ch)
 
     def run(self) -> None:
         # Channel setup in thread start - so that transport thread can return to the session thread
@@ -134,7 +134,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
             logging.debug("Proxyjump: forwarding traffic through master channel [chanid %s]", self.chanid)
         if not self.local_ch:
             self.local_ch = self.session.transport.accept(5)
-        super(LocalPortForwardingForwarder, self).run()
+        super().run()
 
     @classmethod
     def setup(cls, session: 'sshmitm.session.Session') -> None:

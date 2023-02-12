@@ -56,9 +56,8 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
 
     :returns: True if the provided public key is authorized, False otherwise.
     :rtype: bool
-
     """
-
+    # pylint: disable=protected-access
     def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore
         """
         A helper function that is called when authentication is successful.
@@ -93,6 +92,7 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
             m.add_string(self.private_key.public_blob.key_type)
         m.add_string(self.private_key.public_blob.key_blob)
         self.transport._send_message(m)
+        return None
 
     valid_key = False
     try:
@@ -437,7 +437,7 @@ class Authenticator(BaseModule):
             password=self.args.fallback_password,
             host=self.args.fallback_host,
             port=self.args.fallback_port,
-            method=AuthenticationMethod.password,
+            method=AuthenticationMethod.PASSWORD,
             run_post_auth=False
         )
         if auth_status == paramiko.common.AUTH_SUCCESSFUL:
@@ -509,10 +509,10 @@ class AuthenticatorPassThrough(Authenticator):
     """
 
     def auth_agent(self, username: str, host: str, port: int) -> int:
-        return self.connect(username, host, port, AuthenticationMethod.agent)
+        return self.connect(username, host, port, AuthenticationMethod.AGENT)
 
     def auth_password(self, username: str, host: str, port: int, password: str) -> int:
-        return self.connect(username, host, port, AuthenticationMethod.password, password=password)
+        return self.connect(username, host, port, AuthenticationMethod.PASSWORD, password=password)
 
     def auth_publickey(self, username: str, host: str, port: int, key: PKey) -> int:
         """
@@ -535,7 +535,7 @@ class AuthenticatorPassThrough(Authenticator):
                 "AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits",
                 username, key.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits
             )
-            return self.connect(username, host, port, AuthenticationMethod.publickey, key=key)
+            return self.connect(username, host, port, AuthenticationMethod.PUBLICKEY, key=key)
         # A public key is only passed directly from check_auth_publickey.
         # In that case, we need to authenticate the client so that we can wait for the agent!
         publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
