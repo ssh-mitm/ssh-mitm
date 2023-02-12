@@ -100,7 +100,7 @@ class UdpProxy:
             while hexwidth - len(hexa) > 0:
                 hexa.append(' ' * 2)
             text = ''.join([chr(x) if 0x20 <= x < 0x7F else '.' for x in s])
-            addr = '%04X:    %s    %s' % (i, " ".join(hexa), text)
+            addr = '%04X:    %s    %s' % (i, " ".join(hexa), text)  # pylint: disable=consider-using-f-string
             result.append(addr)
 
         return '\n'.join(result)
