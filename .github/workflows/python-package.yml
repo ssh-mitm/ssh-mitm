@@ -26,11 +26,14 @@ jobs:
     - name: Install dependencies
       run: |
         python -m pip install --upgrade pip
-        python -m pip install flake8 pytest mypy .
+        python -m pip install flake8 pytest mypy pylint .
         if [ -f requirements.txt ]; then pip install -r requirements.txt; fi
     - name: Lint with flake8
       run: |
         flake8 --ignore=E501,W503,W504 sshmitm
+    - name: Lint wiht pylint
+      run: |
+        pylint sshmitm --disable=duplicate-code,line-too-long,missing-module-docstring,missing-class-docstring,missing-function-docstring,fixme,too-few-public-methods,too-many-branches,too-many-instance-attributes,too-many-arguments,too-many-statements,too-many-locals,protected-access,too-many-return-statements
     - name: Lint wiht mypy
       run: |
         mypy --strict --install-types --non-interactive sshmitm
