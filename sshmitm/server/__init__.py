@@ -137,7 +137,7 @@ class SSHProxyServer:
         ssh_pub_key.parse()
         print(
             (
-                "{} {} key "
+                "{} {} key "  # pylint: disable=consider-using-f-string
                 "with {} bit length and fingerprints:\n"
                 "   {}\n"
                 "   {}\n"
@@ -244,7 +244,7 @@ class SSHProxyServer:
             return
 
         print(
-            'listen interfaces {} and {} on port {}'.format(
+            'listen interfaces {} and {} on port {}'.format(  # pylint: disable=consider-using-f-string
                 self.listen_address,
                 self.listen_address_v6,
                 self.listen_port

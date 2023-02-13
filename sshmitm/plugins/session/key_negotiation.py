@@ -89,6 +89,8 @@ def handle_key_negotiation(session: 'sshmitm.session.Session') -> None:
     # one should consider that clients who already accepted the fingerprint of the ssh-mitm server
     # will be connected through on their second connect and will get a changed keys error
     # (because they have a cached fingerprint and it looks like they need to be connected through)
+
+    # pylint: disable=protected-access
     def intercept_key_negotiation(transport: paramiko.Transport, m: Message) -> None:
         # restore intercept, to not disturb re-keying if this significantly alters the connection
         transport._handler_table[common.MSG_KEXINIT] = Transport._negotiate_keys  # type: ignore

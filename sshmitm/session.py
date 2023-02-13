@@ -64,7 +64,6 @@ class BaseSession(BaseModule):
 
     This class should be subclassed to provide custom session management functionality.
     """
-    pass
 
 
 class Session(BaseSession):

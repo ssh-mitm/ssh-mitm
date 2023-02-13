@@ -25,10 +25,11 @@ class SCPBaseForwarder(BaseForwarder):
         return traffic
 
     def rewrite_scp_command(self, command: str) -> str:
-        logging.info(f"got remote command: {command}")
+        logging.info("got remote command: %s", command)
         return command
 
     def forward(self) -> None:
+        # pylint: disable=protected-access
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
@@ -157,7 +158,7 @@ class SCPBaseForwarder(BaseForwarder):
 
         channel._unlink()  # type: ignore
 
-        super(SCPBaseForwarder, self).close_session(channel)
+        super().close_session(channel)
         logging.debug("[chan %d] SCP closed", channel.get_id())
 
 
@@ -227,6 +228,6 @@ class SCPForwarder(SCPBaseForwarder):
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         if self.session.scp_command.startswith(b'scp'):
             return self.handle_scp(traffic)
-        elif self.session.scp_command.startswith(b"mosh-server"):
+        if self.session.scp_command.startswith(b"mosh-server"):
             return handle_mosh(self.session, traffic, isclient)
         return traffic

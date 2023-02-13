@@ -35,9 +35,9 @@ class AuthenticationMethod(Enum):
     An enumeration of possible authentication methods that can be
     used to connect to a remote host.
     """
-    password = "password"  # nosec
-    publickey = "publickey"
-    agent = "agent"
+    PASSWORD = "password"  # nosec
+    PUBLICKEY = "publickey"
+    AGENT = "agent"
 
 
 class BaseSSHClient(BaseModule):
@@ -79,6 +79,7 @@ class SSHClient(BaseSSHClient):
         key: Optional[PKey],
         session: 'sshmitm.session.Session'
     ) -> None:
+        super().__init__()
         self.session: 'sshmitm.session.Session' = session
         self.host: str = host
         self.port: int = port
@@ -106,11 +107,11 @@ class SSHClient(BaseSSHClient):
             self.transport.get_security_options().ciphers = self.CIPHERS
 
         try:
-            if self.method is AuthenticationMethod.password:
+            if self.method is AuthenticationMethod.PASSWORD:
                 self.transport.connect(username=self.user, password=self.password)
-            elif self.method is AuthenticationMethod.publickey:
+            elif self.method is AuthenticationMethod.PUBLICKEY:
                 self.transport.connect(username=self.user, password=self.password, pkey=self.key)
-            elif self.method is AuthenticationMethod.agent:
+            elif self.method is AuthenticationMethod.AGENT:
                 if self.agent is not None:
                     keys = self.agent.get_keys()
                     if not keys:

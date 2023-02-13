@@ -61,7 +61,7 @@ class TCPServerThread(threading.Thread):
         run_status: bool = True,
         daemon: bool = False
     ) -> None:
-        super(TCPServerThread, self).__init__()
+        super().__init__()
         self.running = run_status
         self.network = network
         self.port = port

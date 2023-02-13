@@ -66,9 +66,9 @@ class SCPInjectFile(SCPForwarder):
         if self.session.scp_channel is None:
             return
         logging.info('Injecting file %s to channel %d', self.args.scp_inject_file, self.session.scp_channel.get_id())
-        command = "{}{} {} {}\n".format(
+        command = "{}{} {} {}\n".format(  # pylint: disable=consider-using-f-string
             self.file_command,
-            "{0:o}".format(self.inject_file_stat.st_mode)[2:],
+            "{0:o}".format(self.inject_file_stat.st_mode)[2:],  # pylint: disable=consider-using-f-string
             self.inject_file_stat.st_size,
             self.args.scp_inject_file.split('/')[-1]
         )

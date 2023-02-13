@@ -109,10 +109,7 @@ class SSHMirrorForwarder(SSHForwarder):
         try:
             self.logdir = os.path.join(
                 self.session.session_log_dir,
-                "terminal_{}@{}".format(
-                    self.session.username,
-                    self.session.remote_address[0]
-                )
+                f"terminal_{self.session.username}@{self.session.remote_address[0]}"
             )
 
             os.makedirs(self.logdir, exist_ok=True)
@@ -131,7 +128,7 @@ class SSHMirrorForwarder(SSHForwarder):
                 delete=False
             )
             self.fileOut.write(
-                "Session started on {}\n".format(
+                "Session started on {}\n".format(  # pylint: disable=consider-using-f-string
                     datetime.datetime.utcnow().replace(
                         tzinfo=pytz.utc
                     ).strftime("%a %d %b %Y %H:%M:%S %Z")

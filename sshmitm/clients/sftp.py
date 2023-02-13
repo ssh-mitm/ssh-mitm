@@ -177,16 +177,16 @@ class SFTPClient(SSHClient):
         return paramiko.sftp.SFTP_OK
 
     def get(
-        self, remotePath: Union[str, bytes], localPath: Union[str, bytes],
+        self, remotepath: Union[str, bytes], localpath: Union[str, bytes],
         callback: Optional[Callable[[int, int], Any]] = None
     ) -> int:
         """
         Downloads a file from the remote SFTP server and saves it to the local file system.
 
-        :param remotePath: The path of the file on the remote SFTP server.
-        :type remotePath: Union[str, bytes]
-        :param localPath: The path of the file on the local file system.
-        :type localPath: Union[str, bytes]
+        :param remotepath: The path of the file on the remote SFTP server.
+        :type remotepath: Union[str, bytes]
+        :param localpath: The path of the file on the local file system.
+        :type localpath: Union[str, bytes]
         :param callback: An optional callback function that is called after each chunk of data has been transmitted.
             The function should accept two arguments: the number of bytes transmitted so far, and the total size of the
             file in bytes.
@@ -197,11 +197,11 @@ class SFTPClient(SSHClient):
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
         try:
-            self._sftp.get(remotePath, localPath, callback)
+            self._sftp.get(remotepath, localpath, callback)
             return paramiko.sftp.SFTP_OK
         except (IOError, OSError) as ex:
             logging.error(ex)
-            os.remove(localPath)
+            os.remove(localpath)
         return paramiko.sftp.SFTP_FAILURE
 
     def listdir_attr(self, path: str = '.') -> Union[int, List[SFTPAttributes]]:
@@ -247,7 +247,7 @@ class SFTPClient(SSHClient):
         return paramiko.sftp.SFTP_OK
 
     def put(
-        self, localPath: Union[str, bytes], remotePath: Union[str, bytes], callback: Any = None, confirm: bool = True
+        self, localpath: Union[str, bytes], remotepath: Union[str, bytes], callback: Any = None, confirm: bool = True
     ) -> None:
         """
         This method is not implemented.

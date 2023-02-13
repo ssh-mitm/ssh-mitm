@@ -220,7 +220,7 @@ class MultipleSocketsListener:
                 addrs.append(sock.getsockname())
             except socket.error:
                 addrs.append(())
-        return '<%s (%r) at %#x>' % (self.__class__.__name__, addrs, id(self))
+        return '<%s (%r) at %#x>' % (self.__class__.__name__, addrs, id(self))  # pylint: disable=consider-using-f-string
 
     def _poll(self) -> Optional[Any]:
         """Return the first readable fd."""

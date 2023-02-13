@@ -198,6 +198,7 @@ class ModuleFormatter(argparse.HelpFormatter):
             self.items = []  # type: ignore
 
         def format_help(self) -> str:
+            # pylint: disable=protected-access
             # format the indented section
             if self.parent is not None:
                 self.formatter._indent()  # pylint: disable=protected-access

@@ -100,7 +100,7 @@ class UdpProxy:
             while hexwidth - len(hexa) > 0:
                 hexa.append(' ' * 2)
             text = ''.join([chr(x) if 0x20 <= x < 0x7F else '.' for x in s])
-            addr = '%04X:    %s    %s' % (i, " ".join(hexa), text)
+            addr = '%04X:    %s    %s' % (i, " ".join(hexa), text)  # pylint: disable=consider-using-f-string
             result.append(addr)
 
         return '\n'.join(result)
@@ -182,7 +182,7 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                 )
                 mosh_port = mosh_proxy.get_bind_port()
                 mosh_proxy.start()
-                logging.info(f"started mosh proxy with port {mosh_port}")
+                logging.info("started mosh proxy with  %s", mosh_port)
                 return f"MOSH CONNECT {mosh_port} {mosh_connect_parts[3]}".encode()
         except Exception:
             logging.exception("Error starting mosh proxy")
