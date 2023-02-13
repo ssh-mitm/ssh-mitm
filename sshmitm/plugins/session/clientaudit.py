@@ -214,7 +214,7 @@ class SSHClientAudit():
         return messages
 
     def check_key_negotiation(self) -> Dict[str, List[str]]:
-            """
+        """
         Check if a key negotiation data is known.
 
         :param client_id: ID of the client to check
