@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed infinite loop when client closes connection during authentication
 - fixed errors when too much connection attemps happen for the same server
+- close transport in probe_host, which can publickey auth lead to fail
 
 
 ## [3.0.1] - 2022-12-18

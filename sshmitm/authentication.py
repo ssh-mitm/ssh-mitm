@@ -95,6 +95,8 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
         return None
 
     valid_key = False
+    sock = None
+    transport = None
     try:
         client_handler_table = paramiko.auth_handler.AuthHandler._client_handler_table  # type: ignore
         client_handler_table[paramiko.common.MSG_USERAUTH_INFO_REQUEST] = valid
@@ -114,6 +116,10 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
     except paramiko.ssh_exception.AuthenticationException:
         pass
     finally:
+        if transport is not None:
+            transport.close()
+        if sock is not None:
+            sock.close()
         client_handler_table[paramiko.common.MSG_USERAUTH_INFO_REQUEST] = \
             paramiko.auth_handler.AuthHandler._parse_userauth_info_request  # type: ignore
         client_handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = \
@@ -547,7 +553,7 @@ class AuthenticatorPassThrough(Authenticator):
                 ))
                 return paramiko.common.AUTH_SUCCESSFUL
         except EOFError:
-            logging.warning(
+            logging.exception(
                 "%s - faild to check if client is allowed to login with publickey authentication",
                 self.session.sessionid
             )
