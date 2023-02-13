@@ -84,9 +84,9 @@ class TCPServerThread(threading.Thread):
         while self.running:
             readable = select.select([self.socket], [], [], 0.5)[0]
             if len(readable) == 1 and readable[0] is self.socket:
-                t = threading.Thread(target=self.handle_request, args=self.socket.accept())
-                self.threads.append(t)
-                t.start()
+                server_thread = threading.Thread(target=self.handle_request, args=self.socket.accept())
+                self.threads.append(server_thread)
+                server_thread.start()
             time.sleep(0.1)
 
     def handle_request(self, client: Union[socket.socket, paramiko.Channel], addr: Tuple[str, int]) -> None:
@@ -108,6 +108,6 @@ class TCPServerThread(threading.Thread):
 
         :return: None
         """
-        for t in self.threads:
-            t.join()
+        for server_thread in self.threads:
+            server_thread.join()
         self.socket.close()

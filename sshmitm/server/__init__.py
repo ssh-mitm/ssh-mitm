@@ -299,5 +299,5 @@ class SSHProxyServer:
                 else:
                     logging.warning("(%s) session not started", session)
                     self._threads.remove(threading.current_thread())
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("error handling session creation")

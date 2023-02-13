@@ -89,7 +89,7 @@ class SFTPClient(SSHClient):
             sftp._sftp = paramiko.SFTPClient.from_transport(ssh_client.transport)
             sftp.connected = True
             return sftp
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception('error creating sftp client')
             return None
 
@@ -120,7 +120,7 @@ class SFTPClient(SSHClient):
                 return False
             self._sftp = paramiko.SFTPClient.from_transport(self.transport)
             return True
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception('error creating sftp client')
         return False
 

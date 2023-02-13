@@ -69,29 +69,29 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
         self.auth_event.set()
         self.authenticated = True
 
-    def parse_service_accept(self, m: paramiko.message.Message) -> None:  # type: ignore
+    def parse_service_accept(self, message: paramiko.message.Message) -> None:  # type: ignore
         """
         A helper function that parses the service accept message.
 
         Args:
-            m (paramiko.message.Message): The message to parse.
+            message (paramiko.message.Message): The message to parse.
         """
         # https://tools.ietf.org/html/rfc4252#section-7
-        service = m.get_text()
+        service = message.get_text()
         if not (service == "ssh-userauth" and self.auth_method == "publickey"):
-            return self._parse_service_accept(m)  # type: ignore
-        m = paramiko.message.Message()
-        m.add_byte(paramiko.common.cMSG_USERAUTH_REQUEST)
-        m.add_string(self.username)
-        m.add_string("ssh-connection")
-        m.add_string(self.auth_method)
-        m.add_boolean(False)
+            return self._parse_service_accept(message)  # type: ignore
+        message = paramiko.message.Message()
+        message.add_byte(paramiko.common.cMSG_USERAUTH_REQUEST)
+        message.add_string(self.username)
+        message.add_string("ssh-connection")
+        message.add_string(self.auth_method)
+        message.add_boolean(False)
         if self.private_key.public_blob.key_type == 'ssh-rsa':
-            m.add_string('rsa-sha2-512')
+            message.add_string('rsa-sha2-512')
         else:
-            m.add_string(self.private_key.public_blob.key_type)
-        m.add_string(self.private_key.public_blob.key_blob)
-        self.transport._send_message(m)
+            message.add_string(self.private_key.public_blob.key_type)
+        message.add_string(self.private_key.public_blob.key_blob)
+        self.transport._send_message(message)
         return None
 
     valid_key = False
@@ -301,18 +301,18 @@ class Authenticator(BaseModule):
         :return: a list of strings representing the available authentication methods.
         """
         auth_methods = None
-        t = paramiko.Transport((host, port))
+        remote_transport = paramiko.Transport((host, port))
         try:
-            t.connect()
+            remote_transport.connect()
         except paramiko.ssh_exception.SSHException:
-            t.close()
+            remote_transport.close()
             return auth_methods
         try:
-            t.auth_none('')
+            remote_transport.auth_none('')
         except paramiko.BadAuthenticationType as err:
             auth_methods = err.allowed_types
         finally:
-            t.close()
+            remote_transport.close()
         return auth_methods
 
     def authenticate(
@@ -370,7 +370,7 @@ class Authenticator(BaseModule):
                 )
         except MissingHostException:
             logging.error("no remote host")
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("internal error, abort authentication!")
         return paramiko.common.AUTH_FAILED
 

@@ -349,9 +349,9 @@ class Session(BaseSession):
                         if self.transport.completion_event.wait(0.1):
                             break
         if self.transport.server_object is not None:
-            for f in cast(BaseServerInterface, self.transport.server_object).forwarders:
-                f.close()
-                f.join()
+            for tunnel_forwarder in cast(BaseServerInterface, self.transport.server_object).forwarders:
+                tunnel_forwarder.close()
+                tunnel_forwarder.join()
         self.transport.close()
         logging.info(
             "%s session %s closed",

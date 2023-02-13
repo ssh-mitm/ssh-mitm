@@ -23,22 +23,22 @@ if TYPE_CHECKING:
 
 class KeyNegotiationData:
 
-    def __init__(self, session: 'sshmitm.session.Session', m: Message) -> None:
+    def __init__(self, session: 'sshmitm.session.Session', message: Message) -> None:
         self.session = session
         self.client_version = session.transport.remote_version
-        self.cookie = m.get_bytes(16)  # cookie (random bytes)
-        self.kex_algorithms = m.get_list()  # kex_algorithms
-        self.server_host_key_algorithms = m.get_list()
-        self.encryption_algorithms_client_to_server = m.get_list()
-        self.encryption_algorithms_server_to_client = m.get_list()
-        self.mac_algorithms_client_to_server = m.get_list()
-        self.mac_algorithms_server_to_client = m.get_list()
-        self.compression_algorithms_client_to_server = m.get_list()
-        self.compression_algorithms_server_to_client = m.get_list()
-        self.languages_client_to_server = m.get_list()
-        self.languages_server_to_client = m.get_list()
-        self.first_kex_packet_follows = m.get_boolean()
-        m.rewind()
+        self.cookie = message.get_bytes(16)  # cookie (random bytes)
+        self.kex_algorithms = message.get_list()  # kex_algorithms
+        self.server_host_key_algorithms = message.get_list()
+        self.encryption_algorithms_client_to_server = message.get_list()
+        self.encryption_algorithms_server_to_client = message.get_list()
+        self.mac_algorithms_client_to_server = message.get_list()
+        self.mac_algorithms_server_to_client = message.get_list()
+        self.compression_algorithms_client_to_server = message.get_list()
+        self.compression_algorithms_server_to_client = message.get_list()
+        self.languages_client_to_server = message.get_list()
+        self.languages_server_to_client = message.get_list()
+        self.first_kex_packet_follows = message.get_boolean()
+        message.rewind()
 
     def show_debug_info(self) -> None:
         logging.debug(
@@ -67,7 +67,7 @@ class KeyNegotiationData:
             vulndb = pkg_resources.resource_filename('sshmitm', 'data/client_info.yml')
             with open(vulndb, 'r', encoding="utf-8") as file:
                 vulnerability_list = yaml.safe_load(file)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error loading vulnerability database")
             return
         for client_name, client_info in vulnerability_list.items():
@@ -91,17 +91,17 @@ def handle_key_negotiation(session: 'sshmitm.session.Session') -> None:
     # (because they have a cached fingerprint and it looks like they need to be connected through)
 
     # pylint: disable=protected-access
-    def intercept_key_negotiation(transport: paramiko.Transport, m: Message) -> None:
+    def intercept_key_negotiation(transport: paramiko.Transport, message: Message) -> None:
         # restore intercept, to not disturb re-keying if this significantly alters the connection
         transport._handler_table[common.MSG_KEXINIT] = Transport._negotiate_keys  # type: ignore
 
-        key_negotiation_data = KeyNegotiationData(session, m)
+        key_negotiation_data = KeyNegotiationData(session, message)
         key_negotiation_data.show_debug_info()
         key_negotiation_data.audit_client()
 
         # normal operation
         try:
-            Transport._negotiate_keys(transport, m)  # type: ignore
+            Transport._negotiate_keys(transport, message)  # type: ignore
         except SSHException as ex:
             logging.error(str(ex))
 

@@ -44,7 +44,6 @@ class BaseSSHClient(BaseModule):
     """"
     The base class for an SSH client module.
     """
-    pass
 
 
 class SSHClient(BaseSSHClient):

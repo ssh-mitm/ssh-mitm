@@ -58,9 +58,9 @@ class UdpProxy:
 
         :return: None
         """
-        th = threading.Timer(0, self.thread_receive)
-        th.daemon = True
-        th.start()
+        timed_thread = threading.Timer(0, self.thread_receive)
+        timed_thread.daemon = True
+        timed_thread.start()
 
     def check_pairing(self, addr: Tuple[str, int]) -> Tuple[str, int]:
         """
@@ -71,11 +71,11 @@ class UdpProxy:
         :return: Destination address
         :rtype: Tuple[str, int]
         """
-        for i in range(len(self.pair_list)):
-            if addr == self.pair_list[i][0]:
-                return self.pair_list[i][1]
-            if addr == self.pair_list[i][1]:
-                return self.pair_list[i][0]
+        for pair_entry in self.pair_list:
+            if addr == pair_entry[0]:
+                return pair_entry[1]
+            if addr == pair_entry[1]:
+                return pair_entry[0]
         new_port = len(self.pair_list) + self.target_port
         destination_addr = (self.target_ip, new_port)
         self.pair_list.append([addr, destination_addr])
@@ -95,11 +95,11 @@ class UdpProxy:
         """
         result = []
         for i in range(0, len(data), hexwidth):
-            s = data[i:i + hexwidth]
-            hexa = list(map(''.join, zip(*[iter(binascii.hexlify(s).decode('utf-8'))] * 2)))
+            data_part = data[i:i + hexwidth]
+            hexa = list(map(''.join, zip(*[iter(binascii.hexlify(data_part).decode('utf-8'))] * 2)))
             while hexwidth - len(hexa) > 0:
                 hexa.append(' ' * 2)
-            text = ''.join([chr(x) if 0x20 <= x < 0x7F else '.' for x in s])
+            text = ''.join([chr(x) if 0x20 <= x < 0x7F else '.' for x in data_part])
             addr = '%04X:    %s    %s' % (i, " ".join(hexa), text)  # pylint: disable=consider-using-f-string
             result.append(addr)
 
@@ -184,6 +184,6 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                 mosh_proxy.start()
                 logging.info("started mosh proxy with  %s", mosh_port)
                 return f"MOSH CONNECT {mosh_port} {mosh_connect_parts[3]}".encode()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error starting mosh proxy")
     return traffic

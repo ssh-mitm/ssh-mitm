@@ -143,14 +143,14 @@ class SSHClientAudit():
 
         cvemessagelist: List[str] = []
         if cvelist:
-            for e in cvelist.values():
-                cvemessagelist.append(f"  * {e.cve}: {e.url}")
-                if e.cve in vulnerabilities.keys():
-                    if isinstance(vulnerabilities[e.cve], list):
-                        for e1 in vulnerabilities[e.cve]:
-                            cvemessagelist.append(f"    - {e1}")
+            for cve_entry in cvelist.values():
+                cvemessagelist.append(f"  * {cve_entry.cve}: {cve_entry.url}")
+                if cve_entry.cve in vulnerabilities.keys():
+                    if isinstance(vulnerabilities[cve_entry.cve], list):
+                        for vulnerability_entry in vulnerabilities[cve_entry.cve]:
+                            cvemessagelist.append(f"    - {vulnerability_entry}")
                     else:
-                        cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
+                        cvemessagelist.append("\n".join([f"    - {vulnerability}" for vulnerability in vulnerabilities[cve_entry.cve]]))
         return cvemessagelist
 
     def _find_known_server_host_key_algos(self) -> List[str]:
@@ -245,8 +245,8 @@ class SSHClientAudit():
         :rtype: None
         """
         vulnerabilities: DefaultDict[str, List[str]] = defaultdict(list)
-        for k, v in self.check_key_negotiation().items():
-            vulnerabilities[k].extend(v)
+        for audit_type, audit_results in self.check_key_negotiation().items():
+            vulnerabilities[audit_type].extend(audit_results)
 
         vulnerabilities["clientaudit"].extend(self.audit())
 

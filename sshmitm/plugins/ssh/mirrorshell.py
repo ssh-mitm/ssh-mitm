@@ -85,10 +85,10 @@ class SSHMirrorForwarder(SSHForwarder):
 
         self.logdir: Optional[str] = None
         self.timestamp: Optional[datetime.datetime] = None
-        self.fileIn: Optional[IO[bytes]] = None
-        self.fileOut: Optional[IO[bytes]] = None
+        self.file_stdin: Optional[IO[bytes]] = None
+        self.file_stdout: Optional[IO[bytes]] = None
         self.timeingfile: Optional[IO[bytes]] = None
-        self._initFiles()
+        self._init_files()
 
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -101,7 +101,7 @@ class SSHMirrorForwarder(SSHForwarder):
         self.conn_thread = threading.Thread(target=self.injector_connect)
         self.conn_thread.start()
 
-    def _initFiles(self) -> None:
+    def _init_files(self) -> None:
         if not self.args.store_ssh_session:
             return
         if self.session.session_log_dir is None or self.session.username is None or self.session.remote_address is None:
@@ -115,33 +115,33 @@ class SSHMirrorForwarder(SSHForwarder):
             os.makedirs(self.logdir, exist_ok=True)
             timecomponent = str(time.time()).split('.', maxsplit=1)[0]
 
-            self.fileIn = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
+            self.file_stdin = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_in_{timecomponent}_',
                 suffix='.log',
                 dir=self.logdir,
                 delete=False
             )
-            self.fileOut = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
+            self.file_stdout = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_out_{timecomponent}_',
                 suffix='.log',
                 dir=self.logdir,
                 delete=False
             )
-            self.fileOut.write(
+            self.file_stdout.write(
                 "Session started on {}\n".format(  # pylint: disable=consider-using-f-string
                     datetime.datetime.utcnow().replace(
                         tzinfo=pytz.utc
                     ).strftime("%a %d %b %Y %H:%M:%S %Z")
                 ).encode()
             )
-            self.fileOut.flush()
+            self.file_stdout.flush()
             self.timeingfile = tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
                 prefix=f'ssh_time_{timecomponent}_',
                 suffix='.log',
                 dir=self.logdir,
                 delete=False
             )
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error file init")
 
     def write_timingfile(self, text: bytes) -> None:
@@ -172,21 +172,21 @@ class SSHMirrorForwarder(SSHForwarder):
                     except socket.error:
                         break
 
-                    t = paramiko.Transport(self.injector_client_sock)
-                    t.set_gss_host(socket.getfqdn(""))
+                    mirror_transport = paramiko.Transport(self.injector_client_sock)
+                    mirror_transport.set_gss_host(socket.getfqdn(""))
 
-                    t.load_server_moduli()
+                    mirror_transport.load_server_moduli()
                     if self.args.ssh_mirrorshell_key:
-                        t.add_server_key(paramiko.RSAKey(filename=self.args.ssh_mirrorshell_key))
+                        mirror_transport.add_server_key(paramiko.RSAKey(filename=self.args.ssh_mirrorshell_key))
                     else:
-                        t.add_server_key(paramiko.RSAKey.generate(bits=self.HOST_KEY_LENGTH))
+                        mirror_transport.add_server_key(paramiko.RSAKey.generate(bits=self.HOST_KEY_LENGTH))
 
                     self.inject_server = InjectServer(self.server_channel)
                     event = threading.Event()
-                    t.start_server(event=event, server=self.inject_server)
+                    mirror_transport.start_server(event=event, server=self.inject_server)
                     injector_channel = None
                     while not injector_channel:
-                        injector_channel = t.accept(0.5)
+                        injector_channel = mirror_transport.accept(0.5)
                     event.wait()
                     while True:
                         if self.inject_server.injector_channel and self.inject_server.injector_channel.recv_ready():
@@ -195,7 +195,7 @@ class SSHMirrorForwarder(SSHForwarder):
                         else:
                             time.sleep(0.1)
 
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("mirrorshell - injector connection suffered an unexpected error")
             if self.channel is not None:
                 self.close_session(self.channel)
@@ -209,26 +209,26 @@ class SSHMirrorForwarder(SSHForwarder):
         if self.logdir:
             if self.timeingfile is not None:
                 self.timeingfile.close()
-            if self.fileOut is not None:
-                self.fileOut.close()
-            if self.fileIn is not None:
-                self.fileIn.close()
+            if self.file_stdout is not None:
+                self.file_stdout.close()
+            if self.file_stdin is not None:
+                self.file_stdin.close()
 
     def forward_stdin(self) -> None:
         if self.session.ssh_channel is not None and self.session.ssh_channel.recv_ready():
             buf = self.session.ssh_channel.recv(self.BUF_LEN)
-            if self.logdir is not None and self.fileIn is not None:
-                self.fileIn.write(buf)
-                self.fileIn.flush()
+            if self.logdir is not None and self.file_stdin is not None:
+                self.file_stdin.write(buf)
+                self.file_stdin.flush()
             buf = self.stdin(buf)
             self.server_channel.sendall(buf)
 
     def forward_stdout(self) -> None:
         if self.server_channel.recv_ready():
             buf = self.server_channel.recv(self.BUF_LEN)
-            if self.logdir is not None and self.fileOut is not None:
-                self.fileOut.write(buf)
-                self.fileOut.flush()
+            if self.logdir is not None and self.file_stdout is not None:
+                self.file_stdout.write(buf)
+                self.file_stdout.flush()
                 self.write_timingfile(buf)
             buf = self.stdout(buf)
             if self.session.ssh_channel is not None:
@@ -239,9 +239,9 @@ class SSHMirrorForwarder(SSHForwarder):
     def forward_stderr(self) -> None:
         if self.server_channel.recv_stderr_ready():
             buf = self.server_channel.recv_stderr(self.BUF_LEN)
-            if self.logdir is not None and self.fileOut is not None:
-                self.fileOut.write(buf)
-                self.fileOut.flush()
+            if self.logdir is not None and self.file_stdout is not None:
+                self.file_stdout.write(buf)
+                self.file_stdout.flush()
                 self.write_timingfile(buf)
             buf = self.stderr(buf)
             if self.session.ssh_channel is not None:

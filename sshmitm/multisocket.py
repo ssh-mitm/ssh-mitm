@@ -67,7 +67,7 @@ def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
 
 def create_server_sock(
     address: Tuple[str, int],
-    family: Optional[socket.AddressFamily] = None,
+    family: Optional[socket.AddressFamily] = None,  # pylint: disable=no-member
     reuse_addr: Optional[bool] = None,
     transparent: bool = False,
     queue_size: int = 5,
@@ -105,7 +105,7 @@ def create_server_sock(
     ...     sock, addr = server.accept()
     ...     # handle new sock connection
     """
-    AF_INET6 = getattr(socket, 'AF_INET6', 0)
+    AF_INET6 = getattr(socket, 'AF_INET6', 0)  # pylint: disable=invalid-name
     host: Optional[str]
     port: int
     host, port = address
@@ -126,26 +126,26 @@ def create_server_sock(
         # preferred over IPv6
         info.sort(key=lambda x: x[0] == socket.AF_INET, reverse=True)
     for res in info:
-        af, socktype, proto, _, sa = res
+        res_address_family, socktype, proto, _, res_socket_address = res
         sock = None
         try:
-            sock = socket.socket(af, socktype, proto)
+            sock = socket.socket(res_address_family, socktype, proto)
             if reuse_addr:
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             if transparent:
                 if hasattr(socket, 'IP_TRANSPARENT'):
                     sock.setsockopt(socket.SOL_IP, socket.IP_TRANSPARENT, 1)
                 else:
-                    IP_TRANSPARENT = 19
+                    IP_TRANSPARENT = 19  # pylint: disable=invalid-name
                     sock.setsockopt(socket.SOL_IP, IP_TRANSPARENT, 1)
-            if af == AF_INET6:
+            if res_address_family == AF_INET6:
                 if dual_stack:
                     # enable
                     sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 0)
                 elif has_dual_stack(sock):
                     # disable
                     sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
-            sock.bind(sa)
+            sock.bind(res_socket_address)
             sock.listen(queue_size)
             return sock
         except socket.error as _:
@@ -174,7 +174,7 @@ class MultipleSocketsListener:
     def __init__(
         self,
         addresses: List[Tuple[str, int]],
-        family: Optional[socket.AddressFamily] = None,
+        family: Optional[socket.AddressFamily] = None,  # pylint: disable=no-member
         reuse_addr: Optional[bool] = None,
         transparent: bool = False,
         queue_size: int = 5
@@ -198,10 +198,10 @@ class MultipleSocketsListener:
                     dual_stack=False
                 )
                 self._socks.append(sock)
-                fd = sock.fileno()
+                socket_file_descriptor = sock.fileno()
                 if self._pollster is not None:
-                    self._pollster.register(fd, select.POLLIN)
-                self._sockmap[fd] = sock
+                    self._pollster.register(socket_file_descriptor, select.POLLIN)
+                self._sockmap[socket_file_descriptor] = sock
             completed = True
         finally:
             if not completed:
@@ -223,7 +223,7 @@ class MultipleSocketsListener:
         return '<%s (%r) at %#x>' % (self.__class__.__name__, addrs, id(self))  # pylint: disable=consider-using-f-string
 
     def _poll(self) -> Optional[Any]:
-        """Return the first readable fd."""
+        """Return the first readable socket_file_descriptor."""
         fds_select: Optional[Tuple[List[Any], List[Any], List[Any]]] = None
         fds_poll: Optional[List[Tuple[int, int]]] = None
         timeout = self.gettimeout()
@@ -255,8 +255,8 @@ class MultipleSocketsListener:
         """Accept a connection from the first socket which is ready
         to do so.
         """
-        fd = self._poll()
-        sock = self._sockmap[fd] if fd else self._socks[0]
+        socket_file_descriptor = self._poll()
+        sock = self._sockmap[socket_file_descriptor] if socket_file_descriptor else self._socks[0]
         return sock.accept()
 
     def filenos(self) -> List[int]:

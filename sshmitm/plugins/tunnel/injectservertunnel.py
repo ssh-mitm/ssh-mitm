@@ -55,11 +55,11 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
     ) -> None:
         del listenaddr  # unused arguments
         try:
-            f = TunnelForwarder(
+            forwarded_tunnel = TunnelForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", self.destination, addr),
                 client
             )
-            self.server_interface.forwarders.append(f)
+            self.server_interface.forwarders.append(forwarded_tunnel)
         except (paramiko.SSHException, OSError):
             logging.warning("portforward - injector connection suffered an unexpected error")
             self.tcpserver.close()

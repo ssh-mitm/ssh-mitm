@@ -83,17 +83,17 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
 
-        t = TCPServerThread(
+        server_thread = TCPServerThread(
             ClientTunnelHandler(session).handle_request,
             run_status=session.running,
             network=args.socks_listen_address
         )
-        t.start()
-        cls.tcpservers.append(t)
+        server_thread.start()
+        cls.tcpservers.append(server_thread)
 
-        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}'
-        netcat4_cmd = f'nc -X 4 -x localhost:{t.port} address port'
-        netcat5_cmd = f'nc -X 5 -x localhost:{t.port} address port'
+        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={server_thread.port}'
+        netcat4_cmd = f'nc -X 4 -x localhost:{server_thread.port} address port'
+        netcat5_cmd = f'nc -X 5 -x localhost:{server_thread.port} address port'
 
         logging.info(
             (
@@ -108,7 +108,7 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
             EMOJI['information'],
             stylize(session.sessionid, fg('light_blue') + attr('bold')),
             stylize('SOCKS port:', attr('bold')),
-            stylize(t.port, fg('light_blue') + attr('bold')),
+            stylize(server_thread.port, fg('light_blue') + attr('bold')),
             stylize('SOCKS4:', attr('bold')),
             stylize(socat_cmd, fg('light_blue') + attr('bold')),
             stylize(netcat4_cmd, fg('light_blue') + attr('bold')),

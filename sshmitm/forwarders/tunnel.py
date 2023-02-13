@@ -32,7 +32,7 @@ class TunnelForwarder(threading.Thread):
     def run(self) -> None:
         try:
             self.tunnel()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Tunnel exception with peer")
         self.close()
 
@@ -48,16 +48,16 @@ class TunnelForwarder(threading.Thread):
                 logging.error("remote channel is None")
                 break
 
-            r, _, _ = select.select([self.local_ch, self.remote_ch], [], [])
+            socklist_read, _, _ = select.select([self.local_ch, self.remote_ch], [], [])
 
-            if self.local_ch in r:
+            if self.local_ch in socklist_read:
                 data = self.local_ch.recv(chunk_size)
                 data = self.handle_data_from_local(data)
                 if len(data) == 0:
                     break
                 self.remote_ch.send(data)
 
-            if self.remote_ch in r:
+            if self.remote_ch in socklist_read:
                 data = self.remote_ch.recv(chunk_size)
                 data = self.handle_data_from_remote(data)
                 if len(data) == 0:
@@ -174,11 +174,11 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     ) -> None:
         try:
             logging.debug("Opening forwarded-tcpip channel (%s -> %s) to client", origin, destination)
-            f = TunnelForwarder(
+            forwarded_tunnel = TunnelForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", destination, origin),
                 channel
             )
-            self.server_interface.forwarders.append(f)
+            self.server_interface.forwarders.append(forwarded_tunnel)
         except paramiko.ssh_exception.ChannelException:
             channel.close()
             logging.error("Could not setup forward from %s to %s.", origin, destination)

@@ -1,3 +1,27 @@
+"""
+SSH-MITM Askpass
+
+This is a Python implementation of the SSH-ASKPASS utility which provides a simple
+Tkinter-based GUI dialog to obtain a password from the user.
+
+This utility is often used in conjunction with the OpenSSH ssh-agent program to
+securely store private keys. The ssh-agent program is able to hold private keys in
+memory, and automatically provides the passphrases required to use these keys.
+When a key is added to the ssh-agent, it is encrypted and stored in memory, and
+ssh-askpass is used to prompt the user for the passphrase required to unlock the key.
+
+This module provides a GUI dialog to obtain a password from the user, as well as a
+function to confirm a question with a yes/no answer. The module requires Tkinter to
+be installed to function. If Tkinter is not installed, a error message will be logged
+and the program will exit with exit code 1.
+
+The main() function is the entry point for the application, and takes an argument list of
+messages, which are used as the primary and secondary messages to be displayed in the dialog.
+If the first message ends with a question mark, the confirm() function is used, otherwise the
+ask_pass() function is used. If the user cancels or closes the dialog,
+the program will exit with exit code 1.
+"""
+
 import argparse
 import logging
 import sys

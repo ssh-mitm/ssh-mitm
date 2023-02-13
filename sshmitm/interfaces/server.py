@@ -228,10 +228,10 @@ class ServerInterface(BaseServerInterface):
         if not self.args.enable_keyboard_interactive_auth and not is_trivial_auth:
             return paramiko.common.AUTH_FAILED
         self.session.username = username
-        iq = paramiko.server.InteractiveQuery()
+        auth_interactive_query = paramiko.server.InteractiveQuery()
         if not self.args.disable_keyboard_interactive_prompts and not is_trivial_auth:
-            iq.add_prompt("Password (kb-interactive): ", False)
-        return iq
+            auth_interactive_query.add_prompt("Password (kb-interactive): ", False)
+        return auth_interactive_query
 
     def check_auth_interactive_response(self, responses: List[str]) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive_response: responses=%s", responses)
@@ -358,8 +358,8 @@ class ServerInterface(BaseServerInterface):
         )
 
         try:
-            f = self.session.proxyserver.client_tunnel_interface(self.session, chanid, origin, destination)
-            self.forwarders.append(f)
+            tunnel_forwarder = self.session.proxyserver.client_tunnel_interface(self.session, chanid, origin, destination)
+            self.forwarders.append(tunnel_forwarder)
         except paramiko.ssh_exception.ChannelException:
             logging.error("Could not setup forward from %s to %s.", origin, destination)
             return paramiko.common.OPEN_FAILED_CONNECT_FAILED

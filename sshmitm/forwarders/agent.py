@@ -12,9 +12,9 @@ class AgentProxy:
     def __init__(self, transport: Transport) -> None:
         self.agents: List[Union[Agent, AgentClientProxy]] = []
         self.transport = transport
-        a = AgentServerProxy(self.transport)
-        os.environ.update(a.get_env())
-        a.connect()
+        agent_proxy = AgentServerProxy(self.transport)
+        os.environ.update(agent_proxy.get_env())
+        agent_proxy.connect()
         self.agent = Agent()
         self.keys = self.agent.get_keys()[:]
         self.agents.append(self.agent)
@@ -35,5 +35,5 @@ class AgentProxy:
         self.agents.append(AgentClientProxy(remote_channel))
 
     def close(self) -> None:
-        for a in self.agents:
-            a.close()
+        for agent_proxy in self.agents:
+            agent_proxy.close()

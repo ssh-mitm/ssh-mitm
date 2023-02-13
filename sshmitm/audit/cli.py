@@ -61,7 +61,7 @@ def check_privatekey(args: argparse.Namespace) -> bool:
             key_filename=args.private_key,
             passphrase=args.private_key_passphrase
         )
-    except Exception as ex:
+    except Exception as ex:  # pylint: disable=broad-exception-caught
         print(ex)
         return False
     finally:
