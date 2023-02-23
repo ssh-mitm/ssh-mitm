@@ -7,13 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- added workarround for git to avoid unexpected session termination when EOF was reveived
+
+
 ## [3.0.2] - 2023-02-14
 
 ### Added
 
 - added requirements.txt which pins the tested packages
 
-## Fixed
+### Fixed
 
 - fixed infinite loop when client closes connection during authentication
 - fixed errors when too much connection attemps happen for the same server
