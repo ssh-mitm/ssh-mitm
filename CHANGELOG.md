@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added info and PoC exploit for CVE-2023-25136
+
 ### Fixed
 
 - added workarround for git to avoid unexpected session termination when EOF was reveived

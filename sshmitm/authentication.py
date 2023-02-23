@@ -39,11 +39,11 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
     The probe_host function opens a socket connection to the remote host and starts an
     SSH transport using the paramiko library. The function then generates a random private
     key, replaces the public key with the provided key, and performs the public key
-     using transport.auth_publickey. The result of the authentication is stored in the
-     valid_key variable. If the authentication fails, an exception of type
-     paramiko.ssh_exception.AuthenticationException is raised and caught, leaving the
-     valid_key variable as False. Finally, the function returns the value of valid_key,
-     which indicates whether the provided public key is authorized or not.
+    using transport.auth_publickey. The result of the authentication is stored in the
+    valid_key variable. If the authentication fails, an exception of type
+    paramiko.ssh_exception.AuthenticationException is raised and caught, leaving the
+    valid_key variable as False. Finally, the function returns the value of valid_key,
+    which indicates whether the provided public key is authorized or not.
 
     :param hostname_or_ip: Hostname or IP address of the remote host to probe.
     :type hostname: str
