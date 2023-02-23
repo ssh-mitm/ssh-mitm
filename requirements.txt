@@ -20,7 +20,7 @@ cryptography==39.0.1
     #   sshpubkeys
 ecdsa==0.18.0
     # via sshpubkeys
-markdown-it-py==2.1.0
+markdown-it-py==2.2.0
     # via rich
 mdurl==0.1.2
     # via markdown-it-py
