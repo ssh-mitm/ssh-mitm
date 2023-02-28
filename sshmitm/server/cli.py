@@ -177,6 +177,4 @@ def run_server(args: argparse.Namespace) -> None:
         transparent=args.transparent,
         args=args
     )
-    if args.banner_name is not None:
-        Transport._CLIENT_ID = args.banner_name  # type: ignore
     proxy.start()

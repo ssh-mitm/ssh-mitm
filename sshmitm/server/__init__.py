@@ -86,6 +86,7 @@ class SSHProxyServer:
         self.authenticator: Type[Authenticator] = authenticator
         self.transparent: bool = transparent
         self.session_class: Type[Session] = session_class
+        self.ssh_banner: str = args.banner_name
 
         try:
             self.generate_host_key()
@@ -283,7 +284,7 @@ class SSHProxyServer:
         remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]]
     ) -> None:
         try:
-            with self.session_class(self, client, addr, self.authenticator, remoteaddr) as session:
+            with self.session_class(self, client, addr, self.authenticator, remoteaddr, self.ssh_banner) as session:
                 if session.start():
                     while session.running:
                         time.sleep(0.1)

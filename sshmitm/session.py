@@ -105,7 +105,8 @@ class Session(BaseSession):
         client_socket: socket.socket,
         client_address: Union[Tuple[str, int], Tuple[str, int, int, int]],
         authenticator: Type['sshmitm.authentication.Authenticator'],
-        remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]]
+        remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]],
+        ssh_banner: str
     ) -> None:
         """
         Initialize the class instance.
@@ -170,6 +171,7 @@ class Session(BaseSession):
 
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
+        self.ssh_banner = ssh_banner
 
     def get_session_log_dir(self) -> Optional[str]:
         """
@@ -219,6 +221,7 @@ class Session(BaseSession):
         """
         if self._transport is None:
             self._transport = Transport(self.client_socket)
+            self.transport.local_version = f"SSH-2.0-{self.ssh_banner}"
             key_negotiation.handle_key_negotiation(self)
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
