@@ -122,12 +122,21 @@ class UdpProxy:
             aesocb = AESOCB3(self.key)
             dec_message = aesocb.decrypt(nonce, message, None)
 
+            timestamp = dec_message[:2]
+            timestamp_reply = dec_message[2:4]
+            fragment_id = dec_message[4:12]
+            final_fragment = dec_message[12:14]
+            final_fragment_bool = final_fragment.hex() == "8000"
+            payload = dec_message[14:]
+
             data_to_print = [
                 f"{stylize('MOSH Data', attr('bold'))}",
                 f"from->to: {addr} -> {destination_addr}",
-                f"timestamp (ms): {int.from_bytes(dec_message[:2], 'big')}",
-                f"timestamp_reply (ms): {int.from_bytes(dec_message[2:4], 'big')}",
-                f"Payload:\n{self.format_hex(dec_message[4:])}",
+                f"timestamp (ms): {int.from_bytes(timestamp, 'big')} (0x{timestamp.hex()})",
+                f"timestamp_reply (ms): {int.from_bytes(timestamp_reply, 'big')} (0x{timestamp_reply.hex()})",
+                f"fragment_id: 0x{fragment_id.hex()}",
+                f"final_fragment:  {final_fragment_bool} (0x{final_fragment.hex()})",
+                f"Payload:\n{self.format_hex(payload)}",
                 "-" * 89
             ]
             logging.info("\n".join(data_to_print))
