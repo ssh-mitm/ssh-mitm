@@ -106,8 +106,9 @@ class SCPBaseForwarder(BaseForwarder):
                     self.close_session(self.session.scp_channel)
                     break
                 if self.session.scp_channel.eof_received:
-                    if self.session.scp_command.startswith(b'git-'):
-                        # ignore git commands because those can contains EOF, which closes the session
+                    if self.session.scp_command.startswith(b'git-receive-pack'):
+                        # ignore git-receive-pack commands because those can contain EOF,
+                        # which closes the session
                         continue
 
                     # TODO: check if EOF should close the session.
