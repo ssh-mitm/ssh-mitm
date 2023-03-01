@@ -10,10 +10,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added info and PoC exploit for CVE-2023-25136
+- mosh - added more information for decrypted packet
 
 ### Fixed
 
 - added workarround for git to avoid unexpected session termination when EOF was reveived
+- added fix for GitHub git operations
+
+### Changed
+
+- set banner name only for server, not for client
 
 
 ## [3.0.2] - 2023-02-14

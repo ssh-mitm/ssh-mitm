@@ -5,7 +5,6 @@ import select
 import time
 import threading
 import sys
-from argparse import Namespace
 from socket import socket
 
 from typing import (
@@ -59,10 +58,8 @@ class SSHProxyServer:
         authenticator: Type[Authenticator] = AuthenticatorPassThrough,
         transparent: bool = False,
         session_class: Type[Session] = Session,
-        args: Optional[Namespace] = None
+        banner_name: Optional[str] = None
     ) -> None:
-        self.args = args
-
         self._threads: List[threading.Thread] = []
         self._hostkey: Optional[PKey] = None
 
@@ -86,7 +83,7 @@ class SSHProxyServer:
         self.authenticator: Type[Authenticator] = authenticator
         self.transparent: bool = transparent
         self.session_class: Type[Session] = session_class
-        self.ssh_banner: str = args.banner_name
+        self.banner_name: Optional[str] = banner_name
 
         try:
             self.generate_host_key()
@@ -284,7 +281,7 @@ class SSHProxyServer:
         remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]]
     ) -> None:
         try:
-            with self.session_class(self, client, addr, self.authenticator, remoteaddr, self.ssh_banner) as session:
+            with self.session_class(self, client, addr, self.authenticator, remoteaddr, self.banner_name) as session:
                 if session.start():
                     while session.running:
                         time.sleep(0.1)

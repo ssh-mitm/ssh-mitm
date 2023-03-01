@@ -2,8 +2,6 @@ import argparse
 
 from rich import print as rich_print
 
-from paramiko import Transport
-
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.console import sshconsole
@@ -175,6 +173,6 @@ def run_server(args: argparse.Namespace) -> None:
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator,
         transparent=args.transparent,
-        args=args
+        banner_name=args.banner_name
     )
     proxy.start()
