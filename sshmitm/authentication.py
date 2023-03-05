@@ -9,7 +9,7 @@ from typing import (
     Tuple
 )
 
-from colored.colored import stylize, attr, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore
 from paramiko import PKey
 from rich._emoji_codes import EMOJI
 
@@ -17,6 +17,7 @@ import paramiko
 from sshpubkeys import SSHKey  # type: ignore
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.clients.ssh import SSHClient, AuthenticationMethod
 from sshmitm.exceptions import MissingHostException
@@ -412,26 +413,26 @@ class Authenticator(BaseModule):
         if not self.args.fallback_host:
             if self.session.agent:
                 logging.error("\n".join([
-                    stylize(
-                        EMOJI['exclamation'] +
+                    Colors.stylize(
+                        Colors.emoji('exclamation') +
                         " ssh agent keys are not allowed for signing. Remote authentication not possible.",
                         fg('red') + attr('bold')
                     ),
-                    stylize(
-                        EMOJI['information'] +
+                    Colors.stylize(
+                        Colors.emoji('information') +
                         " To intercept clients, you can provide credentials for a honeypot.",
                         fg('yellow') + attr('bold')
                     )
                 ]))
             else:
                 logging.error("\n".join([
-                    stylize(
-                        EMOJI['exclamation'] +
+                    Colors.stylize(
+                        Colors.emoji('exclamation') +
                         " ssh agent not forwarded. Login to remote host not possible with publickey authentication.",
                         fg('red') + attr('bold')
                     ),
-                    stylize(
-                        EMOJI['information'] +
+                    Colors.stylize(
+                        Colors.emoji('information') +
                         " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.",
                         fg('yellow') + attr('bold')
                     )
@@ -448,14 +449,14 @@ class Authenticator(BaseModule):
         )
         if auth_status == paramiko.common.AUTH_SUCCESSFUL:
             logging.warning(
-                stylize(
-                    EMOJI['warning'] + " publickey authentication failed - no agent forwarded - connecting to honeypot!",
+                Colors.stylize(
+                    Colors.emoji('warning') + " publickey authentication failed - no agent forwarded - connecting to honeypot!",
                     fg('yellow') + attr('bold')
                 ),
             )
         else:
             logging.error(
-                stylize(EMOJI['exclamation'] + " Authentication against honeypot failed!", fg('red') + attr('bold')),
+                Colors.stylize(Colors.emoji('exclamation') + " Authentication against honeypot failed!", fg('red') + attr('bold')),
             )
         return auth_status
 
@@ -484,7 +485,7 @@ class Authenticator(BaseModule):
             if self.session.ssh_client is not None and self.session.ssh_client.connect():
                 auth_status = paramiko.common.AUTH_SUCCESSFUL
         except paramiko.SSHException:
-            logging.error(stylize("Connection to remote server refused", fg('red') + attr('bold')))
+            logging.error(Colors.stylize("Connection to remote server refused", fg('red') + attr('bold')))
             return paramiko.common.AUTH_FAILED
         if run_post_auth:
             self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
@@ -602,9 +603,9 @@ class AuthenticatorPassThrough(Authenticator):
 
         logmessage = []
         if success:
-            logmessage.append(stylize("Remote authentication succeeded", fg('green') + attr('bold')))
+            logmessage.append(Colors.stylize("Remote authentication succeeded", fg('green') + attr('bold')))
         else:
-            logmessage.append(stylize("Remote authentication failed", fg('red')))
+            logmessage.append(Colors.stylize("Remote authentication failed", fg('red')))
 
         if self.session.ssh_client is not None:
             logmessage.append(f"\tRemote Address: {self.session.ssh_client.host}:{self.session.ssh_client.port}")
@@ -614,7 +615,7 @@ class AuthenticatorPassThrough(Authenticator):
             display_password = None
             if not self.args.auth_hide_credentials:
                 display_password = self.session.password_provided
-            logmessage.append(f"\tPassword: {display_password or stylize('*******', fg('dark_gray'))}")
+            logmessage.append(f"\tPassword: {display_password or Colors.stylize('*******', fg('dark_gray'))}")
 
         if self.session.accepted_key is not None and self.session.remote_key != self.session.accepted_key:
             ssh_pub_key = SSHKey(f"{self.session.accepted_key.get_name()} {self.session.accepted_key.get_base64()}")

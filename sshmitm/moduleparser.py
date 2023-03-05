@@ -37,7 +37,8 @@ from typing import (
 
 import argcomplete  # type: ignore
 import pkg_resources
-from colored.colored import attr, fg, stylize  # type: ignore
+from colored.colored import attr, fg  # type: ignore
+from sshmitm.logging import Colors
 
 
 def load_module(entry_point_class: Type['BaseModule']) -> Type['argparse.Action']:
@@ -77,15 +78,15 @@ def set_module_kwargs(entry_point_class: Type['BaseModule'], **kwargs: Any) -> D
             default_name = entry_point.name
         entry_point_desc = "" if not loaded_class.__doc__ else loaded_class.__doc__.split("\n")[0]
         if entry_point_desc:
-            entry_point_description = f"\t* {stylize(entry_point.name, fg('blue'))} -> {entry_point_desc}"
+            entry_point_description = f"\t* {Colors.stylize(entry_point.name, fg('blue'))} -> {entry_point_desc}"
         else:
-            entry_point_description = f"\t* {stylize(entry_point.name, fg('blue'))}"
+            entry_point_description = f"\t* {Colors.stylize(entry_point.name, fg('blue'))}"
         descriptions.append(entry_point_description)
 
     kwargs['choices'] = sorted(choices)
     kwargs['help'] = kwargs.get('help') or ""
     if default_name:
-        kwargs['help'] += f"\ndefault module: {stylize(default_name, fg('blue') + attr('bold'))}"
+        kwargs['help'] += f"\ndefault module: {Colors.stylize(default_name, fg('blue') + attr('bold'))}"
     kwargs['help'] += "\navailable modules:\n{}".format("\n".join(descriptions))
     return kwargs
 
@@ -214,7 +215,7 @@ class ModuleFormatter(argparse.HelpFormatter):
             # add the heading if the section was non-empty
             if self.heading is not argparse.SUPPRESS and self.heading is not None:
                 current_indent = self.formatter._current_indent  # pylint: disable=protected-access
-                heading = '%*s%s:\n' % (current_indent, '', stylize(self.heading, fg('red') + attr('bold')))  # pylint: disable=consider-using-f-string
+                heading = '%*s%s:\n' % (current_indent, '', Colors.stylize(self.heading, fg('red') + attr('bold')))  # pylint: disable=consider-using-f-string
             else:
                 heading = ''
 

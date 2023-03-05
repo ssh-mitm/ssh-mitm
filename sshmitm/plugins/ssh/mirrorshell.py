@@ -18,6 +18,7 @@ from rich._emoji_codes import EMOJI
 import paramiko
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.forwarders.ssh import SSHForwarder
 
 
@@ -159,9 +160,9 @@ class SSHMirrorForwarder(SSHForwarder):
         inject_host, inject_port = self.injector_sock.getsockname()
         logging.info(
             "%s created mirrorshell on port %s. connect with: %s",
-            EMOJI['information'],
+            Colors.emoji('information'),
             inject_port,
-            stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))
+            Colors.stylize(f'ssh -p {inject_port} {inject_host}', fg('light_blue') + attr('bold'))
         )
         try:
             while self.session.running:

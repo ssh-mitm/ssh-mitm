@@ -1,10 +1,7 @@
 import argparse
 
-from rich import print as rich_print
-
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.moduleparser import ModuleParser
-from sshmitm.console import sshconsole
 from sshmitm.server import SSHProxyServer
 
 from sshmitm.authentication import (
@@ -150,14 +147,6 @@ def init_server_parser(parser: ModuleParser) -> None:
 def run_server(args: argparse.Namespace) -> None:
     if args.request_agent_breakin:
         args.authenticator.REQUEST_AGENT_BREAKIN = True
-
-    print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
-    sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
-    rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
-    rich_print('[bold]License:[/bold] GNU General Public License v3.0')
-    rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
-    rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
-    sshconsole.rule(style="blue")
 
     proxy = SSHProxyServer(
         args.listen_port,

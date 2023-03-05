@@ -12,6 +12,7 @@ from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
@@ -105,13 +106,13 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
                 "  %s\n"
                 "    * netcat: %s"
             ),
-            EMOJI['information'],
-            stylize(session.sessionid, fg('light_blue') + attr('bold')),
-            stylize('SOCKS port:', attr('bold')),
-            stylize(server_thread.port, fg('light_blue') + attr('bold')),
-            stylize('SOCKS4:', attr('bold')),
-            stylize(socat_cmd, fg('light_blue') + attr('bold')),
-            stylize(netcat4_cmd, fg('light_blue') + attr('bold')),
-            stylize('SOCKS5:', attr('bold')),
-            stylize(netcat5_cmd, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            Colors.stylize('SOCKS port:', attr('bold')),
+            Colors.stylize(server_thread.port, fg('light_blue') + attr('bold')),
+            Colors.stylize('SOCKS4:', attr('bold')),
+            Colors.stylize(socat_cmd, fg('light_blue') + attr('bold')),
+            Colors.stylize(netcat4_cmd, fg('light_blue') + attr('bold')),
+            Colors.stylize('SOCKS5:', attr('bold')),
+            Colors.stylize(netcat5_cmd, fg('light_blue') + attr('bold'))
         )

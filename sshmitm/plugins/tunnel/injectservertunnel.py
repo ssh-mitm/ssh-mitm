@@ -7,6 +7,7 @@ from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
@@ -42,8 +43,8 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
         )
         logging.info(
             "%s %s - created server tunnel injector for host %s on port %s to destination %s",
-            EMOJI['information'],
-            stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            Colors.emoji('information'),
+            Colors.stylize(session.sessionid, fg('light_blue') + attr('bold')),
             self.tcpserver.network,
             self.tcpserver.port,
             self.destination

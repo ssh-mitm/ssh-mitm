@@ -15,6 +15,7 @@ from rich.markup import escape
 from rich._emoji_codes import EMOJI
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
 
 if TYPE_CHECKING:
@@ -43,8 +44,8 @@ class KeyNegotiationData:
     def show_debug_info(self) -> None:
         logging.debug(
             "%s connected client version: %s",
-            EMOJI['information'],
-            stylize(self.client_version, fg('green') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(self.client_version, fg('green') + attr('bold'))
         )
         logging.debug("cookie: %s", self.cookie.hex())
         logging.debug("kex_algorithms: %s", escape(str(self.kex_algorithms)))

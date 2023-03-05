@@ -35,10 +35,12 @@ are defined by the parser_func properties of the corresponding SubCommand instan
 
 from argparse import Namespace
 import logging
+import os
 import sys
 from typing import Callable
 
 from paramiko import Transport
+from pythonjsonlogger import jsonlogger
 
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
@@ -123,6 +125,13 @@ def main() -> None:
         action='store_true',
         help='disable paramiko workarounds'
     )
+    parser.add_argument(
+        '--log-format',
+        dest='log_format',
+        default="richtext",
+        choices=['text', 'richtext', 'json'],
+        help='defines the log output format (json will suppress stdout)'
+    )
 
     subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
     subparsers.required = True
@@ -139,14 +148,23 @@ def main() -> None:
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
-    root_logger.handlers.clear()
-    root_logger.addHandler(RichHandler(
-        highlighter=NullHighlighter(),
-        markup=False,
-        rich_tracebacks=True,
-        enable_link_path=args.debug,
-        show_path=args.debug
-    ))
+    if args.log_format == 'json':
+        root_logger.handlers.clear()
+        sys.stdout = open(os.devnull, 'w')
+        logHandler = logging.StreamHandler()
+        formatter = jsonlogger.JsonFormatter()
+        logHandler.setFormatter(formatter)
+        root_logger.addHandler(logHandler)
+    elif args.log_format == 'richtext':
+        root_logger.handlers.clear()
+        root_logger.addHandler(RichHandler(
+            highlighter=NullHighlighter(),
+            markup=False,
+            rich_tracebacks=True,
+            enable_link_path=args.debug,
+            show_path=args.debug
+        ))
+
 
     if not args.disable_workarounds:
         Transport.run = transport.transport_run  # type: ignore

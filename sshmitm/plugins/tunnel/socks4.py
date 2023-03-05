@@ -14,6 +14,7 @@ from rich._emoji_codes import EMOJI
 from colored.colored import stylize, fg, attr  # type: ignore
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
@@ -185,8 +186,8 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
         socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={server_thread.port}'
         logging.info(
             "%s %s - created Socks4 proxy server on port %s. connect with %s",
-            EMOJI['information'],
-            stylize(session.sessionid, fg('light_blue') + attr('bold')),
-            stylize(server_thread.port, fg('light_blue') + attr('bold')),
-            stylize(socat_cmd, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            Colors.stylize(server_thread.port, fg('light_blue') + attr('bold')),
+            Colors.stylize(socat_cmd, fg('light_blue') + attr('bold'))
         )

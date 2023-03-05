@@ -81,6 +81,7 @@ setup(
         'pyyaml',
         'packaging',
         'colored',
-        'rich'
+        'rich',
+        'python-json-logger'
     ]
 )

@@ -19,6 +19,7 @@ from paramiko import ECDSAKey
 from rich._emoji_codes import EMOJI
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.plugins.session.server_host_key_algorithms import SERVER_HOST_KEY_ALGORITHMS
 
 if TYPE_CHECKING:
@@ -169,7 +170,7 @@ class SSHClientAudit():
                     messages.append(
                         f"client uses same server_host_key_algorithms as {client_name}"
                     )
-                    messages.append(stylize(
+                    messages.append(Colors.stylize(
                         "client seems to connect for the first time or using a default key order",
                         fg('green')
                     ))
@@ -201,13 +202,13 @@ class SSHClientAudit():
             return self._check_known_clients(server_host_key_algorithms)
         for host_key_algo in server_host_key_algorithms:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
-                messages.append(stylize(
+                messages.append(Colors.stylize(
                     "client connecting for the first time or using default key order!",
                     fg('green')
                 ))
                 break
         else:
-            messages.append(stylize(
+            messages.append(Colors.stylize(
                 "client has a locally cached remote fingerprint.",
                 fg('yellow')
             ))
@@ -252,8 +253,8 @@ class SSHClientAudit():
 
         log_output = []
         log_output.extend([
-            stylize(EMOJI['information'] + " client information:", fg('blue') + attr('bold')),
-            f"  - client version: {stylize(self.client_version, fg('green') + attr('bold'))}",
+            Colors.stylize(Colors.emoji('information') + " client information:", fg('blue') + attr('bold')),
+            f"  - client version: {Colors.stylize(self.client_version, fg('green') + attr('bold'))}",
             f"  - product name: {self.product_name}",
             f"  - vendor url:  {self.vendor_url}"
         ])
@@ -262,7 +263,7 @@ class SSHClientAudit():
         if cvemessagelist:
             log_output.append(
                 "".join([
-                    stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
+                    Colors.stylize(Colors.emoji('warning') + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
                     "\n".join(cvemessagelist)
                 ])
             )
@@ -271,7 +272,7 @@ class SSHClientAudit():
         if client_audits:
             log_output.append(
                 "".join([
-                    stylize(EMOJI['warning'] + " client audit tests:\n", fg('blue') + attr('bold')),
+                    Colors.stylize(Colors.emoji('warning') + " client audit tests:\n", fg('blue') + attr('bold')),
                     "\n".join([f"  * {v}" for v in client_audits])
                 ])
             )

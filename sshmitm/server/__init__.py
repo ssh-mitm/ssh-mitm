@@ -16,11 +16,14 @@ from typing import (
 )
 
 from colored import stylize, attr, fg  # type: ignore
+from rich import print as rich_print
 
 from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key, PKey
 from paramiko.ssh_exception import SSHException
 from sshpubkeys import SSHKey  # type: ignore
 
+from sshmitm.__version__ import version as ssh_mitm_version
+from sshmitm.logging import Colors
 from sshmitm.console import sshconsole
 from sshmitm.multisocket import (
     create_server_sock,
@@ -37,6 +40,7 @@ from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.interfaces.server import BaseServerInterface, ServerInterface
 from sshmitm.exceptions import KeyGenerationError
 
+from sshmitm.output import DefaultLogger
 
 class SSHProxyServer:
     SELECT_TIMEOUT = 0.5
@@ -70,7 +74,9 @@ class SSHProxyServer:
 
         self.key_file: Optional[str] = key_file
         self.key_algorithm: str = key_algorithm
+        self.key_algorithm_class: Optional[Type[PKey]] = None
         self.key_length: int = key_length
+        self.ssh_pub_key = None
 
         self.ssh_interface: Type[SSHBaseForwarder] = ssh_interface
         self.scp_interface: Type[SCPBaseForwarder] = scp_interface
@@ -90,19 +96,55 @@ class SSHProxyServer:
         except KeyGenerationError:
             sys.exit(1)
 
+    def print_serverinfo(self):
+        print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
+        sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
+        rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
+        rich_print('[bold]License:[/bold] GNU General Public License v3.0')
+        rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
+        rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
+        sshconsole.rule(style="blue")
+        print(
+            (
+                "{} {} key "  # pylint: disable=consider-using-f-string
+                "with {} bit length and fingerprints:\n"
+                "   {}\n"
+                "   {}\n"
+                "   {}"
+            ).format(
+                'loaded' if self.key_file else 'generated temporary',
+                self.key_algorithm_class.__name__,
+                self._hostkey.get_bits(),
+                stylize(self.ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
+                stylize(self.ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold')),
+                stylize(self.ssh_pub_key.hash_sha512(), fg('light_blue') + attr('bold'))
+            )
+        )
+        print(
+            'listen interfaces {} and {} on port {}'.format(  # pylint: disable=consider-using-f-string
+                self.listen_address,
+                self.listen_address_v6,
+                self.listen_port
+            )
+        )
+        if self.transparent:
+            print(f"{stylize('Transparent mode enabled!', attr('bold'))} (experimental)")
+        sshconsole.rule("[red]waiting for connections", style="red")
+
+
     def generate_host_key(self) -> None:
-        key_algorithm_class: Optional[Type[PKey]] = None
+        self.key_algorithm_class = None
         key_algorithm_bits = None
         if self.key_algorithm == 'dss':
-            key_algorithm_class = DSSKey
+            self.key_algorithm_class = DSSKey
             key_algorithm_bits = self.key_length
         elif self.key_algorithm == 'rsa':
-            key_algorithm_class = RSAKey
+            self.key_algorithm_class = RSAKey
             key_algorithm_bits = self.key_length
         elif self.key_algorithm == 'ecdsa':
-            key_algorithm_class = ECDSAKey
+            self.key_algorithm_class = ECDSAKey
         elif self.key_algorithm == 'ed25519':
-            key_algorithm_class = Ed25519Key
+            self.key_algorithm_class = Ed25519Key
             if not self.key_file:
                 logging.error("ed25519 requires a key file, please use also use --host-key parameter")
                 sys.exit(1)
@@ -111,7 +153,7 @@ class SSHProxyServer:
 
         if not self.key_file:
             try:
-                self._hostkey = key_algorithm_class.generate(bits=key_algorithm_bits)  # type: ignore
+                self._hostkey = self.key_algorithm_class.generate(bits=key_algorithm_bits)  # type: ignore
             except ValueError as err:
                 logging.error(str(err))
                 raise KeyGenerationError() from err
@@ -131,24 +173,8 @@ class SSHProxyServer:
                 logging.error('host key format not supported!')
                 raise KeyGenerationError()
 
-        ssh_pub_key = SSHKey(f"{self._hostkey.get_name()} {self._hostkey.get_base64()}")
-        ssh_pub_key.parse()
-        print(
-            (
-                "{} {} key "  # pylint: disable=consider-using-f-string
-                "with {} bit length and fingerprints:\n"
-                "   {}\n"
-                "   {}\n"
-                "   {}"
-            ).format(
-                'loaded' if self.key_file else 'generated temporary',
-                key_algorithm_class.__name__,
-                self._hostkey.get_bits(),
-                stylize(ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
-                stylize(ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold')),
-                stylize(ssh_pub_key.hash_sha512(), fg('light_blue') + attr('bold'))
-            )
-        )
+        self.ssh_pub_key = SSHKey(f"{self._hostkey.get_name()} {self._hostkey.get_base64()}")
+        self.ssh_pub_key.parse()
 
     def _key_from_filepath(self, filename: str, klass: Type[PKey], password: Optional[str]) -> PKey:
         """
@@ -221,36 +247,27 @@ class SSHProxyServer:
             if self.transparent and permerror.errno == 1:
                 logging.error(
                     "%s Note: running SSH-MITM in transparent mode requires root privileges",
-                    stylize('error creating socket!', fg('red') + attr('bold'))
+                    Colors.stylize('error creating socket!', fg('red') + attr('bold'))
                 )
             elif permerror.errno == 13 and self.listen_port < 1024:
                 logging.error(
                     "%s Note: running SSH-MITM on a port < 1024 requires root privileges",
-                    stylize('error creating socket!', fg('red') + attr('bold'))
+                    Colors.stylize('error creating socket!', fg('red') + attr('bold'))
                 )
             else:
                 logging.exception(
                     "%s - unknown error",
-                    stylize('error creating socket!', fg('red') + attr('bold'))
+                    Colors.stylize('error creating socket!', fg('red') + attr('bold'))
                 )
             return
         if sock is None:
             logging.error(
                 "%s",
-                stylize('error creating socket!', fg('red') + attr('bold'))
+                Colors.stylize('error creating socket!', fg('red') + attr('bold'))
             )
             return
 
-        print(
-            'listen interfaces {} and {} on port {}'.format(  # pylint: disable=consider-using-f-string
-                self.listen_address,
-                self.listen_address_v6,
-                self.listen_port
-            )
-        )
-        if self.transparent:
-            print(f"{stylize('Transparent mode enabled!', attr('bold'))} (experimental)")
-        sshconsole.rule("[red]waiting for connections", style="red")
+        self.print_serverinfo()
 
         self.running = True
         try:

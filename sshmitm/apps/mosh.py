@@ -10,6 +10,7 @@ from colored.colored import stylize, attr, fg  # type: ignore
 from rich._emoji_codes import EMOJI
 
 from sshmitm.session import Session
+from sshmitm.logging import Colors
 
 
 class UdpProxy:
@@ -130,7 +131,7 @@ class UdpProxy:
             payload = dec_message[14:]
 
             data_to_print = [
-                f"{stylize('MOSH Data', attr('bold'))}",
+                f"{Colors.stylize('MOSH Data', attr('bold'))}",
                 f"from->to: {addr} -> {destination_addr}",
                 f"timestamp (ms): {int.from_bytes(timestamp, 'big')} (0x{timestamp.hex()})",
                 f"timestamp_reply (ms): {int.from_bytes(timestamp_reply, 'big')} (0x{timestamp_reply.hex()})",
@@ -172,8 +173,8 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
             logging.info(mosh_connect)
             mosh_connect_parts = mosh_connect.strip().split(" ")
             mosh_info = "\n".join([
-                stylize(
-                    EMOJI['information'] + " MOSH connection info",
+                Colors.stylize(
+                    Colors.emoji('information') + " MOSH connection info",
                     fg('blue') + attr('bold')
                 ),
                 f"  * MOSH-port: {mosh_connect_parts[2]}",

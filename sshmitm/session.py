@@ -40,7 +40,7 @@ from typing import (
     Type
 )
 
-from colored.colored import stylize, fg, attr  # type: ignore
+from colored.colored import fg, attr  # type: ignore
 from rich._emoji_codes import EMOJI
 
 import paramiko
@@ -49,6 +49,7 @@ from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
@@ -128,8 +129,8 @@ class Session(BaseSession):
         self.sessionid = uuid4()
         logging.info(
             "%s session %s created",
-            EMOJI['information'],
-            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
         )
         self._transport: Optional[paramiko.Transport] = None
 
@@ -243,14 +244,14 @@ class Session(BaseSession):
                     requested_agent = AgentProxy(self.transport)
                     logging.info(
                         "%s %s - successfully requested ssh-agent",
-                        EMOJI['information'],
-                        stylize(self.sessionid, fg('light_blue') + attr('bold'))
+                        Colors.emoji('information'),
+                        Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
                     )
             except ChannelException:
                 logging.info(
                     "%s %s - ssh-agent breakin not successfull!",
-                    EMOJI['warning'],
-                    stylize(self.sessionid, fg('light_blue') + attr('bold'))
+                    Colors.emoji('warning'),
+                    Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
                 )
                 return False
         self.agent = requested_agent or self.agent
@@ -326,8 +327,8 @@ class Session(BaseSession):
 
         logging.info(
             "%s %s - session started",
-            EMOJI['information'],
-            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
         )
         return True
 
@@ -359,8 +360,8 @@ class Session(BaseSession):
         self.transport.close()
         logging.info(
             "%s session %s closed",
-            EMOJI['information'],
-            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
         )
         logging.debug(
             "(%s) session closed",
