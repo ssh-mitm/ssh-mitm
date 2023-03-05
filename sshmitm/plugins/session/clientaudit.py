@@ -12,11 +12,10 @@ from typing import (
     DefaultDict
 )
 
-from colored.colored import attr, stylize, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore
 from packaging import version
 
 from paramiko import ECDSAKey
-from rich._emoji_codes import EMOJI
 
 import sshmitm
 from sshmitm.logging import Colors

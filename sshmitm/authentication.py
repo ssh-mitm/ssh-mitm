@@ -11,7 +11,6 @@ from typing import (
 
 from colored.colored import attr, fg  # type: ignore
 from paramiko import PKey
-from rich._emoji_codes import EMOJI
 
 import paramiko
 from sshpubkeys import SSHKey  # type: ignore

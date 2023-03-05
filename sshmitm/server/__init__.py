@@ -40,7 +40,6 @@ from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.interfaces.server import BaseServerInterface, ServerInterface
 from sshmitm.exceptions import KeyGenerationError
 
-from sshmitm.output import DefaultLogger
 
 class SSHProxyServer:
     SELECT_TIMEOUT = 0.5
@@ -76,7 +75,7 @@ class SSHProxyServer:
         self.key_algorithm: str = key_algorithm
         self.key_algorithm_class: Optional[Type[PKey]] = None
         self.key_length: int = key_length
-        self.ssh_pub_key = None
+        self.ssh_pub_key: Optional[SSHKey] = None
 
         self.ssh_interface: Type[SSHBaseForwarder] = ssh_interface
         self.scp_interface: Type[SCPBaseForwarder] = scp_interface
@@ -96,7 +95,7 @@ class SSHProxyServer:
         except KeyGenerationError:
             sys.exit(1)
 
-    def print_serverinfo(self):
+    def print_serverinfo(self) -> None:
         print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
         sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
         rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
@@ -104,22 +103,27 @@ class SSHProxyServer:
         rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
         rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
         sshconsole.rule(style="blue")
-        print(
-            (
-                "{} {} key "  # pylint: disable=consider-using-f-string
-                "with {} bit length and fingerprints:\n"
-                "   {}\n"
-                "   {}\n"
-                "   {}"
-            ).format(
-                'loaded' if self.key_file else 'generated temporary',
-                self.key_algorithm_class.__name__,
-                self._hostkey.get_bits(),
-                stylize(self.ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
-                stylize(self.ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold')),
-                stylize(self.ssh_pub_key.hash_sha512(), fg('light_blue') + attr('bold'))
+        if (
+            self.ssh_pub_key is not None
+            and self.key_algorithm_class is not None
+            and self._hostkey is not None
+        ):
+            print(
+                (
+                    "{} {} key "  # pylint: disable=consider-using-f-string
+                    "with {} bit length and fingerprints:\n"
+                    "   {}\n"
+                    "   {}\n"
+                    "   {}"
+                ).format(
+                    'loaded' if self.key_file else 'generated temporary',
+                    self.key_algorithm_class.__name__,
+                    self._hostkey.get_bits(),
+                    stylize(self.ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
+                    stylize(self.ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold')),
+                    stylize(self.ssh_pub_key.hash_sha512(), fg('light_blue') + attr('bold'))
+                )
             )
-        )
         print(
             'listen interfaces {} and {} on port {}'.format(  # pylint: disable=consider-using-f-string
                 self.listen_address,
@@ -130,7 +134,6 @@ class SSHProxyServer:
         if self.transparent:
             print(f"{stylize('Transparent mode enabled!', attr('bold'))} (experimental)")
         sshconsole.rule("[red]waiting for connections", style="red")
-
 
     def generate_host_key(self) -> None:
         self.key_algorithm_class = None
@@ -173,8 +176,9 @@ class SSHProxyServer:
                 logging.error('host key format not supported!')
                 raise KeyGenerationError()
 
-        self.ssh_pub_key = SSHKey(f"{self._hostkey.get_name()} {self._hostkey.get_base64()}")
-        self.ssh_pub_key.parse()
+        if self._hostkey is not None:
+            self.ssh_pub_key = SSHKey(f"{self._hostkey.get_name()} {self._hostkey.get_base64()}")
+            self.ssh_pub_key.parse()
 
     def _key_from_filepath(self, filename: str, klass: Type[PKey], password: Optional[str]) -> PKey:
         """

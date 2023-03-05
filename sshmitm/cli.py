@@ -40,11 +40,11 @@ import sys
 from typing import Callable
 
 from paramiko import Transport
-from pythonjsonlogger import jsonlogger
 
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 
+from sshmitm.logging import PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import transport
 from sshmitm.__version__ import version as ssh_mitm_version
@@ -150,11 +150,11 @@ def main() -> None:
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
     if args.log_format == 'json':
         root_logger.handlers.clear()
-        sys.stdout = open(os.devnull, 'w')
-        logHandler = logging.StreamHandler()
-        formatter = jsonlogger.JsonFormatter()
-        logHandler.setFormatter(formatter)
-        root_logger.addHandler(logHandler)
+        sys.stdout = open(os.devnull, 'w', encoding='UTF-8')  # pylint: disable=consider-using-with
+        log_handler = logging.StreamHandler()
+        formatter = PlainJsonFormatter()  # type: ignore
+        log_handler.setFormatter(formatter)
+        root_logger.addHandler(log_handler)
     elif args.log_format == 'richtext':
         root_logger.handlers.clear()
         root_logger.addHandler(RichHandler(
@@ -164,7 +164,6 @@ def main() -> None:
             enable_link_path=args.debug,
             show_path=args.debug
         ))
-
 
     if not args.disable_workarounds:
         Transport.run = transport.transport_run  # type: ignore

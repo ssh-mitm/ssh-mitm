@@ -10,8 +10,7 @@ from typing import (
 )
 
 import paramiko
-from rich._emoji_codes import EMOJI
-from colored.colored import stylize, fg, attr  # type: ignore
+from colored.colored import fg, attr  # type: ignore
 
 import sshmitm
 from sshmitm.logging import Colors

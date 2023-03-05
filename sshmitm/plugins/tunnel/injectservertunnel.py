@@ -3,8 +3,7 @@ from socket import socket
 from typing import Optional, Tuple, Union
 
 import paramiko
-from rich._emoji_codes import EMOJI
-from colored.colored import stylize, fg, attr  # type: ignore
+from colored.colored import fg, attr  # type: ignore
 
 import sshmitm
 from sshmitm.logging import Colors

@@ -13,8 +13,7 @@ from typing import (
 
 import pytz
 
-from colored.colored import stylize, attr, fg  # type: ignore
-from rich._emoji_codes import EMOJI
+from colored.colored import attr, fg  # type: ignore
 import paramiko
 
 import sshmitm

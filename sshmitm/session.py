@@ -41,7 +41,6 @@ from typing import (
 )
 
 from colored.colored import fg, attr  # type: ignore
-from rich._emoji_codes import EMOJI
 
 import paramiko
 from paramiko.pkey import PKey

@@ -2,7 +2,7 @@ import logging
 import re
 from typing import TYPE_CHECKING
 
-from colored.colored import stylize, fg, attr  # type: ignore
+from colored.colored import fg, attr  # type: ignore
 import paramiko
 
 import pkg_resources
@@ -12,7 +12,6 @@ from paramiko import Transport, common
 from paramiko.ssh_exception import SSHException
 
 from rich.markup import escape
-from rich._emoji_codes import EMOJI
 
 import sshmitm
 from sshmitm.logging import Colors

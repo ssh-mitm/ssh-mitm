@@ -6,8 +6,7 @@ from typing import cast, List, Tuple
 import base64
 
 from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
-from colored.colored import stylize, attr, fg  # type: ignore
-from rich._emoji_codes import EMOJI
+from colored.colored import attr, fg  # type: ignore
 
 from sshmitm.session import Session
 from sshmitm.logging import Colors
