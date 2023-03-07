@@ -44,13 +44,13 @@ from paramiko import Transport
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 
-from sshmitm.logging import PlainJsonFormatter
+from sshmitm.logging import PlainJsonFormatter, Colors
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import transport
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.server.cli import init_server_parser, run_server
 from sshmitm.audit.cli import init_audit_parser, run_audit
-from sshmitm.threading import monkey_patch_thread
+from sshmitm.monkey import monkey_patch_thread
 
 
 class SubCommand():
@@ -151,12 +151,13 @@ def main() -> None:
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
     if args.log_format == 'json':
         root_logger.handlers.clear()
-        sys.stdout = open(os.devnull, 'w', encoding='UTF-8')  # pylint: disable=consider-using-with
-        log_handler = logging.StreamHandler()
+        #sys.stdout = open(os.devnull, 'w', encoding='UTF-8')  # pylint: disable=consider-using-with
+        log_handler = logging.StreamHandler(stream=sys.stdout)
         formatter = PlainJsonFormatter()  # type: ignore
         log_handler.setFormatter(formatter)
         root_logger.addHandler(log_handler)
     elif args.log_format == 'richtext':
+        Colors.stylize_func = True
         root_logger.handlers.clear()
         root_logger.addHandler(RichHandler(
             highlighter=NullHighlighter(),

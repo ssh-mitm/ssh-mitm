@@ -164,4 +164,5 @@ def run_server(args: argparse.Namespace) -> None:
         transparent=args.transparent,
         banner_name=args.banner_name
     )
+    proxy.print_serverinfo(args.log_format == 'json')
     proxy.start()

@@ -95,45 +95,51 @@ class SSHProxyServer:
         except KeyGenerationError:
             sys.exit(1)
 
-    def print_serverinfo(self) -> None:
-        print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
-        sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
-        rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
-        rich_print('[bold]License:[/bold] GNU General Public License v3.0')
-        rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
-        rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
-        sshconsole.rule(style="blue")
+    def print_serverinfo(self, json_log: bool = False) -> None:
         if (
-            self.ssh_pub_key is not None
-            and self.key_algorithm_class is not None
-            and self._hostkey is not None
+            self.ssh_pub_key is None
+            or self.key_algorithm_class is None
+            or self._hostkey is None
         ):
+            return
+        log_data = {
+            'keygeneration': 'loaded' if self.key_file else 'generated temporary',
+            'algorithm': self.key_algorithm_class.__name__,
+            'bits': self._hostkey.get_bits(),
+            'md5': Colors.stylize(self.ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
+            'sha256': Colors.stylize(self.ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold')),
+            'sha512': Colors.stylize(self.ssh_pub_key.hash_sha512(), fg('light_blue') + attr('bold')),
+            'listen_address': self.listen_address,
+            'listen_address_v6': self.listen_address_v6,
+            'listen_port': self.listen_port,
+            'transparen_mode': self.transparent
+        }
+
+        if json_log:
+            logging.info("ssh-mitm server info", extra={'serverinfo': log_data})
+        else:
+            print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
+            sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
+            rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
+            rich_print('[bold]License:[/bold] GNU General Public License v3.0')
+            rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
+            rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
+            sshconsole.rule(style="blue")
             print(
                 (
-                    "{} {} key "  # pylint: disable=consider-using-f-string
-                    "with {} bit length and fingerprints:\n"
-                    "   {}\n"
-                    "   {}\n"
-                    "   {}"
+                    "{keygeneration} {algorithm} key "  # pylint: disable=consider-using-f-string
+                    "with {bits} bit length and fingerprints:\n"
+                    "   {md5}\n"
+                    "   {sha256}\n"
+                    "   {sha512}\n"
+                    'listen interfaces {listen_address} and {listen_address_v6} on port {listen_port}'
                 ).format(
-                    'loaded' if self.key_file else 'generated temporary',
-                    self.key_algorithm_class.__name__,
-                    self._hostkey.get_bits(),
-                    stylize(self.ssh_pub_key.hash_md5(), fg('light_blue') + attr('bold')),
-                    stylize(self.ssh_pub_key.hash_sha256(), fg('light_blue') + attr('bold')),
-                    stylize(self.ssh_pub_key.hash_sha512(), fg('light_blue') + attr('bold'))
+                    **log_data
                 )
             )
-        print(
-            'listen interfaces {} and {} on port {}'.format(  # pylint: disable=consider-using-f-string
-                self.listen_address,
-                self.listen_address_v6,
-                self.listen_port
-            )
-        )
-        if self.transparent:
-            print(f"{stylize('Transparent mode enabled!', attr('bold'))} (experimental)")
-        sshconsole.rule("[red]waiting for connections", style="red")
+            if self.transparent:
+                print(f"{stylize('Transparent mode enabled!', attr('bold'))} (experimental)")
+            sshconsole.rule("[red]waiting for connections", style="red")
 
     def generate_host_key(self) -> None:
         self.key_algorithm_class = None
@@ -270,8 +276,6 @@ class SSHProxyServer:
                 Colors.stylize('error creating socket!', fg('red') + attr('bold'))
             )
             return
-
-        self.print_serverinfo()
 
         self.running = True
         try:
