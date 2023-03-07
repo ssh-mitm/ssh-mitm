@@ -130,6 +130,7 @@ class ClientTunnelHandler:
         session: 'sshmitm.session.Session'
     ) -> None:
         self.session = session
+        self.session.register_session_thread()
 
     def handle_request(
         self, listenaddr: Tuple[str, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]

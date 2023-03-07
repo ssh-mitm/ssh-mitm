@@ -29,6 +29,7 @@ class BaseForwarder(BaseModule):
             session.agent.forward_agent(self.server_channel)
         self.channel: Optional[paramiko.Channel] = None
         self.session: 'Session' = session
+        self.session.register_session_thread()
 
         # pass environment variables from client to server
         for env_name, env_value in self.session.env_requests.items():

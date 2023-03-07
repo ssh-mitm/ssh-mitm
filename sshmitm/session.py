@@ -48,7 +48,7 @@ from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
 import sshmitm
-from sshmitm.logging import Colors
+from sshmitm.logging import Colors, THREAD_DATA
 from sshmitm.moduleparser import BaseModule
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
@@ -64,6 +64,9 @@ class BaseSession(BaseModule):
 
     This class should be subclassed to provide custom session management functionality.
     """
+
+    def register_session_thread(self):
+        THREAD_DATA.session = self
 
 
 class Session(BaseSession):
@@ -126,6 +129,7 @@ class Session(BaseSession):
         """
         super().__init__()
         self.sessionid = uuid4()
+        self.register_session_thread()
         logging.info(
             "%s session %s created",
             Colors.emoji('information'),
@@ -295,6 +299,7 @@ class Session(BaseSession):
 
         :return: None
         """
+        self.register_session_thread()
         event = threading.Event()
         self.transport.start_server(
             event=event,

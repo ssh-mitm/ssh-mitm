@@ -266,6 +266,7 @@ class Authenticator(BaseModule):
         """
         super().__init__()
         self.session = session
+        self.session.register_session_thread()
 
     def get_remote_host_credentials(
         self,

@@ -280,8 +280,6 @@ class SSHProxyServer:
                 if len(readable) == 1 and readable[0] is sock:
                     client, addr = sock.accept()
                     remoteaddr = client.getsockname()
-                    logging.debug('incoming connection from %s to %s', str(addr), remoteaddr)
-
                     thread = threading.Thread(target=self.create_session, args=(client, addr, remoteaddr))
                     thread.start()
                     self._threads.append(thread)
@@ -303,6 +301,7 @@ class SSHProxyServer:
     ) -> None:
         try:
             with self.session_class(self, client, addr, self.authenticator, remoteaddr, self.banner_name) as session:
+                logging.debug('incoming connection from %s to %s', str(addr), remoteaddr)
                 if session.start():
                     while session.running:
                         time.sleep(0.1)

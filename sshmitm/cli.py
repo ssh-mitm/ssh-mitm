@@ -50,6 +50,7 @@ from sshmitm.workarounds import transport
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.server.cli import init_server_parser, run_server
 from sshmitm.audit.cli import init_audit_parser, run_audit
+from sshmitm.threading import monkey_patch_thread
 
 
 class SubCommand():
@@ -166,6 +167,7 @@ def main() -> None:
         ))
 
     if not args.disable_workarounds:
+        monkey_patch_thread()
         Transport.run = transport.transport_run  # type: ignore
         Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore
 

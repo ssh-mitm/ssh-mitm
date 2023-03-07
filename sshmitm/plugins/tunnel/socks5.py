@@ -235,6 +235,7 @@ class ClientTunnelHandler:
         password: Optional[str] = None
     ) -> None:
         self.session = session
+        self.session.register_session_thread()
         self.username = username
         self.password = password
 

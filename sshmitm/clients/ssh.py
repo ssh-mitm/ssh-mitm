@@ -80,6 +80,7 @@ class SSHClient(BaseSSHClient):
     ) -> None:
         super().__init__()
         self.session: 'sshmitm.session.Session' = session
+        self.session.register_session_thread()
         self.host: str = host
         self.port: int = port
         self.method: AuthenticationMethod = method

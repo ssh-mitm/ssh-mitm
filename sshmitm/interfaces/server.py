@@ -26,6 +26,7 @@ class BaseServerInterface(paramiko.ServerInterface, BaseModule):
     def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__()
         self.session: 'sshmitm.session.Session' = session
+        self.session.register_session_thread()
         self.forwarders: List[Union[TunnelForwarder, LocalPortForwardingForwarder, RemotePortForwardingForwarder]] = []
         self.possible_auth_methods: Optional[List[str]] = None
 
@@ -411,6 +412,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
     ) -> None:
         super().__init__(channel, name, server, sftp_si, *largs, **kwargs)
         self.session = session
+        self.session.register_session_thread()
 
     def start_subsystem(
         self, name: str, transport: paramiko.Transport, channel: paramiko.Channel

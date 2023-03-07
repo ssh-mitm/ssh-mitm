@@ -113,6 +113,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         destination: Optional[Tuple[str, int]]
     ) -> None:
         self.session = session
+        self.session.register_session_thread()
         self.chanid = chanid
         self.origin = origin
         self.destination = destination
@@ -160,6 +161,7 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     ) -> None:
         super(RemotePortForwardingBaseForwarder, self).__init__()
         self.session = session
+        self.session.register_session_thread()
         self.server_interface = server_interface
         self.destination = destination
 

@@ -82,6 +82,7 @@ setup(
         'packaging',
         'colored',
         'rich',
-        'python-json-logger'
+        'python-json-logger',
+        'wrapt'
     ]
 )
