@@ -11,10 +11,10 @@ from typing import (
 )
 
 import paramiko
-from rich._emoji_codes import EMOJI
-from colored.colored import stylize, fg, attr  # type: ignore
+from colored.colored import fg, attr  # type: ignore
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
@@ -51,9 +51,9 @@ class Socks5Command(Socks5Types):
 
 class Socks5AddressType(Socks5Types):
     """Addresstypen für den Socks Proxy"""
-    IPv4 = b"\x01"
+    IPv4 = b"\x01"  # pylint: disable=invalid-name
     DOMAIN = b"\x03"
-    IPv6 = b"\x04"
+    IPv6 = b"\x04"  # pylint: disable=invalid-name
 
 
 class Socks5CommandReply(Socks5Types):
@@ -235,6 +235,7 @@ class ClientTunnelHandler:
         password: Optional[str] = None
     ) -> None:
         self.session = session
+        self.session.register_session_thread()
         self.username = username
         self.password = password
 
@@ -293,17 +294,17 @@ class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
 
-        t = TCPServerThread(
+        serverthread = TCPServerThread(
             ClientTunnelHandler(session, args.socks5_username, args.socks5_password).handle_request,
             run_status=session.running,
             network=args.socks_listen_address
         )
-        t.start()
-        cls.tcpservers.append(t)
+        serverthread.start()
+        cls.tcpservers.append(serverthread)
         logging.info(
             "%s %s - created SOCKS5 proxy server on port %s. connect with: %s",
-            EMOJI['information'],
-            stylize(session.sessionid, fg('light_blue') + attr('bold')),
-            t.port,
-            stylize(f'nc -X 5 -x localhost:{t.port} address port', fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            serverthread.port,
+            Colors.stylize(f'nc -X 5 -x localhost:{serverthread.port} address port', fg('light_blue') + attr('bold'))
         )

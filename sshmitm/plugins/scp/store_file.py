@@ -1,3 +1,19 @@
+"""SCPStorageForwarder: store transferred files from SCP
+
+SCPStorageForwarder is a class that is derived from SCPForwarder.
+This class provides a capability to store the transferred files from SCP (secure copy) to the file system.
+
+Attributes:
+file_id (str): A unique identifier for each file, generated using uuid.
+scp_storage_dir (str): A path to the directory where files are stored.
+
+Methods:
+parser_arguments: This method adds a command line argument '--store-scp-files' for storing SCP files to the file system.
+init: This method initializes the SCPStorageForwarder class. It creates a scp_storage_dir if it doesn't exist.
+process_data: This method stores the data transmitted during SCP file transfer to the file system. The files are stored in the scp_storage_dir directory.
+
+"""
+
 import logging
 import os
 import uuid

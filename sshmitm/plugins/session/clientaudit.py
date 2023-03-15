@@ -12,13 +12,13 @@ from typing import (
     DefaultDict
 )
 
-from colored.colored import attr, stylize, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore
 from packaging import version
 
 from paramiko import ECDSAKey
-from rich._emoji_codes import EMOJI
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.plugins.session.server_host_key_algorithms import SERVER_HOST_KEY_ALGORITHMS
 
 if TYPE_CHECKING:
@@ -26,6 +26,15 @@ if TYPE_CHECKING:
 
 
 class Vulnerability:
+    """
+    This class represents a vulnerability and holds information about it.
+
+    :param cve: the identifier of the vulnerability (e.g. 'CVE-2022-0001')
+    :type cve: str
+    :param indocs: if True, the URL of the vulnerability information will point to the internal docs.
+                  if False, the URL will point to the official NIST National Vulnerability Database.
+    :type indocs: bool
+    """
 
     def __init__(self, cve: str, indocs: bool = False) -> None:
         self.cve: str = cve
@@ -33,12 +42,32 @@ class Vulnerability:
 
     @property
     def url(self) -> str:
+        """
+        Get the URL where the information about the vulnerability can be found.
+
+        :return: the URL
+        :rtype: str
+        """
         if self.indocs:
             return f"https://docs.ssh-mitm.at/vulnerabilities/{self.cve}.html"
         return f"https://nvd.nist.gov/vuln/detail/{self.cve}"
 
 
 class SSHClientAudit():
+    """
+    The class SSHClientAudit is used for auditing SSH clients.
+
+    :param key_negotiation_data: object of 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData'
+    :type key_negotiation_data: 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData'
+    :param client_version: client version string
+    :type client_version: str
+    :param client_name: optional client name
+    :type client_name: Optional[str]
+    :param client_info: optional client information, stored as a dictionary
+    :type client_info: Optional[Dict[str, Dict[str, Any]]]
+    :return: None
+    :rtype: None
+    """
 
     def __init__(
         self,
@@ -55,6 +84,13 @@ class SSHClientAudit():
         self.vendor_url: Optional[str] = cast(str, self.client_info.get('url', ""))
 
     def get_version_string(self) -> Optional[str]:
+        """
+        This method returns version string extracted from the `client_version` string in the `key_negotiation_data` object
+        using the `version_regex` field of `client_info` dictionary.
+
+        :return: version string
+        :rtype: Optional[str]
+        """
         for version_regex in self.client_info.get('version_regex', []):
             version_sring = re.match(version_regex, self.key_negotiation_data.client_version.lower())
             if version_sring:
@@ -62,6 +98,17 @@ class SSHClientAudit():
         return None
 
     def between_versions(self, version_min: Union[None, int, float, str], version_max: Union[None, int, float, str]) -> bool:
+        """
+        This method returns `True` if the version string is between `version_min` and `version_max`.
+        Returns `False` otherwise.
+
+        :param version_min: minimum version number
+        :type version_min: Union[None, int, float, str]
+        :param version_max: maximum version number
+        :type version_max: Union[None, int, float, str]
+        :return: `True` if version string is between `version_min` and `version_max`, `False` otherwise
+        :rtype: bool
+        """
         try:
             version_string = self.get_version_string()
             if not version_string:
@@ -77,6 +124,15 @@ class SSHClientAudit():
             return False
 
     def check_cves(self, vulnerabilities: Dict[str, List[str]]) -> List[str]:
+        """
+        This method returns a list of strings representing the Common Vulnerabilities and Exposures (CVEs) found in the client,
+        along with the information available in the `vulnerabilities` dictionary.
+
+        :param vulnerabilities: dictionary of CVEs and their descriptions
+        :type vulnerabilities: Dict[str, List[str]]
+        :return: list of strings representing the CVEs and their information
+        :rtype: List[str]
+        """
         cvelist: Dict[str, Vulnerability] = {}
         for cve, description in self.client_info.get('vulnerabilities', {}).items():
             version_min = description.get('version_min', "")
@@ -87,17 +143,23 @@ class SSHClientAudit():
 
         cvemessagelist: List[str] = []
         if cvelist:
-            for e in cvelist.values():
-                cvemessagelist.append(f"  * {e.cve}: {e.url}")
-                if e.cve in vulnerabilities.keys():
-                    if isinstance(vulnerabilities[e.cve], list):
-                        for e1 in vulnerabilities[e.cve]:
-                            cvemessagelist.append(f"    - {e1}")
+            for cve_entry in cvelist.values():
+                cvemessagelist.append(f"  * {cve_entry.cve}: {cve_entry.url}")
+                if cve_entry.cve in vulnerabilities.keys():
+                    if isinstance(vulnerabilities[cve_entry.cve], list):
+                        for vulnerability_entry in vulnerabilities[cve_entry.cve]:
+                            cvemessagelist.append(f"    - {vulnerability_entry}")
                     else:
-                        cvemessagelist.append("\n".join([f"    - {v}" for v in vulnerabilities[e.cve]]))
+                        cvemessagelist.append("\n".join([f"    - {vulnerability}" for vulnerability in vulnerabilities[cve_entry.cve]]))
         return cvemessagelist
 
     def _find_known_server_host_key_algos(self) -> List[str]:
+        """
+        This method returns a list of strings representing the server host key algorithms known to the client.
+
+        :return: list of strings representing server host key algorithms
+        :rtype: List[str]
+        """
         messages: List[str] = []
         for client_name, server_host_key_algorithms_list in SERVER_HOST_KEY_ALGORITHMS.items():
             if not isinstance(server_host_key_algorithms_list, list):
@@ -107,7 +169,7 @@ class SSHClientAudit():
                     messages.append(
                         f"client uses same server_host_key_algorithms as {client_name}"
                     )
-                    messages.append(stylize(
+                    messages.append(Colors.stylize(
                         "client seems to connect for the first time or using a default key order",
                         fg('green')
                     ))
@@ -120,6 +182,14 @@ class SSHClientAudit():
         return messages
 
     def _check_known_clients(self, client_name: str) -> List[str]:
+        """
+        Check if a client with the given ID is already registered as a known client.
+
+        :param client_id: ID of the client to check
+        :type client_id: str
+        :return: True if the client is known, False otherwise
+        :rtype: bool
+        """
         messages: List[str] = []
         if client_name not in SERVER_HOST_KEY_ALGORITHMS:
             return self._find_known_server_host_key_algos()
@@ -131,19 +201,27 @@ class SSHClientAudit():
             return self._check_known_clients(server_host_key_algorithms)
         for host_key_algo in server_host_key_algorithms:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
-                messages.append(stylize(
+                messages.append(Colors.stylize(
                     "client connecting for the first time or using default key order!",
                     fg('green')
                 ))
                 break
         else:
-            messages.append(stylize(
+            messages.append(Colors.stylize(
                 "client has a locally cached remote fingerprint.",
                 fg('yellow')
             ))
         return messages
 
     def check_key_negotiation(self) -> Dict[str, List[str]]:
+        """
+        Check if a key negotiation data is known.
+
+        :param client_id: ID of the client to check
+        :type client_id: str
+        :return: True if key negotiation data is known, False otherwise
+        :rtype: bool
+        """
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning("%s: ecdsa-sha2 key is a bad choice; this will produce false positives!", self.client_info.get('name', ''))
 
@@ -158,16 +236,24 @@ class SSHClientAudit():
         return {'clientaudit': messages}
 
     def run_audit(self) -> None:
+        """
+        Run an audit on the client with the given ID.
+
+        :param client_id: ID of the client to audit
+        :type client_id: str
+        :return: None
+        :rtype: None
+        """
         vulnerabilities: DefaultDict[str, List[str]] = defaultdict(list)
-        for k, v in self.check_key_negotiation().items():
-            vulnerabilities[k].extend(v)
+        for audit_type, audit_results in self.check_key_negotiation().items():
+            vulnerabilities[audit_type].extend(audit_results)
 
         vulnerabilities["clientaudit"].extend(self.audit())
 
         log_output = []
         log_output.extend([
-            stylize(EMOJI['information'] + " client information:", fg('blue') + attr('bold')),
-            f"  - client version: {stylize(self.client_version, fg('green') + attr('bold'))}",
+            Colors.stylize(Colors.emoji('information') + " client information:", fg('blue') + attr('bold')),
+            f"  - client version: {Colors.stylize(self.client_version, fg('green') + attr('bold'))}",
             f"  - product name: {self.product_name}",
             f"  - vendor url:  {self.vendor_url}"
         ])
@@ -176,7 +262,7 @@ class SSHClientAudit():
         if cvemessagelist:
             log_output.append(
                 "".join([
-                    stylize(EMOJI['warning'] + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
+                    Colors.stylize(Colors.emoji('warning') + " client affected by CVEs:\n", fg('yellow') + attr('bold')),
                     "\n".join(cvemessagelist)
                 ])
             )
@@ -185,11 +271,17 @@ class SSHClientAudit():
         if client_audits:
             log_output.append(
                 "".join([
-                    stylize(EMOJI['warning'] + " client audit tests:\n", fg('blue') + attr('bold')),
+                    Colors.stylize(Colors.emoji('warning') + " client audit tests:\n", fg('blue') + attr('bold')),
                     "\n".join([f"  * {v}" for v in client_audits])
                 ])
             )
         logging.info("%s", "\n".join(log_output))
 
     def audit(self) -> List[str]:
+        """
+        Run audits on all clients.
+
+        :return: None
+        :rtype: None
+        """
         return []

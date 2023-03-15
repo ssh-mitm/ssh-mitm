@@ -2,8 +2,19 @@
 :fas:`copy` File transferrs (SCP/SFTP)
 ======================================
 
-SSH-MITM is able to intercept SCP and SFTP file transferrs.
-It's also possible to store or replace transferred files.
+In this chapter, we will explore how to intercept and manipulate file transfers using
+Secure Copy (SCP) and Secure File Transfer Protocol (SFTP).
+
+These protocols provide a secure method for transferring files between a
+local host and a remote host, or between two remote hosts.
+
+Intercepting or manipulating files during security audits for SCP and SFTP protocols can be very useful.
+It allows security personnel to monitor file transfers and potentially identify any security threats.
+For example, it can be used in malware analysis to detect malicious files being transferred,
+in forensics to analyze data during an investigation, or in security audits to identify vulnerabilities.
+By having the ability to view and control file transfers, security personnel can take proactive measures
+to improve the overall security of the system.
+
 
 Secure copy protocol (SCP)
 ==========================
@@ -12,10 +23,12 @@ Secure copy protocol (SCP) is a means of securely transferring computer files
 between a local host and a remote host or between two remote hosts.
 "SCP" commonly refers to both the Secure Copy Protocol and the program itself.
 
-According to OpenSSH developers in April 2019, SCP is outdated, inflexible and not readily fixed;
-they recommend the use of more modern protocols like SFTP and rsync for file transfer.
-As of OpenSSH version 9.0, scp client therefore uses SFTP for file transfers by default
-instead of the legacy SCP/RCP protocol.
+.. note::
+
+    According to OpenSSH developers in April 2019, SCP is outdated, inflexible and not readily fixed;
+    they recommend the use of more modern protocols like SFTP and rsync for file transfer.
+    As of OpenSSH version 9.0, scp client therefore uses SFTP for file transfers by default
+    instead of the legacy SCP/RCP protocol.
 
 Store intercepted files
 -----------------------

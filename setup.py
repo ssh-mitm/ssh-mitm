@@ -75,12 +75,14 @@ setup(
     },
     install_requires=[
         'argcomplete',
-        'paramiko',
+        'paramiko>=3,<4',
         'pytz',
         'sshpubkeys',
         'pyyaml',
         'packaging',
         'colored',
-        'rich'
+        'rich',
+        'python-json-logger',
+        'wrapt'
     ]
 )

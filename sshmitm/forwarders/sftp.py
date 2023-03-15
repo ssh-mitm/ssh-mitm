@@ -52,6 +52,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
     ) -> None:
         super().__init__(flags)
         self.session = session
+        self.session.register_session_thread()
         self.plugin = plugin(self, filename)
         self.writefile: Optional[paramiko.sftp_file.SFTPFile] = None
         self.readfile: Optional[paramiko.sftp_file.SFTPFile] = None

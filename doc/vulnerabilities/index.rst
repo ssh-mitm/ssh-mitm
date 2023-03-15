@@ -1,7 +1,15 @@
 :fas:`skull` Vulnerabilities
 ============================
 
-This page lists vulnerabilities in SSH clients and servers as well as SSH relevant programs of the last years.
+The following section provides an overview of recent vulnerabilities in
+SSH clients, servers, and related programs. This information is crucial
+for understanding potential threats and ensuring the security of your
+SSH-based systems during malware analysis, security audits, and other projects.
+
+Understanding the common vulnerabilities and their impact is essential for
+organizations looking to secure their infrastructure and minimize the risk
+of a successful attack.
+
 
 .. note::
 

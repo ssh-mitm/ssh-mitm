@@ -3,10 +3,10 @@ from socket import socket
 from typing import Optional, Tuple, Union
 
 import paramiko
-from rich._emoji_codes import EMOJI
-from colored.colored import stylize, fg, attr  # type: ignore
+from colored.colored import fg, attr  # type: ignore
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
@@ -42,8 +42,8 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
         )
         logging.info(
             "%s %s - created server tunnel injector for host %s on port %s to destination %s",
-            EMOJI['information'],
-            stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            Colors.emoji('information'),
+            Colors.stylize(session.sessionid, fg('light_blue') + attr('bold')),
             self.tcpserver.network,
             self.tcpserver.port,
             self.destination
@@ -55,11 +55,11 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
     ) -> None:
         del listenaddr  # unused arguments
         try:
-            f = TunnelForwarder(
+            forwarded_tunnel = TunnelForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", self.destination, addr),
                 client
             )
-            self.server_interface.forwarders.append(f)
+            self.server_interface.forwarders.append(forwarded_tunnel)
         except (paramiko.SSHException, OSError):
             logging.warning("portforward - injector connection suffered an unexpected error")
             self.tcpserver.close()

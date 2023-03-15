@@ -10,11 +10,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added configuration file for cmd arg defaults
+- added info and PoC exploit for CVE-2023-25136
+- mosh - added more information for decrypted packet
+
+### Fixed
+
+- added workarround for git to avoid unexpected session termination when EOF was reveived
+- added fix for GitHub git operations
+
+### Changed
+
+- set banner name only for server, not for client
+
+
+## [3.0.2] - 2023-02-14
+
+### Added
+
+- added requirements.txt which pins the tested packages
 
 ### Fixed
 
 - fixed infinite loop when client closes connection during authentication
 - fixed errors when too much connection attemps happen for the same server
+- close transport in probe_host, which can publickey auth lead to fail
+
 
 ## [3.0.1] - 2022-12-18
 
@@ -361,7 +381,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/3.0.1...master
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/3.0.2...master
+[3.0.2]: https://github.com/ssh-mitm/ssh-mitm/compare/3.0.1...3.0.2
 [3.0.1]: https://github.com/ssh-mitm/ssh-mitm/compare/3.0.0...3.0.1
 [3.0.0]: https://github.com/ssh-mitm/ssh-mitm/compare/2.1.0...3.0.0
 [2.1.0]: https://github.com/ssh-mitm/ssh-mitm/compare/2.0.5...2.1.0

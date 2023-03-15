@@ -1,12 +1,7 @@
 import argparse
 
-from rich import print as rich_print
-
-from paramiko import Transport
-
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.moduleparser import ModuleParser
-from sshmitm.console import sshconsole
 from sshmitm.server import SSHProxyServer
 
 from sshmitm.authentication import (
@@ -139,14 +134,6 @@ def run_server(args: argparse.Namespace) -> None:
     if args.request_agent_breakin:
         args.authenticator.REQUEST_AGENT_BREAKIN = True
 
-    print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
-    sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
-    rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
-    rich_print('[bold]License:[/bold] GNU General Public License v3.0')
-    rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
-    rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
-    sshconsole.rule(style="blue")
-
     proxy = SSHProxyServer(
         args.listen_port,
         key_file=args.host_key,
@@ -161,8 +148,7 @@ def run_server(args: argparse.Namespace) -> None:
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator,
         transparent=args.transparent,
-        args=args
+        banner_name=args.banner_name
     )
-    if args.banner_name is not None:
-        Transport._CLIENT_ID = args.banner_name  # type: ignore
+    proxy.print_serverinfo(args.log_format == 'json')
     proxy.start()

@@ -91,6 +91,12 @@ OpenSSH:
   version_regex:
     - ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*
   vulnerabilities:
+    CVE-2023-25136:
+      version_min: 9.1
+      version_max: 9.1
+      cvss: 9.8
+      docs: true
+      description: remote code execution in sshd
     CVE-2016-20012:
       version_max: 8.7
       cvss: N/A

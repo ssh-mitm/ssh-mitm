@@ -8,10 +8,10 @@ from typing import (
 )
 
 import paramiko
-from rich._emoji_codes import EMOJI
-from colored.colored import stylize, fg, attr  # type: ignore
+from colored.colored import fg, attr  # type: ignore
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
@@ -29,6 +29,7 @@ class ClientTunnelHandler:
         session: 'sshmitm.session.Session'
     ) -> None:
         self.session = session
+        self.session.register_session_thread()
 
     def handle_request(
         self, listenaddr: Tuple[str, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
@@ -83,17 +84,17 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
 
-        t = TCPServerThread(
+        server_thread = TCPServerThread(
             ClientTunnelHandler(session).handle_request,
             run_status=session.running,
             network=args.socks_listen_address
         )
-        t.start()
-        cls.tcpservers.append(t)
+        server_thread.start()
+        cls.tcpservers.append(server_thread)
 
-        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}'
-        netcat4_cmd = f'nc -X 4 -x localhost:{t.port} address port'
-        netcat5_cmd = f'nc -X 5 -x localhost:{t.port} address port'
+        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={server_thread.port}'
+        netcat4_cmd = f'nc -X 4 -x localhost:{server_thread.port} address port'
+        netcat5_cmd = f'nc -X 5 -x localhost:{server_thread.port} address port'
 
         logging.info(
             (
@@ -105,13 +106,13 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
                 "  %s\n"
                 "    * netcat: %s"
             ),
-            EMOJI['information'],
-            stylize(session.sessionid, fg('light_blue') + attr('bold')),
-            stylize('SOCKS port:', attr('bold')),
-            stylize(t.port, fg('light_blue') + attr('bold')),
-            stylize('SOCKS4:', attr('bold')),
-            stylize(socat_cmd, fg('light_blue') + attr('bold')),
-            stylize(netcat4_cmd, fg('light_blue') + attr('bold')),
-            stylize('SOCKS5:', attr('bold')),
-            stylize(netcat5_cmd, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            Colors.stylize('SOCKS port:', attr('bold')),
+            Colors.stylize(server_thread.port, fg('light_blue') + attr('bold')),
+            Colors.stylize('SOCKS4:', attr('bold')),
+            Colors.stylize(socat_cmd, fg('light_blue') + attr('bold')),
+            Colors.stylize(netcat4_cmd, fg('light_blue') + attr('bold')),
+            Colors.stylize('SOCKS5:', attr('bold')),
+            Colors.stylize(netcat5_cmd, fg('light_blue') + attr('bold'))
         )

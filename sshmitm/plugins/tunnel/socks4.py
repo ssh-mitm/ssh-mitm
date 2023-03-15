@@ -10,10 +10,10 @@ from typing import (
 )
 
 import paramiko
-from rich._emoji_codes import EMOJI
-from colored.colored import stylize, fg, attr  # type: ignore
+from colored.colored import fg, attr  # type: ignore
 
 import sshmitm
+from sshmitm.logging import Colors
 from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
@@ -130,6 +130,7 @@ class ClientTunnelHandler:
         session: 'sshmitm.session.Session'
     ) -> None:
         self.session = session
+        self.session.register_session_thread()
 
     def handle_request(
         self, listenaddr: Tuple[str, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
@@ -137,8 +138,8 @@ class ClientTunnelHandler:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
         destination: Optional[Tuple[str, int]] = None
-        Socks4connection = Socks4Server(listenaddr)
-        destination = Socks4connection.get_address(client)
+        socks4_connection = Socks4Server(listenaddr)
+        destination = socks4_connection.get_address(client)
         if destination is None:
             client.close()
             logging.error("unable to parse Socks4 request")
@@ -175,18 +176,18 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
 
-        t = TCPServerThread(
+        server_thread = TCPServerThread(
             ClientTunnelHandler(session).handle_request,
             run_status=session.running,
             network=args.socks_listen_address
         )
-        t.start()
-        cls.tcpservers.append(t)
-        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={t.port}'
+        server_thread.start()
+        cls.tcpservers.append(server_thread)
+        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={server_thread.port}'
         logging.info(
             "%s %s - created Socks4 proxy server on port %s. connect with %s",
-            EMOJI['information'],
-            stylize(session.sessionid, fg('light_blue') + attr('bold')),
-            stylize(t.port, fg('light_blue') + attr('bold')),
-            stylize(socat_cmd, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(session.sessionid, fg('light_blue') + attr('bold')),
+            Colors.stylize(server_thread.port, fg('light_blue') + attr('bold')),
+            Colors.stylize(socat_cmd, fg('light_blue') + attr('bold'))
         )

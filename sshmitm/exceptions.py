@@ -1,22 +1,34 @@
 class NoAgentKeys(Exception):
-    pass
+    """
+    Exception raised when there are no private keys available for authentication.
+    """
 
 
 class NoAgentException(Exception):
-    pass
+    """
+    Exception raised when an attempt to access the ssh-agent fails.
+    """
 
 
 class InvalidHostKey(Exception):
-    pass
+    """
+    Exception raised when an invalid host key is encountered.
+    """
 
 
 class MissingHostException(Exception):
-    pass
+    """
+    Exception raised when the specified host cannot be found.
+    """
 
 
 class KeyGenerationError(Exception):
-    pass
+    """
+    Exception raised when an error occurs during key generation.
+    """
 
 
 class MissingClient(Exception):
-    pass
+    """
+    Exception raised when a client cannot be found for a given host.
+    """

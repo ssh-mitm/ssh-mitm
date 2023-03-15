@@ -1,3 +1,29 @@
+"""SCPReplaceFile: Replace file with another file during SCP transfer.
+
+This module is a subclass of SCPForwarder from the sshmitm library and implements
+the handle_command and process_data methods to replace the original file with a
+specified file during SCP transfer.
+
+Attributes:
+data_sent (bool): Flag to keep track of if the replacement file data has already been sent.
+file_stat (os.stat_result): Stat result of the replacement file.
+file_to_send (file): The replacement file that is to be sent during SCP transfer.
+args (argparse.Namespace): Namespace object containing the command-line arguments passed to the script.
+bytes_remaining (int): Bytes remaining to be sent.
+file_size (int): The size of the replacement file.
+file_command (str): The command of the file being transferred (e.g. 'C' for copying to the remote machine).
+file_mode (str): The mode of the file being transferred (e.g. '0644').
+file_name (str): The name of the file being transferred.
+got_c_command (bool): Flag to keep track of if the 'C' command has been received.
+
+Methods:
+parser_arguments(): Adds a required argument --scp-replace to the argument parser.
+init(session: sshmitm.session.Session): Initializes the SCPReplaceFile instance.
+handle_command(traffic: bytes) -> bytes: Handles the incoming SCP command and returns the modified SCP command.
+process_data(traffic: bytes) -> bytes: Processes the SCP data and returns the modified SCP data
+(i.e.the replacement file).
+"""
+
 import os
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder

@@ -91,7 +91,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
                 if self.session.sftp_client is None:
                     return paramiko.sftp.SFTP_FAILURE
                 client_f = self.session.sftp_client.open(path, fstr)
-            except Exception:
+            except Exception:  # pylint: disable=broad-exception-caught
                 logging.exception("Error file")
                 return paramiko.sftp.SFTP_FAILURE
 
@@ -112,10 +112,10 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             if fobj.writefile:
                 self.chattr(path, attr)
             return fobj
-        except (OSError, IOError) as e:
+        except (OSError, IOError) as exc:
             logging.exception("Error")
-            return paramiko.SFTPServer.convert_errno(e.errno)
-        except Exception:
+            return paramiko.SFTPServer.convert_errno(exc.errno)
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error")
             return paramiko.sftp.SFTP_FAILURE
 

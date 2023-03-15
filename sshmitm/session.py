@@ -1,3 +1,28 @@
+"""Session Class
+
+The Session class provides the ability to start, manage, and close an interactive session between
+a client and a server. It provides a convenient and exception-safe way to handle sessions in your application.
+
+.. code-block:: python
+
+    try:
+        with Session(self, client, addr, self.authenticator, remoteaddr) as session:
+            if session.start():
+                while session.running:
+                    # session is running
+                    pass
+            else:
+                logging.warning("(%s) session not started", session)
+    except Exception:
+        logging.exception("error handling session creation")
+
+This code creates a session object using the session_class method, and wraps it in a with statement.
+The start method is then called on the session object. If the start method returns True, the session
+is considered running and the running property of the session is checked in a while loop. If the start
+method returns False, a warning message is logged indicating that the session was not started.
+If any exceptions are raised during session creation, they are logged using the logging.exception method.
+"""
+
 import logging
 import threading
 from uuid import uuid4
@@ -15,8 +40,7 @@ from typing import (
     Type
 )
 
-from colored.colored import stylize, fg, attr  # type: ignore
-from rich._emoji_codes import EMOJI
+from colored.colored import fg, attr  # type: ignore
 
 import paramiko
 from paramiko.pkey import PKey
@@ -24,6 +48,7 @@ from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
 import sshmitm
+from sshmitm.logging import Colors, THREAD_DATA
 from sshmitm.moduleparser import BaseModule
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
@@ -34,15 +59,42 @@ if TYPE_CHECKING:
 
 
 class BaseSession(BaseModule):
-    pass
+    """
+    The `BaseSession` class serves as a base for session management in the system.
+
+    This class should be subclassed to provide custom session management functionality.
+    """
+
+    def register_session_thread(self):
+        THREAD_DATA.session = self
 
 
 class Session(BaseSession):
+    """
+    A class that holds the information and methods for the ssh session.
+
+    :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
+    :type proxyserver: sshmitm.server.SSHProxyServer
+    :param client_socket: A socket instance representing the connection from the client
+    :type client_socket: socket.socket
+    :param client_address: Address information of the client
+    :type client_address: Tuple[str, int] or Tuple[str, int, int, int]
+    :param authenticator: Type of the authentication class to be used
+    :type authenticator: Type[sshmitm.authentication.Authenticator]
+    :param remoteaddr: Remote address information
+    :type remoteaddr: Tuple[str, int] or Tuple[str, int, int, int]
+    """
 
     CIPHERS = None
 
     @classmethod
     def parser_arguments(cls) -> None:
+        """
+        Add an argument to the command line parser for session plugin.
+
+        :return: None
+        :rtype: None
+        """
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
             '--session-log-dir',
@@ -56,14 +108,32 @@ class Session(BaseSession):
         client_socket: socket.socket,
         client_address: Union[Tuple[str, int], Tuple[str, int, int, int]],
         authenticator: Type['sshmitm.authentication.Authenticator'],
-        remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]]
+        remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]],
+        banner_name: Optional[str] = None
     ) -> None:
+        """
+        Initialize the class instance.
+
+        :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
+        :type proxyserver: sshmitm.server.SSHProxyServer
+        :param client_socket: A socket instance representing the connection from the client
+        :type client_socket: socket.socket
+        :param client_address: Address information of the client
+        :type client_address: Tuple[str, int] or Tuple[str, int, int, int]
+        :param authenticator: Type of the authentication class to be used
+        :type authenticator: Type[sshmitm.authentication.Authenticator]
+        :param remoteaddr: Remote address information
+        :type remoteaddr: Tuple[str, int] or Tuple[str, int, int, int]
+        :return: None
+        :rtype: None
+        """
         super().__init__()
         self.sessionid = uuid4()
+        self.register_session_thread()
         logging.info(
             "%s session %s created",
-            EMOJI['information'],
-            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
         )
         self._transport: Optional[paramiko.Transport] = None
 
@@ -105,8 +175,15 @@ class Session(BaseSession):
 
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
+        self.banner_name = banner_name
 
     def get_session_log_dir(self) -> Optional[str]:
+        """
+        Returns the directory where the ssh session logs will be stored.
+
+        :return: The directory path where the ssh session logs will be stored, or `None` if the directory is not specified.
+        :rtype: Optional[str]
+        """
         if not self.args.session_log_dir:
             return None
         session_log_dir = os.path.expanduser(self.args.session_log_dir)
@@ -117,6 +194,12 @@ class Session(BaseSession):
 
     @property
     def running(self) -> bool:
+        """
+        Returns the running state of the current session.
+
+        :return: A boolean indicating whether the session is running or not
+        :rtype: bool
+        """
         session_channel_open: bool = True
         ssh_channel_open: bool = False
         scp_channel_open: bool = False
@@ -134,8 +217,16 @@ class Session(BaseSession):
 
     @property
     def transport(self) -> paramiko.Transport:
+        """
+        Returns the type of transport being used by the current session.
+
+        :return: A string representing the transport type
+        :rtype: str
+        """
         if self._transport is None:
             self._transport = Transport(self.client_socket)
+            if self.banner_name:
+                self.transport.local_version = f"SSH-2.0-{self.banner_name}"
             key_negotiation.handle_key_negotiation(self)
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
@@ -156,14 +247,14 @@ class Session(BaseSession):
                     requested_agent = AgentProxy(self.transport)
                     logging.info(
                         "%s %s - successfully requested ssh-agent",
-                        EMOJI['information'],
-                        stylize(self.sessionid, fg('light_blue') + attr('bold'))
+                        Colors.emoji('information'),
+                        Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
                     )
             except ChannelException:
                 logging.info(
                     "%s %s - ssh-agent breakin not successfull!",
-                    EMOJI['warning'],
-                    stylize(self.sessionid, fg('light_blue') + attr('bold'))
+                    Colors.emoji('warning'),
+                    Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
                 )
                 return False
         self.agent = requested_agent or self.agent
@@ -203,6 +294,12 @@ class Session(BaseSession):
         return True
 
     def start(self) -> bool:
+        """
+        Start the session and initialize the underlying transport.
+
+        :return: None
+        """
+        self.register_session_thread()
         event = threading.Event()
         self.transport.start_server(
             event=event,
@@ -234,12 +331,17 @@ class Session(BaseSession):
 
         logging.info(
             "%s %s - session started",
-            EMOJI['information'],
-            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
         )
         return True
 
     def close(self) -> None:
+        """
+        Close the session and release the underlying resources.
+
+        :return: None
+        """
         if self.agent:
             self.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
@@ -256,14 +358,14 @@ class Session(BaseSession):
                         if self.transport.completion_event.wait(0.1):
                             break
         if self.transport.server_object is not None:
-            for f in cast(BaseServerInterface, self.transport.server_object).forwarders:
-                f.close()
-                f.join()
+            for tunnel_forwarder in cast(BaseServerInterface, self.transport.server_object).forwarders:
+                tunnel_forwarder.close()
+                tunnel_forwarder.join()
         self.transport.close()
         logging.info(
             "%s session %s closed",
-            EMOJI['information'],
-            stylize(self.sessionid, fg('light_blue') + attr('bold'))
+            Colors.emoji('information'),
+            Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
         )
         logging.debug(
             "(%s) session closed",

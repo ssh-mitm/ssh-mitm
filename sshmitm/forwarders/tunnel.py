@@ -24,7 +24,7 @@ class TunnelForwarder(threading.Thread):
     def __init__(
         self, local_ch: Optional[Union[socket, paramiko.Channel]], remote_ch: Optional[Union[socket, paramiko.Channel]]
     ) -> None:
-        super(TunnelForwarder, self).__init__()
+        super().__init__()
         self.local_ch = local_ch
         self.remote_ch = remote_ch
         self.start()
@@ -32,7 +32,7 @@ class TunnelForwarder(threading.Thread):
     def run(self) -> None:
         try:
             self.tunnel()
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Tunnel exception with peer")
         self.close()
 
@@ -48,16 +48,16 @@ class TunnelForwarder(threading.Thread):
                 logging.error("remote channel is None")
                 break
 
-            r, _, _ = select.select([self.local_ch, self.remote_ch], [], [])
+            socklist_read, _, _ = select.select([self.local_ch, self.remote_ch], [], [])
 
-            if self.local_ch in r:
+            if self.local_ch in socklist_read:
                 data = self.local_ch.recv(chunk_size)
                 data = self.handle_data_from_local(data)
                 if len(data) == 0:
                     break
                 self.remote_ch.send(data)
 
-            if self.remote_ch in r:
+            if self.remote_ch in socklist_read:
                 data = self.remote_ch.recv(chunk_size)
                 data = self.handle_data_from_remote(data)
                 if len(data) == 0:
@@ -113,6 +113,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         destination: Optional[Tuple[str, int]]
     ) -> None:
         self.session = session
+        self.session.register_session_thread()
         self.chanid = chanid
         self.origin = origin
         self.destination = destination
@@ -120,7 +121,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             raise ValueError("No SSH client!")
         remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", self.destination, self.origin)
-        super(LocalPortForwardingForwarder, self).__init__(None, remote_ch)
+        super().__init__(None, remote_ch)
 
     def run(self) -> None:
         # Channel setup in thread start - so that transport thread can return to the session thread
@@ -134,7 +135,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
             logging.debug("Proxyjump: forwarding traffic through master channel [chanid %s]", self.chanid)
         if not self.local_ch:
             self.local_ch = self.session.transport.accept(5)
-        super(LocalPortForwardingForwarder, self).run()
+        super().run()
 
     @classmethod
     def setup(cls, session: 'sshmitm.session.Session') -> None:
@@ -160,6 +161,7 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     ) -> None:
         super(RemotePortForwardingBaseForwarder, self).__init__()
         self.session = session
+        self.session.register_session_thread()
         self.server_interface = server_interface
         self.destination = destination
 
@@ -174,11 +176,11 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     ) -> None:
         try:
             logging.debug("Opening forwarded-tcpip channel (%s -> %s) to client", origin, destination)
-            f = TunnelForwarder(
+            forwarded_tunnel = TunnelForwarder(
                 self.session.transport.open_channel("forwarded-tcpip", destination, origin),
                 channel
             )
-            self.server_interface.forwarders.append(f)
+            self.server_interface.forwarders.append(forwarded_tunnel)
         except paramiko.ssh_exception.ChannelException:
             channel.close()
             logging.error("Could not setup forward from %s to %s.", origin, destination)

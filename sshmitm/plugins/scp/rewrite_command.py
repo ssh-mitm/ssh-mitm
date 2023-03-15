@@ -1,3 +1,13 @@
+"""
+SCPRewriteCommand - A plugin for ssh-mitm that rewrites SCP commands.
+
+This plugin is used to modify SCP commands, either by appending a string to
+the existing command or replacing the command with a different string.
+It can also be used to modify rsync and git commands.
+The new command is specified using the `--scp-append-string` and `--scp-replace-string`
+options, respectively.
+
+"""
 import logging
 from sshmitm.forwarders.scp import SCPForwarder
 
@@ -28,7 +38,7 @@ class SCPRewriteCommand(SCPForwarder):
             new_command = f"{command}{self.args.scp_append_string}"
             logging.info("scp command added string: %s", new_command)
             return new_command
-        elif self.args.scp_replace_string:
+        if self.args.scp_replace_string:
             logging.info("scp command replaced: %s", self.args.scp_replace_string)
             return f"{self.args.scp_replace_string}"
         return command

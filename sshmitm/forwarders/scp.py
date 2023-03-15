@@ -17,6 +17,11 @@ from sshmitm.apps.mosh import handle_mosh
 
 class SCPBaseForwarder(BaseForwarder):
 
+    def __init__(self, session: 'sshmitm.session.Session') -> None:
+        super().__init__(session)
+        self.client_exit_code_received = False
+        self.server_exit_code_received = False
+
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         del isclient  # unused arguments
         return traffic
@@ -25,10 +30,11 @@ class SCPBaseForwarder(BaseForwarder):
         return traffic
 
     def rewrite_scp_command(self, command: str) -> str:
-        logging.info(f"got remote command: {command}")
+        logging.info("got remote command: %s", command)
         return command
 
     def forward(self) -> None:
+        # pylint: disable=protected-access
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
@@ -75,6 +81,7 @@ class SCPBaseForwarder(BaseForwarder):
 
                 if self.server_channel.exit_status_ready():
                     status = self.server_channel.recv_exit_status()
+                    self.server_exit_code_received = True
                     self.close_session_with_status(self.session.scp_channel, status)
                     logging.info(
                         "remote command '%s' exited with code: %s",
@@ -84,6 +91,7 @@ class SCPBaseForwarder(BaseForwarder):
                     break
                 if self.session.scp_channel.exit_status_ready():
                     status = self.session.scp_channel.recv_exit_status()
+                    self.client_exit_code_received = True
                     # self.server_channel.send_exit_status(status)
                     self.close_session(self.session.scp_channel)
                     break
@@ -98,6 +106,12 @@ class SCPBaseForwarder(BaseForwarder):
                     self.close_session(self.session.scp_channel)
                     break
                 if self.session.scp_channel.eof_received:
+                    if self.session.scp_command.startswith(b'git-receive-pack'):
+                        # ignore git-receive-pack commands because those can contain EOF,
+                        # which closes the session
+                        continue
+
+                    # TODO: check if EOF should close the session.
                     message = Message()
                     message.add_byte(cMSG_CHANNEL_EOF)
                     message.add_int(self.session.scp_channel.remote_chanid)
@@ -106,6 +120,8 @@ class SCPBaseForwarder(BaseForwarder):
                     self.session.scp_channel.send_exit_status(0)
                     self.close_session(self.session.scp_channel)
                     break
+                if self.server_channel.eof_received:
+                    logging.debug("server channel eof received")
 
                 time.sleep(0.1)
         except Exception:
@@ -134,7 +150,7 @@ class SCPBaseForwarder(BaseForwarder):
         if channel.closed:
             return
 
-        if not channel.eof_received:
+        if not channel.eof_received or self.server_exit_code_received:
             message = Message()
             message.add_byte(cMSG_CHANNEL_EOF)
             message.add_int(channel.remote_chanid)
@@ -142,6 +158,7 @@ class SCPBaseForwarder(BaseForwarder):
 
             if status is not None and self.session.scp_channel is not None:
                 self.session.scp_channel.send_exit_status(status)
+                logging.debug("sent exit status to client: %s", status)
 
             message = Message()
             message.add_byte(cMSG_CHANNEL_REQUEST)
@@ -157,7 +174,7 @@ class SCPBaseForwarder(BaseForwarder):
 
         channel._unlink()  # type: ignore
 
-        super(SCPBaseForwarder, self).close_session(channel)
+        super().close_session(channel)
         logging.debug("[chan %d] SCP closed", channel.get_id())
 
 
@@ -227,6 +244,6 @@ class SCPForwarder(SCPBaseForwarder):
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         if self.session.scp_command.startswith(b'scp'):
             return self.handle_scp(traffic)
-        elif self.session.scp_command.startswith(b"mosh-server"):
+        if self.session.scp_command.startswith(b"mosh-server"):
             return handle_mosh(self.session, traffic, isclient)
         return traffic

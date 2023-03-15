@@ -1,3 +1,14 @@
+"""
+The variable SERVER_HOST_KEY_ALGORITHMS is a dictionary containing information on the
+server host key algorithms supported by different SSH clients.
+
+Each key in the dictionary represents a different SSH client, and the value for each key
+is either a list of algorithms supported by that client, the name of another key in the
+dictionary (referring to the same algorithm list), or None indicating that the same algorithm
+list is used as for "known hosts". The algorithms are represented by strings in the format
+algorithm-hash-cert-version@openssh.com or just algorithm-hash.
+"""
+
 from sshmitm.plugins.session import cve202014002, cve202014145
 
 SERVER_HOST_KEY_ALGORITHMS = {
@@ -36,3 +47,6 @@ SERVER_HOST_KEY_ALGORITHMS = {
     'WinSCP': 'PuTTY_Release',
     'WolfSSH': None,  # same list for known hosts
 }
+"""
+dictionary mapping various SSH client implementations to the algorithms they support for server host keys
+"""
