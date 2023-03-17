@@ -43,13 +43,12 @@ from paramiko import Transport
 from rich.logging import RichHandler
 from rich.highlighter import NullHighlighter
 
-from sshmitm.logging import PlainJsonFormatter, Colors
+from sshmitm.logging import PlainJsonFormatter, Colors, FailSaveLogStream
 from sshmitm.moduleparser import ModuleParser
-from sshmitm.workarounds import transport
+from sshmitm.workarounds import transport, monkeypatch
 from sshmitm.__version__ import version as ssh_mitm_version
 from sshmitm.server.cli import init_server_parser, run_server
 from sshmitm.audit.cli import init_audit_parser, run_audit
-from sshmitm.monkey import monkey_patch_thread
 
 
 class SubCommand():
@@ -138,7 +137,7 @@ def main() -> None:
         '--log-format',
         dest='log_format',
         default="richtext",
-        choices=['text', 'richtext', 'json'],
+        choices=['text', 'json'],
         help='defines the log output format (json will suppress stdout)'
     )
 
@@ -159,14 +158,16 @@ def main() -> None:
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
-    if args.log_format == 'json':
+    if args.log_format == 'json' or not sys.stdout.isatty():
         Colors.stylize_func = False
         root_logger.handlers.clear()
-        log_handler = logging.StreamHandler(stream=sys.stdout)
+        log_handler = logging.StreamHandler(
+            stream=FailSaveLogStream(debug=args.debug)
+        )
         formatter = PlainJsonFormatter()  # type: ignore
         log_handler.setFormatter(formatter)
         root_logger.addHandler(log_handler)
-    elif args.log_format == 'richtext':
+    else:
         Colors.stylize_func = True
         root_logger.handlers.clear()
         root_logger.addHandler(RichHandler(
@@ -176,11 +177,9 @@ def main() -> None:
             enable_link_path=args.debug,
             show_path=args.debug
         ))
-    else:
-        Colors.stylize_func = False
 
     if not args.disable_workarounds:
-        monkey_patch_thread()
+        monkeypatch.patch_thread()
         Transport.run = transport.transport_run  # type: ignore
         Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore
 

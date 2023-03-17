@@ -1,9 +1,12 @@
 from datetime import datetime, timezone
 import logging
+import sys
 import threading
 from typing import Any, Dict
 from colored.colored import stylize  # type: ignore
 from rich._emoji_codes import EMOJI
+from rich.logging import RichHandler
+from rich.highlighter import NullHighlighter
 from pythonjsonlogger import jsonlogger
 
 
@@ -35,6 +38,35 @@ class Colors:
         del styles
         del reset
         return text
+
+
+class FailSaveLogStream():
+
+    def __init__(self, debug: bool = False) -> None:
+        self.debug = debug
+
+    def write(self, text: str) -> None:
+        sys.stdout.write(text)
+
+    def flush(self) -> None:
+        try:
+            sys.stdout.flush()
+        except BrokenPipeError:
+            sys.stdout = sys.stderr
+            self.activate_format()
+            logging.error("unable to pipe output to logviewer!")
+
+    def activate_format(self) -> None:
+        Colors.stylize_func = True
+        root_logger = logging.getLogger()
+        root_logger.handlers.clear()
+        root_logger.addHandler(RichHandler(
+            highlighter=NullHighlighter(),
+            markup=False,
+            rich_tracebacks=True,
+            enable_link_path=self.debug,
+            show_path=self.debug
+        ))
 
 
 class PlainJsonFormatter(jsonlogger.JsonFormatter):

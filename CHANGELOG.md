@@ -9,9 +9,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- added configuration file for cmd arg defaults
+- added configuration file to configure default values
 - added info and PoC exploit for CVE-2023-25136
 - mosh - added more information for decrypted packet
+- added json logging format
 
 ### Fixed
 
@@ -21,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - set banner name only for server, not for client
+- when output is piped to another application, the logformat is switched to json
 
 
 ## [3.0.2] - 2023-02-14

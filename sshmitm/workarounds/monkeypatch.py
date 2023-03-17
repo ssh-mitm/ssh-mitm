@@ -18,7 +18,7 @@ def do_run(wrapped: Any, instance: Any, *args: Any, **kwargs: Any) -> Any:
     return wrapped(*args, **kwargs)
 
 
-def monkey_patch_thread() -> None:
+def patch_thread() -> None:
 
     @wrapt.patch_function_wrapper(threading.Thread, '__init__')  # type: ignore
     def thread_init(wrapped: Any, instance: Any, args: Any, kwargs: Any) -> None:

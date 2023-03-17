@@ -115,7 +115,7 @@ class SSHProxyServer:
             'transparen_mode': self.transparent
         }
 
-        if json_log:
+        if json_log or not sys.stdout.isatty():
             logging.info("ssh-mitm server info", extra={'serverinfo': log_data})
         else:
             print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
@@ -288,8 +288,11 @@ class SSHProxyServer:
                     thread.start()
                     self._threads.append(thread)
         except KeyboardInterrupt:
-            sys.stdout.write('\b\b\r')
-            sys.stdout.flush()
+            try:
+                sys.stdout.write('\b\b\r')
+                sys.stdout.flush()
+            except BrokenPipeError:
+                pass
             self.running = False
         finally:
             logging.info("[red]:exclamation: Shutting down server ...", extra={"markup": True})

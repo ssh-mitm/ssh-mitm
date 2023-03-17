@@ -2,6 +2,7 @@
 # More Information: https://rushter.com/blog/public-ssh-keys/
 
 import argparse
+import logging
 import sys
 
 import paramiko
@@ -79,7 +80,7 @@ def perform_cve_2023_25136(args: argparse.Namespace) -> bool:
     except paramiko.ssh_exception.AuthenticationException:
         return False
     except Exception:  # pylint: disable=broad-exception-caught
-        pass
+        logging.error("error executing check for CVE-2023-25136")
     return True
 
 
