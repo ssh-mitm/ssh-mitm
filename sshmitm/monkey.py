@@ -1,43 +1,37 @@
 import threading
-import logging
+from typing import Any
 import paramiko
-import wrapt
+import wrapt  # type: ignore
 from sshmitm.logging import THREAD_DATA
 
 
-def fullname(o):
-    klass = o.__class__
-    module = klass.__module__
-    if module == 'builtins':
-        return klass.__qualname__ # avoid outputs like 'builtins.str'
-    return module + '.' + klass.__qualname__
-
-
-def do_init(wrapped, instance, *args, **kwargs):
+def do_init(wrapped: Any, instance: Any, *args: Any, **kwargs: Any) -> Any:
     instance.session = getattr(THREAD_DATA, 'session', None)
     if instance.session is not None:
         instance.session.register_session_thread()
     wrapped(*args, **kwargs)
 
-def do_run(wrapped, instance, *args, **kwargs):
+
+def do_run(wrapped: Any, instance: Any, *args: Any, **kwargs: Any) -> Any:
     if instance.session is not None:
         instance.session.register_session_thread()
     return wrapped(*args, **kwargs)
 
-def monkey_patch_thread():
 
-    @wrapt.patch_function_wrapper(threading.Thread, '__init__')
-    def thread_init(wrapped, instance, args, kwargs):
+def monkey_patch_thread() -> None:
+
+    @wrapt.patch_function_wrapper(threading.Thread, '__init__')  # type: ignore
+    def thread_init(wrapped: Any, instance: Any, args: Any, kwargs: Any) -> None:
         do_init(wrapped, instance, *args, **kwargs)
 
-    @wrapt.patch_function_wrapper(threading.Thread, 'run')
-    def thread_run(wrapped, instance, args, kwargs) -> None:
+    @wrapt.patch_function_wrapper(threading.Thread, 'run')  # type: ignore
+    def thread_run(wrapped: Any, instance: Any, args: Any, kwargs: Any) -> None:
         do_run(wrapped, instance, *args, **kwargs)
 
-    @wrapt.patch_function_wrapper(paramiko.transport.Transport, 'run')
-    def transport_run(wrapped, instance, args, kwargs) -> None:
+    @wrapt.patch_function_wrapper(paramiko.transport.Transport, 'run')  # type: ignore
+    def transport_run(wrapped: Any, instance: Any, args: Any, kwargs: Any) -> None:
         do_run(wrapped, instance, *args, **kwargs)
 
-    @wrapt.patch_function_wrapper(threading.Timer, 'run')
-    def timer_run(wrapped, instance, args, kwargs) -> None:
+    @wrapt.patch_function_wrapper(threading.Timer, 'run')  # type: ignore
+    def timer_run(wrapped: Any, instance: Any, args: Any, kwargs: Any) -> None:
         do_run(wrapped, instance, *args, **kwargs)

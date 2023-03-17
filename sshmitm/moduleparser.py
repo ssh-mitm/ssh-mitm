@@ -26,6 +26,7 @@ import inspect
 from importlib import import_module
 
 from typing import (
+    cast,
     Any,
     List,
     Optional,
@@ -43,10 +44,11 @@ from colored.colored import attr, fg  # type: ignore
 from sshmitm.logging import Colors
 
 
-def load_module_from_entrypoint(name, entry_point_class):
+def load_module_from_entrypoint(name: str, entry_point_class: Type['BaseModule']) -> Optional[Type['BaseModule']]:
     for entry_point in pkg_resources.iter_entry_points(entry_point_class.__name__):
         if name in (entry_point.name, entry_point.module_name):
-            return entry_point.load()
+            return cast(Type[BaseModule], entry_point.load())
+    return None
 
 
 def load_module(entry_point_class: Type['BaseModule']) -> Type['argparse.Action']:
@@ -124,7 +126,7 @@ class AddArgumentMethod:
     def __init__(
         self,
         parser: "_ModuleArgumentParser",
-        container: argparse._ActionsContainer = None,
+        container: Optional[argparse._ActionsContainer] = None,
         config_section: Optional[str] = None
     ) -> None:
         self.parser = parser
@@ -135,10 +137,10 @@ class AddArgumentMethod:
         self._add_argument = self.container.add_argument
 
     def _get_dest(self, *args: Any, **kwargs: Any) -> Any:
-        dest_1 =  None
+        dest_1 = kwargs.get('dest')
         dest_2 = None
-        if kwargs.get('dest') is not None:
-            dest_1 = kwargs.get('dest').replace('_', '-')
+        if dest_1 is not None:
+            dest_1 = dest_1.replace('_', '-')
         if len(args) >= 1:
             dest_2 = args[0].lstrip(self.container.prefix_chars)
             dest_2 = dest_2.replace('_', '-')
@@ -169,17 +171,17 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
         self.exit_on_error = True
         self.config = configparser.ConfigParser()
         self.config.read(pkg_resources.resource_filename('sshmitm', 'data/default.ini'))
-        self.add_argument = AddArgumentMethod(self, self)
+        self.add_argument = AddArgumentMethod(self, self)  # type: ignore
 
     def error(self, message: str) -> None:  # type: ignore
         if self.exit_on_error:
             return
         super().error(message)
 
-    def add_argument_group(self, *args, **kwargs):
+    def add_argument_group(self, *args: Any, **kwargs: Any) -> argparse._ArgumentGroup:
         config_section = kwargs.pop('config_section', None)
         group = argparse._ArgumentGroup(self, *args, **kwargs)
-        group.add_argument = AddArgumentMethod(self, group, config_section)
+        group.add_argument = AddArgumentMethod(self, group, config_section)  # type: ignore
         self._action_groups.append(group)
         return group
 
@@ -386,17 +388,16 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
             if isinstance(default_value, str):
                 kwargs['default'] = load_module_from_entrypoint(default_value, baseclass)
         else:
-            arg_dest = self.add_argument._get_dest(*args, **kwargs)
+            arg_dest = self.add_argument._get_dest(*args, **kwargs)  # type: ignore
             if arg_dest and self.config.has_option(
                 self.config_section,
                 arg_dest
             ):
                 default_value = self.config.get(self.config_section, arg_dest)
                 if self.config.has_section(default_value):
-                    m, c = default_value.rsplit(":", 1)
-                    module = import_module(m)
-                    module_class = getattr(module, c)
-                    kwargs['default'] = module_class
+                    part_module, part_class = default_value.rsplit(":", 1)
+                    module = import_module(part_module)
+                    kwargs['default'] = getattr(module, part_class)
                 else:
                     kwargs['default'] = load_module_from_entrypoint(
                         default_value,

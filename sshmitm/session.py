@@ -65,7 +65,11 @@ class BaseSession(BaseModule):
     This class should be subclassed to provide custom session management functionality.
     """
 
-    def register_session_thread(self):
+    def __init__(self) -> None:
+        super().__init__()
+        self.sessionid = uuid4()
+
+    def register_session_thread(self) -> None:
         THREAD_DATA.session = self
 
 
@@ -128,7 +132,6 @@ class Session(BaseSession):
         :rtype: None
         """
         super().__init__()
-        self.sessionid = uuid4()
         self.register_session_thread()
         logging.info(
             "%s session %s created",

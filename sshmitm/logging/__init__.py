@@ -1,6 +1,7 @@
 from datetime import datetime, timezone
+import logging
 import threading
-from typing import Callable, Any, Optional
+from typing import Any, Dict
 from colored.colored import stylize  # type: ignore
 from rich._emoji_codes import EMOJI
 from pythonjsonlogger import jsonlogger
@@ -38,11 +39,11 @@ class Colors:
 
 class PlainJsonFormatter(jsonlogger.JsonFormatter):
 
-    def process_log_record(self, log_record: Any) -> Any:
+    def process_log_record(self, log_record: Dict[str, Any]) -> Dict[str, Any]:
         log_record['message'] = log_record['message'].strip()
         return log_record
 
-    def add_fields(self, log_record, record, message_dict):
+    def add_fields(self, log_record: Dict[str, Any], record: logging.LogRecord, message_dict: Dict[str, Any]) -> None:
         super().add_fields(log_record, record, message_dict)
         log_record['tid'] = threading.get_native_id()
         log_record['module'] = record.module

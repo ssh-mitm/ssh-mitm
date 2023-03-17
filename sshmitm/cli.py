@@ -35,7 +35,6 @@ are defined by the parser_func properties of the corresponding SubCommand instan
 
 from argparse import Namespace
 import logging
-import os
 import sys
 from typing import Callable
 
@@ -147,11 +146,12 @@ def main() -> None:
     subparsers.required = True
     for sc_name, sc_item in available_subcommands.items():
         sc_item.parser_func(
+            # TODO: fix 'config_section' argument for suparser not known to mypy
             subparsers.add_parser(
                 sc_name,
                 allow_abbrev=False,
                 help=sc_item.help,
-                config_section=sc_item.config_section
+                config_section=sc_item.config_section  # type: ignore
             )
         )
 
@@ -162,7 +162,6 @@ def main() -> None:
     if args.log_format == 'json':
         Colors.stylize_func = False
         root_logger.handlers.clear()
-        #sys.stdout = open(os.devnull, 'w', encoding='UTF-8')  # pylint: disable=consider-using-with
         log_handler = logging.StreamHandler(stream=sys.stdout)
         formatter = PlainJsonFormatter()  # type: ignore
         log_handler.setFormatter(formatter)
