@@ -23,6 +23,7 @@ import logging
 import argparse
 import configparser
 import inspect
+from importlib import import_module
 
 from typing import (
     Any,
@@ -54,9 +55,7 @@ def load_module(entry_point_class: Type['BaseModule']) -> Type['argparse.Action'
     class ModuleLoaderAction(argparse.Action):
         def __call__(self, parser: argparse.ArgumentParser, namespace: argparse.Namespace, values: Union[str, Sequence[Any], None], option_string: Optional[str] = None) -> None:
             if values:
-                entry_point_list = []
                 for entry_point in pkg_resources.iter_entry_points(entry_point_class.__name__):
-                    entry_point_list.append(entry_point.name)
                     if values in (entry_point.name, entry_point.module_name):
                         values = [entry_point.load()]
                         setattr(namespace, self.dest, values[0] if values else None)
@@ -123,8 +122,8 @@ class InvalidModuleArguments(BaseModuleError):
 class AddArgumentMethod:
 
     def __init__(
-        self, 
-        parser: "_ModuleArgumentParser", 
+        self,
+        parser: "_ModuleArgumentParser",
         container: argparse._ActionsContainer = None,
         config_section: Optional[str] = None
     ) -> None:
@@ -239,7 +238,7 @@ class BaseModule():
             cls._parser = _ModuleArgumentParser(
                 add_help=False,
                 description=cls.__name__,
-                config_section=cls.__name__
+                config_section=f"{cls.__module__}:{cls.__name__}"
             )
             cls.parser_arguments()
         if not cls._parser:
@@ -392,16 +391,23 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
                 self.config_section,
                 arg_dest
             ):
-                kwargs['default'] = load_module_from_entrypoint(
-                    self.config.get(
-                        self.config_section, 
-                        arg_dest
-                    ),
-                    baseclass
-                )
+                default_value = self.config.get(self.config_section, arg_dest)
+                if self.config.has_section(default_value):
+                    m, c = default_value.rsplit(":", 1)
+                    module = import_module(m)
+                    module_class = getattr(module, c)
+                    kwargs['default'] = module_class
+                else:
+                    kwargs['default'] = load_module_from_entrypoint(
+                        default_value,
+                        baseclass
+                    )
 
         if not inspect.isclass(baseclass) or not issubclass(baseclass, BaseModule):
-            logging.error('Baseclass %s mast be subclass of %s not %s', baseclass, BaseModule, type(baseclass))
+            logging.error(
+                'Baseclass %s must be subclass of %s not %s',
+                baseclass.__name__, BaseModule.__name__, type(baseclass).__name__
+            )
             raise ModuleError()
         # add "action" to new arguments
         kwargs['action'] = load_module(baseclass)

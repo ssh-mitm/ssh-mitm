@@ -160,6 +160,7 @@ def main() -> None:
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
     if args.log_format == 'json':
+        Colors.stylize_func = False
         root_logger.handlers.clear()
         #sys.stdout = open(os.devnull, 'w', encoding='UTF-8')  # pylint: disable=consider-using-with
         log_handler = logging.StreamHandler(stream=sys.stdout)
@@ -176,6 +177,8 @@ def main() -> None:
             enable_link_path=args.debug,
             show_path=args.debug
         ))
+    else:
+        Colors.stylize_func = False
 
     if not args.disable_workarounds:
         monkey_patch_thread()

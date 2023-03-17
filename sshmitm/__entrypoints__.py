@@ -1,6 +1,15 @@
 from typing import Dict, List
 
 entry_points: Dict[str, List[str]] = {
+    'BaseSession': [
+        'base = sshmitm.session:Session'
+    ],
+    'Authenticator': [
+        'passthrough = sshmitm.authentication:AuthenticatorPassThrough'
+    ],
+    'BaseServerInterface': [
+        'base = sshmitm.interfaces.server:ServerInterface'
+    ],
     'SSHBaseForwarder': [
         'base = sshmitm.forwarders.ssh:SSHForwarder',
         'mirrorshell = sshmitm.plugins.ssh.mirrorshell:SSHMirrorForwarder',
@@ -32,17 +41,5 @@ entry_points: Dict[str, List[str]] = {
         'socks = sshmitm.plugins.tunnel.socks:SOCKSTunnelForwarder',
         'socks4 = sshmitm.plugins.tunnel.socks4:SOCKS4TunnelForwarder',
         'socks5 = sshmitm.plugins.tunnel.socks5:SOCKS5TunnelForwarder'
-    ],
-    'BaseServerInterface': [
-        'base = sshmitm.interfaces.server:ServerInterface'
-    ],
-    'BaseSSHProxyManager': [
-        'base = sshmitm.interfaces.server:SSHProxyManager'
-    ],
-    'Authenticator': [
-        'passthrough = sshmitm.authentication:AuthenticatorPassThrough'
-    ],
-    'BaseSession': [
-        'base = sshmitm.session:Session'
     ]
 }

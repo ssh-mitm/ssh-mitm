@@ -11,7 +11,7 @@ THREAD_DATA = threading.local()
 
 class Colors:
 
-    stylize_func: bool = False
+    stylize_func: bool = True
 
     @classmethod
     def emoji(cls, name: str) -> str:
