@@ -288,14 +288,16 @@ class SSHProxyServer:
                     thread.start()
                     self._threads.append(thread)
         except KeyboardInterrupt:
-            try:
+            self.running = False
+            if sys.stdout.isatty():
                 sys.stdout.write('\b\b\r')
                 sys.stdout.flush()
-            except BrokenPipeError:
-                pass
-            self.running = False
         finally:
-            logging.info("[red]:exclamation: Shutting down server ...", extra={"markup": True})
+            logging.info(
+                "%s %s",
+                Colors.emoji('exclamation'),
+                Colors.stylize("Shutting down server ...", fg('red'))
+            )
             sock.close()
             for thread in self._threads[:]:
                 thread.join()

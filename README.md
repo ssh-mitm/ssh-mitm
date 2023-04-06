@@ -1,7 +1,3 @@
-[![en](https://img.shields.io/badge/lang-en-blue.svg)](https://github.com/ssh-mitm/ssh-mitm/blob/master/README.md)
-[![en](https://img.shields.io/badge/lang-zh-red.svg)](https://github.com/ssh-mitm/ssh-mitm/blob/master/README.zh-cn.md)
-
-
 <div id="top" align="center">
 <img src="https://github.com/ssh-mitm/ssh-mitm/raw/master/doc/images/ssh-mitm-logo.png" width="200"><br/>
 </div>
