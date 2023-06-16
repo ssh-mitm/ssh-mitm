@@ -1,11 +1,21 @@
 """
 The module provides a set of classes for implementing SSH-MITM clients in Python.
 
-The AuthenticationMethod class is a helper class that provides different methods for authentication to a remote ssh server. It provides methods for authentication using passwords, private key files, and key-pair certificates. This class makes it easy to use different authentication methods in a consistent manner.
+The AuthenticationMethod class is a helper class that provides different methods
+for authentication to a remote ssh server. It provides methods for authentication
+using passwords, private key files, and key-pair certificates. This class makes
+it easy to use different authentication methods in a consistent manner.
 
-The BaseSSHClient class is an abstract class that provides the basic functionality for an ssh client. This class provides methods to connect to a remote server, create and use secure shell channels, and execute commands on the remote server. It is designed to be extended and customized for specific use cases.
+The BaseSSHClient class is an abstract class that provides the basic functionality
+for an ssh client. This class provides methods to connect to a remote server, create
+and use secure shell channels, and execute commands on the remote server.
+It is designed to be extended and customized for specific use cases.
 
-The SSHClient class is a concrete implementation of the BaseSSHClient class. This class provides a high-level API for connecting to remote servers and performing operations over ssh. It uses the Paramiko library under the hood to handle the underlying ssh connectivity. This class makes it easy to connect to remote servers, execute commands, and transfer files.
+The SSHClient class is a concrete implementation of the BaseSSHClient class.
+This class provides a high-level API for connecting to remote servers and
+performing operations over ssh. It uses the Paramiko library under the hood
+to handle the underlying ssh connectivity. This class makes it easy to connect
+to remote servers, execute commands, and transfer files.
 """
 
 import logging
@@ -118,7 +128,11 @@ class SSHClient(BaseSSHClient):
                         raise NoAgentKeys()
                     for k in keys:
                         try:
-                            self.transport.connect(username=self.user, password=self.password, pkey=k)
+                            self.transport.connect(
+                                username=self.user,
+                                password=self.password,
+                                pkey=k
+                            )
                             ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
                             ssh_pub_key.parse()
                             logging.debug(

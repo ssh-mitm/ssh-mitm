@@ -38,7 +38,7 @@ from typing import (
     Union
 )
 
-import argcomplete  # type: ignore
+import argcomplete
 import pkg_resources
 from colored.colored import attr, fg  # type: ignore
 from sshmitm.logging import Colors
