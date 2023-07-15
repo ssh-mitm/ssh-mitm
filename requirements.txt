@@ -14,7 +14,7 @@ cffi==1.15.1
     #   pynacl
 colored==1.4.4
     # via ssh-mitm (setup.py)
-cryptography==41.0.1
+cryptography==41.0.2
     # via
     #   paramiko
     #   sshpubkeys
