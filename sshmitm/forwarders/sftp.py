@@ -1,5 +1,6 @@
 import logging
 from typing import (
+    TYPE_CHECKING,
     Optional,
     Union,
     Type,
@@ -11,6 +12,9 @@ import paramiko
 import sshmitm
 from sshmitm.moduleparser import BaseModule
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
+
+if TYPE_CHECKING:
+    from _typeshed import ReadableBuffer
 
 
 class SFTPHandlerBasePlugin(BaseModule):
@@ -68,8 +72,11 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         data = self.readfile.read(length)
         return self.plugin.handle_data(data, length=length)
 
-    def write(self, offset: int, data: bytes) -> int:
+    def write(self, offset: int, data: 'ReadableBuffer') -> int:
         logging.debug("W_OFFSET: %s", offset)
+        if not isinstance(data, bytes):
+            logging.error('SFTPBaseHandle.write got invalid argument!')
+            return paramiko.sftp.SFTP_FAILURE
         data = self.plugin.handle_data(data, offset=offset)
         if self.writefile is None:
             return paramiko.sftp.SFTP_FAILURE

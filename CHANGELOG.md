@@ -18,6 +18,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added workarround for git to avoid unexpected session termination when EOF was reveived
 - added fix for GitHub git operations
+- fixes #136 - set paramiko version to >=3,<3.2 to fix private api changes in paramiko
 
 ### Changed
 
