@@ -92,6 +92,11 @@ OpenSSH:
     - ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*
   vulnerabilities:
     CVE-2023-25136:
+      version_max: 9.3
+      cvss: N/A
+      docs: true
+      description: remote code execution in ssh-agent
+    CVE-2023-25136:
       version_min: 9.1
       version_max: 9.1
       cvss: 9.8

@@ -26,6 +26,7 @@ Vulnerabilities
 .. toctree::
    :maxdepth: 1
 
+   CVE-2023-38408
    CVE-2023-25136
    CVE-2021-36368
    CVE-2020-15778
