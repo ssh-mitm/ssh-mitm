@@ -1,6 +1,6 @@
 import argparse
 
-from sshmitm.__version__ import version as ssh_mitm_version
+from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.server import SSHProxyServer
 

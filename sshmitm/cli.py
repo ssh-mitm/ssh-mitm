@@ -46,7 +46,7 @@ from rich.highlighter import NullHighlighter
 from sshmitm.logging import PlainJsonFormatter, Colors, FailSaveLogStream
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import transport, monkeypatch
-from sshmitm.__version__ import version as ssh_mitm_version
+from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.server.cli import init_server_parser, run_server
 from sshmitm.audit.cli import init_audit_parser, run_audit
 

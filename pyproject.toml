@@ -1,0 +1,111 @@
+[build-system]
+requires = ["setuptools>=61.2"]
+build-backend = "setuptools.build_meta"
+
+[project]
+name = "ssh-mitm"
+dynamic = ["version"]
+authors = [
+    {name = "SSH-MITM Dev-Team", email = "support@ssh-mitm.at"}
+]
+maintainers = [
+  {name = "Manfred Kaiser", email = "manfred.kaiser@ssh-mitm.at"}
+]
+description = "ssh mitm server for security audits supporting publickey authentication, session hijacking and file manipulation"
+readme = "README.md"
+license = {file = "LICENSE"}
+keywords = [
+    "ssh",
+    "proxy",
+    "mitm",
+    "network",
+    "security",
+    "audit",
+]
+classifiers = [
+    "Programming Language :: Python :: 3",
+    "Programming Language :: Python :: 3.8",
+    "Programming Language :: Python :: 3.9",
+    "Programming Language :: Python :: 3.10",
+    "Programming Language :: Python :: 3.11",
+    "License :: OSI Approved :: GNU General Public License v3 (GPLv3)",
+    "Topic :: System :: Networking",
+    "Development Status :: 5 - Production/Stable",
+]
+requires-python = ">= 3.8"
+dependencies = [
+    "argcomplete",
+    "paramiko>=3,<3.2",
+    "pytz",
+    "sshpubkeys",
+    "pyyaml",
+    "packaging",
+    "colored",
+    "rich",
+    "python-json-logger",
+    "wrapt",
+]
+
+[project.urls]
+Homepage = "https://www.ssh-mitm.at"
+Documentation = "https://docs.ssh-mitm.at"
+Changelog = "https://github.com/ssh-mitm/ssh-mitm/blob/master/CHANGELOG.md"
+Source = "https://github.com/ssh-mitm/ssh-mitm"
+Tracker = "https://github.com/ssh-mitm/ssh-mitm/issues"
+
+[project.scripts]
+ssh-mitm = "sshmitm.cli:main"
+ssh-mitm-askpass = "sshmitm.tools.askpass:main"
+
+[project.entry-points."BaseSession"]
+base = "sshmitm.session:Session"
+
+[project.entry-points."Authenticator"]
+passthrough = "sshmitm.authentication:AuthenticatorPassThrough"
+
+[project.entry-points."BaseServerInterface"]
+base = "sshmitm.interfaces.server:ServerInterface"
+
+[project.entry-points."SSHBaseForwarder"]
+base = "sshmitm.forwarders.ssh:SSHForwarder"
+mirrorshell = "sshmitm.plugins.ssh.mirrorshell:SSHMirrorForwarder"
+noshell = "sshmitm.plugins.ssh.noshell:NoShellForwarder"
+
+[project.entry-points."SCPBaseForwarder"]
+base = "sshmitm.forwarders.scp:SCPForwarder"
+debug_traffic = "sshmitm.plugins.scp.debug_traffic:SCPDebugForwarder"
+inject_file = "sshmitm.plugins.scp.inject_file:SCPInjectFile"
+replace_file = "sshmitm.plugins.scp.replace_file:SCPReplaceFile"
+store_file = "sshmitm.plugins.scp.store_file:SCPStorageForwarder"
+replace-command = "sshmitm.plugins.scp.rewrite_command:SCPRewriteCommand"
+CVE-2022-29154 = "sshmitm.plugins.scp.cve202229154:CVE202229154"
+
+[project.entry-points."BaseSFTPServerInterface"]
+base = "sshmitm.interfaces.sftp:SFTPProxyServerInterface"
+
+[project.entry-points."SFTPHandlerBasePlugin"]
+base = "sshmitm.forwarders.sftp:SFTPHandlerPlugin"
+replace_file = "sshmitm.plugins.sftp.replace_file:SFTPProxyReplaceHandler"
+store_file = "sshmitm.plugins.sftp.store_file:SFTPHandlerStoragePlugin"
+
+[project.entry-points."RemotePortForwardingBaseForwarder"]
+base = "sshmitm.forwarders.tunnel:RemotePortForwardingForwarder"
+inject = "sshmitm.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardingForwarder"
+
+[project.entry-points."LocalPortForwardingBaseForwarder"]
+base = "sshmitm.forwarders.tunnel:LocalPortForwardingForwarder"
+socks = "sshmitm.plugins.tunnel.socks:SOCKSTunnelForwarder"
+socks4 = "sshmitm.plugins.tunnel.socks4:SOCKS4TunnelForwarder"
+socks5 = "sshmitm.plugins.tunnel.socks5:SOCKS5TunnelForwarder"
+
+[tool.setuptools]
+include-package-data = false
+
+[tool.setuptools.dynamic]
+version = {attr = "sshmitm.__version__"}
+
+[tool.setuptools.packages]
+find = {namespaces = false}
+
+[tool.setuptools.package-data]
+sshmitm = ["data/*.*"]

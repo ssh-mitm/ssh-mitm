@@ -22,7 +22,7 @@ from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key, PKey
 from paramiko.ssh_exception import SSHException
 from sshpubkeys import SSHKey  # type: ignore
 
-from sshmitm.__version__ import version as ssh_mitm_version
+from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.logging import Colors
 from sshmitm.console import sshconsole
 from sshmitm.multisocket import (
