@@ -109,3 +109,30 @@ find = {namespaces = false}
 
 [tool.setuptools.package-data]
 sshmitm = ["data/*.*"]
+
+[tool.flake8]
+ignore = ["E501", "W503"]
+
+[tool.mypy]
+files = [
+  "sshmitm"
+]
+strict = true
+
+[tool.pylint]
+disable = [
+    "duplicate-code",
+    "line-too-long",
+    "missing-module-docstring",
+    "missing-class-docstring",
+    "missing-function-docstring",
+    "fixme",
+    "too-few-public-methods",
+    "too-many-branches",
+    "too-many-instance-attributes",
+    "too-many-arguments",
+    "too-many-statements",
+    "too-many-locals",
+    "protected-access",
+    "too-many-return-statements"
+]
