@@ -36,4 +36,4 @@ jobs:
         pylint sshmitm
     - name: Lint wiht mypy
       run: |
-        mypy
+        mypy --install-types --non-interactive
