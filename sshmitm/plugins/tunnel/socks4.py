@@ -100,10 +100,10 @@ class Socks4Server():
             reply = Socks4CommandReply.SUCCESS
 
         clientsock.sendall(
-            b"\x00" +
-            reply +
-            self.server_port +
-            self.server_ip
+            b"\x00"
+            + reply
+            + self.server_port
+            + self.server_ip
         )
         return address
 

@@ -414,26 +414,26 @@ class Authenticator(BaseModule):
             if self.session.agent:
                 logging.error("\n".join([
                     Colors.stylize(
-                        Colors.emoji('exclamation') +
-                        " ssh agent keys are not allowed for signing. Remote authentication not possible.",
+                        Colors.emoji('exclamation')
+                        + " ssh agent keys are not allowed for signing. Remote authentication not possible.",
                         fg('red') + attr('bold')
                     ),
                     Colors.stylize(
-                        Colors.emoji('information') +
-                        " To intercept clients, you can provide credentials for a honeypot.",
+                        Colors.emoji('information')
+                        + " To intercept clients, you can provide credentials for a honeypot.",
                         fg('yellow') + attr('bold')
                     )
                 ]))
             else:
                 logging.error("\n".join([
                     Colors.stylize(
-                        Colors.emoji('exclamation') +
-                        " ssh agent not forwarded. Login to remote host not possible with publickey authentication.",
+                        Colors.emoji('exclamation')
+                        + " ssh agent not forwarded. Login to remote host not possible with publickey authentication.",
                         fg('red') + attr('bold')
                     ),
                     Colors.stylize(
-                        Colors.emoji('information') +
-                        " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.",
+                        Colors.emoji('information')
+                        + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.",
                         fg('yellow') + attr('bold')
                     )
                 ]))

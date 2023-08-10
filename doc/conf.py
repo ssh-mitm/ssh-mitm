@@ -74,8 +74,8 @@ html_theme_options = {
             "url": "https://defcon.social/@sshmitm",
             "icon": "fa-brands fa-mastodon",
             "attributes": {
-               "target" : "_blank",
-               "rel" : "noopener me"
+                "target": "_blank",
+                "rel": "noopener me"
             }
         }
     ],

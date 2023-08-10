@@ -1,5 +1,2 @@
-User-agent: GPTBot
-Disallow: /
-
 User-agent: *
 Sitemap: https://docs.ssh-mitm.at/sitemap-docs.xml

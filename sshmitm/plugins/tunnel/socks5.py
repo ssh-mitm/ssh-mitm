@@ -196,12 +196,12 @@ class Socks5Server():
             reply = Socks5CommandReply.SUCCESS
 
         clientsock.sendall(
-            Socks5Server.SOCKSVERSION +
-            reply +
-            b"\x00" +
-            Socks5AddressType.IPv4 +
-            self.server_ip +
-            self.server_port
+            Socks5Server.SOCKSVERSION
+            + reply
+            + b"\x00"
+            + Socks5AddressType.IPv4
+            + self.server_ip
+            + self.server_port
         )
         return address
 
