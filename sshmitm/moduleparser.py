@@ -427,7 +427,7 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
             return argparse.Namespace()
         return args_namespace
 
-    def parse_known_args(
+    def parse_known_args(  # type: ignore
         self,
         args: Optional[Sequence[str]] = None,
         namespace: Optional[argparse.Namespace] = None
