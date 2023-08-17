@@ -107,6 +107,23 @@ include = [
     "sshmitm/data/*.*",
 ]
 
+[tool.hatch.envs.lint]
+detached = false
+dependencies = [
+    "flake8",
+    "Flake8-pyproject",
+    "mypy",
+    "pylint",
+]
+
+[tool.hatch.envs.lint.scripts]
+check = [
+    "flake8",
+    "mypy --install-types --non-interactive",
+    "pylint sshmitm",
+]
+
+
 [tool.flake8]
 ignore = ["E501", "W503"]
 
