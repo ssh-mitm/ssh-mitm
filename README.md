@@ -71,16 +71,23 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 ## Installation
 
-**SSH-MITM** can be installed as a [Ubuntu Snap](https://snapcraft.io/ssh-mitm), [PIP-Package](https://pypi.org/project/ssh-mitm/), [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest), [Nix](https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm) and even runs on **[Android devices](https://github.com/ssh-mitm/ssh-mitm/discussions/83#discussioncomment-1531873)**
+**SSH-MITM** can be installed as a [Ubuntu Snap](https://snapcraft.io/ssh-mitm), [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest) and [PIP-Package](https://pypi.org/project/ssh-mitm/).
+
+Community-supported options include installations via `[Nix](https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm) and running on [Android devices](https://github.com/ssh-mitm/ssh-mitm/discussions/83#discussioncomment-1531873).
+
 
     # install ssh-mitm as snap package
     $ sudo snap install ssh-mitm
 
+    # install ssh-mitm as AppImage
+    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    $ chmod +x ssh-mitm*.AppImage
+
     # install ssh-mitm as python pip package
     $ python3 -m pip install ssh-mitm
 
-    # install as Nix package
-    $ nix-env -iA nixos.ssh-mitm
+For more installation methods, refer to the [SSH-MITM installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
+
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

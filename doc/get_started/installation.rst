@@ -1,3 +1,4 @@
+======================================
 :fas:`cloud-download-alt` Installation
 ======================================
 
@@ -11,6 +12,13 @@ Windows and package managers such as ``snap``, ``pip``, ``pipenv``, ``AppImage``
 These options provide a simple and efficient way for users to get SSH-MITM installed
 and ready to use for various purposes such as malware analysis, forensics, security audits, and more.
 
+Official distributions
+======================
+
+Official distributions of SSH-MITM represent the most recent and up-to-date versions of the software,
+directly maintained and approved by the SSH-MITM developers. These are the releases that see regular updates,
+ensuring users have access to the latest features, security patches, and improvements.
+
 :fab:`ubuntu` snap
 ------------------
 
@@ -19,6 +27,18 @@ If you use ``snap``, you can install it with:
 .. code-block:: none
 
     $ sudo snap install ssh-mitm
+
+
+:fas:`cog` AppImage
+-------------------
+
+If you use the ``AppImage``, you can install it as:
+
+.. code:: none
+
+    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    $ chmod +x ssh-mitm*.AppImage
+
 
 :fab:`windows` Windows
 -----------------------
@@ -73,16 +93,13 @@ Alternatively, you can run ``ssh-mitm server`` inside the virtualenv with
     $ pipenv run ssh-mitm server
 
 
-:fas:`cog` AppImage
--------------------
+Community supported distributions
+=================================
 
-If you use the ``AppImage``, you can install it as:
-
-.. code:: none
-
-    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-    $ chmod +x ssh-mitm*.AppImage
-
+Community supported distributions of SSH-MITM, while immensely valuable, might not always be as current as the official ones.
+These versions are maintained by the broader community and can sometimes lag behind in incorporating the latest updates.
+They might offer unique configurations or adaptations tailored to specific needs, but there could be a trade-off in terms
+of having the most recent enhancements.
 
 :fas:`box` Nixpkgs
 ------------------
@@ -95,7 +112,7 @@ available. The lastest release is usually present in the ``unstable`` channel.
     $ nix-env -iA nixos.ssh-mitm
 
 Installation problems
----------------------
+=====================
 
 If your computer is behind corporate proxy or firewall, you may encounter
 HTTP and SSL errors due to the proxy or firewall blocking connections to widely-used servers.
