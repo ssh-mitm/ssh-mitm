@@ -1,3 +1,5 @@
+.. _sshmitminstall:
+
 ======================================
 :fas:`cloud-download-alt` Installation
 ======================================

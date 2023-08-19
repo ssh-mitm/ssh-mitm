@@ -36,23 +36,6 @@ If you use ``snap``, you can install it with:
 
     $ sudo snap install ssh-mitm
 
-:fab:`windows` Windows
------------------------
-
-If you use ``Windows``, you can download SSH-MITM and start it from the cmd.
-
-:fas:`file-download` `Download Windows executable <https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm.exe>`_
-
-
-:fab:`python` pip
-------------------
-
-If you use ``pip``, you can install it with:
-
-.. code-block:: none
-
-    $ python3 -m pip install ssh-mitm
-
 
 :fas:`cog` AppImage
 -------------------
@@ -65,15 +48,18 @@ If you use the ``AppImage``, you can install it as:
     $ chmod +x ssh-mitm*.AppImage
 
 
-:fas:`box` Nixpkgs
+:fab:`python` pip
 ------------------
 
-For Nix or NixOS is a `package <https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm>`_
-available. The lastest release is usually present in the ``unstable`` channel.
+If you use ``pip``, you can install it with:
 
 .. code-block:: none
 
-    $ nix-env -iA nixos.ssh-mitm
+    $ python3 -m pip install ssh-mitm
+
+
+For more installation methods, refer to the  :doc:`installation guide </get_started/installation>`.
+
 
 Start SSH-MITM
 ==============
