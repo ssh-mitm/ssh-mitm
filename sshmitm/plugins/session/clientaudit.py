@@ -255,7 +255,8 @@ class SSHClientAudit():
             Colors.stylize(Colors.emoji('information') + " client information:", fg('blue') + attr('bold')),
             f"  - client version: {Colors.stylize(self.client_version, fg('green') + attr('bold'))}",
             f"  - product name: {self.product_name}",
-            f"  - vendor url:  {self.vendor_url}"
+            f"  - vendor url:  {self.vendor_url}",
+            f" - client address: ip={self.key_negotiation_data.session.client_address[0]} port={self.key_negotiation_data.session.client_address[1]}"
         ])
 
         cvemessagelist = self.check_cves(vulnerabilities)
@@ -275,7 +276,18 @@ class SSHClientAudit():
                     "\n".join([f"  * {v}" for v in client_audits])
                 ])
             )
-        logging.info("%s", "\n".join(log_output))
+        logging.info(
+            "%s", "\n".join(log_output),
+            extra={
+                'client_version': self.client_version,
+                'product_name': self.product_name,
+                'vendor_url': self.vendor_url,
+                'client_address': {
+                    'ip': self.key_negotiation_data.session.client_address[0],
+                    'port': self.key_negotiation_data.session.client_address[1]
+                }
+            }
+        )
 
     def audit(self) -> List[str]:
         """

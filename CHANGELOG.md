@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added info and PoC exploit for CVE-2023-25136
 - mosh - added more information for decrypted packet
 - added json logging format
+- added client ip and port to client information #145
 
 ### Fixed
 

@@ -136,7 +136,7 @@ def main() -> None:
     parser.add_argument(
         '--log-format',
         dest='log_format',
-        default="richtext",
+        default="text",
         choices=['text', 'json'],
         help='defines the log output format (json will suppress stdout)'
     )
