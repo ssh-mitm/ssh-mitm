@@ -14,7 +14,8 @@ tar --use-compress-program=unzstd -xvf build/python.tar.zst -C build/appimage/Ap
 
 build/appimage/AppDir/python/bin/python3 -m pip install .
 
-cp appimage/AppRun build/appimage/AppDir/
+# install files in AppDir
+ln -s python/bin/ssh-mitm build/appimage/AppDir/AppRun
 cp appimage/ssh-mitm* build/appimage/AppDir/
 
 # detect machine's architecture
