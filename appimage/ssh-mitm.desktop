@@ -1,0 +1,7 @@
+[Desktop Entry]
+Type=Application
+Name=SSH-MITM
+Icon=ssh-mitm
+Categories=Network;
+Terminal=true
+X-AppImage-Version=0.1.09

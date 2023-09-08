@@ -123,6 +123,13 @@ check = [
     "pylint sshmitm",
 ]
 
+[tool.hatch.envs.appimage]
+detached = false
+
+[tool.hatch.envs.appimage.scripts]
+build = [
+    "appimage/build.sh",
+]
 
 [tool.flake8]
 ignore = ["E501", "W503"]
