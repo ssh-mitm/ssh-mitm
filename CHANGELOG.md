@@ -25,6 +25,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - set banner name only for server, not for client
 - when output is piped to another application, the logformat is switched to json
+- changed build system to hatch
+- create AppImage with appimagetool instead of AppImage-Builder
+
+### Removed
+
+- removed support for Python 3.7
+- removed official support for Windows
 
 
 ## [3.0.2] - 2023-02-14

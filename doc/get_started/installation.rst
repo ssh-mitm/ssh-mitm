@@ -6,10 +6,10 @@
 
 Installing SSH-MITM is the first step to leveraging its capabilities for your technical projects.
 This guide will provide you with the information and resources you need to get SSH-MITM up and
-running on your system, whether it be **Linux** or **Windows**.
+running on your system.
 
-SSH-MITM offers flexible and convenient installation options, including pre-built packages for
-Windows and package managers such as ``snap``, ``pip``, ``pipenv``, ``AppImage`` or ``Nixpkgs``.
+SSH-MITM offers flexible and convenient installation options, including pre-built packages
+and package managers such as ``snap``, ``pip``, ``pipenv``, ``AppImage`` or ``Nixpkgs``.
 
 These options provide a simple and efficient way for users to get SSH-MITM installed
 and ready to use for various purposes such as malware analysis, forensics, security audits, and more.
@@ -41,13 +41,6 @@ If you use the ``AppImage``, you can install it as:
     $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
     $ chmod +x ssh-mitm*.AppImage
 
-
-:fab:`windows` Windows
------------------------
-
-If you use ``Windows``, you can download SSH-MITM and start it from the cmd.
-
-:fas:`file-download` `Download Windows executable <https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm.exe>`_
 
 
 :fab:`python` pip
@@ -138,12 +131,6 @@ Alternatively, you can specify a proxy user (usually a domain user with password
 that is allowed to communicate via network. This can be easily achieved
 by setting two common environment variables: ``HTTP_PROXY`` and ``HTTPS_PROXY``.
 These variables are automatically used by many open-source tools (like ``pip``) if set correctly.
-
-.. code:: none
-
-    # For Windows
-    set HTTP_PROXY=http://USER:PWD@proxy.company.com:PORT
-    set HTTPS_PROXY=https://USER:PWD@proxy.company.com:PORT
 
 .. code:: none
 
