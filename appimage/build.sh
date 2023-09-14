@@ -7,12 +7,12 @@ fi
 
 mkdir -p build/appimage/AppDir
 
-if [ ! -x build/python.tar.zst ]; then
+if [ ! -f build/python.tar.zst ]; then
   curl -L -o build/python.tar.zst  https://github.com/indygreg/python-build-standalone/releases/download/20230726/cpython-3.11.4+20230726-x86_64_v2-unknown-linux-gnu-pgo+lto-full.tar.zst
 fi
 tar --use-compress-program=unzstd -xvf build/python.tar.zst -C build/appimage/AppDir --transform 's/python\/install/python/' python/install
 
-build/appimage/AppDir/python/bin/python3 -m pip install .
+build/appimage/AppDir/python/bin/python3 -m pip install -r requirements-dev.txt .
 
 # install files in AppDir
 ln -s python/bin/ssh-mitm build/appimage/AppDir/AppRun
@@ -27,4 +27,5 @@ if [ ! -x build/appimagetool-$ARCH.AppImage ]; then
 fi
 # the build command itself:
 mkdir -p dist
-build/appimagetool-$ARCH.AppImage build/appimage/AppDir dist/ssh-mitm-x86_64.AppImage 
+cd dist
+../build/appimagetool-$ARCH.AppImage -u "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync" ../build/appimage/AppDir ssh-mitm-x86_64.AppImage 
