@@ -21,7 +21,6 @@ implementation specific and should not be used in production applications.
 
 import logging
 import argparse
-import configparser
 import inspect
 from importlib import import_module
 
@@ -41,6 +40,7 @@ from typing import (
 import argcomplete
 import pkg_resources
 from colored.colored import attr, fg  # type: ignore
+from sshmitm.config import CONFIGFILE
 from sshmitm.logging import Colors
 
 
@@ -131,8 +131,6 @@ class AddArgumentMethod:
     ) -> None:
         self.parser = parser
         self.container = container or parser
-        self.config = configparser.ConfigParser()
-        self.config.read(pkg_resources.resource_filename('sshmitm', 'data/default.ini'))
         self.config_section = config_section or self.parser.config_section
         self._add_argument = self.container.add_argument
 
@@ -151,14 +149,14 @@ class AddArgumentMethod:
         arg_dest = self._get_dest(*args, **kwargs)
         arg_action = kwargs.get('action', 'store')
 
-        if self.config_section and not self.config.has_option(self.config_section, arg_dest) and arg_action != 'version':
+        if self.config_section and not CONFIGFILE.has_option(self.config_section, arg_dest) and arg_action != 'version':
             logging.error("Missing config value -  %s - %s (%s) = %s", self.config_section, arg_dest, arg_action, default_value)
 
-        if arg_dest and self.config.has_option(self.config_section, arg_dest) and self.config.get(self.config_section, arg_dest):
+        if arg_dest and CONFIGFILE.has_option(self.config_section, arg_dest) and CONFIGFILE.get(self.config_section, arg_dest):
             if arg_action in ('store', 'store_const'):
-                kwargs['default'] = self.config.get(self.config_section, arg_dest)
+                kwargs['default'] = CONFIGFILE.get(self.config_section, arg_dest)
             elif arg_action in ('store_true', 'store_false'):
-                kwargs['default'] = self.config.getboolean(self.config_section, arg_dest)
+                kwargs['default'] = CONFIGFILE.getboolean(self.config_section, arg_dest)
         return self._add_argument(*args, **kwargs)
 
 
@@ -169,8 +167,6 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
         self.config_section = kwargs.pop('config_section', None)
         super().__init__(*args, **kwargs)
         self.exit_on_error = True
-        self.config = configparser.ConfigParser()
-        self.config.read(pkg_resources.resource_filename('sshmitm', 'data/default.ini'))
         self.add_argument = AddArgumentMethod(self, self)  # type: ignore
 
     def error(self, message: str) -> None:  # type: ignore
@@ -389,12 +385,12 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
                 kwargs['default'] = load_module_from_entrypoint(default_value, baseclass)
         else:
             arg_dest = self.add_argument._get_dest(*args, **kwargs)  # type: ignore
-            if arg_dest and self.config.has_option(
+            if arg_dest and CONFIGFILE.has_option(
                 self.config_section,
                 arg_dest
             ):
-                default_value = self.config.get(self.config_section, arg_dest)
-                if self.config.has_section(default_value):
+                default_value = CONFIGFILE.get(self.config_section, arg_dest)
+                if CONFIGFILE.has_section(default_value):
                     part_module, part_class = default_value.rsplit(":", 1)
                     module = import_module(part_module)
                     kwargs['default'] = getattr(module, part_class)
