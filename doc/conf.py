@@ -50,11 +50,11 @@ html_theme_options = {
         "text": "SSH-MITM",
     },
     "github_url": "https://github.com/ssh-mitm/ssh-mitm",
-    "navbar_end": ["navbar-icon-links.html", "search-field.html"],
+    "navbar_end": ["navbar-icon-links.html"],
     "navbar_align": "left",
 
     "secondary_sidebar_items": ["page-toc", "edit-this-page"],
-    "footer_items": ["copyright"],
+    "footer_start": ["copyright"],
     "show_prev_next": False,
     "navigation_with_keys": False,
     "icon_links": [
@@ -98,6 +98,7 @@ html_permalinks = False
 html_baseurl = 'https://docs.ssh-mitm.at/'
 autosectionlabel_maxdepth = 1
 html_extra_path = ['robots.txt', '_static/codeberg-logo_icon_blue.svg']
+sitemap_filename = "sitemap-docs.xml"
 
 # -- CopyButton --------------------------------------------------------------
 
@@ -160,24 +161,7 @@ redirects = {
 
 
 # -- Helper functions ----------------------------------------------------------
-
-def create_sitemap(app, exception):
-    """Generates the sitemap.xml from the collected HTML page links"""
-    filename = app.outdir + "/sitemap-docs.xml"
-    print("Generating sitemap-docs.xml in %s" % filename)
-
-    root = ET.Element("urlset")
-    root.set("xmlns", "http://www.sitemaps.org/schemas/sitemap/0.9")
-
-    for link in app.sitemap_links:
-        url = ET.SubElement(root, "url")
-        ET.SubElement(url, "loc").text = html_baseurl + link
-
-    ET.ElementTree(root).write(filename)
-
-
 def setup(app):
-    app.connect('build-finished', create_sitemap)
     app.add_object_type(
         'confval',
         'confval',
