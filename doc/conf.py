@@ -15,7 +15,6 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 import datetime
-import xml.etree.ElementTree as ET
 from sphinx.util.docfields import TypedField
 
 # -- Project information -----------------------------------------------------
