@@ -8,8 +8,9 @@
   </a>
   <p align="center">ssh man-in-the-middle (ssh-mitm) server for security audits supporting<br> <b>publickey authentication</b>, <b>session hijacking</b> and <b>file manipulation</b></p>
   <p align="center">
+   <a href='https://flathub.org/apps/at.ssh_mitm.server'><img height='56' alt='Download on Flathub' src='https://dl.flathub.org/assets/badges/flathub-badge-en.png'/></a>
    <a href="https://snapcraft.io/ssh-mitm">
-     <img alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
+     <img  height='56' alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
    </a>
    <br />
    <br />
@@ -75,15 +76,22 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 Community-supported options include installations via `[Nix](https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm) and running on [Android devices](https://github.com/ssh-mitm/ssh-mitm/discussions/83#discussioncomment-1531873).
 
+Install from Flathub:
 
-    # install ssh-mitm as snap package
+    $ flatpak install flathub at.ssh_mitm.server
+    $ flatpak run at.ssh_mitm.server
+
+Install from Snap store:
+
     $ sudo snap install ssh-mitm
 
-    # install ssh-mitm as AppImage
+Install as AppImage:
+
     $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
     $ chmod +x ssh-mitm*.AppImage
 
-    # install ssh-mitm as python pip package
+Install python package:
+
     $ python3 -m pip install ssh-mitm
 
 For more installation methods, refer to the [SSH-MITM installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
