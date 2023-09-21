@@ -22,6 +22,7 @@ directly maintained and approved by the SSH-MITM developers. These are the relea
 ensuring users have access to the latest features, security patches, and improvements.
 
 :fab:`linux` Flatpak
+--------------------
 
 Install SSH-MITM as Flatpak from Flathub:
 
