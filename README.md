@@ -78,21 +78,21 @@ Community-supported options include installations via `[Nix](https://search.nixo
 
 Install from Flathub:
 
-    $ flatpak install flathub at.ssh_mitm.server
-    $ flatpak run at.ssh_mitm.server
+    flatpak install flathub at.ssh_mitm.server
+    flatpak run at.ssh_mitm.server
 
 Install from Snap store:
 
-    $ sudo snap install ssh-mitm
+    sudo snap install ssh-mitm
 
 Install as AppImage:
 
-    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-    $ chmod +x ssh-mitm*.AppImage
+    wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    chmod +x ssh-mitm*.AppImage
 
 Install python package:
 
-    $ python3 -m pip install ssh-mitm
+    python3 -m pip install ssh-mitm
 
 For more installation methods, refer to the [SSH-MITM installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
 
@@ -103,11 +103,11 @@ For more installation methods, refer to the [SSH-MITM installation guide](https:
 
 To start SSH-MITM, all you have to do is run this command in your terminal of choice.
 
-    $ ssh-mitm server --remote-host 192.168.0.x
+    ssh-mitm server --remote-host 192.168.0.x
 
 Now let's try to connect. SSH-MITM is listening on port 10022.
 
-    $ ssh -p 10022 testuser@proxyserver
+    ssh -p 10022 testuser@proxyserver
 
 You will see the credentials in the log output.
 
@@ -128,7 +128,7 @@ When a client connects, the ssh-mitm starts a new server, which is used for sess
 
 To hijack the session, you can use your favorite ssh client.
 
-    $ ssh -p 34463 127.0.0.1
+    ssh -p 34463 127.0.0.1
 
 Try to execute somme commands in the hijacked session or in the original session.
 
