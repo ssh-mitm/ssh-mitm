@@ -27,6 +27,19 @@ The first step to using any software package is getting it properly installed.
 
 To install SSH-MITM, simply run one of those commands in your terminal of choice:
 
+:fab:`linux` Flatpak
+
+Install SSH-MITM as Flatpak from Flathub:
+
+.. code-block:: none
+
+    # install Flatpak
+    $ flatpak install flathub at.ssh_mitm.server
+
+    # run SSH-MITM from Flatpak
+    $ flatpak run at.ssh_mitm.server
+    
+
 :fab:`ubuntu` snap
 ------------------
 
