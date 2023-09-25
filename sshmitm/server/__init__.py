@@ -61,7 +61,8 @@ class SSHProxyServer:
         authenticator: Type[Authenticator] = AuthenticatorPassThrough,
         transparent: bool = False,
         session_class: Type[Session] = Session,
-        banner_name: Optional[str] = None
+        banner_name: Optional[str] = None,
+        debug: bool = False
     ) -> None:
         self._threads: List[threading.Thread] = []
         self._hostkey: Optional[PKey] = None
@@ -89,6 +90,7 @@ class SSHProxyServer:
         self.transparent: bool = transparent
         self.session_class: Type[Session] = session_class
         self.banner_name: Optional[str] = banner_name
+        self.debug: bool = debug
 
         try:
             self.generate_host_key()
@@ -120,25 +122,46 @@ class SSHProxyServer:
         else:
             print('\33]0;SSH-MITM - ssh audits made simple\a', end='', flush=True)
             sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
-            rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
-            rich_print('[bold]License:[/bold] GNU General Public License v3.0')
+            if self.debug:
+                rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
+                rich_print('[bold]License:[/bold] GNU General Public License v3.0')
+            
             rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
             rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
-            sshconsole.rule(style="blue")
+            sshconsole.rule("[blue]Configuration", style="blue")
+
+            if os.environ.get('container'):
+                rich_print("[bold red]:exclamation: You are executing SSH-MITM as Flatpak")
+                rich_print("Without further configuration, SSH-MITM can only access Flatpaks default data directory")
+                app_data = os.path.expanduser( '~/.var/app/at.ssh_mitm.server/data/' )
+                folder_link = f"[link=file://{app_data}]{app_data}[/link]"
+                rich_print(f"[bold]Data directory:[/bold] {folder_link}")
+                rich_print(":light_bulb: If you need access to other files and directories, you can use [link=https://flathub.org/apps/com.github.tchx84.Flatseal]Flatseal[/link] to reconfigure SSH-MITM.")
+                sshconsole.rule(characters='.', style="bright_black")
+
+            rich_print("[bold blue]:key: SSH-Host-Keys:")
             print(
                 (
-                    "{keygeneration} {algorithm} key "  # pylint: disable=consider-using-f-string
-                    "with {bits} bit length and fingerprints:\n"
+                    "   {keygeneration} {algorithm} key with {bits} bit length\n"  # pylint: disable=consider-using-f-string
                     "   {md5}\n"
                     "   {sha256}\n"
-                    "   {sha512}\n"
-                    'listen interfaces {listen_address} and {listen_address_v6} on port {listen_port}'
+                    "   {sha512}"
+                    
                 ).format(
                     **log_data
                 )
             )
+            sshconsole.rule(characters='.', style="bright_black")
+            print(
+                '{servericon} listen interfaces {listen_address} and {listen_address_v6} on port {listen_port}'.format(
+                    **log_data,
+                    servericon=Colors.emoji('computer')
+                )
+            )
             if self.transparent:
-                print(f"{stylize('Transparent mode enabled!', attr('bold'))} (experimental)")
+                rich_print(":exclamation: Transparent mode enabled [red bold](experimental)" )
+            if self.debug:
+                rich_print("[bold red]:exclamation: Debug mode enabled")
             sshconsole.rule("[red]waiting for connections", style="red")
 
     def generate_host_key(self) -> None:

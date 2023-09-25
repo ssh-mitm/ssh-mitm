@@ -148,7 +148,8 @@ def run_server(args: argparse.Namespace) -> None:
         authentication_interface=args.auth_interface,
         authenticator=args.authenticator,
         transparent=args.transparent,
-        banner_name=args.banner_name
+        banner_name=args.banner_name,
+        debug=args.debug
     )
     proxy.print_serverinfo(args.log_format == 'json')
     proxy.start()
