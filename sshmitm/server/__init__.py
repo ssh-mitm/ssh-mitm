@@ -15,7 +15,7 @@ from typing import (
     Union
 )
 
-from colored import stylize, attr, fg  # type: ignore
+from colored import attr, fg  # type: ignore
 from rich import print as rich_print
 
 from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key, PKey
@@ -125,7 +125,7 @@ class SSHProxyServer:
             if self.debug:
                 rich_print(f'[bold]Version:[/bold] {ssh_mitm_version}')
                 rich_print('[bold]License:[/bold] GNU General Public License v3.0')
-            
+
             rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
             rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
             sshconsole.rule("[blue]Configuration", style="blue")
@@ -133,7 +133,7 @@ class SSHProxyServer:
             if os.environ.get('container'):
                 rich_print("[bold red]:exclamation: You are executing SSH-MITM as Flatpak")
                 rich_print("Without further configuration, SSH-MITM can only access Flatpaks default data directory")
-                app_data = os.path.expanduser( '~/.var/app/at.ssh_mitm.server/data/' )
+                app_data = os.path.expanduser('~/.var/app/at.ssh_mitm.server/data/')
                 folder_link = f"[link=file://{app_data}]{app_data}[/link]"
                 rich_print(f"[bold]Data directory:[/bold] {folder_link}")
                 rich_print(":light_bulb: If you need access to other files and directories, you can use [link=https://flathub.org/apps/com.github.tchx84.Flatseal]Flatseal[/link] to reconfigure SSH-MITM.")
@@ -146,7 +146,7 @@ class SSHProxyServer:
                     "   {md5}\n"
                     "   {sha256}\n"
                     "   {sha512}"
-                    
+
                 ).format(
                     **log_data
                 )
@@ -159,7 +159,7 @@ class SSHProxyServer:
                 )
             )
             if self.transparent:
-                rich_print(":exclamation: Transparent mode enabled [red bold](experimental)" )
+                rich_print(":exclamation: Transparent mode enabled [red bold](experimental)")
             if self.debug:
                 rich_print("[bold red]:exclamation: Debug mode enabled")
             sshconsole.rule("[red]waiting for connections", style="red")
