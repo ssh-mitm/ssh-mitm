@@ -14,7 +14,7 @@ cffi==1.15.1
     #   pynacl
 colored==2.2.3
     # via ssh-mitm (pyproject.toml)
-cryptography==41.0.3
+cryptography==41.0.4
     # via
     #   paramiko
     #   sshpubkeys
