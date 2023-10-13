@@ -43,7 +43,6 @@ class SCPStorageForwarder(SCPForwarder):
             help='store data from non-interactive ssh commands'
         )
 
-
     def __init__(self, session: 'sshmitm.session.Session') -> None:
         super().__init__(session)
         self.file_id: Optional[str] = None
@@ -72,7 +71,7 @@ class SCPStorageForwarder(SCPForwarder):
             self.file_id = None
         return traffic
 
-    def store_command_data(self, file_id, traffic: bytes, isclient: bool):
+    def store_command_data(self, file_id: str, traffic: bytes, isclient: bool) -> None:
         if isclient:
             suffix = '.client'
         else:

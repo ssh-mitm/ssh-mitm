@@ -10,6 +10,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Changed
 
 - better output for Flatpak
+- allow mkdir to work with default attr.st_mode (#152)
+- Add new option to store output of non-interactive commands (#156)
 
 ## [4.0.0] - 2023-09-14
 
