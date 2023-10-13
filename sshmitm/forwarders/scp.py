@@ -241,9 +241,13 @@ class SCPForwarder(SCPBaseForwarder):
         self.got_c_command = False
         return self.process_data(traffic)
 
+    def process_command_data(self, command: bytes, traffic: bytes, isclient: bool) -> bytes:
+        return traffic
+
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         if self.session.scp_command.startswith(b'scp'):
             return self.handle_scp(traffic)
-        if self.session.scp_command.startswith(b"mosh-server"):
+        elif self.session.scp_command.startswith(b"mosh-server"):
             return handle_mosh(self.session, traffic, isclient)
-        return traffic
+        else:
+            return self.process_command_data(self.session.scp_command, traffic, isclient)
