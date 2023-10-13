@@ -60,6 +60,8 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             raise MissingClient("self.session.sftp_client is None!")
+        if attr.st_mode is None:
+            return self.session.sftp_client.mkdir(path) 
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
     def open(self, path: str, flags: int, attr: SFTPAttributes) -> Union[SFTPHandle, int]:
