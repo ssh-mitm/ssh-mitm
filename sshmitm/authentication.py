@@ -2,6 +2,7 @@ import logging
 import os
 import sys
 import socket
+import threading
 
 from typing import (
     Optional,
@@ -20,6 +21,33 @@ from sshmitm.logging import Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.clients.ssh import SSHClient, AuthenticationMethod
 from sshmitm.exceptions import MissingHostException
+
+
+PATCH_LOCK = threading.Lock()
+ORIGINAL_parse_service_accept = paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore[attr-defined]
+ORIGINAL_parse_userauth_info_request = paramiko.auth_handler.AuthHandler._parse_userauth_info_request  # type: ignore[attr-defined]
+
+
+def patched_parse_service_accept(
+    self: paramiko.auth_handler.AuthHandler,
+    msg: paramiko.message.Message
+) -> None:
+    logging.debug("wait for lock to execute original _parse_service_accept")
+    with PATCH_LOCK:
+        ORIGINAL_parse_service_accept(self, msg)
+
+
+def patched_parse_userauth_info_request(
+    self: paramiko.auth_handler.AuthHandler,
+    msg: paramiko.message.Message
+) -> None:
+    logging.debug("wait for lock to execute original _parse_userauth_info_request")
+    with PATCH_LOCK:
+        ORIGINAL_parse_userauth_info_request(self, msg)
+
+
+paramiko.auth_handler.AuthHandler._parse_service_accept = patched_parse_service_accept  # type: ignore[attr-defined]
+paramiko.auth_handler.AuthHandler._parse_userauth_info_request = patched_parse_userauth_info_request  # type: ignore[attr-defined]
 
 
 def probe_host(hostname_or_ip: str, port: int, username: str, public_key: paramiko.pkey.PublicBlob) -> bool:
@@ -66,6 +94,7 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
             msg (paramiko.message.Message): The message that was sent.
         """
         del msg  # unused arguments
+        logging.debug("execute patched _parse_userauth_info_request")
         self.auth_event.set()
         self.authenticated = True
 
@@ -77,6 +106,7 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
             message (paramiko.message.Message): The message to parse.
         """
         # https://tools.ietf.org/html/rfc4252#section-7
+        logging.debug("execute patched _parse_service_accept")
         service = message.get_text()
         if not (service == "ssh-userauth" and self.auth_method == "publickey"):
             return self._parse_service_accept(message)  # type: ignore
@@ -97,33 +127,32 @@ def probe_host(hostname_or_ip: str, port: int, username: str, public_key: parami
     valid_key = False
     sock = None
     transport = None
-    try:
-        client_handler_table = paramiko.auth_handler.AuthHandler._client_handler_table  # type: ignore
-        client_handler_table[paramiko.common.MSG_USERAUTH_INFO_REQUEST] = valid
-        client_handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = parse_service_accept
 
-        sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        sock.connect((hostname_or_ip, port))
-        transport = paramiko.transport.Transport(sock)
-        transport.start_client()
+    with PATCH_LOCK:
+        try:
+            paramiko.auth_handler.AuthHandler._parse_service_accept = parse_service_accept  # type: ignore[attr-defined]
+            paramiko.auth_handler.AuthHandler._parse_userauth_info_request = valid  # type: ignore[attr-defined]
 
-        # For compatibility with paramiko, we need to generate a random private key and replace
-        # the public key with our data.
-        key: PKey = paramiko.RSAKey.generate(2048)
-        key.public_blob = public_key
-        transport.auth_publickey(username, key)
-        valid_key = True
-    except paramiko.ssh_exception.AuthenticationException:
-        pass
-    finally:
-        if transport is not None:
-            transport.close()
-        if sock is not None:
-            sock.close()
-        client_handler_table[paramiko.common.MSG_USERAUTH_INFO_REQUEST] = \
-            paramiko.auth_handler.AuthHandler._parse_userauth_info_request  # type: ignore
-        client_handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = \
-            paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore
+            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            sock.connect((hostname_or_ip, port))
+            transport = paramiko.transport.Transport(sock)
+            transport.start_client()
+
+            # For compatibility with paramiko, we need to generate a random private key and replace
+            # the public key with our data.
+            key: PKey = paramiko.RSAKey.generate(2048)
+            key.public_blob = public_key
+            transport.auth_publickey(username, key)
+            valid_key = True
+        except paramiko.ssh_exception.AuthenticationException:
+            pass
+        finally:
+            if transport is not None:
+                transport.close()
+            if sock is not None:
+                sock.close()
+            paramiko.auth_handler.AuthHandler._parse_service_accept = ORIGINAL_parse_service_accept  # type: ignore[attr-defined]
+            paramiko.auth_handler.AuthHandler._parse_userauth_info_request = ORIGINAL_parse_userauth_info_request  # type: ignore[attr-defined]
     return valid_key
 
 

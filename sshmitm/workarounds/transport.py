@@ -189,6 +189,8 @@ def transport_run(self):  # type: ignore
                             )
                         )  # noqa
                     self._expected_packet = tuple()
+                    # These message IDs indicate key exchange & will differ
+                    # depending on exact exchange algorithm
                     if (ptype >= 30) and (ptype <= 41):
                         self.kex_engine.parse_next(ptype, m)
                         continue
@@ -198,7 +200,7 @@ def transport_run(self):  # type: ignore
                     if error_msg:
                         self._send_message(error_msg)
                     else:
-                        self._handler_table[ptype](self, m)
+                        self._handler_table[ptype](m)
                 elif ptype in self._channel_handler_table:
                     chanid = m.get_int()
                     chan = self._channels.get(chanid)
@@ -224,7 +226,7 @@ def transport_run(self):  # type: ignore
                     and ptype in self.auth_handler._handler_table
                 ):
                     handler = self.auth_handler._handler_table[ptype]
-                    handler(self.auth_handler, m)
+                    handler(m)
                     if len(self._expected_packet) > 0:
                         continue
                 else:

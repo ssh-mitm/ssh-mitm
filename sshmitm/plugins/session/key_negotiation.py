@@ -3,7 +3,6 @@ import re
 from typing import TYPE_CHECKING
 
 from colored.colored import fg, attr  # type: ignore
-import paramiko
 
 import pkg_resources
 import yaml
@@ -92,9 +91,9 @@ def handle_key_negotiation(session: 'sshmitm.session.Session') -> None:
     # (because they have a cached fingerprint and it looks like they need to be connected through)
 
     # pylint: disable=protected-access
-    def intercept_key_negotiation(transport: paramiko.Transport, message: Message) -> None:
+    def intercept_key_negotiation(message: Message) -> None:
         # restore intercept, to not disturb re-keying if this significantly alters the connection
-        transport._handler_table[common.MSG_KEXINIT] = Transport._negotiate_keys  # type: ignore
+        session.transport._handler_table[common.MSG_KEXINIT] = Transport._negotiate_keys  # type: ignore
 
         key_negotiation_data = KeyNegotiationData(session, message)
         key_negotiation_data.show_debug_info()
@@ -102,7 +101,7 @@ def handle_key_negotiation(session: 'sshmitm.session.Session') -> None:
 
         # normal operation
         try:
-            Transport._negotiate_keys(transport, message)  # type: ignore
+            Transport._negotiate_keys(session.transport, message)  # type: ignore
         except SSHException as ex:
             logging.error(str(ex))
 

@@ -321,9 +321,11 @@ class SSHProxyServer:
                 Colors.emoji('exclamation'),
                 Colors.stylize("Shutting down server ...", fg('red'))
             )
-            sock.close()
-            for thread in self._threads[:]:
-                thread.join()
+            # TODO: better shutdown for threads. At the moment we kill the server
+            # sock.close()
+            # for thread in self._threads[:]:
+            #    thread.join()
+            os._exit(os.EX_OK)
 
     def create_session(
         self,

@@ -35,7 +35,7 @@ classifiers = [
 requires-python = ">= 3.8"
 dependencies = [
     "argcomplete",
-    "paramiko>=3,<3.2",
+    "paramiko>=3.3,<3.4",
     "pytz",
     "sshpubkeys",
     "pyyaml",
@@ -119,8 +119,8 @@ dependencies = [
 [tool.hatch.envs.lint.scripts]
 check = [
     "flake8",
-    "mypy --install-types --non-interactive",
     "pylint sshmitm",
+    "mypy --install-types --non-interactive",
 ]
 
 [tool.hatch.envs.appimage]
