@@ -41,7 +41,7 @@ html_sidebars = {
     "**": ["sidebar-nav-bs"]
 }
 html_title = "SSH-MITM"
-html_logo = "_static/ssh-mitm-logo.svg"
+html_logo = "_static/ssh-mitm-64.png"
 
 
 html_theme_options = {
@@ -49,11 +49,12 @@ html_theme_options = {
         "text": "SSH-MITM",
     },
     "github_url": "https://github.com/ssh-mitm/ssh-mitm",
-    "navbar_end": ["navbar-icon-links.html"],
+    "navbar_end": ["navbar-icon-links.html", "theme-switcher"],
     "navbar_align": "left",
 
     "secondary_sidebar_items": ["page-toc", "edit-this-page"],
     "footer_start": ["copyright"],
+    "footer_end": [],
     "show_prev_next": False,
     "navigation_with_keys": False,
     "icon_links": [
@@ -87,7 +88,7 @@ html_context = {
     "github_user": "ssh-mitm",
     "github_repo": "ssh-mitm",
     "github_version": "develop",
-    "doc_path": "doc",
+    "doc_path": "doc"
 }
 
 notfound_no_urls_prefix = True
