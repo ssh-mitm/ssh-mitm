@@ -71,12 +71,8 @@ class SCPStorageForwarder(SCPForwarder):
             self.file_id = None
         return traffic
 
-    def store_command_data(self, file_id: str, traffic: bytes, isclient: bool) -> None:
-        if isclient:
-            suffix = '.client'
-        else:
-            suffix = '.server'
-        output_path = os.path.join(self.command_storage_dir, file_id + suffix)
+    def store_command_data(self, file_id, traffic: bytes, suffix: str) -> None:
+        output_path = os.path.join(self.command_storage_dir, file_id + '.' + suffix)
         with open(output_path, 'a+b') as tmp_file:
             tmp_file.write(traffic)
 
@@ -86,6 +82,6 @@ class SCPStorageForwarder(SCPForwarder):
         os.makedirs(self.command_storage_dir, exist_ok=True)
         if self.file_id is None:
             self.file_id = str(uuid.uuid4())
-            self.store_command_data(self.file_id, command, True)
-        self.store_command_data(self.file_id, traffic, isclient)
+            self.store_command_data(self.file_id, command, 'command')
+        self.store_command_data(self.file_id, traffic, 'client' if isclient else 'server')
         return traffic
