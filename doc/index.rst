@@ -4,7 +4,7 @@ SSH-MITM - ssh audits made simple
 
 ssh man-in-the-middle (ssh-mitm) server for security audits supporting **publickey authentication**, **session hijacking** and **file manipulation**
 
-.. image:: _static/ssh-mitm-password.png
+.. image:: _static/image2.png
 
 Introduction
 ============
