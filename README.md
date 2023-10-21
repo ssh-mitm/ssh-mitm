@@ -4,7 +4,7 @@
 <h1 align="center"> SSH-MITM - ssh audits made simple </h1>
 <p align="center">
   <a href="https://docs.ssh-mitm.at">
-    <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://docs.ssh-mitm.at/_images/ssh-mitm-password.png#20230214" >
+    <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://docs.ssh-mitm.at/_images/image2.png#20231021" >
   </a>
   <p align="center">ssh man-in-the-middle (ssh-mitm) server for security audits supporting<br> <b>publickey authentication</b>, <b>session hijacking</b> and <b>file manipulation</b></p>
   <p align="center">
@@ -72,10 +72,10 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 ## Installation
 
-**SSH-MITM** can be installed as a 
-[Flatpak](https://flathub.org/apps/at.ssh_mitm.server), 
-[Ubuntu Snap](https://snapcraft.io/ssh-mitm), 
-[AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest) 
+**SSH-MITM** can be installed as a
+[Flatpak](https://flathub.org/apps/at.ssh_mitm.server),
+[Ubuntu Snap](https://snapcraft.io/ssh-mitm),
+[AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest)
 and [PIP-Package](https://pypi.org/project/ssh-mitm/).
 
 Community-supported options include installations via `[Nix](https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm) and running on [Android devices](https://github.com/ssh-mitm/ssh-mitm/discussions/83#discussioncomment-1531873).
