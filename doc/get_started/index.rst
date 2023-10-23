@@ -1,6 +1,9 @@
 :fas:`rocket` Get started
 ==========================
 
+.. image:: _static/ssh-mitm-password.png
+    :class: dark-light
+
 The SSH-MITM Quick Start Guide provides a comprehensive overview of the functionality of SSH-MITM,
 a man-in-the-middle tool designed for security audits and malware analysis.
 In this guide, you will learn how to use SSH-MITM to hijack terminal sessions,
