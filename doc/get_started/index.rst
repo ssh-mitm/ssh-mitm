@@ -1,7 +1,7 @@
 :fas:`rocket` Get started
 ==========================
 
-.. image:: _static/ssh-mitm-password.png
+.. image:: ../_static/ssh-mitm-password.png
     :class: dark-light
 
 The SSH-MITM Quick Start Guide provides a comprehensive overview of the functionality of SSH-MITM,
