@@ -1,8 +1,6 @@
 <h1 align="center"> SSH-MITM - ssh audits made simple </h1>
 <p align="center">
-  <a href="https://docs.ssh-mitm.at">
-    <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://docs.ssh-mitm.at/_images/intro.png" >
-  </a>
+  <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://docs.ssh-mitm.at/_images/intro.png" >
   <p align="center">ssh man-in-the-middle (ssh-mitm) server for security audits supporting<br> <b>publickey authentication</b>, <b>session hijacking</b> and <b>file manipulation</b></p>
   <p align="center">
    <a href='https://flathub.org/apps/at.ssh_mitm.server'><img height='56' alt='Download on Flathub' src='https://dl.flathub.org/assets/badges/flathub-badge-en.png'/></a>
