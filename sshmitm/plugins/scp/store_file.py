@@ -71,7 +71,7 @@ class SCPStorageForwarder(SCPForwarder):
             self.file_id = None
         return traffic
 
-    def store_command_data(self, file_id, traffic: bytes, suffix: str) -> None:
+    def store_command_data(self, file_id: str, traffic: bytes, suffix: str) -> None:
         output_path = os.path.join(self.command_storage_dir, file_id + '.' + suffix)
         with open(output_path, 'a+b') as tmp_file:
             tmp_file.write(traffic)
