@@ -69,7 +69,7 @@
       SSH-MITM tries to request the ssh agent, even if the client does not forward the agent.
    :option string banner-name: |br|
       Custom ssh banner name, which is presented the client on the first connection attempt.|br|
-      If no banner name is configured, the default banner name is ``SSH-2.0-SSHMITM_3.0.1`` 
+      If no banner name is configured, the default banner name is ``SSH-2.0-SSHMITM_3.0.1``
 
 .. confval:: [Session]
 
@@ -136,7 +136,7 @@ SCP-Plugins
    .. code-block:: ini
 
       [CVE202229154]
-      rsync-inject-file = 
+      rsync-inject-file =
 
 
 .. confval:: [SCPReplaceFile]
@@ -144,15 +144,15 @@ SCP-Plugins
    .. code-block:: ini
 
       [SCPReplaceFile]
-      scp_replace_file = 
+      scp_replace_file =
 
 .. confval:: [SCPRewriteCommand]
 
    .. code-block:: ini
 
       [SCPRewriteCommand]
-      scp-append-string = 
-      scp-replace-string = 
+      scp-append-string =
+      scp-replace-string =
 
 .. confval:: [SCPStorageForwarder]
 
@@ -160,6 +160,7 @@ SCP-Plugins
 
       [SCPStorageForwarder]
       store-scp-files = False
+      store-command-data = False
 
 
 SFTP-Plugins
@@ -177,7 +178,7 @@ SFTP-Plugins
    .. code-block:: ini
 
       [SFTPProxyReplaceHandler]
-      sftp-replace-file = 
+      sftp-replace-file =
 
 
 Port-Forwarding-Plugins
