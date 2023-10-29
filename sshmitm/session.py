@@ -106,7 +106,7 @@ class Session(BaseSession):
             help='directory to store ssh session logs'
         )
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         proxyserver: 'sshmitm.server.SSHProxyServer',
         client_socket: socket.socket,

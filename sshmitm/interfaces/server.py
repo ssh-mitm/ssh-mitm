@@ -156,7 +156,7 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    def check_channel_pty_request(
+    def check_channel_pty_request(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.channel.Channel,
         term: bytes,
@@ -367,7 +367,7 @@ class ServerInterface(BaseServerInterface):
 
         return paramiko.common.OPEN_SUCCEEDED
 
-    def check_channel_window_change_request(
+    def check_channel_window_change_request(  # pylint: disable=too-many-arguments
         self, channel: paramiko.Channel, width: int, height: int, pixelwidth: int, pixelheight: int
     ) -> bool:
         logging.debug(
@@ -379,7 +379,7 @@ class ServerInterface(BaseServerInterface):
             return True
         return False
 
-    def check_channel_x11_request(
+    def check_channel_x11_request(  # pylint: disable=too-many-arguments
         self, channel: paramiko.Channel, single_connection: bool,
         auth_protocol: str, auth_cookie: ByteString, screen_number: int
     ) -> bool:
@@ -400,7 +400,7 @@ class ServerInterface(BaseServerInterface):
 
 class ProxySFTPServer(paramiko.SFTPServer):
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.Channel,
         name: str,

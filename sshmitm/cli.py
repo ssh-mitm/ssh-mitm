@@ -180,8 +180,8 @@ def main() -> None:
 
     if not args.disable_workarounds:
         monkeypatch.patch_thread()
-        Transport.run = transport.transport_run  # type: ignore
-        Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore
+        Transport.run = transport.transport_run  # type: ignore # pylint: disable=protected-access
+        Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore # pylint: disable=protected-access
 
     if args.paramiko_log_level == 'debug':
         logging.getLogger("paramiko").setLevel(logging.DEBUG)

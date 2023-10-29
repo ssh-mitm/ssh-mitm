@@ -50,7 +50,7 @@ class TCPServerThread(threading.Thread):
     :return: None
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         request_handler: Optional[Callable[
             [Tuple[str, int], Union[socket.socket, paramiko.Channel], Tuple[str, int]],

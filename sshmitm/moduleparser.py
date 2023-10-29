@@ -176,7 +176,7 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
 
     def add_argument_group(self, *args: Any, **kwargs: Any) -> argparse._ArgumentGroup:
         config_section = kwargs.pop('config_section', None)
-        group = argparse._ArgumentGroup(self, *args, **kwargs)
+        group = argparse._ArgumentGroup(self, *args, **kwargs)  # pylint:disable=protected-access
         group.add_argument = AddArgumentMethod(self, group, config_section)  # type: ignore
         self._action_groups.append(group)
         return group
@@ -384,7 +384,7 @@ class ModuleParser(_ModuleArgumentParser):  # pylint: disable=too-many-instance-
             if isinstance(default_value, str):
                 kwargs['default'] = load_module_from_entrypoint(default_value, baseclass)
         else:
-            arg_dest = self.add_argument._get_dest(*args, **kwargs)  # type: ignore
+            arg_dest = self.add_argument._get_dest(*args, **kwargs)  # type: ignore # pylint:disable=protected-access
             if arg_dest and CONFIGFILE.has_option(
                 self.config_section,
                 arg_dest

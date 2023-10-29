@@ -32,7 +32,15 @@ class UdpProxy:
     :type buf_size: int
     """
 
-    def __init__(self, key: str, target_ip: str, target_port: int, listen_ip: str = '', listen_port: int = 0, buf_size: int = 1024):
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        key: str,
+        target_ip: str,
+        target_port: int,
+        listen_ip: str = '',
+        listen_port: int = 0,
+        buf_size: int = 1024
+    ):
         self.key = base64.b64decode(key + "==")
         self.listen_ip = listen_ip
         self.listen_port = listen_port

@@ -65,7 +65,7 @@ def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
         return False
 
 
-def create_server_sock(
+def create_server_sock(  # pylint: disable=too-many-arguments
     address: Tuple[str, int],
     family: Optional[socket.AddressFamily] = None,  # pylint: disable=no-member
     reuse_addr: Optional[bool] = None,
@@ -171,7 +171,7 @@ class MultipleSocketsListener:
     socket in the list.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         addresses: List[Tuple[str, int]],
         family: Optional[socket.AddressFamily] = None,  # pylint: disable=no-member

@@ -78,7 +78,7 @@ class SSHClient(BaseSSHClient):
 
     CIPHERS = None
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         host: str,
         port: int,

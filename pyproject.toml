@@ -151,9 +151,7 @@ disable = [
     "too-few-public-methods",
     "too-many-branches",
     "too-many-instance-attributes",
-    "too-many-arguments",
     "too-many-statements",
     "too-many-locals",
-    "protected-access",
     "too-many-return-statements"
 ]

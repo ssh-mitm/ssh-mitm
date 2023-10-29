@@ -24,8 +24,8 @@ from sshmitm.exceptions import MissingHostException
 
 
 PATCH_LOCK = threading.Lock()
-ORIGINAL_parse_service_accept = paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore[attr-defined]
-ORIGINAL_parse_userauth_info_request = paramiko.auth_handler.AuthHandler._parse_userauth_info_request  # type: ignore[attr-defined]
+ORIGINAL_parse_service_accept = paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore[attr-defined] # pylint:disable=protected-access
+ORIGINAL_parse_userauth_info_request = paramiko.auth_handler.AuthHandler._parse_userauth_info_request  # type: ignore[attr-defined] # pylint:disable=protected-access
 
 
 def patched_parse_service_accept(
@@ -46,8 +46,8 @@ def patched_parse_userauth_info_request(
         ORIGINAL_parse_userauth_info_request(self, msg)
 
 
-paramiko.auth_handler.AuthHandler._parse_service_accept = patched_parse_service_accept  # type: ignore[attr-defined]
-paramiko.auth_handler.AuthHandler._parse_userauth_info_request = patched_parse_userauth_info_request  # type: ignore[attr-defined]
+paramiko.auth_handler.AuthHandler._parse_service_accept = patched_parse_service_accept  # type: ignore[attr-defined] # pylint:disable=protected-access
+paramiko.auth_handler.AuthHandler._parse_userauth_info_request = patched_parse_userauth_info_request  # type: ignore[attr-defined] # pylint:disable=protected-access
 
 
 def probe_host(hostname_or_ip: str, port: int, username: str, public_key: paramiko.pkey.PublicBlob) -> bool:
@@ -161,7 +161,7 @@ class RemoteCredentials:
     The `RemoteCredentials` class represents the credentials required to access a remote host.
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self, *,
         username: str,
         password: Optional[str] = None,
@@ -489,7 +489,7 @@ class Authenticator(BaseModule):
             )
         return auth_status
 
-    def connect(
+    def connect(  # pylint: disable=too-many-arguments
         self, user: str, host: str, port: int, method: AuthenticationMethod,
         password: Optional[str] = None, key: Optional[PKey] = None, *, run_post_auth: bool = True
     ) -> int:

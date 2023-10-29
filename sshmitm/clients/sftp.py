@@ -42,7 +42,7 @@ class SFTPClient(SSHClient):
 
     """
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         host: str,
         port: int,

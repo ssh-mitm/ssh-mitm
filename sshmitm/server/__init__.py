@@ -44,7 +44,7 @@ from sshmitm.exceptions import KeyGenerationError
 class SSHProxyServer:
     SELECT_TIMEOUT = 0.5
 
-    def __init__(
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         listen_port: int,
         *,

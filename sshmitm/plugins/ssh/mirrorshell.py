@@ -39,7 +39,7 @@ class InjectServer(paramiko.ServerInterface):
         self.injector_channel = channel
         return True
 
-    def check_channel_pty_request(
+    def check_channel_pty_request(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.channel.Channel,
         term: bytes,
