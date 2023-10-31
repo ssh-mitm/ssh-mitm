@@ -1,10 +1,10 @@
 [build-system]
-requires = ["hatchling"]
+requires = ["hatchling", "hatch-requirements-txt"]
 build-backend = "hatchling.build"
 
 [project]
 name = "ssh-mitm"
-dynamic = ["version"]
+dynamic = ["version", "dependencies"]
 authors = [
     {name = "SSH-MITM Dev-Team", email = "support@ssh-mitm.at"}
 ]
@@ -33,18 +33,6 @@ classifiers = [
     "Development Status :: 5 - Production/Stable",
 ]
 requires-python = ">= 3.8"
-dependencies = [
-    "argcomplete",
-    "paramiko>=3.3,<3.4",
-    "pytz",
-    "sshpubkeys",
-    "pyyaml",
-    "packaging",
-    "colored",
-    "rich",
-    "python-json-logger",
-    "wrapt",
-]
 
 [project.urls]
 Homepage = "https://www.ssh-mitm.at"
@@ -101,6 +89,9 @@ socks5 = "sshmitm.plugins.tunnel.socks5:SOCKS5TunnelForwarder"
 [tool.hatch.version]
 path = "sshmitm/__init__.py"
 
+[tool.hatch.metadata.hooks.requirements_txt]
+files = ["requirements.in"]
+
 [tool.hatch.build]
 include = [
     "sshmitm/**/*.py",
@@ -118,9 +109,9 @@ dependencies = [
 
 [tool.hatch.envs.lint.scripts]
 check = [
-    "flake8",
+    "flake8 sshmitm",
     "pylint sshmitm",
-    "mypy --install-types --non-interactive",
+    "mypy sshmitm",
 ]
 
 [tool.hatch.envs.appimage]
@@ -135,10 +126,9 @@ build = [
 ignore = ["E501", "W503"]
 
 [tool.mypy]
-files = [
-  "sshmitm"
-]
 strict = true
+install_types = true
+non_interactive = true
 
 [tool.pylint]
 disable = [

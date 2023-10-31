@@ -7,11 +7,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- fixed AppImage build process
+
 ### Changed
 
 - better output for Flatpak
 - allow mkdir to work with default attr.st_mode (https://github.com/ssh-mitm/ssh-mitm/pull/152)
 - Add new option to store output of non-interactive commands (https://github.com/ssh-mitm/ssh-mitm/pull/156)
+- moved project dependencies to requirements.in file
+- use command name of executable or link in help output
+
 
 ## [4.0.0] - 2023-09-14
 

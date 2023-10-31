@@ -1,0 +1,10 @@
+argcomplete
+colored
+packaging
+paramiko>=3.3,<3.4
+python-json-logger
+pytz
+pyyaml
+rich
+sshpubkeys
+wrapt

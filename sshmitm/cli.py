@@ -35,6 +35,7 @@ are defined by the parser_func properties of the corresponding SubCommand instan
 
 from argparse import Namespace
 import logging
+import os
 import sys
 from typing import Callable
 
@@ -97,8 +98,14 @@ def main() -> None:
             help='start the ssh-mitm server'
         )
     }
+    prog_name = os.path.basename(
+        os.environ.get('ARGV0', 'ssh-mitm')
+    )
+    if os.environ.get('container'):
+        prog_name = 'at.ssh_mitm.server'
 
     parser = ModuleParser(
+        prog=prog_name,
         description='SSH-MITM Tools',
         allow_abbrev=False,
         config_section='SSH-MITM'

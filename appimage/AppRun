@@ -1,4 +1,8 @@
-#!/bin/sh
+#!/bin/bash
 
-cd "$(dirname "$0")"
-python/bin/ssh-mitm $@
+# Set APPDIR when running directly from the AppDir:
+if [ -z $APPDIR ]; then
+    APPDIR=$(readlink -f $(dirname "$0"))
+fi
+
+exec $APPDIR/python/bin/python3 -m sshmitm $@
