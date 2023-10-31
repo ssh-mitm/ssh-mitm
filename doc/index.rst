@@ -28,6 +28,17 @@ The first step to using any software package is getting it properly installed.
 
 To install SSH-MITM, simply run one of those commands in your terminal of choice:
 
+:fas:`cog` AppImage
+-------------------
+
+If you use the ``AppImage``, you can install it as:
+
+.. code:: none
+
+    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    $ chmod +x ssh-mitm*.AppImage
+
+
 :fab:`linux` Flatpak
 --------------------
 
@@ -50,17 +61,6 @@ If you use ``snap``, you can install it with:
 .. code-block:: none
 
     $ sudo snap install ssh-mitm
-
-
-:fas:`cog` AppImage
--------------------
-
-If you use the ``AppImage``, you can install it as:
-
-.. code:: none
-
-    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-    $ chmod +x ssh-mitm*.AppImage
 
 
 :fab:`python` pip

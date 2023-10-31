@@ -114,6 +114,16 @@ check = [
     "mypy sshmitm",
 ]
 
+[tool.hatch.envs.docs]
+detached = false
+
+[tool.hatch.envs.docs.scripts]
+build = [
+    "pip install -r doc/requirements.txt",
+    "sphinx-apidoc -T -e -M -d 1 -o doc/api sshmitm",
+    "sphinx-build doc build/html",
+]
+
 [tool.hatch.envs.appimage]
 detached = false
 

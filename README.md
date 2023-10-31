@@ -5,10 +5,11 @@
   </a>
   <p align="center">ssh man-in-the-middle (ssh-mitm) server for security audits supporting<br> <b>publickey authentication</b>, <b>session hijacking</b> and <b>file manipulation</b></p>
   <p align="center">
-   <a href='https://flathub.org/apps/at.ssh_mitm.server'><img height='56' alt='Download on Flathub' src='https://dl.flathub.org/assets/badges/flathub-badge-en.png'/></a>
-   <a href="https://snapcraft.io/ssh-mitm">
-     <img  height='56' alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" />
-   </a>
+   <a href="https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage"><img height='56' alt='Download as an AppImage' src='https://docs.appimage.org/_images/download-appimage-banner.svg'/></a>
+   &nbsp;&nbsp;&nbsp;
+   <a href="https://flathub.org/apps/at.ssh_mitm.server"><img height='56' alt='Download on Flathub' src='https://dl.flathub.org/assets/badges/flathub-badge-en.png'/></a>
+   &nbsp;&nbsp;&nbsp;
+   <a href="https://snapcraft.io/ssh-mitm"><img  height='56' alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" /></a>
    <br />
    <br />
    <a href="https://docs.ssh-mitm.at"><img src="https://read-the-docs-guidelines.readthedocs-hosted.com/_downloads/d9606423d87d78fcceae4ee2af883b12/logo-wordmark-dark.png" title="read the docs" width="256"></a>
