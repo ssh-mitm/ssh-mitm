@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [4.1.0] - 2023-10-31
+
 ### Fixed
 
 - fixed AppImage build process
@@ -407,7 +409,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/4.0.0...master
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/4.1.0...master
+[4.1.0]: https://github.com/ssh-mitm/ssh-mitm/compare/4.0.0...4.1.0
 [4.0.0]: https://github.com/ssh-mitm/ssh-mitm/compare/3.0.2...4.0.0
 [3.0.2]: https://github.com/ssh-mitm/ssh-mitm/compare/3.0.1...3.0.2
 [3.0.1]: https://github.com/ssh-mitm/ssh-mitm/compare/3.0.0...3.0.1
