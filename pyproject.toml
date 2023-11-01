@@ -94,6 +94,7 @@ files = ["requirements.in"]
 
 [tool.hatch.build]
 include = [
+    "requirements.in",
     "sshmitm/**/*.py",
     "sshmitm/data/*.*",
 ]
