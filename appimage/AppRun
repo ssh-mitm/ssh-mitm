@@ -1,8 +1,14 @@
 #!/bin/bash
 
-# Set APPDIR when running directly from the AppDir:
+# set APPDIR when running directly from the AppDir:
 if [ -z $APPDIR ]; then
-    APPDIR=$(readlink -f $(dirname "$0"))
+    export APPDIR=$(readlink -f $(dirname "$0"))
 fi
 
-exec $APPDIR/python/bin/python3 -m sshmitm $@
+# check if an environment file exists and load it
+if [ -f "$APPDIR/environment.sh" ]; then
+    source $APPDIR/environment.sh
+fi
+
+# start the python application and pass arguments
+exec $APPDIR/python/bin/python3 $APPDIR/startapp.py $@
