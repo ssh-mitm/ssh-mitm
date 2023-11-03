@@ -18,7 +18,6 @@ build/appimage/AppDir/python/bin/python3 -m pip install -r requirements-dev.txt 
 cp appimage/AppRun build/appimage/AppDir/
 cp appimage/startapp.py build/appimage/AppDir/
 cp appimage/appimage.ini build/appimage/AppDir/
-cp appimage/environment.sh build/appimage/AppDir/
 cp appimage/ssh-mitm* build/appimage/AppDir/
 
 # detect machine's architecture

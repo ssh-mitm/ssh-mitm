@@ -142,3 +142,4 @@ appimage-builder-cache
 appimage-build
 doc/api/
 .DirIcon
+squashfs-root

@@ -1,14 +1,25 @@
 #!/bin/bash
 
-# set APPDIR when running directly from the AppDir:
+# This script is the AppRun entry point used by an AppImage to set up the necessary environment
+# and directory path for the application. It first ensures that the APPDIR variable is defined, 
+# representing the root of the AppImage filesystem. After setting up the environment, it delegates 
+# control to the `startapp.py` script, which is responsible for initiating the main Python 
+# application. This setup allows for a layered initialization process, ensuring that the 
+# application is launched with the correct context and dependencies within the AppImage's sandbox.
+
+# Check if APPDIR is already set, if not, determine and set it to the AppImage's mount directory.
+# APPDIR needs to be set as it specifies the directory where the AppImage content is located.
 if [ -z $APPDIR ]; then
     export APPDIR=$(readlink -f $(dirname "$0"))
 fi
 
-# check if an environment file exists and load it
-if [ -f "$APPDIR/environment.sh" ]; then
-    source $APPDIR/environment.sh
-fi
+# Insert any required environment variable exports here.
+# This is where you would configure the environment variables needed by the Python application.
+# For instance: export PYTHONPATH=$APPDIR/some/path
 
-# start the python application and pass arguments
-exec $APPDIR/python/bin/python3 $APPDIR/startapp.py $@
+
+
+# The script then delegates control to `startapp.py` by using the Python interpreter included within the AppImage.
+# `startapp.py` is responsible for further initializing and starting the actual Python application.
+# $@ passes all given arguments through to `startapp.py`.
+exec $APPDIR/python/bin/python3 $APPDIR/startapp.py "$@"
