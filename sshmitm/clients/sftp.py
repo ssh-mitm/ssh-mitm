@@ -8,14 +8,7 @@ This module contains the implementation of the SFTP client.
 
 import logging
 import os
-from typing import (
-    Callable,
-    List,
-    Any,
-    Optional,
-    Tuple,
-    Union
-)
+from typing import Callable, List, Any, Optional, Tuple, Union
 
 import paramiko
 from paramiko.pkey import PKey
@@ -50,14 +43,14 @@ class SFTPClient(SSHClient):
         password: Optional[str],
         user: str,
         key: Optional[PKey],
-        session: 'sshmitm.session.Session'
+        session: "sshmitm.session.Session",
     ) -> None:
         super().__init__(host, port, method, password, user, key, session)
         self._sftp: Optional[paramiko.SFTPClient] = None
         self.subsystem_count = 0
 
     @classmethod
-    def from_client(cls, ssh_client: Optional[SSHClient]) -> Optional['SFTPClient']:
+    def from_client(cls, ssh_client: Optional[SSHClient]) -> Optional["SFTPClient"]:
         """
         Create an SFTPClient instance from an SSHClient instance.
 
@@ -67,10 +60,10 @@ class SFTPClient(SSHClient):
         :rtype: Optional[SFTPClient]
         """
         if ssh_client is None:
-            logging.error('error creating sftp client - no ssh client!')
+            logging.error("error creating sftp client - no ssh client!")
             return None
         if not ssh_client.connected and ssh_client.connect():
-            logging.error('error creating sftp client!')
+            logging.error("error creating sftp client!")
             return None
 
         try:
@@ -81,7 +74,7 @@ class SFTPClient(SSHClient):
                 ssh_client.password,
                 ssh_client.user,
                 ssh_client.key,
-                ssh_client.session
+                ssh_client.session,
             )
             if ssh_client.transport is None:
                 logging.debug("ssh_client does not have a transport")
@@ -90,7 +83,7 @@ class SFTPClient(SSHClient):
             sftp.connected = True
             return sftp
         except Exception:  # pylint: disable=broad-exception-caught
-            logging.exception('error creating sftp client')
+            logging.exception("error creating sftp client")
             return None
 
     @property
@@ -121,10 +114,12 @@ class SFTPClient(SSHClient):
             self._sftp = paramiko.SFTPClient.from_transport(self.transport)
             return True
         except Exception:  # pylint: disable=broad-exception-caught
-            logging.exception('error creating sftp client')
+            logging.exception("error creating sftp client")
         return False
 
-    def open(self, filename: Union[str, bytes], mode: str = 'r', bufsize: int = -1) -> SFTPFile:
+    def open(
+        self, filename: Union[str, bytes], mode: str = "r", bufsize: int = -1
+    ) -> SFTPFile:
         """
         Open a file on the SFTP server.
 
@@ -177,8 +172,10 @@ class SFTPClient(SSHClient):
         return paramiko.sftp.SFTP_OK
 
     def get(
-        self, remotepath: Union[str, bytes], localpath: Union[str, bytes],
-        callback: Optional[Callable[[int, int], Any]] = None
+        self,
+        remotepath: Union[str, bytes],
+        localpath: Union[str, bytes],
+        callback: Optional[Callable[[int, int], Any]] = None,
     ) -> int:
         """
         Downloads a file from the remote SFTP server and saves it to the local file system.
@@ -204,7 +201,7 @@ class SFTPClient(SSHClient):
             os.remove(localpath)
         return paramiko.sftp.SFTP_FAILURE
 
-    def listdir_attr(self, path: str = '.') -> Union[int, List[SFTPAttributes]]:
+    def listdir_attr(self, path: str = ".") -> Union[int, List[SFTPAttributes]]:
         """
         This method returns the list of files and directories in the given path with their attributes.
 
@@ -247,14 +244,18 @@ class SFTPClient(SSHClient):
         return paramiko.sftp.SFTP_OK
 
     def put(
-        self, localpath: Union[str, bytes], remotepath: Union[str, bytes], callback: Any = None, confirm: bool = True
+        self,
+        localpath: Union[str, bytes],
+        remotepath: Union[str, bytes],
+        callback: Any = None,
+        confirm: bool = True,
     ) -> None:
         """
         This method is not implemented.
 
         :raises: NotImplementedError
         """
-        raise NotImplementedError('put not implemented')
+        raise NotImplementedError("put not implemented")
 
     def readlink(self, path: Union[str, bytes]) -> Union[int, str]:
         """

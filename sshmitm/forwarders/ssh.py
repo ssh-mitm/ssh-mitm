@@ -10,8 +10,7 @@ class SSHBaseForwarder(BaseForwarder):  # pylint: disable=W0223
 
 
 class SSHForwarder(SSHBaseForwarder):
-    """forwards the terminal session to the remote server without modification
-    """
+    """forwards the terminal session to the remote server without modification"""
 
     def forward(self) -> None:
         time.sleep(0.1)
@@ -28,11 +27,16 @@ class SSHForwarder(SSHBaseForwarder):
                 self.forward_extra()
                 self.forward_stderr()
 
-                if self.session.ssh_channel is not None and self._closed(self.session.ssh_channel):
+                if self.session.ssh_channel is not None and self._closed(
+                    self.session.ssh_channel
+                ):
                     self.server_channel.close()
                     self.close_session(self.session.ssh_channel)
                     break
-                if self._closed(self.server_channel) and self.session.ssh_channel is not None:
+                if (
+                    self._closed(self.server_channel)
+                    and self.session.ssh_channel is not None
+                ):
                     self.close_session(self.session.ssh_channel)
                     break
                 if self.server_channel.exit_status_ready():
@@ -40,18 +44,24 @@ class SSHForwarder(SSHBaseForwarder):
                     if self.session.ssh_channel is not None:
                         self.close_session(self.session.ssh_channel)
                     break
-                if self.session.ssh_channel is not None and self.session.ssh_channel.exit_status_ready():
+                if (
+                    self.session.ssh_channel is not None
+                    and self.session.ssh_channel.exit_status_ready()
+                ):
                     self.session.ssh_channel.recv_exit_status()
                     if self.session.ssh_channel is not None:
                         self.close_session(self.session.ssh_channel)
                     break
                 time.sleep(0.01)
         except Exception:
-            logging.exception('error processing ssh session!')
+            logging.exception("error processing ssh session!")
             raise
 
     def forward_stdin(self) -> None:
-        if self.session.ssh_channel is not None and self.session.ssh_channel.recv_ready():
+        if (
+            self.session.ssh_channel is not None
+            and self.session.ssh_channel.recv_ready()
+        ):
             buf: bytes = self.session.ssh_channel.recv(self.BUF_LEN)
             buf = self.stdin(buf)
             self.server_channel.sendall(buf)

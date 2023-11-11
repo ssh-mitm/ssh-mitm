@@ -37,9 +37,9 @@ class UdpProxy:
         key: str,
         target_ip: str,
         target_port: int,
-        listen_ip: str = '',
+        listen_ip: str = "",
         listen_port: int = 0,
-        buf_size: int = 1024
+        buf_size: int = 1024,
     ):
         self.key = base64.b64decode(key + "==")
         self.listen_ip = listen_ip
@@ -103,15 +103,24 @@ class UdpProxy:
         """
         result = []
         for i in range(0, len(data), hexwidth):
-            data_part = data[i:i + hexwidth]
-            hexa = list(map(''.join, zip(*[iter(binascii.hexlify(data_part).decode('utf-8'))] * 2)))
+            data_part = data[i : i + hexwidth]
+            hexa = list(
+                map(
+                    "".join,
+                    zip(*[iter(binascii.hexlify(data_part).decode("utf-8"))] * 2),
+                )
+            )
             while hexwidth - len(hexa) > 0:
-                hexa.append(' ' * 2)
-            text = ''.join([chr(x) if 0x20 <= x < 0x7F else '.' for x in data_part])
-            addr = '%04X:    %s    %s' % (i, " ".join(hexa), text)  # pylint: disable=consider-using-f-string
+                hexa.append(" " * 2)
+            text = "".join([chr(x) if 0x20 <= x < 0x7F else "." for x in data_part])
+            addr = "%04X:    %s    %s" % (  # pylint: disable=consider-using-f-string
+                i,
+                " ".join(hexa),
+                text,
+            )
             result.append(addr)
 
-        return '\n'.join(result)
+        return "\n".join(result)
 
     def receive(self, buff_size: int) -> None:
         """
@@ -145,7 +154,7 @@ class UdpProxy:
                 f"fragment_id: 0x{fragment_id.hex()}",
                 f"final_fragment:  {final_fragment_bool} (0x{final_fragment.hex()})",
                 f"Payload:\n{self.format_hex(payload)}",
-                "-" * 89
+                "-" * 89,
             ]
             logging.info("\n".join(data_to_print))
 
@@ -179,14 +188,16 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
             mosh_connect = traffic.decode("utf8")
             logging.info(mosh_connect)
             mosh_connect_parts = mosh_connect.strip().split(" ")
-            mosh_info = "\n".join([
-                Colors.stylize(
-                    Colors.emoji('information') + " MOSH connection info",
-                    fg('blue') + attr('bold')
-                ),
-                f"  * MOSH-port: {mosh_connect_parts[2]}",
-                f"  * MOSH-shared-secret: {mosh_connect_parts[3]}"
-            ])
+            mosh_info = "\n".join(
+                [
+                    Colors.stylize(
+                        Colors.emoji("information") + " MOSH connection info",
+                        fg("blue") + attr("bold"),
+                    ),
+                    f"  * MOSH-port: {mosh_connect_parts[2]}",
+                    f"  * MOSH-shared-secret: {mosh_connect_parts[3]}",
+                ]
+            )
             logging.info(mosh_info)
 
             if session.remote_address[0] is not None:
@@ -195,7 +206,9 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                     target_ip=session.remote_address[0],
                     target_port=int(mosh_connect_parts[2]),
                     listen_ip="0.0.0.0",
-                    listen_port=0 if session.remote_address[0] == '127.0.0.1' else cast(int, mosh_connect_parts[2])
+                    listen_port=0
+                    if session.remote_address[0] == "127.0.0.1"
+                    else cast(int, mosh_connect_parts[2]),
                 )
                 mosh_port = mosh_proxy.get_bind_port()
                 mosh_proxy.start()

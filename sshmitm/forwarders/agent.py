@@ -8,7 +8,6 @@ from paramiko.channel import Channel
 
 
 class AgentProxy:
-
     def __init__(self, transport: Transport) -> None:
         self.agents: List[Union[Agent, AgentClientProxy]] = []
         self.transport = transport

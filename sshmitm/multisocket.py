@@ -32,15 +32,7 @@ import socket
 import select
 import contextlib
 
-from typing import (
-    Any,
-    Dict,
-    Tuple,
-    Optional,
-    List,
-    Union,
-    overload
-)
+from typing import Any, Dict, Tuple, Optional, List, Union, overload
 
 
 __author__ = "Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>"
@@ -52,7 +44,11 @@ def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
     listen for both IPv4 and IPv6 connections.
     If *sock* is provided the check is made against it.
     """
-    if not hasattr(socket, 'AF_INET6') or not hasattr(socket, 'IPPROTO_IPV6') or not hasattr(socket, 'IPV6_V6ONLY'):
+    if (
+        not hasattr(socket, "AF_INET6")
+        or not hasattr(socket, "IPPROTO_IPV6")
+        or not hasattr(socket, "IPV6_V6ONLY")
+    ):
         return False
     try:
         if sock is not None:
@@ -71,7 +67,7 @@ def create_server_sock(  # pylint: disable=too-many-arguments
     reuse_addr: Optional[bool] = None,
     transparent: bool = False,
     queue_size: int = 5,
-    dual_stack: bool = has_dual_stack()
+    dual_stack: bool = has_dual_stack(),
 ) -> socket.socket:
     """Convenience function which creates a TCP server bound to
     *address* and return the socket object.
@@ -105,7 +101,7 @@ def create_server_sock(  # pylint: disable=too-many-arguments
     ...     sock, addr = server.accept()
     ...     # handle new sock connection
     """
-    AF_INET6 = getattr(socket, 'AF_INET6', 0)  # pylint: disable=invalid-name
+    AF_INET6 = getattr(socket, "AF_INET6", 0)  # pylint: disable=invalid-name
     host: Optional[str]
     port: int
     host, port = address
@@ -117,10 +113,11 @@ def create_server_sock(  # pylint: disable=too-many-arguments
     if family is None:
         family = socket.AF_UNSPEC
     if reuse_addr is None:
-        reuse_addr = os.name == 'posix' and sys.platform != 'cygwin'
+        reuse_addr = os.name == "posix" and sys.platform != "cygwin"
     err = None
-    info = socket.getaddrinfo(host, port, family, socket.SOCK_STREAM,
-                              0, socket.AI_PASSIVE)
+    info = socket.getaddrinfo(
+        host, port, family, socket.SOCK_STREAM, 0, socket.AI_PASSIVE
+    )
     if not dual_stack:
         # in case dual stack is not supported we want IPv4 to be
         # preferred over IPv6
@@ -133,7 +130,7 @@ def create_server_sock(  # pylint: disable=too-many-arguments
             if reuse_addr:
                 sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
             if transparent:
-                if hasattr(socket, 'IP_TRANSPARENT'):
+                if hasattr(socket, "IP_TRANSPARENT"):
                     sock.setsockopt(socket.SOL_IP, socket.IP_TRANSPARENT, 1)
                 else:
                     IP_TRANSPARENT = 19  # pylint: disable=invalid-name
@@ -177,12 +174,12 @@ class MultipleSocketsListener:
         family: Optional[socket.AddressFamily] = None,  # pylint: disable=no-member
         reuse_addr: Optional[bool] = None,
         transparent: bool = False,
-        queue_size: int = 5
+        queue_size: int = 5,
     ) -> None:
         self._pollster: Optional[select.poll]
         self._socks: List[socket.socket] = []
         self._sockmap: Dict[int, socket.socket] = {}
-        if hasattr(select, 'poll'):
+        if hasattr(select, "poll"):
             self._pollster = select.poll()
         else:
             self._pollster = None
@@ -195,7 +192,7 @@ class MultipleSocketsListener:
                     reuse_addr=reuse_addr,
                     transparent=transparent,
                     queue_size=queue_size,
-                    dual_stack=False
+                    dual_stack=False,
                 )
                 self._socks.append(sock)
                 socket_file_descriptor = sock.fileno()
@@ -207,7 +204,7 @@ class MultipleSocketsListener:
             if not completed:
                 self.close()
 
-    def __enter__(self) -> 'MultipleSocketsListener':
+    def __enter__(self) -> "MultipleSocketsListener":
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
@@ -220,7 +217,11 @@ class MultipleSocketsListener:
                 addrs.append(sock.getsockname())
             except socket.error:
                 addrs.append(())
-        return '<%s (%r) at %#x>' % (self.__class__.__name__, addrs, id(self))  # pylint: disable=consider-using-f-string
+        return "<%s (%r) at %#x>" % (  # pylint: disable=consider-using-f-string
+            self.__class__.__name__,
+            addrs,
+            id(self),
+        )
 
     def _poll(self) -> Optional[Any]:
         """Return the first readable socket_file_descriptor."""
@@ -230,13 +231,13 @@ class MultipleSocketsListener:
         if self._pollster is None:
             fds_select = select.select(self._sockmap.keys(), [], [], timeout)
             if timeout and fds_select == ([], [], []):
-                raise TimeoutError('timed out')
+                raise TimeoutError("timed out")
         else:
             if timeout is not None:
                 timeout *= 1000
             fds_poll = self._pollster.poll(timeout)
             if timeout and fds_poll == []:
-                raise TimeoutError('timed out')
+                raise TimeoutError("timed out")
         try:
             if fds_select is not None:
                 return fds_select[0][0]
@@ -256,7 +257,11 @@ class MultipleSocketsListener:
         to do so.
         """
         socket_file_descriptor = self._poll()
-        sock = self._sockmap[socket_file_descriptor] if socket_file_descriptor else self._socks[0]
+        sock = (
+            self._sockmap[socket_file_descriptor]
+            if socket_file_descriptor
+            else self._socks[0]
+        )
         return sock.accept()
 
     def filenos(self) -> List[int]:
@@ -277,7 +282,9 @@ class MultipleSocketsListener:
     def getsockopt(self, level: int, optname: int, buflen: int) -> bytes:
         ...
 
-    def getsockopt(self, level: int, optname: int, buflen: int = 0) -> Union[int, bytes]:
+    def getsockopt(
+        self, level: int, optname: int, buflen: int = 0
+    ) -> Union[int, bytes]:
         """Return first registered socket's options."""
         return self._socks[0].getsockopt(level, optname, buflen)
 
@@ -287,30 +294,38 @@ class MultipleSocketsListener:
 
     def settimeout(self, timeout: float) -> None:
         """Set timeout for all registered sockets."""
-        self._multicall('settimeout', timeout)
+        self._multicall("settimeout", timeout)
 
     def setblocking(self, flag: bool) -> None:
         """Set non/blocking mode for all registered sockets."""
-        self._multicall('setblocking', flag)
+        self._multicall("setblocking", flag)
 
     @overload
-    def setsockopt(self, level: int, optname: int, value: Union[int, bytes], optlen: None) -> None:
+    def setsockopt(
+        self, level: int, optname: int, value: Union[int, bytes], optlen: None
+    ) -> None:
         ...
 
     @overload
     def setsockopt(self, level: int, optname: int, value: None, optlen: int) -> None:
         ...
 
-    def setsockopt(self, level: int, optname: int, value: Optional[Union[int, bytes]], optlen: Optional[int]) -> None:
+    def setsockopt(
+        self,
+        level: int,
+        optname: int,
+        value: Optional[Union[int, bytes]],
+        optlen: Optional[int],
+    ) -> None:
         """Set option for all registered sockets."""
-        self._multicall('setsockopt', level, optname, value, optlen)
+        self._multicall("setsockopt", level, optname, value, optlen)
 
     def shutdown(self, how: int) -> None:
         """Shut down all registered sockets."""
-        self._multicall('shutdown', how)
+        self._multicall("shutdown", how)
 
     def close(self) -> None:
         """Close all registered sockets."""
-        self._multicall('close')
+        self._multicall("close")
         self._socks = []
         self._sockmap.clear()

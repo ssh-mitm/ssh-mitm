@@ -29,16 +29,7 @@ from uuid import uuid4
 import os
 import socket
 
-from typing import (
-    TYPE_CHECKING,
-    cast,
-    Any,
-    Dict,
-    Optional,
-    Union,
-    Tuple,
-    Type
-)
+from typing import TYPE_CHECKING, cast, Any, Dict, Optional, Union, Tuple, Type
 
 from colored.colored import fg, attr  # type: ignore
 
@@ -101,19 +92,19 @@ class Session(BaseSession):
         """
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
-            '--session-log-dir',
-            dest='session_log_dir',
-            help='directory to store ssh session logs'
+            "--session-log-dir",
+            dest="session_log_dir",
+            help="directory to store ssh session logs",
         )
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        proxyserver: 'sshmitm.server.SSHProxyServer',
+        proxyserver: "sshmitm.server.SSHProxyServer",
         client_socket: socket.socket,
         client_address: Union[Tuple[str, int], Tuple[str, int, int, int]],
-        authenticator: Type['sshmitm.authentication.Authenticator'],
+        authenticator: Type["sshmitm.authentication.Authenticator"],
         remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]],
-        banner_name: Optional[str] = None
+        banner_name: Optional[str] = None,
     ) -> None:
         """
         Initialize the class instance.
@@ -135,14 +126,14 @@ class Session(BaseSession):
         self.register_session_thread()
         logging.info(
             "%s session %s created",
-            Colors.emoji('information'),
-            Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
+            Colors.emoji("information"),
+            Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
         )
         self._transport: Optional[paramiko.Transport] = None
 
         self.channel: Optional[paramiko.Channel] = None
 
-        self.proxyserver: 'sshmitm.server.SSHProxyServer' = proxyserver
+        self.proxyserver: "sshmitm.server.SSHProxyServer" = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
         self.name = f"{client_address}->{remoteaddr}"
@@ -157,14 +148,14 @@ class Session(BaseSession):
 
         self.scp_requested: bool = False
         self.scp_channel: Optional[paramiko.Channel] = None
-        self.scp_command: bytes = b''
+        self.scp_command: bytes = b""
 
         self.sftp_requested: bool = False
         self.sftp_channel: Optional[paramiko.Channel] = None
         self.sftp_client: Optional[sshmitm.clients.sftp.SFTPClient] = None
         self.sftp_client_ready = threading.Event()
 
-        self.username: str = ''
+        self.username: str = ""
         self.username_provided: Optional[str] = None
         self.password: Optional[str] = None
         self.password_provided: Optional[str] = None
@@ -174,7 +165,7 @@ class Session(BaseSession):
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
         self.agent: Optional[AgentProxy] = None
-        self.authenticator: 'sshmitm.authentication.Authenticator' = authenticator(self)
+        self.authenticator: "sshmitm.authentication.Authenticator" = authenticator(self)
 
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
@@ -190,10 +181,7 @@ class Session(BaseSession):
         if not self.args.session_log_dir:
             return None
         session_log_dir = os.path.expanduser(self.args.session_log_dir)
-        return os.path.join(
-            session_log_dir,
-            str(self.sessionid)
-        )
+        return os.path.join(session_log_dir, str(self.sessionid))
 
     @property
     def running(self) -> bool:
@@ -212,10 +200,16 @@ class Session(BaseSession):
         if self.ssh_channel is not None:
             ssh_channel_open = not self.ssh_channel.closed
         if self.scp_channel is not None:
-            scp_channel_open = not self.scp_channel.closed if self.scp_channel else False
-        open_channel_exists = session_channel_open or ssh_channel_open or scp_channel_open
+            scp_channel_open = (
+                not self.scp_channel.closed if self.scp_channel else False
+            )
+        open_channel_exists = (
+            session_channel_open or ssh_channel_open or scp_channel_open
+        )
 
-        return_value = self.proxyserver.running and open_channel_exists and not self.closed
+        return_value = (
+            self.proxyserver.running and open_channel_exists and not self.closed
+        )
         return return_value
 
     @property
@@ -233,12 +227,14 @@ class Session(BaseSession):
             key_negotiation.handle_key_negotiation(self)
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
-                    raise ValueError('ciphers must be a tuple')
+                    raise ValueError("ciphers must be a tuple")
                 self._transport.get_security_options().ciphers = self.CIPHERS
             host_key: Optional[PKey] = self.proxyserver.host_key
             if host_key is not None:
                 self._transport.add_server_key(host_key)
-            self._transport.set_subsystem_handler('sftp', ProxySFTPServer, self.proxyserver.sftp_interface, self)
+            self._transport.set_subsystem_handler(
+                "sftp", ProxySFTPServer, self.proxyserver.sftp_interface, self
+            )
 
         return self._transport
 
@@ -246,18 +242,21 @@ class Session(BaseSession):
         requested_agent = None
         if self.agent is None or self.authenticator.REQUEST_AGENT_BREAKIN:
             try:
-                if self.agent_requested.wait(1) or self.authenticator.REQUEST_AGENT_BREAKIN:
+                if (
+                    self.agent_requested.wait(1)
+                    or self.authenticator.REQUEST_AGENT_BREAKIN
+                ):
                     requested_agent = AgentProxy(self.transport)
                     logging.info(
                         "%s %s - successfully requested ssh-agent",
-                        Colors.emoji('information'),
-                        Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
+                        Colors.emoji("information"),
+                        Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
                     )
             except ChannelException:
                 logging.info(
                     "%s %s - ssh-agent breakin not successfull!",
-                    Colors.emoji('warning'),
-                    Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
+                    Colors.emoji("warning"),
+                    Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
                 )
                 return False
         self.agent = requested_agent or self.agent
@@ -276,19 +275,32 @@ class Session(BaseSession):
             if self.username_provided is None:
                 logging.error("No username provided during login!")
                 return False
-            return self.authenticator.auth_fallback(self.username_provided) == paramiko.common.AUTH_SUCCESSFUL
+            return (
+                self.authenticator.auth_fallback(self.username_provided)
+                == paramiko.common.AUTH_SUCCESSFUL
+            )
 
-        if self.authenticator.authenticate(store_credentials=False) != paramiko.common.AUTH_SUCCESSFUL:
+        if (
+            self.authenticator.authenticate(store_credentials=False)
+            != paramiko.common.AUTH_SUCCESSFUL
+        ):
             if self.username_provided is None:
                 logging.error("No username provided during login!")
                 return False
-            if self.authenticator.auth_fallback(self.username_provided) == paramiko.common.AUTH_SUCCESSFUL:
+            if (
+                self.authenticator.auth_fallback(self.username_provided)
+                == paramiko.common.AUTH_SUCCESSFUL
+            ):
                 return True
             self.transport.close()
             return False
 
         # Connect method end
-        if not self.scp_requested and not self.ssh_requested and not self.sftp_requested:
+        if (
+            not self.scp_requested
+            and not self.ssh_requested
+            and not self.sftp_requested
+        ):
             if self.transport.is_active():
                 self.transport.close()
                 return False
@@ -305,8 +317,7 @@ class Session(BaseSession):
         self.register_session_thread()
         event = threading.Event()
         self.transport.start_server(
-            event=event,
-            server=self.proxyserver.authentication_interface(self)
+            event=event, server=self.proxyserver.authentication_interface(self)
         )
 
         while not self.channel:
@@ -317,7 +328,7 @@ class Session(BaseSession):
                 return False
 
         if not self.channel:
-            logging.error('(%s) session error opening channel!', self)
+            logging.error("(%s) session error opening channel!", self)
             self.transport.close()
             return False
 
@@ -334,8 +345,8 @@ class Session(BaseSession):
 
         logging.info(
             "%s %s - session started",
-            Colors.emoji('information'),
-            Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
+            Colors.emoji("information"),
+            Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
         )
         return True
 
@@ -355,31 +366,33 @@ class Session(BaseSession):
             # With graceful exit the completion_event can be polled to wait, well ..., for completion
             # it can also only be a graceful exit if the ssh client has already been established
             if self.transport.completion_event is not None:
-                if self.transport.completion_event.is_set() and self.transport.is_active():
+                if (
+                    self.transport.completion_event.is_set()
+                    and self.transport.is_active()
+                ):
                     self.transport.completion_event.clear()
                     while self.transport.is_active():
                         if self.transport.completion_event.wait(0.1):
                             break
         if self.transport.server_object is not None:
-            for tunnel_forwarder in cast(BaseServerInterface, self.transport.server_object).forwarders:
+            for tunnel_forwarder in cast(
+                BaseServerInterface, self.transport.server_object
+            ).forwarders:
                 tunnel_forwarder.close()
                 tunnel_forwarder.join()
         self.transport.close()
         logging.info(
             "%s session %s closed",
-            Colors.emoji('information'),
-            Colors.stylize(self.sessionid, fg('light_blue') + attr('bold'))
+            Colors.emoji("information"),
+            Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
         )
-        logging.debug(
-            "(%s) session closed",
-            self
-        )
+        logging.debug("(%s) session closed", self)
         self.closed = True
 
     def __str__(self) -> str:
         return self.name
 
-    def __enter__(self) -> 'Session':
+    def __enter__(self) -> "Session":
         return self
 
     def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:

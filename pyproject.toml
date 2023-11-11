@@ -134,7 +134,7 @@ build = [
 ]
 
 [tool.flake8]
-ignore = ["E501", "W503"]
+ignore = ["E203", "E501", "W503"]
 
 [tool.mypy]
 strict = true

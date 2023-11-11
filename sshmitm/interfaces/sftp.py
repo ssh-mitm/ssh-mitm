@@ -1,10 +1,6 @@
 import logging
 import os
-from typing import (
-    cast,
-    List,
-    Union
-)
+from typing import cast, List, Union
 
 import paramiko
 from paramiko.sftp_attr import SFTPAttributes
@@ -16,15 +12,13 @@ from sshmitm.interfaces.server import BaseServerInterface
 
 
 class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):
-
     def __init__(self, serverinterface: BaseServerInterface) -> None:
         super().__init__(serverinterface)
         self.session = serverinterface.session
 
 
 class SFTPProxyServerInterface(BaseSFTPServerInterface):
-    """sftp subsystem implementation for SSH-MITM
-    """
+    """sftp subsystem implementation for SSH-MITM"""
 
     def chattr(self, path: str, attr: SFTPAttributes) -> int:
         self.session.sftp_client_ready.wait()
@@ -64,7 +58,9 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             return self.session.sftp_client.mkdir(path)
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
-    def open(self, path: str, flags: int, attr: SFTPAttributes) -> Union[SFTPHandle, int]:
+    def open(
+        self, path: str, flags: int, attr: SFTPAttributes
+    ) -> Union[SFTPHandle, int]:
         try:
             self.session.sftp_client_ready.wait()
             if self.session.sftp_client is None:
@@ -75,17 +71,17 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
                 attr._flags &= ~attr.FLAG_PERMISSIONS  # type: ignore
             if flags & os.O_WRONLY:
                 if flags & os.O_APPEND:
-                    fstr = 'ab'
+                    fstr = "ab"
                 else:
-                    fstr = 'wb'
+                    fstr = "wb"
             elif flags & os.O_RDWR:
                 if flags & os.O_APPEND:
-                    fstr = 'a+b'
+                    fstr = "a+b"
                 else:
-                    fstr = 'r+b'
+                    fstr = "r+b"
             else:
                 # O_RDONLY (== 0)
-                fstr = 'rb'
+                fstr = "rb"
 
             try:
                 if self.session.sftp_client is None:
@@ -100,13 +96,13 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             fobj = sftp_file_handle(self.session, sftp_handler, path)
 
             # writeonly
-            if fstr in ('wb', 'ab'):
+            if fstr in ("wb", "ab"):
                 fobj.writefile = client_f
             # readonly
-            elif fstr == 'rb':
+            elif fstr == "rb":
                 fobj.readfile = client_f
             # read and write
-            elif fstr in ('a+b', 'r+b'):
+            elif fstr in ("a+b", "r+b"):
                 fobj.writefile = client_f
                 fobj.readfile = client_f
             if fobj.writefile:

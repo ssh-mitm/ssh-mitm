@@ -52,7 +52,7 @@ from sshmitm.server.cli import init_server_parser, run_server
 from sshmitm.audit.cli import init_audit_parser, run_audit
 
 
-class SubCommand():
+class SubCommand:
     """
     This class represents a subcommand, which contains a function that is run and a parser that is used to parse arguments.
 
@@ -69,7 +69,7 @@ class SubCommand():
         run_func: Callable[[Namespace], None],
         parser_func: Callable[[ModuleParser], None],
         config_section: str,
-        help: str  # pylint: disable=redefined-builtin
+        help: str,  # pylint: disable=redefined-builtin
     ):
         self.run_func = run_func
         self.config_section = config_section
@@ -85,70 +85,65 @@ def main() -> None:
     :rtype: None
     """
     available_subcommands = {
-        'audit': SubCommand(
+        "audit": SubCommand(
             run_func=run_audit,
             parser_func=init_audit_parser,
-            config_section='Audit',
-            help='audit tools for ssh servers'
+            config_section="Audit",
+            help="audit tools for ssh servers",
         ),
-        'server': SubCommand(
+        "server": SubCommand(
             run_func=run_server,
             parser_func=init_server_parser,
-            config_section='SSH-Server-Modules',
-            help='start the ssh-mitm server'
-        )
+            config_section="SSH-Server-Modules",
+            help="start the ssh-mitm server",
+        ),
     }
-    prog_name = os.path.basename(
-        os.environ.get('ARGV0', 'ssh-mitm')
-    )
-    if os.environ.get('container'):
-        prog_name = 'at.ssh_mitm.server'
+    prog_name = os.path.basename(os.environ.get("ARGV0", "ssh-mitm"))
+    if os.environ.get("container"):
+        prog_name = "at.ssh_mitm.server"
 
     parser = ModuleParser(
         prog=prog_name,
-        description='SSH-MITM Tools',
+        description="SSH-MITM Tools",
         allow_abbrev=False,
-        config_section='SSH-MITM'
+        config_section="SSH-MITM",
     )
-    parser_group = parser.add_argument_group(
-        'SSH-MITM',
-        'global options for SSH-MITM'
+    parser_group = parser.add_argument_group("SSH-MITM", "global options for SSH-MITM")
+    parser_group.add_argument(
+        "-V", "--version", action="version", version=f"SSH-MITM {ssh_mitm_version}"
     )
     parser_group.add_argument(
-        '-V', '--version',
-        action='version',
-        version=f"SSH-MITM {ssh_mitm_version}"
-    )
-    parser_group.add_argument(
-        '-d',
-        '--debug',
-        dest='debug',
+        "-d",
+        "--debug",
+        dest="debug",
         default=False,
-        action='store_true',
-        help='More verbose output of status information'
+        action="store_true",
+        help="More verbose output of status information",
     )
     parser_group.add_argument(
-        '--paramiko-log-level',
-        dest='paramiko_log_level',
-        default='warning',
-        choices=['warning', 'info', 'debug'],
-        help='set paramikos log level'
+        "--paramiko-log-level",
+        dest="paramiko_log_level",
+        default="warning",
+        choices=["warning", "info", "debug"],
+        help="set paramikos log level",
     )
     parser_group.add_argument(
-        '--disable-workarounds',
-        dest='disable_workarounds',
-        action='store_true',
-        help='disable paramiko workarounds'
+        "--disable-workarounds",
+        dest="disable_workarounds",
+        action="store_true",
+        help="disable paramiko workarounds",
     )
     parser.add_argument(
-        '--log-format',
-        dest='log_format',
+        "--log-format",
+        dest="log_format",
         default="text",
-        choices=['text', 'json'],
-        help='defines the log output format (json will suppress stdout)'
+        choices=["text", "json"],
+        help="defines the log output format (json will suppress stdout)",
     )
 
-    subparsers = parser.add_subparsers(title='Available commands', dest="subparser_name", metavar='subcommand')
+    subparsers = parser.add_subparsers(
+        title="Available commands", dest="subparser_name", metavar="subcommand"
+    )
     subparsers.required = True
     for sc_name, sc_item in available_subcommands.items():
         sc_item.parser_func(
@@ -157,7 +152,7 @@ def main() -> None:
                 sc_name,
                 allow_abbrev=False,
                 help=sc_item.help,
-                config_section=sc_item.config_section  # type: ignore
+                config_section=sc_item.config_section,  # type: ignore
             )
         )
 
@@ -165,34 +160,34 @@ def main() -> None:
 
     root_logger = logging.getLogger()
     root_logger.setLevel(logging.DEBUG if args.debug else logging.INFO)
-    if args.log_format == 'json' or not sys.stdout.isatty():
+    if args.log_format == "json" or not sys.stdout.isatty():
         Colors.stylize_func = False
         root_logger.handlers.clear()
-        log_handler = logging.StreamHandler(
-            stream=FailSaveLogStream(debug=args.debug)
-        )
+        log_handler = logging.StreamHandler(stream=FailSaveLogStream(debug=args.debug))
         formatter = PlainJsonFormatter()  # type: ignore
         log_handler.setFormatter(formatter)
         root_logger.addHandler(log_handler)
     else:
         Colors.stylize_func = True
         root_logger.handlers.clear()
-        root_logger.addHandler(RichHandler(
-            highlighter=NullHighlighter(),
-            markup=False,
-            rich_tracebacks=True,
-            enable_link_path=args.debug,
-            show_path=args.debug
-        ))
+        root_logger.addHandler(
+            RichHandler(
+                highlighter=NullHighlighter(),
+                markup=False,
+                rich_tracebacks=True,
+                enable_link_path=args.debug,
+                show_path=args.debug,
+            )
+        )
 
     if not args.disable_workarounds:
         monkeypatch.patch_thread()
         Transport.run = transport.transport_run  # type: ignore # pylint: disable=protected-access
         Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore # pylint: disable=protected-access
 
-    if args.paramiko_log_level == 'debug':
+    if args.paramiko_log_level == "debug":
         logging.getLogger("paramiko").setLevel(logging.DEBUG)
-    elif args.paramiko_log_level == 'info':
+    elif args.paramiko_log_level == "info":
         logging.getLogger("paramiko").setLevel(logging.INFO)
     else:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
@@ -204,5 +199,5 @@ def main() -> None:
         sys.exit(1)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
