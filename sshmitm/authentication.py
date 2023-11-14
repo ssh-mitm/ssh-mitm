@@ -210,8 +210,6 @@ class Authenticator(BaseModule):
     REQUEST_AGENT_BREAKIN = False
     """
     This flag indicates if SSH-MITM should do a breakin to the client's ssh agent, even in cases where the agent is not forwarded.
-
-    :param session: an object of sshmitm.session.Session class to store session information.
     """
 
     @classmethod
@@ -292,6 +290,10 @@ class Authenticator(BaseModule):
     def __init__(self, session: 'sshmitm.session.Session') -> None:
         """
         Initializes Authenticator instance.
+
+        This class pass the authentication from the client to the server.
+        
+        :param session: an object of sshmitm.session.Session class to store session information.
         """
         super().__init__()
         self.session = session

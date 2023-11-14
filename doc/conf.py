@@ -19,30 +19,29 @@ from sphinx.util.docfields import TypedField
 
 # -- Project information -----------------------------------------------------
 
-project = 'SSH-MITM'
-author = 'Manfred Kaiser'
-copyright = f'{datetime.datetime.now().year}, {author}'  # pylint: disable=redefined-builtin
+project = "SSH-MITM"
+author = "Manfred Kaiser"
+copyright = (
+    f"{datetime.datetime.now().year}, {author}"  # pylint: disable=redefined-builtin
+)
 
 extensions = [
-    'sphinx.ext.autosectionlabel',
-    'sphinx.ext.autodoc',
-    'sphinx_sitemap',
-    'sphinx_reredirects',
-    'sphinx_design',
-    'notfound.extension',
-    'sphinx_copybutton',
-    'sphinxcontrib.mermaid',
-    'sphinx_togglebutton'
+    "notfound.extension",
+    "sphinx_copybutton",
+    "sphinx_design",
+    "sphinx_reredirects",
+    "sphinx_sitemap",
+    "sphinx_togglebutton",
+    "sphinx.ext.autodoc",
+    "sphinx.ext.autosectionlabel",
+    "sphinxcontrib.mermaid",
+    "sphinx_autodoc_typehints",
 ]
 
-html_theme = "pydata_sphinx_theme"
-html_sidebars = {
-    "index": [],
-    "**": ["sidebar-nav-bs"]
-}
 html_title = "SSH-MITM"
+html_theme = "pydata_sphinx_theme"
+html_sidebars = {"index": [], "**": ["sidebar-nav-bs"]}
 html_logo = "_static/ssh-mitm-64.png"
-
 
 html_theme_options = {
     "logo": {
@@ -51,7 +50,6 @@ html_theme_options = {
     "github_url": "https://github.com/ssh-mitm/ssh-mitm",
     "navbar_end": ["navbar-icon-links.html", "theme-switcher"],
     "navbar_align": "left",
-
     "secondary_sidebar_items": ["page-toc", "edit-this-page"],
     "footer_start": ["copyright"],
     "footer_end": [],
@@ -62,7 +60,7 @@ html_theme_options = {
             "name": "Codeberg",
             "url": "https://codeberg.org/ssh-mitm/ssh-mitm",
             "icon": "_static/codeberg-logo_icon_blue.svg",
-            "type": "local"
+            "type": "local",
         },
         {
             "name": "PyPI",
@@ -73,11 +71,8 @@ html_theme_options = {
             "name": "Mastodon",
             "url": "https://defcon.social/@sshmitm",
             "icon": "fa-brands fa-mastodon",
-            "attributes": {
-                "target": "_blank",
-                "rel": "noopener me"
-            }
-        }
+            "attributes": {"target": "_blank", "rel": "noopener me"},
+        },
     ],
     "show_toc_level": 1,
     "use_edit_page_button": True,
@@ -88,16 +83,22 @@ html_context = {
     "github_user": "ssh-mitm",
     "github_repo": "ssh-mitm",
     "github_version": "develop",
-    "doc_path": "doc"
+    "doc_path": "doc",
 }
 
 notfound_no_urls_prefix = True
 
-master_doc = 'index'
+
+always_document_param_types = True
+typehints_defaults = 'comma'
+typehints_use_signature = False
+typehints_use_signature_return = False
+
+master_doc = "index"
 html_permalinks = False
-html_baseurl = 'https://docs.ssh-mitm.at/'
+html_baseurl = "https://docs.ssh-mitm.at/"
 autosectionlabel_maxdepth = 1
-html_extra_path = ['robots.txt', '_static/codeberg-logo_icon_blue.svg']
+html_extra_path = ["robots.txt", "_static/codeberg-logo_icon_blue.svg"]
 sitemap_filename = "sitemap-docs.xml"
 
 # -- CopyButton --------------------------------------------------------------
@@ -117,7 +118,7 @@ copybutton_line_continuation_character = "\\"
 #
 # This is also used if you do content translation via gettext catalogs.
 # Usually you set "language" from the command line for these cases.
-language = 'en'
+language = "en"
 
 # List of patterns, relative to source directory, that match files and
 # directories to ignore when looking for source files.
@@ -130,48 +131,45 @@ exclude_patterns = []
 # Add any paths that contain custom static files (such as style sheets) here,
 # relative to this directory. They are copied after the builtin static files,
 # so a file named "default.css" will overwrite the builtin "default.css".
-html_static_path = ['_static']
+html_static_path = ["_static"]
 
 redirects = {
     "trivialauth": "user_guide/trivialauth.html",
     # CVEs
     "puttydos": "vulnerabilities/CVE-2021-33500.html",
-    'CVE-2016-20012': 'vulnerabilities/CVE-2016-20012.html',
-    'CVE-2018-15473': 'vulnerabilities/CVE-2018-15473.html',
-    'CVE-2018-15599': 'vulnerabilities/CVE-2018-15599.html',
-    'CVE-2018-15919': 'vulnerabilities/CVE-2018-15919.html',
-    'CVE-2018-20685': 'vulnerabilities/CVE-2018-20685.html',
-    'CVE-2019-16905': 'vulnerabilities/CVE-2019-16905.html',
-    'CVE-2019-6109': 'vulnerabilities/CVE-2019-6109.html',
-    'CVE-2019-6110': 'vulnerabilities/CVE-2019-6110.html',
-    'CVE-2019-6111': 'vulnerabilities/CVE-2019-6111.html',
-    'CVE-2020-12062': 'vulnerabilities/CVE-2020-12062.html',
-    'CVE-2020-14002': 'vulnerabilities/CVE-2020-14002.html',
-    'CVE-2020-14145': 'vulnerabilities/CVE-2020-14145.html',
-    'CVE-2020-15778': 'vulnerabilities/CVE-2020-15778.html',
-    'CVE-2021-28041': 'vulnerabilities/CVE-2021-28041.html',
-    'CVE-2021-33500': 'vulnerabilities/CVE-2021-33500.html',
-    'CVE-2021-36367': 'vulnerabilities/CVE-2021-36367.html',
-    'CVE-2021-36368': 'vulnerabilities/CVE-2021-36368.html',
-    'CVE-2021-36369': 'vulnerabilities/CVE-2021-36369.html',
-    'CVE-2021-36370': 'vulnerabilities/CVE-2021-36370.html',
-    'CVE-2021-41617': 'vulnerabilities/CVE-2021-41617.html',
-    'CVE-2022-29154': 'vulnerabilities/CVE-2022-29154.html'
+    "CVE-2016-20012": "vulnerabilities/CVE-2016-20012.html",
+    "CVE-2018-15473": "vulnerabilities/CVE-2018-15473.html",
+    "CVE-2018-15599": "vulnerabilities/CVE-2018-15599.html",
+    "CVE-2018-15919": "vulnerabilities/CVE-2018-15919.html",
+    "CVE-2018-20685": "vulnerabilities/CVE-2018-20685.html",
+    "CVE-2019-16905": "vulnerabilities/CVE-2019-16905.html",
+    "CVE-2019-6109": "vulnerabilities/CVE-2019-6109.html",
+    "CVE-2019-6110": "vulnerabilities/CVE-2019-6110.html",
+    "CVE-2019-6111": "vulnerabilities/CVE-2019-6111.html",
+    "CVE-2020-12062": "vulnerabilities/CVE-2020-12062.html",
+    "CVE-2020-14002": "vulnerabilities/CVE-2020-14002.html",
+    "CVE-2020-14145": "vulnerabilities/CVE-2020-14145.html",
+    "CVE-2020-15778": "vulnerabilities/CVE-2020-15778.html",
+    "CVE-2021-28041": "vulnerabilities/CVE-2021-28041.html",
+    "CVE-2021-33500": "vulnerabilities/CVE-2021-33500.html",
+    "CVE-2021-36367": "vulnerabilities/CVE-2021-36367.html",
+    "CVE-2021-36368": "vulnerabilities/CVE-2021-36368.html",
+    "CVE-2021-36369": "vulnerabilities/CVE-2021-36369.html",
+    "CVE-2021-36370": "vulnerabilities/CVE-2021-36370.html",
+    "CVE-2021-41617": "vulnerabilities/CVE-2021-41617.html",
+    "CVE-2022-29154": "vulnerabilities/CVE-2022-29154.html",
 }
 
 
 # -- Helper functions ----------------------------------------------------------
 def setup(app):
     app.add_object_type(
-        'confval',
-        'confval',
-        objname='configuration value',
+        "confval",
+        "confval",
+        objname="configuration value",
         doc_field_types=[
             TypedField(
-                'parameter',
-                label='Options',
-                names=('option',),
-                can_collapse=True
+                "parameter", label="Options", names=("option",), can_collapse=True
             )
-        ]
+        ],
     )

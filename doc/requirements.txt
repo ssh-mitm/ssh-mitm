@@ -1,3 +1,4 @@
+sphinx
 pydata-sphinx-theme
 sphinx-sitemap<2.4.0
 sphinx-reredirects
@@ -6,3 +7,4 @@ sphinx-notfound-page
 sphinx-copybutton
 sphinxcontrib-mermaid
 sphinx-togglebutton
+sphinx-autodoc-typehints
