@@ -1,11 +1,5 @@
 import logging
-from typing import (
-    TYPE_CHECKING,
-    Optional,
-    Union,
-    Type,
-    cast
-)
+from typing import TYPE_CHECKING, Optional, Union, Type, cast
 
 import paramiko
 
@@ -18,41 +12,40 @@ if TYPE_CHECKING:
 
 
 class SFTPHandlerBasePlugin(BaseModule):
-
-    def __init__(self, sftp: 'SFTPBaseHandle', filename: str) -> None:
+    def __init__(self, sftp: "SFTPBaseHandle", filename: str) -> None:
         super().__init__()
         self.filename: str = filename
-        self.sftp: 'SFTPBaseHandle' = sftp
+        self.sftp: "SFTPBaseHandle" = sftp
 
     @classmethod
     def get_interface(cls) -> Optional[Type[BaseSFTPServerInterface]]:
         return None
 
     @classmethod
-    def get_file_handle(cls) -> Type['SFTPBaseHandle']:
+    def get_file_handle(cls) -> Type["SFTPBaseHandle"]:
         return cast(Type[SFTPBaseHandle], SFTPBaseHandle)
 
     def close(self) -> None:
         pass
 
-    def handle_data(self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None) -> bytes:
+    def handle_data(
+        self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None
+    ) -> bytes:
         del offset, length  # unused arguments
         return data
 
 
 class SFTPHandlerPlugin(SFTPHandlerBasePlugin):
-    """transfer files from/to remote sftp server
-    """
+    """transfer files from/to remote sftp server"""
 
 
 class SFTPBaseHandle(paramiko.SFTPHandle):
-
     def __init__(
         self,
-        session: 'sshmitm.session.Session',
+        session: "sshmitm.session.Session",
         plugin: Type[SFTPHandlerBasePlugin],
         filename: str,
-        flags: int = 0
+        flags: int = 0,
     ) -> None:
         super().__init__(flags)
         self.session = session
@@ -72,10 +65,10 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         data = self.readfile.read(length)
         return self.plugin.handle_data(data, length=length)
 
-    def write(self, offset: int, data: 'ReadableBuffer') -> int:
+    def write(self, offset: int, data: "ReadableBuffer") -> int:
         logging.debug("W_OFFSET: %s", offset)
         if not isinstance(data, bytes):
-            logging.error('SFTPBaseHandle.write got invalid argument!')
+            logging.error("SFTPBaseHandle.write got invalid argument!")
             return paramiko.sftp.SFTP_FAILURE
         data = self.plugin.handle_data(data, offset=offset)
         if self.writefile is None:

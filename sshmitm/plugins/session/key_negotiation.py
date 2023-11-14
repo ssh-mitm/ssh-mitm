@@ -21,8 +21,7 @@ if TYPE_CHECKING:
 
 
 class KeyNegotiationData:
-
-    def __init__(self, session: 'sshmitm.session.Session', message: Message) -> None:
+    def __init__(self, session: "sshmitm.session.Session", message: Message) -> None:
         self.session = session
         self.session.register_session_thread()
         self.client_version = session.transport.remote_version
@@ -43,18 +42,34 @@ class KeyNegotiationData:
     def show_debug_info(self) -> None:
         logging.debug(
             "%s connected client version: %s",
-            Colors.emoji('information'),
-            Colors.stylize(self.client_version, fg('green') + attr('bold'))
+            Colors.emoji("information"),
+            Colors.stylize(self.client_version, fg("green") + attr("bold")),
         )
         logging.debug("cookie: %s", self.cookie.hex())
         logging.debug("kex_algorithms: %s", escape(str(self.kex_algorithms)))
         logging.debug("server_host_key_algorithms: %s", self.server_host_key_algorithms)
-        logging.debug("encryption_algorithms_client_to_server: %s", self.encryption_algorithms_client_to_server)
-        logging.debug("encryption_algorithms_server_to_client: %s", self.encryption_algorithms_server_to_client)
-        logging.debug("mac_algorithms_client_to_server: %s", self.mac_algorithms_client_to_server)
-        logging.debug("mac_algorithms_server_to_client: %s", self.mac_algorithms_server_to_client)
-        logging.debug("compression_algorithms_client_to_server: %s", self.compression_algorithms_client_to_server)
-        logging.debug("compression_algorithms_server_to_client: %s", self.compression_algorithms_server_to_client)
+        logging.debug(
+            "encryption_algorithms_client_to_server: %s",
+            self.encryption_algorithms_client_to_server,
+        )
+        logging.debug(
+            "encryption_algorithms_server_to_client: %s",
+            self.encryption_algorithms_server_to_client,
+        )
+        logging.debug(
+            "mac_algorithms_client_to_server: %s", self.mac_algorithms_client_to_server
+        )
+        logging.debug(
+            "mac_algorithms_server_to_client: %s", self.mac_algorithms_server_to_client
+        )
+        logging.debug(
+            "compression_algorithms_client_to_server: %s",
+            self.compression_algorithms_client_to_server,
+        )
+        logging.debug(
+            "compression_algorithms_server_to_client: %s",
+            self.compression_algorithms_server_to_client,
+        )
         logging.debug("languages_client_to_server: %s", self.languages_client_to_server)
         logging.debug("languages_server_to_client: %s", self.languages_server_to_client)
         logging.debug("first_kex_packet_follows: %s", self.first_kex_packet_follows)
@@ -64,16 +79,18 @@ class KeyNegotiationData:
         vulnerability_list = None
         client_version = self.client_version.lower()
         try:
-            vulndb = pkg_resources.resource_filename('sshmitm', 'data/client_info.yml')
-            with open(vulndb, 'r', encoding="utf-8") as file:
+            vulndb = pkg_resources.resource_filename("sshmitm", "data/client_info.yml")
+            with open(vulndb, "r", encoding="utf-8") as file:
                 vulnerability_list = yaml.safe_load(file)
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error loading vulnerability database")
             return
         for client_name, client_info in vulnerability_list.items():
-            for version_regex in client_info.get('version_regex'):
+            for version_regex in client_info.get("version_regex"):
                 if re.search(version_regex, client_version):
-                    client = SSHClientAudit(self, client_version, client_name, client_info)
+                    client = SSHClientAudit(
+                        self, client_version, client_name, client_info
+                    )
                     break
             else:
                 continue
@@ -84,7 +101,7 @@ class KeyNegotiationData:
         client.run_audit()
 
 
-def handle_key_negotiation(session: 'sshmitm.session.Session') -> None:
+def handle_key_negotiation(session: "sshmitm.session.Session") -> None:
     # When really trying to implement connection accepting/forwarding based on CVE-14145
     # one should consider that clients who already accepted the fingerprint of the ssh-mitm server
     # will be connected through on their second connect and will get a changed keys error

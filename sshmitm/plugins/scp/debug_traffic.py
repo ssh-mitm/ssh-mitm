@@ -14,8 +14,7 @@ from sshmitm.forwarders.scp import SCPForwarder
 
 
 class SCPDebugForwarder(SCPForwarder):
-    """print traffic as hexdump
-    """
+    """print traffic as hexdump"""
 
     @staticmethod
     def print_hexdump(traffic: bytes, hexwidth: int = 16) -> None:
@@ -23,15 +22,24 @@ class SCPDebugForwarder(SCPForwarder):
         result = []
 
         for i in range(0, len(traffic), hexwidth):
-            data_part = traffic[i:i + hexwidth]
-            hexa = list(map(''.join, zip(*[iter(binascii.hexlify(data_part).decode('utf-8'))] * 2)))
+            data_part = traffic[i : i + hexwidth]
+            hexa = list(
+                map(
+                    "".join,
+                    zip(*[iter(binascii.hexlify(data_part).decode("utf-8"))] * 2),
+                )
+            )
             while hexwidth - len(hexa) > 0:
-                hexa.append(' ' * 2)
-            text = ''.join([chr(x) if 0x20 <= x < 0x7F else '.' for x in data_part])
-            addr = '%04X:    %s    %s' % (i, " ".join(hexa), text)  # pylint: disable=consider-using-f-string
+                hexa.append(" " * 2)
+            text = "".join([chr(x) if 0x20 <= x < 0x7F else "." for x in data_part])
+            addr = "%04X:    %s    %s" % (  # pylint: disable=consider-using-f-string
+                i,
+                " ".join(hexa),
+                text,
+            )
             result.append(addr)
 
-        print('\n'.join(result))
+        print("\n".join(result))
 
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         print("Client data:" if isclient else "Server data:")

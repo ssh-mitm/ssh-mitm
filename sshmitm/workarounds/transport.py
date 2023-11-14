@@ -40,14 +40,12 @@ from paramiko.common import (
     cMSG_UNIMPLEMENTED,
     MSG_UNIMPLEMENTED,
     MSG_NAMES,
-    cMSG_KEXINIT
+    cMSG_KEXINIT,
 )
 from paramiko.message import Message
 from paramiko.packet import NeedRekeyException
 from paramiko.util import b
-from paramiko.ssh_exception import (
-    SSHException
-)
+from paramiko.ssh_exception import SSHException
 
 
 from paramiko.transport import _active_threads  # type: ignore
@@ -235,9 +233,7 @@ def transport_run(self):  # type: ignore
                     # itself literally MSG_UNIMPLEMENTED, in which case, we
                     # just shut up to avoid causing a useless loop).
                     name = MSG_NAMES[ptype]
-                    warning = "Oops, unhandled type {} ({!r})".format(
-                        ptype, name
-                    )
+                    warning = "Oops, unhandled type {} ({!r})".format(ptype, name)
                     self._log(WARNING, warning)
                     if ptype != MSG_UNIMPLEMENTED:
                         msg = Message()

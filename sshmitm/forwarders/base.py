@@ -1,13 +1,11 @@
-from typing import (
-    TYPE_CHECKING,
-    Optional
-)
+from typing import TYPE_CHECKING, Optional
 
 import paramiko
 
 import sshmitm
 from sshmitm.moduleparser import BaseModule
 from sshmitm.exceptions import MissingClient
+
 if TYPE_CHECKING:
     from sshmitm.session import Session
 
@@ -20,15 +18,17 @@ class BaseForwarder(BaseModule):
     # Slow file transmission
     BUF_LEN = 65536 * 100
 
-    def __init__(self, session: 'sshmitm.session.Session') -> None:
+    def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__()
         if session.ssh_client is None or session.ssh_client.transport is None:
             raise MissingClient("session.ssh_client is None")
-        self.server_channel: paramiko.Channel = session.ssh_client.transport.open_session()
+        self.server_channel: paramiko.Channel = (
+            session.ssh_client.transport.open_session()
+        )
         if session.agent is not None:
             session.agent.forward_agent(self.server_channel)
         self.channel: Optional[paramiko.Channel] = None
-        self.session: 'Session' = session
+        self.session: "Session" = session
         self.session.register_session_thread()
 
         # pass environment variables from client to server

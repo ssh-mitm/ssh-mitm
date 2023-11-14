@@ -30,26 +30,27 @@ from sshmitm.forwarders.scp import SCPForwarder
 
 
 class SCPReplaceFile(SCPForwarder):
-    """replace the file with another file
-    """
+    """replace the file with another file"""
 
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
-            '--scp-replace-file',
-            dest='scp_replace_file',
+            "--scp-replace-file",
+            dest="scp_replace_file",
             required=True,
-            help='file that is used for replacement'
+            help="file that is used for replacement",
         )
 
-    def __init__(self, session: 'sshmitm.session.Session') -> None:
+    def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session)
         self.args.scp_replace_file = os.path.expanduser(self.args.scp_replace_file)
 
         self.data_sent = False
         self.file_stat = os.stat(self.args.scp_replace_file)
-        self.file_to_send = open(self.args.scp_replace_file, 'rb')  # pylint: disable=consider-using-with
+        self.file_to_send = open(  # pylint: disable=consider-using-with
+            self.args.scp_replace_file, "rb"
+        )
 
     def handle_command(self, traffic: bytes) -> bytes:
         traffic = super().handle_command(traffic)
@@ -57,7 +58,9 @@ class SCPReplaceFile(SCPForwarder):
             return traffic
 
         self.bytes_remaining = self.file_size = self.file_stat.st_size
-        traffic_string = f"{self.file_command}{self.file_mode} {self.file_size} {self.file_name}\n"
+        traffic_string = (
+            f"{self.file_command}{self.file_mode} {self.file_size} {self.file_name}\n"
+        )
         return traffic_string.encode("UTF-8")
 
     def process_data(self, traffic: bytes) -> bytes:

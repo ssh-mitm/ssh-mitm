@@ -21,10 +21,7 @@ to remote servers, execute commands, and transfer files.
 import logging
 from enum import Enum
 
-from typing import (
-    TYPE_CHECKING,
-    Optional
-)
+from typing import TYPE_CHECKING, Optional
 from paramiko.pkey import PKey
 
 import paramiko
@@ -45,13 +42,14 @@ class AuthenticationMethod(Enum):
     An enumeration of possible authentication methods that can be
     used to connect to a remote host.
     """
+
     PASSWORD = "password"  # nosec
     PUBLICKEY = "publickey"
     AGENT = "agent"
 
 
 class BaseSSHClient(BaseModule):
-    """"
+    """ "
     The base class for an SSH client module.
     """
 
@@ -86,10 +84,10 @@ class SSHClient(BaseSSHClient):
         password: Optional[str],
         user: str,
         key: Optional[PKey],
-        session: 'sshmitm.session.Session'
+        session: "sshmitm.session.Session",
     ) -> None:
         super().__init__()
-        self.session: 'sshmitm.session.Session' = session
+        self.session: "sshmitm.session.Session" = session
         self.session.register_session_thread()
         self.host: str = host
         self.port: int = port
@@ -113,14 +111,16 @@ class SSHClient(BaseSSHClient):
         self.transport = paramiko.Transport((self.host, self.port))
         if self.CIPHERS:
             if not isinstance(self.CIPHERS, tuple):
-                raise ValueError('client ciphers must be a tuple')
+                raise ValueError("client ciphers must be a tuple")
             self.transport.get_security_options().ciphers = self.CIPHERS
 
         try:
             if self.method is AuthenticationMethod.PASSWORD:
                 self.transport.connect(username=self.user, password=self.password)
             elif self.method is AuthenticationMethod.PUBLICKEY:
-                self.transport.connect(username=self.user, password=self.password, pkey=self.key)
+                self.transport.connect(
+                    username=self.user, password=self.password, pkey=self.key
+                )
             elif self.method is AuthenticationMethod.AGENT:
                 if self.agent is not None:
                     keys = self.agent.get_keys()
@@ -129,15 +129,16 @@ class SSHClient(BaseSSHClient):
                     for k in keys:
                         try:
                             self.transport.connect(
-                                username=self.user,
-                                password=self.password,
-                                pkey=k
+                                username=self.user, password=self.password, pkey=k
                             )
                             ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
                             ssh_pub_key.parse()
                             logging.debug(
                                 "ssh-mitm connected to remote host with username=%s, key=%s %s %sbits",
-                                self.user, k.get_name(), ssh_pub_key.hash_sha256(), ssh_pub_key.bits
+                                self.user,
+                                k.get_name(),
+                                ssh_pub_key.hash_sha256(),
+                                ssh_pub_key.bits,
                             )
                             break
                         except paramiko.AuthenticationException:
@@ -145,11 +146,15 @@ class SSHClient(BaseSSHClient):
                             self.transport = paramiko.Transport((self.host, self.port))
 
             else:
-                logging.error('authentication method "%s" not supported!', self.method.value)
+                logging.error(
+                    'authentication method "%s" not supported!', self.method.value
+                )
                 return False
 
             remotekey = self.transport.get_remote_server_key()
-            if not self.check_host_key(f"{self.host}:{self.port}", remotekey.get_name(), remotekey):
+            if not self.check_host_key(
+                f"{self.host}:{self.port}", remotekey.get_name(), remotekey
+            ):
                 raise InvalidHostKey()
             self.connected = True
             return True
@@ -162,7 +167,12 @@ class SSHClient(BaseSSHClient):
             message = "Hostkey is invalid"
 
         userstring = f"{self.user}:{self.password}@{self.host}:{self.port}"
-        logging.debug('Authentication failed: %s, User: %s, Message: %s', self.method.value, userstring, message or "")
+        logging.debug(
+            "Authentication failed: %s, User: %s, Message: %s",
+            self.method.value,
+            userstring,
+            message or "",
+        )
 
         return False
 

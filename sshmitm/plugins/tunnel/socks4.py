@@ -1,13 +1,7 @@
 import logging
 from enum import Enum
 import socket
-from typing import (
-    cast,
-    List,
-    Optional,
-    Tuple,
-    Union
-)
+from typing import cast, List, Optional, Tuple, Union
 
 import paramiko
 from colored.colored import fg, attr  # type: ignore
@@ -37,19 +31,21 @@ class Socks4Types(Enum):
 
 class Socks4Command(Socks4Types):
     """Kommandos für den Socks Proxy"""
+
     CONNECT = b"\x01"
     BIND = b"\x02"
 
 
 class Socks4CommandReply(Socks4Types):
     """Bestättigungen für den Socks Proxy"""
+
     SUCCESS = b"\x5A"
     FAILED = b"\x5B"
 
 
-class Socks4Server():
-    """Socks4 kompatibler Forwarder
-    """
+class Socks4Server:
+    """Socks4 kompatibler Forwarder"""
+
     SOCKSVERSION = b"\x04"
 
     def __init__(self, listenaddress: Tuple[str, int]) -> None:
@@ -66,7 +62,9 @@ class Socks4Server():
         server_port = self.listenaddress[1]
         return bytes([int(server_port / 256)]) + bytes([int(server_port % 256)])
 
-    def _get_address(self, clientsock: Union[socket.socket, paramiko.Channel]) -> Optional[Tuple[str, int]]:
+    def _get_address(
+        self, clientsock: Union[socket.socket, paramiko.Channel]
+    ) -> Optional[Tuple[str, int]]:
         """Ermittelt das Ziel aus der Socks Anfrage"""
         # get socks command
         try:
@@ -99,16 +97,13 @@ class Socks4Server():
             address = (dst_addr, dst_port)
             reply = Socks4CommandReply.SUCCESS
 
-        clientsock.sendall(
-            b"\x00"
-            + reply
-            + self.server_port
-            + self.server_ip
-        )
+        clientsock.sendall(b"\x00" + reply + self.server_port + self.server_ip)
         return address
 
     def get_address(
-        self, clientsock: Union[socket.socket, paramiko.Channel], ignore_version: bool = False
+        self,
+        clientsock: Union[socket.socket, paramiko.Channel],
+        ignore_version: bool = False,
     ) -> Optional[Tuple[str, int]]:
         try:
             # check socks version
@@ -125,15 +120,15 @@ class ClientTunnelHandler:
     Similar to the RemotePortForwardingForwarder
     """
 
-    def __init__(
-        self,
-        session: 'sshmitm.session.Session'
-    ) -> None:
+    def __init__(self, session: "sshmitm.session.Session") -> None:
         self.session = session
         self.session.register_session_thread()
 
     def handle_request(
-        self, listenaddr: Tuple[str, int], client: Union[socket.socket, paramiko.Channel], addr: Optional[Tuple[str, int]]
+        self,
+        listenaddr: Tuple[str, int],
+        client: Union[socket.socket, paramiko.Channel],
+        addr: Optional[Tuple[str, int]],
     ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
@@ -145,8 +140,12 @@ class ClientTunnelHandler:
             logging.error("unable to parse Socks4 request")
             return
         try:
-            logging.debug("Injecting direct-tcpip channel (%s -> %s) to client", addr, destination)
-            remote_ch = self.session.ssh_client.transport.open_channel("direct-tcpip", destination, addr)
+            logging.debug(
+                "Injecting direct-tcpip channel (%s -> %s) to client", addr, destination
+            )
+            remote_ch = self.session.ssh_client.transport.open_channel(
+                "direct-tcpip", destination, addr
+            )
             TunnelForwarder(client, remote_ch)
         except paramiko.ssh_exception.ChannelException:
             client.close()
@@ -154,17 +153,16 @@ class ClientTunnelHandler:
 
 
 class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
-    """Serve out direct-tcpip connections over a session on local ports
-    """
+    """Serve out direct-tcpip connections over a session on local ports"""
 
     @classmethod
     def parser_arguments(cls) -> None:
         plugin_group = cls.parser().add_argument_group(cls.__name__)
         plugin_group.add_argument(
-            '--socks-listen-address',
-            dest='socks_listen_address',
-            default='127.0.0.1',
-            help='socks server listen address (default: 127.0.0.1)'
+            "--socks-listen-address",
+            dest="socks_listen_address",
+            default="127.0.0.1",
+            help="socks server listen address (default: 127.0.0.1)",
         )
 
     tcpservers: List[TCPServerThread] = []
@@ -172,22 +170,22 @@ class SOCKS4TunnelForwarder(LocalPortForwardingForwarder):
     # Setup should occur after master channel establishment
 
     @classmethod
-    def setup(cls, session: 'sshmitm.session.Session') -> None:
+    def setup(cls, session: "sshmitm.session.Session") -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
 
         server_thread = TCPServerThread(
             ClientTunnelHandler(session).handle_request,
             run_status=session.running,
-            network=args.socks_listen_address
+            network=args.socks_listen_address,
         )
         server_thread.start()
         cls.tcpservers.append(server_thread)
-        socat_cmd = f'socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={server_thread.port}'
+        socat_cmd = f"socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport={server_thread.port}"
         logging.info(
             "%s %s - created Socks4 proxy server on port %s. connect with %s",
-            Colors.emoji('information'),
-            Colors.stylize(session.sessionid, fg('light_blue') + attr('bold')),
-            Colors.stylize(server_thread.port, fg('light_blue') + attr('bold')),
-            Colors.stylize(socat_cmd, fg('light_blue') + attr('bold'))
+            Colors.emoji("information"),
+            Colors.stylize(session.sessionid, fg("light_blue") + attr("bold")),
+            Colors.stylize(server_thread.port, fg("light_blue") + attr("bold")),
+            Colors.stylize(socat_cmd, fg("light_blue") + attr("bold")),
         )

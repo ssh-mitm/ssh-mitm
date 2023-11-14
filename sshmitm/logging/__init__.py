@@ -14,14 +14,13 @@ THREAD_DATA = threading.local()
 
 
 class Colors:
-
     stylize_func: bool = True
 
     @classmethod
     def emoji(cls, name: str) -> str:
         if name in EMOJI and cls.stylize_func:
             return EMOJI[name]
-        return ''
+        return ""
 
     @classmethod
     def stylize(cls, text: Any, styles: Any, reset: bool = True) -> Any:
@@ -40,8 +39,7 @@ class Colors:
         return text
 
 
-class FailSaveLogStream():
-
+class FailSaveLogStream:
     def __init__(self, debug: bool = False) -> None:
         self.debug = debug
 
@@ -60,28 +58,36 @@ class FailSaveLogStream():
         Colors.stylize_func = True
         root_logger = logging.getLogger()
         root_logger.handlers.clear()
-        root_logger.addHandler(RichHandler(
-            highlighter=NullHighlighter(),
-            markup=False,
-            rich_tracebacks=True,
-            enable_link_path=self.debug,
-            show_path=self.debug
-        ))
+        root_logger.addHandler(
+            RichHandler(
+                highlighter=NullHighlighter(),
+                markup=False,
+                rich_tracebacks=True,
+                enable_link_path=self.debug,
+                show_path=self.debug,
+            )
+        )
 
 
 class PlainJsonFormatter(jsonlogger.JsonFormatter):
-
     def process_log_record(self, log_record: Dict[str, Any]) -> Dict[str, Any]:
-        log_record['message'] = log_record['message'].strip()
+        log_record["message"] = log_record["message"].strip()
         return log_record
 
-    def add_fields(self, log_record: Dict[str, Any], record: logging.LogRecord, message_dict: Dict[str, Any]) -> None:
+    def add_fields(
+        self,
+        log_record: Dict[str, Any],
+        record: logging.LogRecord,
+        message_dict: Dict[str, Any],
+    ) -> None:
         super().add_fields(log_record, record, message_dict)
-        log_record['tid'] = threading.get_native_id()
-        log_record['module'] = record.module
+        log_record["tid"] = threading.get_native_id()
+        log_record["module"] = record.module
 
-        session = getattr(THREAD_DATA, 'session', None)
-        log_record['sessionid'] = session.sessionid if session is not None else None
+        session = getattr(THREAD_DATA, "session", None)
+        log_record["sessionid"] = session.sessionid if session is not None else None
 
-        log_record['timestamp'] = datetime.now(timezone.utc).strftime('%Y-%m-%dT%H:%M:%S.%fZ')
-        log_record['level'] = record.levelname
+        log_record["timestamp"] = datetime.now(timezone.utc).strftime(
+            "%Y-%m-%dT%H:%M:%S.%fZ"
+        )
+        log_record["level"] = record.levelname

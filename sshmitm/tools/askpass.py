@@ -31,12 +31,15 @@ try:
     import tkinter
     from tkinter.simpledialog import askstring
     from tkinter import ttk
+
     TKINTER_IMPORTED = True
 except ImportError:
     TKINTER_IMPORTED = False
 
 
-def ask_pass(primary_message: str, secondary_message: Optional[str] = None) -> Optional[str]:
+def ask_pass(
+    primary_message: str, secondary_message: Optional[str] = None
+) -> Optional[str]:
     """
     This function displays a dialog box for the user to enter a password.
      The dialog box has a primary message, and an optional secondary message.
@@ -51,7 +54,7 @@ def ask_pass(primary_message: str, secondary_message: Optional[str] = None) -> O
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
-    password = askstring('SSH-MITM - Askpass', dialog_text, show="*")
+    password = askstring("SSH-MITM - Askpass", dialog_text, show="*")
     if password is not None:
         return password
     return None
@@ -71,8 +74,8 @@ def confirm(primary_message: str, secondary_message: Optional[str] = None) -> bo
     dialog_text = primary_message
     if secondary_message:
         dialog_text = "\n".join([primary_message, secondary_message])
-    answer = tkinter.messagebox.askquestion('SSH-MITM - Askpass', dialog_text, icon='question')  # type: ignore
-    if answer == 'yes':
+    answer = tkinter.messagebox.askquestion("SSH-MITM - Askpass", dialog_text, icon="question")  # type: ignore
+    if answer == "yes":
         return True
     return False
 
@@ -85,7 +88,7 @@ def main() -> NoReturn:
         logging.error("tkinter not installed!")
         sys.exit(1)
     parser = argparse.ArgumentParser()
-    parser.add_argument('messages', nargs='*')
+    parser.add_argument("messages", nargs="*")
     args = parser.parse_args()
 
     lines = " ".join(args.messages).split("\n")
@@ -100,7 +103,7 @@ def main() -> NoReturn:
     root = tkinter.Tk()
     root.withdraw()
     style = ttk.Style()
-    style.theme_use('clam')
+    style.theme_use("clam")
     if primary_message.endswith("?"):
         rvalue_ok = confirm(primary_message, secondary_message)
         if not rvalue_ok:
@@ -114,5 +117,5 @@ def main() -> NoReturn:
     sys.exit(0)
 
 
-if __name__ == '__main__':
+if __name__ == "__main__":
     main()
