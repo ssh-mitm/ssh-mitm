@@ -68,15 +68,10 @@ class Session(BaseSession):
     """Session Handler to store and manage active SSH sessions.
 
     :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
-    :type proxyserver: sshmitm.server.SSHProxyServer
     :param client_socket: A socket instance representing the connection from the client
-    :type client_socket: socket.socket
     :param client_address: Address information of the client
-    :type client_address: Tuple[str, int] or Tuple[str, int, int, int]
     :param authenticator: Type of the authentication class to be used
-    :type authenticator: Type[sshmitm.authentication.Authenticator]
     :param remoteaddr: Remote address information
-    :type remoteaddr: Tuple[str, int] or Tuple[str, int, int, int]
     """
 
     CIPHERS = None
@@ -85,9 +80,6 @@ class Session(BaseSession):
     def parser_arguments(cls) -> None:
         """
         Add an argument to the command line parser for session plugin.
-
-        :return: None
-        :rtype: None
         """
         plugin_group = cls.argument_group()
         plugin_group.add_argument(
@@ -109,17 +101,10 @@ class Session(BaseSession):
         Initialize the class instance.
 
         :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
-        :type proxyserver: sshmitm.server.SSHProxyServer
         :param client_socket: A socket instance representing the connection from the client
-        :type client_socket: socket.socket
         :param client_address: Address information of the client
-        :type client_address: Tuple[str, int] or Tuple[str, int, int, int]
         :param authenticator: Type of the authentication class to be used
-        :type authenticator: Type[sshmitm.authentication.Authenticator]
         :param remoteaddr: Remote address information
-        :type remoteaddr: Tuple[str, int] or Tuple[str, int, int, int]
-        :return: None
-        :rtype: None
         """
         super().__init__()
         self.register_session_thread()
@@ -175,7 +160,6 @@ class Session(BaseSession):
         Returns the directory where the ssh session logs will be stored.
 
         :return: The directory path where the ssh session logs will be stored, or `None` if the directory is not specified.
-        :rtype: Optional[str]
         """
         if not self.args.session_log_dir:
             return None
@@ -188,7 +172,6 @@ class Session(BaseSession):
         Returns the running state of the current session.
 
         :return: A boolean indicating whether the session is running or not
-        :rtype: bool
         """
         session_channel_open: bool = True
         ssh_channel_open: bool = False
@@ -217,7 +200,6 @@ class Session(BaseSession):
         Returns the type of transport being used by the current session.
 
         :return: A string representing the transport type
-        :rtype: str
         """
         if self._transport is None:
             self._transport = Transport(self.client_socket)
@@ -310,8 +292,6 @@ class Session(BaseSession):
     def start(self) -> bool:
         """
         Start the session and initialize the underlying transport.
-
-        :return: None
         """
         self.register_session_thread()
         event = threading.Event()
@@ -352,8 +332,6 @@ class Session(BaseSession):
     def close(self) -> None:
         """
         Close the session and release the underlying resources.
-
-        :return: None
         """
         if self.agent:
             self.agent.close()

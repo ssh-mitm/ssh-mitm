@@ -70,16 +70,11 @@ def probe_host(
     which indicates whether the provided public key is authorized or not.
 
     :param hostname_or_ip: Hostname or IP address of the remote host to probe.
-    :type hostname: str
     :param port: Port of the remote host.
-    :type port: int
     :param username: The username to probe authorization for.
-    :type username: str
     :param public_key: The public key to use for the probe.
-    :type public_key: paramiko.pkey.PublicBlob
 
     :returns: True if the provided public key is authorized, False otherwise.
-    :rtype: bool
     """
 
     # pylint: disable=protected-access
@@ -175,7 +170,6 @@ class RemoteCredentials:
         :param key: (PKey) an optional `PKey` object representing a private key used to authenticate with the remote host. This argument is optional and if not specified, the value will be `None`.
         :param host: (str) an optional string representing the hostname or IP address of the remote host. This argument is optional and if not specified, the value will be `None`.
         :param port: (int) an optional integer representing the port number used to connect to the remote host. This argument is optional and if not specified, the value will be `None`.
-        :return: None
         """
         self.username: str = username
         """
@@ -215,8 +209,6 @@ class Authenticator(BaseModule):
     def parser_arguments(cls) -> None:
         """
         Adds the options for remote authentication using argparse.
-
-        :return: None
         """
         plugin_group = cls.argument_group()
         plugin_group.add_argument(
@@ -549,8 +541,6 @@ class Authenticator(BaseModule):
         """Perform any pre-authentication actions.
 
         This method is called before the authentication process starts.
-
-        :return: None
         """
 
     def post_auth_action(self, success: bool) -> None:
@@ -559,7 +549,6 @@ class Authenticator(BaseModule):
         This method is called after the authentication process is completed, whether successfully or not.
 
         :param success: indicates if the authentication was successful or not
-        :return: None
         """
 
 

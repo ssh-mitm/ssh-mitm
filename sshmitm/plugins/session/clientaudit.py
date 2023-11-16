@@ -23,10 +23,8 @@ class Vulnerability:
     This class represents a vulnerability and holds information about it.
 
     :param cve: the identifier of the vulnerability (e.g. 'CVE-2022-0001')
-    :type cve: str
     :param indocs: if True, the URL of the vulnerability information will point to the internal docs.
                   if False, the URL will point to the official NIST National Vulnerability Database.
-    :type indocs: bool
     """
 
     def __init__(self, cve: str, indocs: bool = False) -> None:
@@ -39,7 +37,6 @@ class Vulnerability:
         Get the URL where the information about the vulnerability can be found.
 
         :return: the URL
-        :rtype: str
         """
         if self.indocs:
             return f"https://docs.ssh-mitm.at/vulnerabilities/{self.cve}.html"
@@ -51,15 +48,9 @@ class SSHClientAudit:
     The class SSHClientAudit is used for auditing SSH clients.
 
     :param key_negotiation_data: object of 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData'
-    :type key_negotiation_data: 'sshmitm.plugins.session.key_negotiation.KeyNegotiationData'
     :param client_version: client version string
-    :type client_version: str
     :param client_name: optional client name
-    :type client_name: Optional[str]
     :param client_info: optional client information, stored as a dictionary
-    :type client_info: Optional[Dict[str, Dict[str, Any]]]
-    :return: None
-    :rtype: None
     """
 
     def __init__(
@@ -82,7 +73,6 @@ class SSHClientAudit:
         using the `version_regex` field of `client_info` dictionary.
 
         :return: version string
-        :rtype: Optional[str]
         """
         for version_regex in self.client_info.get("version_regex", []):
             version_sring = re.match(
@@ -102,11 +92,8 @@ class SSHClientAudit:
         Returns `False` otherwise.
 
         :param version_min: minimum version number
-        :type version_min: Union[None, int, float, str]
         :param version_max: maximum version number
-        :type version_max: Union[None, int, float, str]
         :return: `True` if version string is between `version_min` and `version_max`, `False` otherwise
-        :rtype: bool
         """
         try:
             version_string = self.get_version_string()
@@ -132,9 +119,7 @@ class SSHClientAudit:
         along with the information available in the `vulnerabilities` dictionary.
 
         :param vulnerabilities: dictionary of CVEs and their descriptions
-        :type vulnerabilities: Dict[str, List[str]]
         :return: list of strings representing the CVEs and their information
-        :rtype: List[str]
         """
         cvelist: Dict[str, Vulnerability] = {}
         for cve, description in self.client_info.get("vulnerabilities", {}).items():
@@ -168,7 +153,6 @@ class SSHClientAudit:
         This method returns a list of strings representing the server host key algorithms known to the client.
 
         :return: list of strings representing server host key algorithms
-        :rtype: List[str]
         """
         messages: List[str] = []
         for (
@@ -206,9 +190,7 @@ class SSHClientAudit:
         Check if a client with the given ID is already registered as a known client.
 
         :param client_id: ID of the client to check
-        :type client_id: str
         :return: True if the client is known, False otherwise
-        :rtype: bool
         """
         messages: List[str] = []
         if client_name not in SERVER_HOST_KEY_ALGORITHMS:
@@ -243,9 +225,7 @@ class SSHClientAudit:
         Check if a key negotiation data is known.
 
         :param client_id: ID of the client to check
-        :type client_id: str
         :return: True if key negotiation data is known, False otherwise
-        :rtype: bool
         """
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning(
@@ -271,9 +251,6 @@ class SSHClientAudit:
         Run an audit on the client with the given ID.
 
         :param client_id: ID of the client to audit
-        :type client_id: str
-        :return: None
-        :rtype: None
         """
         vulnerabilities: DefaultDict[str, List[str]] = defaultdict(list)
         for audit_type, audit_results in self.check_key_negotiation().items():
@@ -339,8 +316,5 @@ class SSHClientAudit:
     def audit(self) -> List[str]:
         """
         Run audits on all clients.
-
-        :return: None
-        :rtype: None
         """
         return []

@@ -54,11 +54,8 @@ class SubCommand:
     This class represents a subcommand, which contains a function that is run and a parser that is used to parse arguments.
 
     :param run_func: A callable function that runs the subcommand
-    :type run_func: Callable[[Namespace], None]
     :param parser_func: A callable function that generates the argument parser for the subcommand
-    :type parser_func: Callable[[ModuleParser], None]
     :param help: A string that describes the subcommand
-    :type help: str
     """
 
     def __init__(
@@ -77,9 +74,6 @@ class SubCommand:
 def main() -> None:
     """
     Main function of the SSH-MITM tools, it provides a CLI interface to use the `audit` and `server` subcommands.
-
-    :return: None
-    :rtype: None
     """
     available_subcommands = {
         "audit": SubCommand(

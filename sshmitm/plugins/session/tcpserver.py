@@ -32,16 +32,10 @@ class TCPServerThread(threading.Thread):
     A TCP server thread that accepts incoming connections and launches a new thread for each connection.
 
     :param request_handler: a function to be called for each connection request
-    :type request_handler: Optional[Callable[Tuple[str, int], Union[socket.socket, paramiko.Channel], Tuple[str, int]], None]
     :param network: network address for the server to bind to
-    :type network: str
     :param port: port number for the server to listen on
-    :type port: int
     :param run_status: whether the server should run or not
-    :type run_status: bool
     :param daemon: whether the server should run as a daemon
-    :type daemon: bool
-    :return: None
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -78,8 +72,6 @@ class TCPServerThread(threading.Thread):
     def run(self) -> None:
         """
         Start the server thread and continuously check for incoming connections.
-
-        :return: None
         """
         while self.running:
             readable = select.select([self.socket], [], [], 0.5)[0]
@@ -98,10 +90,7 @@ class TCPServerThread(threading.Thread):
         Call the handle request callback for a new connection.
 
         :param client: The client's socket or paramiko channel.
-        :type client: Union[socket.socket, paramiko.Channel]
         :param addr: Tuple containing the address information of the client.
-        :type addr: Tuple[str, int]
-        :return: None
         """
         if self.handle_request_callback is not None:
             self.handle_request_callback((self.network, self.port), client, addr)
@@ -109,8 +98,6 @@ class TCPServerThread(threading.Thread):
     def close(self) -> None:
         """
         Join all the active threads and close the server socket.
-
-        :return: None
         """
         for server_thread in self.threads:
             server_thread.join()

@@ -45,11 +45,8 @@ def ask_pass(
      The dialog box has a primary message, and an optional secondary message.
 
     :param primary_message: The primary message to be displayed in the dialog box
-    :type primary_message: str
     :param secondary_message: An optional secondary message to be displayed in the dialog box
-    :type secondary_message: Optional[str]
     :return: The password entered by the user
-    :rtype: Optional[str]
     """
     dialog_text = primary_message
     if secondary_message:
@@ -65,11 +62,8 @@ def confirm(primary_message: str, secondary_message: Optional[str] = None) -> bo
     Confirms a question with yes or no answer.
 
     :param primary_message: The main message to be displayed
-    :type primary_message: str
     :param secondary_message: An optional secondary message to be displayed
-    :type secondary_message: Optional[str]
     :return: True if answer is yes, False otherwise.
-    :rtype: bool
     """
     dialog_text = primary_message
     if secondary_message:

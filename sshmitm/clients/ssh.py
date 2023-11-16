@@ -59,19 +59,12 @@ class SSHClient(BaseSSHClient):
     The SSH client class, used to connect to a remote host.
 
     :param host: the hostname or IP address of the remote host
-    :type host: str
     :param port: the port number to connect to on the remote host
-    :type port: int
     :param method: the authentication method to use when connecting
-    :type method: AuthenticationMethod
     :param password: the password to use for authentication (if method is `password`)
-    :type password: Optional[str]
     :param user: the username to use for authentication
-    :type user: str
     :param key: the public key to use for authentication (if method is `publickey`)
-    :type key: Optional[PKey]
     :param session: the session instance
-    :type session: 'sshmitm.session.Session'
     """
 
     CIPHERS = None
@@ -104,7 +97,6 @@ class SSHClient(BaseSSHClient):
         Connects to the remote host using the specified authentication method.
 
         :return: True if the connection was successful, False otherwise
-        :rtype: bool
         """
         message = None
 
@@ -181,13 +173,9 @@ class SSHClient(BaseSSHClient):
         Check the host key.
 
         :param hostname: Hostname of the remote server.
-        :type hostname: str
         :param keytype: Type of the key.
-        :type keytype: str
         :param key: Key of the remote server.
-        :type key: `paramiko.pkey.PKey`
         :return: True if the host key is valid, False otherwise.
-        :rtype: bool
         """
         del hostname, keytype, key  # unused arguments
         return True

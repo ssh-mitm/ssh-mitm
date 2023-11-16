@@ -25,13 +25,9 @@ class SFTPClient(SSHClient):
     to and from a remote server using SFTP protocol.
 
     :param host: hostname or IP address of the SFTP server
-    :type host: str
     :param username: username for authentication to the SFTP server
-    :type username: str
     :param password: password for authentication to the SFTP server
-    :type password: str
     :param port: port number to use for the connection (default is 22)
-    :type port: int
 
     """
 
@@ -55,9 +51,7 @@ class SFTPClient(SSHClient):
         Create an SFTPClient instance from an SSHClient instance.
 
         :param ssh_client: The SSHClient instance.
-        :type ssh_client: Optional[SSHClient]
         :return: An SFTPClient instance, or None if the SFTPClient could not be created.
-        :rtype: Optional[SFTPClient]
         """
         if ssh_client is None:
             logging.error("error creating sftp client - no ssh client!")
@@ -92,7 +86,6 @@ class SFTPClient(SSHClient):
         Indicate whether the SFTP client is running.
 
         :return: Whether the SFTP client is running.
-        :rtype: bool
         """
         return self.subsystem_count > 0
 
@@ -101,7 +94,6 @@ class SFTPClient(SSHClient):
         Connect to the SFTP server.
 
         :return: Whether the connection was successful.
-        :rtype: bool
         """
         ret = super().connect()
         if not ret:
@@ -124,13 +116,9 @@ class SFTPClient(SSHClient):
         Open a file on the SFTP server.
 
         :param filename: The file to open.
-        :type filename: Union[str, bytes]
         :param mode: The mode in which to open the file.
-        :type mode: str
         :param bufsize: The buffer size for the file.
-        :type bufsize: int
         :return: An SFTPFile instance for the opened file.
-        :rtype: SFTPFile
         :raise paramiko.SFTPError: If the handle for the SFTP client is not available.
         """
         if self._sftp is None:
@@ -142,11 +130,8 @@ class SFTPClient(SSHClient):
         Changes the mode (permission) of the specified path.
 
         :param path: The path of the file or directory whose permissions are to be changed.
-        :type path: Union[str, bytes]
         :param mode: The new permission mode, expressed as an integer (e.g. 0o755).
-        :type mode: int
         :return: `paramiko.sftp.SFTP_OK` if the operation was successful, `paramiko.sftp.SFTP_FAILURE` otherwise.
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -158,13 +143,9 @@ class SFTPClient(SSHClient):
         Changes the owner and group of the specified path.
 
         :param path: The path of the file or directory whose ownership is to be changed.
-        :type path: Union[str, bytes]
         :param uid: The new user ID of the file or directory.
-        :type uid: int
         :param gid: The new group ID of the file or directory.
-        :type gid: int
         :return: `paramiko.sftp.SFTP_OK` if the operation was successful, `paramiko.sftp.SFTP_FAILURE` otherwise.
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -181,15 +162,11 @@ class SFTPClient(SSHClient):
         Downloads a file from the remote SFTP server and saves it to the local file system.
 
         :param remotepath: The path of the file on the remote SFTP server.
-        :type remotepath: Union[str, bytes]
         :param localpath: The path of the file on the local file system.
-        :type localpath: Union[str, bytes]
         :param callback: An optional callback function that is called after each chunk of data has been transmitted.
             The function should accept two arguments: the number of bytes transmitted so far, and the total size of the
             file in bytes.
-        :type callback: Optional[Callable[[int, int], Any]]
         :return: `paramiko.sftp.SFTP_OK` if the operation was successful, `paramiko.sftp.SFTP_FAILURE` otherwise.
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -206,9 +183,7 @@ class SFTPClient(SSHClient):
         This method returns the list of files and directories in the given path with their attributes.
 
         :param path: path to the directory to list the contents of. Default is current directory '.'
-        :type path: str
         :return: If successful, it returns a list of `SFTPAttributes` objects, else returns `paramiko.sftp.SFTP_FAILURE`
-        :rtype: Union[int, List[SFTPAttributes]]
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -219,9 +194,7 @@ class SFTPClient(SSHClient):
         This method returns the attributes of the file/directory at the given path.
 
         :param path: path to the file/directory to get the attributes of.
-        :type path: Union[str, bytes]
         :return: If successful, it returns a `SFTPAttributes` object, else returns `paramiko.sftp.SFTP_FAILURE`
-        :rtype: Union[int, SFTPAttributes]
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -232,11 +205,8 @@ class SFTPClient(SSHClient):
         This method creates a new directory at the given path.
 
         :param path: path to the directory to be created.
-        :type path: Union[str, bytes]
         :param mode: mode of the directory to be created. Default is 511.
-        :type mode: int
         :return: If successful, returns `paramiko.sftp.SFTP_OK`, else returns `paramiko.sftp.SFTP_FAILURE`
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -262,9 +232,7 @@ class SFTPClient(SSHClient):
         This method returns the target of the symbolic link or a failure code.
 
         :param path: The path of the symbolic link.
-        :type path: Union[str, bytes]
         :return: The target of the symbolic link or a failure code.
-        :rtype: Union[int, str]
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -275,9 +243,7 @@ class SFTPClient(SSHClient):
         This method removes the specified file.
 
         :param path: The path of the file to be removed.
-        :type path: Union[str, bytes]
         :return: A success code or a failure code.
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -289,11 +255,8 @@ class SFTPClient(SSHClient):
         This method renames a file.
 
         :param oldpath: The current name of the file.
-        :type oldpath: Union[str, bytes]
         :param newpath: The new name of the file.
-        :type newpath: Union[str, bytes]
         :return: A success code or a failure code.
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -305,9 +268,7 @@ class SFTPClient(SSHClient):
         This method removes the specified directory.
 
         :param path: The path of the directory to be removed.
-        :type path: Union[str, bytes]
         :return: A success code or a failure code.
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -319,9 +280,7 @@ class SFTPClient(SSHClient):
         This method returns the status of a file.
 
         :param path: The path of the file.
-        :type path: Union[str, bytes]
         :return: The status of the file or a failure code.
-        :rtype: Union[int, SFTPAttributes]
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -332,11 +291,8 @@ class SFTPClient(SSHClient):
         Update the access and modification time of a file.
 
         :param path: The path to the file.
-        :type path: Union[str, bytes]
         :param times: Tuple of float representing the access and modification time.
-        :type times: Tuple[float, float]
         :return: returns `paramiko.sftp.SFTP_OK` on success, `paramiko.sftp.SFTP_FAILURE` on failure
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -348,11 +304,8 @@ class SFTPClient(SSHClient):
         Create a symbolic link pointing to `source` at `dest`.
 
         :param source: The target file of the symbolic link.
-        :type source: Union[str, bytes]
         :param dest: The path to the symbolic link.
-        :type dest: Union[str, bytes]
         :return: returns `paramiko.sftp.SFTP_OK` on success, `paramiko.sftp.SFTP_FAILURE` on failure
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
@@ -364,7 +317,6 @@ class SFTPClient(SSHClient):
         Close the SFTP session.
 
         :return: returns `paramiko.sftp.SFTP_OK` on success, `paramiko.sftp.SFTP_FAILURE` on failure
-        :rtype: int
         """
         if self._sftp is None:
             return paramiko.sftp.SFTP_FAILURE
