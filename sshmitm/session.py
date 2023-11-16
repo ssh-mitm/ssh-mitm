@@ -65,8 +65,7 @@ class BaseSession(BaseModule):
 
 
 class Session(BaseSession):
-    """
-    A class that holds the information and methods for the ssh session.
+    """Session Handler to store and manage active SSH sessions.
 
     :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
     :type proxyserver: sshmitm.server.SSHProxyServer
@@ -90,7 +89,7 @@ class Session(BaseSession):
         :return: None
         :rtype: None
         """
-        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--session-log-dir",
             dest="session_log_dir",

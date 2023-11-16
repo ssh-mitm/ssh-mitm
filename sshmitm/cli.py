@@ -105,7 +105,9 @@ def main() -> None:
         allow_abbrev=False,
         config_section="SSH-MITM",
     )
-    parser_group = parser.add_argument_group("SSH-MITM", "global options for SSH-MITM")
+    parser_group = parser.add_argument_group(
+        "SSH-MITM", description="global options for SSH-MITM"
+    )
     parser_group.add_argument(
         "-V", "--version", action="version", version=f"SSH-MITM {ssh_mitm_version}"
     )

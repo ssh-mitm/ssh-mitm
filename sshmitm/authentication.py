@@ -204,6 +204,8 @@ class RemoteCredentials:
 
 
 class Authenticator(BaseModule):
+    """Options for remote authentication."""
+
     REQUEST_AGENT_BREAKIN = False
     """
     This flag indicates if SSH-MITM should do a breakin to the client's ssh agent, even in cases where the agent is not forwarded.
@@ -216,9 +218,7 @@ class Authenticator(BaseModule):
 
         :return: None
         """
-        plugin_group = cls.parser().add_argument_group(
-            cls.__name__, "options for remote authentication"
-        )
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--remote-host",
             dest="remote_host",
@@ -248,12 +248,15 @@ class Authenticator(BaseModule):
             help="do not log credentials (usefull for presentations)",
         )
 
-        honeypot_group = cls.parser().add_argument_group("AuthenticationFallback")
+        honeypot_group = cls.argument_group(
+            "AuthenticationFallback",
+            description=("Options for the authentication fallback to a honey pot"),
+        )
         honeypot_group.add_argument(
             "--enable-auth-fallback",
             action="store_true",
             default=False,
-            help="use a honeypot if no agent was forwarded to login with publickey auth ",
+            help="enabled the fallback to a hoenypot when authentication not possible",
         )
         honeypot_group.add_argument(
             "--fallback-host",

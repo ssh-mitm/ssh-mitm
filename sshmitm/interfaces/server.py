@@ -33,13 +33,11 @@ class BaseServerInterface(paramiko.ServerInterface, BaseModule):
 
 
 class ServerInterface(BaseServerInterface):
-    """ssh server implementation for SSH-MITM"""
+    """SSH-MITM server implementation"""
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(
-            cls.__name__, "options for integrated ssh server"
-        )
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--disable-ssh", dest="disable_ssh", action="store_true", help="disable ssh"
         )

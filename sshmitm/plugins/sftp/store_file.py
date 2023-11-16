@@ -11,7 +11,7 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--store-sftp-files",
             dest="store_sftp_files",

@@ -55,7 +55,7 @@ class FailSaveLogStream:
             logging.error("unable to pipe output to logviewer!")
 
     @classmethod
-    def activate_format(cls, *, debug=False) -> None:
+    def activate_format(cls, *, debug: bool = False) -> None:
         Colors.stylize_func = True
         root_logger = logging.getLogger()
         root_logger.handlers.clear()

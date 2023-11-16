@@ -12,9 +12,7 @@ class CVE202229154(SCPForwarder):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(
-            cls.__name__, "Inject an additional file in rsync"
-        )
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--rsync-inject-file",
             dest="rsync_inject_file",

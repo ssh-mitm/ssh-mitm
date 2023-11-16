@@ -7,7 +7,11 @@ from colored.colored import fg, attr  # type: ignore
 
 import sshmitm
 from sshmitm.logging import Colors
-from sshmitm.forwarders.tunnel import BaseClientTunnelHandler, TunnelForwarder, LocalPortForwardingForwarder
+from sshmitm.forwarders.tunnel import (
+    BaseClientTunnelHandler,
+    TunnelForwarder,
+    LocalPortForwardingForwarder,
+)
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 from sshmitm.plugins.tunnel.socks4 import Socks4Server, Socks4Error
@@ -57,11 +61,11 @@ class ClientTunnelHandler(BaseClientTunnelHandler):
 
 
 class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
-    """Serve out direct-tcpip connections over a session on local ports"""
+    """SOCKS4/5 server to serve out direct-tcpip connections over a session on local ports"""
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--socks-listen-address",
             dest="socks_listen_address",

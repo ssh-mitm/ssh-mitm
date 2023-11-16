@@ -55,7 +55,7 @@ class SSHMirrorForwarder(SSHForwarder):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(cls.__name__)
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--ssh-mirrorshell-net",
             dest="ssh_mirrorshell_net",

@@ -15,7 +15,6 @@ if TYPE_CHECKING:
 
 
 class BaseClientTunnelHandler:
-
     def __init__(self, session: "sshmitm.session.Session") -> None:
         self.session = session
         self.session.register_session_thread()

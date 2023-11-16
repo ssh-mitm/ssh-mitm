@@ -13,13 +13,11 @@ from sshmitm.forwarders.scp import SCPForwarder
 
 
 class SCPRewriteCommand(SCPForwarder):
-    """replace the file with another file"""
+    """Rewrite SCP Commands (can also used for rsync and git)"""
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(
-            cls.__name__, "Rewrite SCP Commands (can also used for rsync and git)"
-        )
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--scp-append-string",
             dest="scp_append_string",

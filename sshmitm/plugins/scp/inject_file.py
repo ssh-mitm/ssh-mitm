@@ -32,9 +32,7 @@ class SCPInjectFile(SCPForwarder):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        plugin_group = cls.parser().add_argument_group(
-            cls.__name__, "Example exploit for CVE-2019-6111, CVE-2019-6110"
-        )
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--scp-inject-file",
             dest="scp_inject_file",
@@ -87,9 +85,9 @@ class SCPInjectFile(SCPForwarder):
         )
         command = "{}{} {} {}\n".format(  # pylint: disable=consider-using-f-string
             self.file_command,
-            "{0:o}".format(self.inject_file_stat.st_mode)[  # pylint: disable=consider-using-f-string
-                2:
-            ],
+            "{0:o}".format(  # pylint: disable=consider-using-f-string
+                self.inject_file_stat.st_mode
+            )[2:],
             self.inject_file_stat.st_size,
             self.args.scp_inject_file.split("/")[-1],
         )

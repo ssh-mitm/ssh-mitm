@@ -210,6 +210,7 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
 class BaseModule:
     _parser: Optional[_ModuleArgumentParser] = None
     _modules: Optional[List[Tuple[argparse.Action, Any]]] = None
+    _argument_groups: Dict[str, argparse._ArgumentGroup] = {}
 
     def __init__(
         self,
@@ -281,6 +282,22 @@ class BaseModule:
         if not cls._parser:
             raise ValueError(f"failed to create ModuleParser for {cls}")
         return cls._parser
+
+    @classmethod
+    def argument_group(
+        cls,
+        title: Optional[str] = None,
+        *,
+        description: Optional[str] = None,
+    ) -> argparse._ArgumentGroup:
+        group_title = title or cls.__name__
+        if not description and cls.__doc__:
+            description = cls.__doc__.strip().split("\n", maxsplit=1)[0]
+        if group_title not in cls._argument_groups:
+            cls._argument_groups[group_title] = cls.parser().add_argument_group(
+                group_title, description
+            )
+        return cls._argument_groups[group_title]
 
 
 class ModuleFormatter(argparse.HelpFormatter):
