@@ -1,6 +1,7 @@
 import logging
 import socket
 from typing import List, Optional, Tuple, Union
+import sys
 
 import paramiko
 from colored.colored import fg, attr  # type: ignore
@@ -23,6 +24,16 @@ class ClientTunnelHandler(BaseClientTunnelHandler):
     Similar to the RemotePortForwardingForwarder
     """
 
+    def __init__(
+        self,
+        session: "sshmitm.session.Session",
+        username: Optional[str] = None,
+        password: Optional[str] = None,
+    ) -> None:
+        super().__init__(session)
+        self.username = username
+        self.password = password
+
     def handle_request(
         self,
         listenaddr: Tuple[str, int],
@@ -39,7 +50,7 @@ class ClientTunnelHandler(BaseClientTunnelHandler):
                 socksconnection = Socks4Server(listenaddr)
                 destination = socksconnection.get_address(client, ignore_version=True)
             elif socksversion == Socks5Server.SOCKSVERSION:
-                socksconnection = Socks5Server(listenaddr)
+                socksconnection = Socks5Server(listenaddr, self.username, self.password)
                 destination = socksconnection.get_address(client, ignore_version=True)
         except (Socks4Error, Socks5Error) as sockserror:
             logging.error("unable to parse SOCKS request! %s", sockserror)
@@ -72,6 +83,17 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
             default="127.0.0.1",
             help="socks server listen address (default: 127.0.0.1)",
         )
+        plugin_group.add_argument(
+            "--socks5-username",
+            dest="socks5_username",
+            help="username for the SOCKS5 server",
+        )
+        plugin_group.add_argument(
+            "--socks5-password",
+            dest="socks5_password",
+            required="--socks5-username" in sys.argv,
+            help="password for the SOCKS5 server",
+        )
 
     tcpservers: List[TCPServerThread] = []
 
@@ -83,7 +105,9 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
         args, _ = parser_retval
 
         server_thread = TCPServerThread(
-            ClientTunnelHandler(session).handle_request,
+            ClientTunnelHandler(
+                session, args.socks5_username, args.socks5_password
+            ).handle_request,
             run_status=session.running,
             network=args.socks_listen_address,
         )

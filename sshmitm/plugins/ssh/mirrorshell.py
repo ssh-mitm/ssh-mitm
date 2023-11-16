@@ -219,6 +219,7 @@ class SSHMirrorForwarder(SSHForwarder):
 
     def close_session(self, channel: paramiko.Channel) -> None:
         super().close_session(channel)
+        # close sessions and inject server connections
         self.injector_sock.close()
         if (
             self.inject_server is not None
@@ -226,6 +227,7 @@ class SSHMirrorForwarder(SSHForwarder):
         ):
             self.inject_server.injector_channel.get_transport().close()
         self.conn_thread.join()
+        # close log files
         if self.logdir:
             if self.timeingfile is not None:
                 self.timeingfile.close()
@@ -234,46 +236,37 @@ class SSHMirrorForwarder(SSHForwarder):
             if self.file_stdin is not None:
                 self.file_stdin.close()
 
-    def forward_stdin(self) -> None:
+    def stdin(self, text: bytes) -> bytes:
+        # write the buffer to the log file
+        if self.logdir is not None and self.file_stdin is not None:
+            self.file_stdin.write(text)
+            self.file_stdin.flush()
+        return text
+
+    def stdout(self, text: bytes) -> bytes:
+        # write the buffer to the log file
+        if self.logdir is not None and self.file_stdout is not None:
+            self.file_stdout.write(text)
+            self.file_stdout.flush()
+            self.write_timingfile(text)
+        # send buffer to connected injection server
         if (
-            self.session.ssh_channel is not None
-            and self.session.ssh_channel.recv_ready()
+            self.inject_server is not None
+            and self.inject_server.injector_channel is not None
         ):
-            buf = self.session.ssh_channel.recv(self.BUF_LEN)
-            if self.logdir is not None and self.file_stdin is not None:
-                self.file_stdin.write(buf)
-                self.file_stdin.flush()
-            buf = self.stdin(buf)
-            self.server_channel.sendall(buf)
+            self.inject_server.injector_channel.sendall(text)
+        return text
 
-    def forward_stdout(self) -> None:
-        if self.server_channel.recv_ready():
-            buf = self.server_channel.recv(self.BUF_LEN)
-            if self.logdir is not None and self.file_stdout is not None:
-                self.file_stdout.write(buf)
-                self.file_stdout.flush()
-                self.write_timingfile(buf)
-            buf = self.stdout(buf)
-            if self.session.ssh_channel is not None:
-                self.session.ssh_channel.sendall(buf)
-            if (
-                self.inject_server is not None
-                and self.inject_server.injector_channel is not None
-            ):
-                self.inject_server.injector_channel.sendall(buf)
-
-    def forward_stderr(self) -> None:
-        if self.server_channel.recv_stderr_ready():
-            buf = self.server_channel.recv_stderr(self.BUF_LEN)
-            if self.logdir is not None and self.file_stdout is not None:
-                self.file_stdout.write(buf)
-                self.file_stdout.flush()
-                self.write_timingfile(buf)
-            buf = self.stderr(buf)
-            if self.session.ssh_channel is not None:
-                self.session.ssh_channel.sendall_stderr(buf)
-            if (
-                self.inject_server is not None
-                and self.inject_server.injector_channel is not None
-            ):
-                self.inject_server.injector_channel.sendall(buf)
+    def stderr(self, text: bytes) -> bytes:
+        # write the buffer to the log file
+        if self.logdir is not None and self.file_stdout is not None:
+            self.file_stdout.write(text)
+            self.file_stdout.flush()
+            self.write_timingfile(text)
+        # send buffer to connected injection server
+        if (
+            self.inject_server is not None
+            and self.inject_server.injector_channel is not None
+        ):
+            self.inject_server.injector_channel.sendall(text)
+        return text

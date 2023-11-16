@@ -1,20 +1,9 @@
 import logging
 from enum import Enum
 import socket
-import sys
 from typing import cast, List, Optional, Tuple, Union
 
 import paramiko
-from colored.colored import fg, attr  # type: ignore
-
-import sshmitm
-from sshmitm.logging import Colors
-from sshmitm.forwarders.tunnel import (
-    BaseClientTunnelHandler,
-    TunnelForwarder,
-    LocalPortForwardingForwarder,
-)
-from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 
 class Socks5Error(Exception):
@@ -242,100 +231,3 @@ class Socks5Server:
         except Socks5Error as sockserror:
             logging.error("Socks5 Error: %s", str(sockserror))
         return None
-
-
-class ClientTunnelHandler(BaseClientTunnelHandler):
-    """
-    Similar to the RemotePortForwardingForwarder
-    """
-
-    def __init__(
-        self,
-        session: "sshmitm.session.Session",
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-    ) -> None:
-        super().__init__(session)
-        self.username = username
-        self.password = password
-
-    def handle_request(
-        self,
-        listenaddr: Tuple[str, int],
-        client: Union[socket.socket, paramiko.Channel],
-        addr: Optional[Tuple[str, int]],
-    ) -> None:
-        if self.session.ssh_client is None or self.session.ssh_client.transport is None:
-            return
-        destination: Optional[Tuple[str, int]] = None
-        socks5connection = Socks5Server(listenaddr, self.username, self.password)
-        destination = socks5connection.get_address(client)
-        if destination is None:
-            client.close()
-            logging.error("unable to parse socks5 request")
-            return
-        try:
-            logging.debug(
-                "Injecting direct-tcpip channel (%s -> %s) to client", addr, destination
-            )
-            remote_ch = self.session.ssh_client.transport.open_channel(
-                "direct-tcpip", destination, addr
-            )
-            TunnelForwarder(client, remote_ch)
-        except paramiko.ssh_exception.ChannelException:
-            client.close()
-            logging.error("Could not setup forward from %s to %s.", addr, destination)
-
-
-class SOCKS5TunnelForwarder(LocalPortForwardingForwarder):
-    """SOCKS5 server to serve out direct-tcpip connections over a session on local ports"""
-
-    @classmethod
-    def parser_arguments(cls) -> None:
-        plugin_group = cls.argument_group()
-        plugin_group.add_argument(
-            "--socks-listen-address",
-            dest="socks_listen_address",
-            default="127.0.0.1",
-            help="socks server listen address (default: 127.0.0.1)",
-        )
-        plugin_group.add_argument(
-            "--socks5-username",
-            dest="socks5_username",
-            help="username for the SOCKS5 server",
-        )
-        plugin_group.add_argument(
-            "--socks5-password",
-            dest="socks5_password",
-            required="--socks5-username" in sys.argv,
-            help="password for the SOCKS5 server",
-        )
-
-    tcpservers: List[TCPServerThread] = []
-
-    # Setup should occur after master channel establishment
-
-    @classmethod
-    def setup(cls, session: "sshmitm.session.Session") -> None:
-        parser_retval = cls.parser().parse_known_args(None, None)
-        args, _ = parser_retval
-
-        serverthread = TCPServerThread(
-            ClientTunnelHandler(
-                session, args.socks5_username, args.socks5_password
-            ).handle_request,
-            run_status=session.running,
-            network=args.socks_listen_address,
-        )
-        serverthread.start()
-        cls.tcpservers.append(serverthread)
-        logging.info(
-            "%s %s - created SOCKS5 proxy server on port %s. connect with: %s",
-            Colors.emoji("information"),
-            Colors.stylize(session.sessionid, fg("light_blue") + attr("bold")),
-            serverthread.port,
-            Colors.stylize(
-                f"nc -X 5 -x localhost:{serverthread.port} address port",
-                fg("light_blue") + attr("bold"),
-            ),
-        )
