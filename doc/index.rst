@@ -162,6 +162,5 @@ SSH-MITM can redirect the connection to a honeypot.
 
    get_started/index
    user_guide/index
+   develop/index
    vulnerabilities/index
-   develop/contributing
-   api

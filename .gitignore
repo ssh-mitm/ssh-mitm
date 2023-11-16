@@ -141,5 +141,6 @@ appimage-builder-cache
 *.AppImage*
 appimage-build
 doc/api/
+doc/develop/api/
 .DirIcon
 squashfs-root
