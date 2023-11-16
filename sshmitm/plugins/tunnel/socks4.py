@@ -8,7 +8,7 @@ from colored.colored import fg, attr  # type: ignore
 
 import sshmitm
 from sshmitm.logging import Colors
-from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
+from sshmitm.forwarders.tunnel import BaseClientTunnelHandler, TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 
@@ -115,14 +115,10 @@ class Socks4Server:
         return None
 
 
-class ClientTunnelHandler:
+class ClientTunnelHandler(BaseClientTunnelHandler):
     """
     Similar to the RemotePortForwardingForwarder
     """
-
-    def __init__(self, session: "sshmitm.session.Session") -> None:
-        self.session = session
-        self.session.register_session_thread()
 
     def handle_request(
         self,

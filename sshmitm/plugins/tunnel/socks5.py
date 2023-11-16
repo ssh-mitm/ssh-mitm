@@ -9,7 +9,7 @@ from colored.colored import fg, attr  # type: ignore
 
 import sshmitm
 from sshmitm.logging import Colors
-from sshmitm.forwarders.tunnel import TunnelForwarder, LocalPortForwardingForwarder
+from sshmitm.forwarders.tunnel import BaseClientTunnelHandler, TunnelForwarder, LocalPortForwardingForwarder
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 
@@ -240,7 +240,7 @@ class Socks5Server:
         return None
 
 
-class ClientTunnelHandler:
+class ClientTunnelHandler(BaseClientTunnelHandler):
     """
     Similar to the RemotePortForwardingForwarder
     """
@@ -251,8 +251,7 @@ class ClientTunnelHandler:
         username: Optional[str] = None,
         password: Optional[str] = None,
     ) -> None:
-        self.session = session
-        self.session.register_session_thread()
+        super().__init__(session)
         self.username = username
         self.password = password
 

@@ -286,7 +286,7 @@ class Authenticator(BaseModule):
         Initializes Authenticator instance.
 
         This class pass the authentication from the client to the server.
-        
+
         :param session: an object of sshmitm.session.Session class to store session information.
         """
         super().__init__()

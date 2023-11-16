@@ -1,4 +1,4 @@
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import paramiko
 
@@ -27,7 +27,6 @@ class BaseForwarder(BaseModule):
         )
         if session.agent is not None:
             session.agent.forward_agent(self.server_channel)
-        self.channel: Optional[paramiko.Channel] = None
         self.session: "Session" = session
         self.session.register_session_thread()
 

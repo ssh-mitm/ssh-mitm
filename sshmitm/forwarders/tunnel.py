@@ -14,6 +14,13 @@ if TYPE_CHECKING:
     from sshmitm.session import Session  # noqa
 
 
+class BaseClientTunnelHandler:
+
+    def __init__(self, session: "sshmitm.session.Session") -> None:
+        self.session = session
+        self.session.register_session_thread()
+
+
 class TunnelForwarder(threading.Thread):
     def __init__(
         self,

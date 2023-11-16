@@ -216,8 +216,6 @@ class SSHMirrorForwarder(SSHForwarder):
             logging.exception(
                 "mirrorshell - injector connection suffered an unexpected error"
             )
-            if self.channel is not None:
-                self.close_session(self.channel)
 
     def close_session(self, channel: paramiko.Channel) -> None:
         super().close_session(channel)

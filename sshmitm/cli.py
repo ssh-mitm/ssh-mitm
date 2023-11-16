@@ -41,9 +41,6 @@ from typing import Callable
 
 from paramiko import Transport
 
-from rich.logging import RichHandler
-from rich.highlighter import NullHighlighter
-
 from sshmitm.logging import PlainJsonFormatter, Colors, FailSaveLogStream
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import transport, monkeypatch
@@ -168,17 +165,7 @@ def main() -> None:
         log_handler.setFormatter(formatter)
         root_logger.addHandler(log_handler)
     else:
-        Colors.stylize_func = True
-        root_logger.handlers.clear()
-        root_logger.addHandler(
-            RichHandler(
-                highlighter=NullHighlighter(),
-                markup=False,
-                rich_tracebacks=True,
-                enable_link_path=args.debug,
-                show_path=args.debug,
-            )
-        )
+        FailSaveLogStream.activate_format(debug=args.debug)
 
     if not args.disable_workarounds:
         monkeypatch.patch_thread()

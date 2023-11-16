@@ -51,10 +51,11 @@ class FailSaveLogStream:
             sys.stdout.flush()
         except BrokenPipeError:
             sys.stdout = sys.stderr
-            self.activate_format()
+            self.activate_format(debug=self.debug)
             logging.error("unable to pipe output to logviewer!")
 
-    def activate_format(self) -> None:
+    @classmethod
+    def activate_format(cls, *, debug=False) -> None:
         Colors.stylize_func = True
         root_logger = logging.getLogger()
         root_logger.handlers.clear()
@@ -63,8 +64,8 @@ class FailSaveLogStream:
                 highlighter=NullHighlighter(),
                 markup=False,
                 rich_tracebacks=True,
-                enable_link_path=self.debug,
-                show_path=self.debug,
+                enable_link_path=debug,
+                show_path=debug,
             )
         )
 
