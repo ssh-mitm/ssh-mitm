@@ -12,7 +12,7 @@
    <a href="https://snapcraft.io/ssh-mitm"><img  height='56' alt="Get it from the Snap Store" src="https://snapcraft.io/static/images/badges/en/snap-store-black.svg" /></a>
    <br />
    <br />
-   <a href="https://docs.ssh-mitm.at"><img src="https://read-the-docs-guidelines.readthedocs-hosted.com/_downloads/d9606423d87d78fcceae4ee2af883b12/logo-wordmark-dark.png" title="read the docs" width="256"></a>
+   <a href="https://docs.ssh-mitm.at"><img src="https://raw.githubusercontent.com/ssh-mitm/ssh-mitm/master/doc/_static/readthedocslogo.png" title="read the docs" width="256"></a>
   </p>
 </p>
 
