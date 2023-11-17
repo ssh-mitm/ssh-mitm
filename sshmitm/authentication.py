@@ -1,3 +1,4 @@
+from abc import abstractmethod
 import logging
 import os
 import sys
@@ -406,23 +407,23 @@ class Authenticator(BaseModule):
             logging.exception("internal error, abort authentication!")
         return paramiko.common.AUTH_FAILED
 
+    @abstractmethod
     def auth_agent(self, username: str, host: str, port: int) -> int:
         """
         Performs authentication using the ssh-agent.
         """
-        raise NotImplementedError("authentication must be implemented")
 
+    @abstractmethod
     def auth_password(self, username: str, host: str, port: int, password: str) -> int:
         """
         Performs authentication using a password.
         """
-        raise NotImplementedError("authentication must be implemented")
 
+    @abstractmethod
     def auth_publickey(self, username: str, host: str, port: int, key: PKey) -> int:
         """
         Performs authentication using public key authentication.
         """
-        raise NotImplementedError("authentication must be implemented")
 
     def auth_fallback(self, username: str) -> int:
         """

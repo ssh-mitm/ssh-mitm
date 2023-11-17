@@ -1,12 +1,45 @@
 import logging
 import time
+from typing import Optional
+import paramiko
 
 
 from sshmitm.forwarders.base import BaseForwarder
 
 
-class SSHBaseForwarder(BaseForwarder):  # pylint: disable=W0223
-    pass
+class SSHBaseForwarder(BaseForwarder):  # pylint: disable=abstract-method
+
+    @property
+    def client_channel(self) -> Optional[paramiko.Channel]:
+        return self.session.ssh_channel
+
+    def check_if_channels_are_closed(self) -> bool:
+        if self.client_channel is not None and self._closed(
+            self.client_channel
+        ):
+            self.server_channel.close()
+            self.close_session(self.client_channel)
+            return True
+        if (
+            self._closed(self.server_channel)
+            and self.client_channel is not None
+        ):
+            self.close_session(self.client_channel)
+            return True
+        if self.server_channel.exit_status_ready():
+            self.server_channel.recv_exit_status()
+            if self.client_channel is not None:
+                self.close_session(self.client_channel)
+            return True
+        if (
+            self.client_channel is not None
+            and self.client_channel.exit_status_ready()
+        ):
+            self.client_channel.recv_exit_status()
+            if self.client_channel is not None:
+                self.close_session(self.client_channel)
+            return True
+        return False
 
 
 class SSHForwarder(SSHBaseForwarder):
@@ -27,31 +60,9 @@ class SSHForwarder(SSHBaseForwarder):
                 self.forward_extra()
                 self.forward_stderr()
 
-                if self.session.ssh_channel is not None and self._closed(
-                    self.session.ssh_channel
-                ):
-                    self.server_channel.close()
-                    self.close_session(self.session.ssh_channel)
+                if self.check_if_channels_are_closed():
                     break
-                if (
-                    self._closed(self.server_channel)
-                    and self.session.ssh_channel is not None
-                ):
-                    self.close_session(self.session.ssh_channel)
-                    break
-                if self.server_channel.exit_status_ready():
-                    self.server_channel.recv_exit_status()
-                    if self.session.ssh_channel is not None:
-                        self.close_session(self.session.ssh_channel)
-                    break
-                if (
-                    self.session.ssh_channel is not None
-                    and self.session.ssh_channel.exit_status_ready()
-                ):
-                    self.session.ssh_channel.recv_exit_status()
-                    if self.session.ssh_channel is not None:
-                        self.close_session(self.session.ssh_channel)
-                    break
+
                 time.sleep(0.01)
         except Exception:
             logging.exception("error processing ssh session!")
@@ -59,10 +70,10 @@ class SSHForwarder(SSHBaseForwarder):
 
     def forward_stdin(self) -> None:
         if (
-            self.session.ssh_channel is not None
-            and self.session.ssh_channel.recv_ready()
+            self.client_channel is not None
+            and self.client_channel.recv_ready()
         ):
-            buf: bytes = self.session.ssh_channel.recv(self.BUF_LEN)
+            buf: bytes = self.client_channel.recv(self.BUF_LEN)
             buf = self.stdin(buf)
             self.server_channel.sendall(buf)
 
@@ -70,8 +81,8 @@ class SSHForwarder(SSHBaseForwarder):
         if self.server_channel.recv_ready():
             buf: bytes = self.server_channel.recv(self.BUF_LEN)
             buf = self.stdout(buf)
-            if self.session.ssh_channel is not None:
-                self.session.ssh_channel.sendall(buf)
+            if self.client_channel is not None:
+                self.client_channel.sendall(buf)
 
     def forward_extra(self) -> None:
         pass
@@ -80,8 +91,8 @@ class SSHForwarder(SSHBaseForwarder):
         if self.server_channel.recv_stderr_ready():
             buf: bytes = self.server_channel.recv_stderr(self.BUF_LEN)
             buf = self.stderr(buf)
-            if self.session.ssh_channel is not None:
-                self.session.ssh_channel.sendall_stderr(buf)
+            if self.client_channel is not None:
+                self.client_channel.sendall_stderr(buf)
 
     def stdin(self, text: bytes) -> bytes:
         return text

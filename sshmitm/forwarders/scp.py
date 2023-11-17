@@ -18,6 +18,10 @@ class SCPBaseForwarder(BaseForwarder):
         self.client_exit_code_received = False
         self.server_exit_code_received = False
 
+    @property
+    def client_channel(self) -> Optional[paramiko.Channel]:
+        return self.session.scp_channel
+
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         del isclient  # unused arguments
         return traffic
@@ -45,15 +49,15 @@ class SCPBaseForwarder(BaseForwarder):
                 not self.session.scp_command.find(b" -t ") != -1
                 and not self.session.scp_command.find(b" -f ") != -1
             ):
-                if self.session.scp_channel is not None:
+                if self.client_channel is not None:
                     logging.debug(
                         "[chan %d] Initiating SCP remote to remote",
-                        self.session.scp_channel.get_id(),
+                        self.client_channel.get_id(),
                     )
                     if self.session.agent is None:
                         logging.warning(
                             "[chan %d] SCP remote to remote needs a forwarded agent",
-                            self.session.scp_channel.get_id(),
+                            self.client_channel.get_id(),
                         )
                 while not self._closed(self.server_channel):
                     time.sleep(1)
@@ -64,21 +68,21 @@ class SCPBaseForwarder(BaseForwarder):
 
         try:
             while self.session.running:
-                if self.session.scp_channel is None:
+                if self.client_channel is None:
                     raise ValueError("No SCP Channel available!")
                 # redirect stdout <-> stdin und stderr <-> stderr
-                if self.session.scp_channel.recv_ready():
-                    buf = self.session.scp_channel.recv(self.BUF_LEN)
+                if self.client_channel.recv_ready():
+                    buf = self.client_channel.recv(self.BUF_LEN)
                     buf = self.handle_traffic(buf, isclient=True)
                     self.sendall(self.server_channel, buf, self.server_channel.send)
                 if self.server_channel.recv_ready():
                     buf = self.server_channel.recv(self.BUF_LEN)
                     buf = self.handle_traffic(buf, isclient=False)
                     self.sendall(
-                        self.session.scp_channel, buf, self.session.scp_channel.send
+                        self.client_channel, buf, self.client_channel.send
                     )
-                if self.session.scp_channel.recv_stderr_ready():
-                    buf = self.session.scp_channel.recv_stderr(self.BUF_LEN)
+                if self.client_channel.recv_stderr_ready():
+                    buf = self.client_channel.recv_stderr(self.BUF_LEN)
                     buf = self.handle_error(buf)
                     self.sendall(
                         self.server_channel, buf, self.server_channel.send_stderr
@@ -87,15 +91,15 @@ class SCPBaseForwarder(BaseForwarder):
                     buf = self.server_channel.recv_stderr(self.BUF_LEN)
                     buf = self.handle_error(buf)
                     self.sendall(
-                        self.session.scp_channel,
+                        self.client_channel,
                         buf,
-                        self.session.scp_channel.send_stderr,
+                        self.client_channel.send_stderr,
                     )
 
                 if self.server_channel.exit_status_ready():
                     status = self.server_channel.recv_exit_status()
                     self.server_exit_code_received = True
-                    self.close_session_with_status(self.session.scp_channel, status)
+                    self.close_session_with_status(self.client_channel, status)
                     logging.info(
                         "remote command '%s' exited with code: %s",
                         self.session.scp_command.decode("utf-8"),
@@ -103,23 +107,23 @@ class SCPBaseForwarder(BaseForwarder):
                     )
                     time.sleep(0.1)
                     break
-                if self.session.scp_channel.exit_status_ready():
-                    status = self.session.scp_channel.recv_exit_status()
+                if self.client_channel.exit_status_ready():
+                    status = self.client_channel.recv_exit_status()
                     self.client_exit_code_received = True
                     # self.server_channel.send_exit_status(status)
-                    self.close_session(self.session.scp_channel)
+                    self.close_session(self.client_channel)
                     break
 
-                if self._closed(self.session.scp_channel):
+                if self._closed(self.client_channel):
                     logging.info("client channel closed")
                     self.server_channel.close()
-                    self.close_session(self.session.scp_channel)
+                    self.close_session(self.client_channel)
                     break
                 if self._closed(self.server_channel):
                     logging.info("server channel closed")
-                    self.close_session(self.session.scp_channel)
+                    self.close_session(self.client_channel)
                     break
-                if self.session.scp_channel.eof_received:
+                if self.client_channel.eof_received:
                     if self.session.scp_command.startswith(b"git-receive-pack"):
                         # ignore git-receive-pack commands because those can contain EOF,
                         # which closes the session
@@ -128,11 +132,11 @@ class SCPBaseForwarder(BaseForwarder):
                     # TODO: check if EOF should close the session.
                     message = Message()
                     message.add_byte(cMSG_CHANNEL_EOF)
-                    message.add_int(self.session.scp_channel.remote_chanid)
-                    if self.session.scp_channel.transport is not None:
-                        self.session.scp_channel.transport._send_user_message(message)  # type: ignore
-                    self.session.scp_channel.send_exit_status(0)
-                    self.close_session(self.session.scp_channel)
+                    message.add_int(self.client_channel.remote_chanid)
+                    if self.client_channel.transport is not None:
+                        self.client_channel.transport._send_user_message(message)  # type: ignore
+                    self.client_channel.send_exit_status(0)
+                    self.close_session(self.client_channel)
                     break
                 if self.server_channel.eof_received:
                     logging.debug("server channel eof received")
@@ -174,8 +178,8 @@ class SCPBaseForwarder(BaseForwarder):
             message.add_int(channel.remote_chanid)
             channel.transport._send_user_message(message)  # type: ignore
 
-            if status is not None and self.session.scp_channel is not None:
-                self.session.scp_channel.send_exit_status(status)
+            if status is not None and self.client_channel is not None:
+                self.client_channel.send_exit_status(status)
                 logging.debug("sent exit status to client: %s", status)
 
             message = Message()

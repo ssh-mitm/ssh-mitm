@@ -19,6 +19,7 @@ All other classes and functions in this module are either legacy or are
 implementation specific and should not be used in production applications.
 """
 
+from abc import ABC
 import logging
 import argparse
 import inspect
@@ -207,7 +208,7 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
         return group
 
 
-class BaseModule:
+class BaseModule(ABC):
     _parser: Optional[_ModuleArgumentParser] = None
     _modules: Optional[List[Tuple[argparse.Action, Any]]] = None
     _argument_groups: Dict[str, argparse._ArgumentGroup] = {}

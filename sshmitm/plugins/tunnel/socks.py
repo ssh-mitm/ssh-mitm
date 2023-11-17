@@ -47,6 +47,9 @@ class ClientTunnelHandler(BaseClientTunnelHandler):
         try:
             socksversion = client.recv(1)
             if socksversion == Socks4Server.SOCKSVERSION:
+                if self.username or self.password:
+                    logging.error("client tied to connect with SOCKS4 but authentication is enaled!")
+                    return
                 socksconnection = Socks4Server(listenaddr)
                 destination = socksconnection.get_address(client, ignore_version=True)
             elif socksversion == Socks5Server.SOCKSVERSION:

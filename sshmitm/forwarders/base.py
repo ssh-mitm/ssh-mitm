@@ -1,4 +1,5 @@
-from typing import TYPE_CHECKING
+from abc import abstractmethod
+from typing import TYPE_CHECKING, Optional
 
 import paramiko
 
@@ -34,8 +35,14 @@ class BaseForwarder(BaseModule):
         for env_name, env_value in self.session.env_requests.items():
             self.server_channel.set_environment_variable(env_name, env_value)
 
+    @property
+    @abstractmethod
+    def client_channel(self) -> Optional[paramiko.Channel]:
+        """Returns the client channel for the current plugin type"""
+
+    @abstractmethod
     def forward(self) -> None:
-        raise NotImplementedError
+        """Forwards data between the client and the server"""
 
     def close_session(self, channel: paramiko.Channel) -> None:
         channel.lock.acquire()
