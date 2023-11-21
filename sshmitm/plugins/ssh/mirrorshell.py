@@ -1,14 +1,10 @@
-import datetime
 import logging
 import select
 import threading
 import socket
 import time
 import os
-import tempfile
-from typing import Optional, IO
-
-import pytz
+from typing import Optional
 
 from colored.colored import attr, fg  # type: ignore
 import paramiko
@@ -16,6 +12,7 @@ import paramiko
 import sshmitm
 from sshmitm.logging import Colors
 from sshmitm.forwarders.ssh import SSHForwarder
+from sshmitm.plugins.ssh.terminallogs import TerminalLogFormat, ScriptLogFormat
 
 
 class InjectServer(paramiko.ServerInterface):
@@ -69,6 +66,13 @@ class SSHMirrorForwarder(SSHForwarder):
             action="store_true",
             help="store ssh session in scriptreplay format",
         )
+        plugin_group.add_argument(
+            "--ssh-terminal-log-formatter",
+            dest="ssh_terminal_log_formatter",
+            default='script',
+            choices=['script'],
+            help="terminal log format for captured ssh session",
+        )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session)
@@ -77,12 +81,18 @@ class SSHMirrorForwarder(SSHForwarder):
                 self.args.ssh_mirrorshell_key
             )
 
-        self.logdir: Optional[str] = None
-        self.timestamp: Optional[datetime.datetime] = None
-        self.file_stdin: Optional[IO[bytes]] = None
-        self.file_stdout: Optional[IO[bytes]] = None
-        self.timeingfile: Optional[IO[bytes]] = None
-        self._init_files()
+        self.sessionlog: Optional[TerminalLogFormat] = None
+        if (
+            self.args.store_ssh_session
+            and self.session.session_log_dir
+        ):
+            try:
+                self.sessionlog = ScriptLogFormat(
+                    os.path.join(self.session.session_log_dir, 'terminal_sessions')
+                )
+            except Exception:  # pylint: disable=broad-exception-caught
+                logging.exception("Error creating session log dir. terminal logging disabled")
+                self.sessionlog = None
 
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -94,72 +104,6 @@ class SSHMirrorForwarder(SSHForwarder):
 
         self.conn_thread = threading.Thread(target=self.injector_connect)
         self.conn_thread.start()
-
-    def _init_files(self) -> None:
-        if not self.args.store_ssh_session:
-            return
-        if (
-            self.session.session_log_dir is None
-            or self.session.username is None
-            or self.session.remote_address is None
-        ):
-            return
-        try:
-            self.logdir = os.path.join(
-                self.session.session_log_dir,
-                f"terminal_{self.session.username}@{self.session.remote_address[0]}",
-            )
-
-            os.makedirs(self.logdir, exist_ok=True)
-            timecomponent = str(time.time()).split(".", maxsplit=1)[0]
-
-            self.file_stdin = (
-                tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
-                    prefix=f"ssh_in_{timecomponent}_",
-                    suffix=".log",
-                    dir=self.logdir,
-                    delete=False,
-                )
-            )
-            self.file_stdout = (
-                tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
-                    prefix=f"ssh_out_{timecomponent}_",
-                    suffix=".log",
-                    dir=self.logdir,
-                    delete=False,
-                )
-            )
-            self.file_stdout.write(
-                "Session started on {}\n".format(  # pylint: disable=consider-using-f-string
-                    datetime.datetime.utcnow()
-                    .replace(tzinfo=pytz.utc)
-                    .strftime("%a %d %b %Y %H:%M:%S %Z")
-                ).encode()
-            )
-            self.file_stdout.flush()
-            self.timeingfile = (
-                tempfile.NamedTemporaryFile(  # pylint: disable=consider-using-with
-                    prefix=f"ssh_time_{timecomponent}_",
-                    suffix=".log",
-                    dir=self.logdir,
-                    delete=False,
-                )
-            )
-        except Exception:  # pylint: disable=broad-exception-caught
-            logging.exception("Error file init")
-
-    def write_timingfile(self, text: bytes) -> None:
-        if self.timeingfile is None:
-            return
-        if self.timestamp is None:
-            self.timestamp = datetime.datetime.now()
-        oldtime = self.timestamp
-        self.timestamp = datetime.datetime.now()
-        diff = self.timestamp - oldtime
-        self.timeingfile.write(
-            f"{diff.seconds}.{diff.microseconds} {len(text)}\n".encode()
-        )
-        self.timeingfile.flush()
 
     def injector_connect(self) -> None:
         inject_host, inject_port = self.injector_sock.getsockname()
@@ -228,27 +172,19 @@ class SSHMirrorForwarder(SSHForwarder):
             self.inject_server.injector_channel.get_transport().close()
         self.conn_thread.join()
         # close log files
-        if self.logdir:
-            if self.timeingfile is not None:
-                self.timeingfile.close()
-            if self.file_stdout is not None:
-                self.file_stdout.close()
-            if self.file_stdin is not None:
-                self.file_stdin.close()
+        if self.sessionlog:
+            self.sessionlog.close()
 
     def stdin(self, text: bytes) -> bytes:
         # write the buffer to the log file
-        if self.logdir is not None and self.file_stdin is not None:
-            self.file_stdin.write(text)
-            self.file_stdin.flush()
+        if self.sessionlog:
+            self.sessionlog.stdin(text)
         return text
 
     def stdout(self, text: bytes) -> bytes:
         # write the buffer to the log file
-        if self.logdir is not None and self.file_stdout is not None:
-            self.file_stdout.write(text)
-            self.file_stdout.flush()
-            self.write_timingfile(text)
+        if self.sessionlog:
+            self.sessionlog.stdout(text)
         # send buffer to connected injection server
         if (
             self.inject_server is not None
@@ -259,10 +195,8 @@ class SSHMirrorForwarder(SSHForwarder):
 
     def stderr(self, text: bytes) -> bytes:
         # write the buffer to the log file
-        if self.logdir is not None and self.file_stdout is not None:
-            self.file_stdout.write(text)
-            self.file_stdout.flush()
-            self.write_timingfile(text)
+        if self.sessionlog:
+            self.sessionlog.stderr(text)
         # send buffer to connected injection server
         if (
             self.inject_server is not None
