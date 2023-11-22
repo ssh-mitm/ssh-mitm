@@ -23,6 +23,7 @@ from abc import ABC, abstractmethod
 import logging
 import argparse
 import inspect
+import sys
 from importlib import import_module
 
 from typing import cast, Any, List, Optional, Sequence, Tuple, Dict, Type, Set, Union
@@ -166,6 +167,7 @@ class AddArgumentMethod:
             self.config_section
             and not CONFIGFILE.has_option(self.config_section, arg_dest)
             and arg_action != "version"
+            and sys.flags.debug
         ):
             logging.error(
                 "Missing config value -  %s - %s (%s) = %s",
@@ -305,6 +307,8 @@ class BaseModule(ABC):
 
 
 class SubCommand(ABC):
+    HAS_CONFIG = True
+
     def __init__(
         self, name: str, subcommand: "argparse._SubParsersAction[ModuleParser]"
     ) -> None:
@@ -329,8 +333,8 @@ class SubCommand(ABC):
         return cls.__doc__.strip().split("\n", maxsplit=1)[0]
 
     @classmethod
-    def config_section(cls) -> str:
-        return cls.__name__.replace("_", "-")
+    def config_section(cls) -> Optional[str]:
+        return cls.__name__.replace("_", "-") if cls.HAS_CONFIG else None
 
 
 class ModuleFormatter(argparse.HelpFormatter):
