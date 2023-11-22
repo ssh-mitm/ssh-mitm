@@ -21,7 +21,7 @@ class Check_Publickey(SubCommand):  # pylint: disable=invalid-name
             "--username", type=str, required=True, help="username to check"
         )
         self.parser.add_argument(
-            "--public-key", type=str, required=True, help="publickey to check"
+            "--public-keys", action="store", nargs="+", type=str, required=True, help="publickey to check",
         )
 
     def execute(self, args: argparse.Namespace) -> None:
@@ -31,17 +31,20 @@ class Check_Publickey(SubCommand):  # pylint: disable=invalid-name
 
         :param args: Namespace object that contains the necessary parameters.
         """
-        with open(args.public_key, "rt", encoding="utf-8") as key_handle:
-            key = key_handle.read()
-        try:
-            pubkey = PublicBlob.from_string(key)
-        except ValueError:
-            sys.exit("file is not a valid public key")
+        keys = []
+        for file_path in args.public_keys:
+            with open(file_path, "rt", encoding="utf-8") as key_handle:
+                key = key_handle.read()
+            try:
+                keys.append(PublicBlob.from_string(key))
+            except ValueError:
+                sys.exit("file is not a valid public key")
+
         if not probe_host(
             hostname_or_ip=args.host,
             port=args.port,
             username=args.username,
-            public_key=pubkey,
+            public_keys=keys
         ):
             sys.exit("bad key")
         print("valid key")

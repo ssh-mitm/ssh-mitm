@@ -46,7 +46,10 @@ paramiko.auth_handler.AuthHandler._parse_userauth_info_request = patched_parse_u
 
 
 def probe_host(
-    hostname_or_ip: str, port: int, username: str, public_key: paramiko.pkey.PublicBlob
+    hostname_or_ip: str,
+    port: int,
+    username: str,
+    public_keys: List[paramiko.pkey.PublicBlob]
 ) -> bool:
     """
     Probe a remote host to determine if the provided public key is authorized for the provided username.
@@ -133,11 +136,17 @@ def probe_host(
 
             # For compatibility with paramiko, we need to generate a random private key and replace
             # the public key with our data.
-            key: PKey = paramiko.RSAKey.generate(2048)
-            key.public_blob = public_key
-            transport.auth_publickey(username, key)
-            valid_key = True
-        except paramiko.ssh_exception.AuthenticationException:
+            for pubkey in public_keys:
+                try:
+                    key: PKey = paramiko.RSAKey.generate(2048)
+                    key.public_blob = pubkey
+                    transport.auth_publickey(username, key)
+                    valid_key = True
+                    if valid_key:
+                        break
+                except paramiko.ssh_exception.AuthenticationException:
+                    pass
+        except Exception:  # pylint: disable=broad-exception-caught
             pass
         finally:
             if transport is not None:
@@ -596,9 +605,9 @@ class AuthenticatorPassThrough(Authenticator):
             )
         # A public key is only passed directly from check_auth_publickey.
         # In that case, we need to authenticate the client so that we can wait for the agent!
-        publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
+        publickeys = [paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())]
         try:
-            if probe_host(host, port, username, publickey):
+            if probe_host(host, port, username, publickeys):
                 logging.debug(
                     (
                         "Found valid key for host %s:%s username=%s, key=%s %s %sbits",
