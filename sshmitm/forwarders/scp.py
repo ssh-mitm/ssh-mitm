@@ -78,9 +78,7 @@ class SCPBaseForwarder(BaseForwarder):
                 if self.server_channel.recv_ready():
                     buf = self.server_channel.recv(self.BUF_LEN)
                     buf = self.handle_traffic(buf, isclient=False)
-                    self.sendall(
-                        self.client_channel, buf, self.client_channel.send
-                    )
+                    self.sendall(self.client_channel, buf, self.client_channel.send)
                 if self.client_channel.recv_stderr_ready():
                     buf = self.client_channel.recv_stderr(self.BUF_LEN)
                     buf = self.handle_error(buf)

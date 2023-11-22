@@ -19,7 +19,7 @@ All other classes and functions in this module are either legacy or are
 implementation specific and should not be used in production applications.
 """
 
-from abc import ABC
+from abc import ABC, abstractmethod
 import logging
 import argparse
 import inspect
@@ -304,6 +304,35 @@ class BaseModule(ABC):
         return cls._argument_groups[group_title]
 
 
+class SubCommand(ABC):
+    def __init__(
+        self, name: str, subcommand: "argparse._SubParsersAction[ModuleParser]"
+    ) -> None:
+        self.parser = subcommand.add_parser(  # type: ignore[call-arg]
+            name,
+            allow_abbrev=False,
+            help=self.docs(),
+            config_section=self.config_section(),
+        )
+
+    def register_arguments(self) -> None:
+        pass
+
+    @abstractmethod
+    def execute(self, args: argparse.Namespace) -> None:
+        pass
+
+    @classmethod
+    def docs(cls) -> Optional[str]:
+        if not cls.__doc__:
+            return None
+        return cls.__doc__.strip().split("\n", maxsplit=1)[0]
+
+    @classmethod
+    def config_section(cls) -> str:
+        return cls.__name__.replace("_", "-")
+
+
 class ModuleFormatter(argparse.HelpFormatter):
     """Help message formatter which retains formatting of all help text.
     Only the name of this class is considered a public API. All the methods
@@ -366,6 +395,26 @@ class ModuleParser(
         self._extra_modules: List[Tuple[argparse.Action, type]] = []
         self._module_parsers: Set[argparse.ArgumentParser] = {self}
         self.plugin_group = self.add_argument_group(self.config_section)
+        self.subcommand: Optional["argparse._SubParsersAction[ModuleParser]"] = None
+        self._registered_subcommands: Dict[str, SubCommand] = {}
+
+    def load_subcommands(self) -> None:
+        if not self.subcommand:
+            self.subcommand = self.add_subparsers(
+                title="Available commands", dest="subparser_name", metavar="subcommand"
+            )
+            self.subcommand.required = True
+
+        for entry_point in pkg_resources.iter_entry_points(SubCommand.__name__):
+            if entry_point.name in self._registered_subcommands:
+                continue
+            subcommand_cls = cast(Type[SubCommand], entry_point.load())
+            subcommand = subcommand_cls(entry_point.name, self.subcommand)
+            subcommand.register_arguments()
+            self._registered_subcommands[entry_point.name] = subcommand
+
+    def execute_subcommand(self, name: str, args: argparse.Namespace) -> None:
+        self._registered_subcommands[name].execute(args)
 
     def _get_sub_modules_args(
         self,

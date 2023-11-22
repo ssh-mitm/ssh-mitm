@@ -33,11 +33,9 @@ The main method also supports subcommands. The specific subcommands and their ar
 are defined by the parser_func properties of the corresponding SubCommand instances.
 """
 
-from argparse import Namespace
 import logging
 import os
 import sys
-from typing import Callable
 
 from paramiko import Transport
 
@@ -45,50 +43,13 @@ from sshmitm.logging import PlainJsonFormatter, Colors, FailSaveLogStream
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import transport, monkeypatch
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.server.cli import init_server_parser, run_server
-from sshmitm.audit.cli import init_audit_parser, run_audit
-
-
-class SubCommand:
-    """
-    This class represents a subcommand, which contains a function that is run and a parser that is used to parse arguments.
-
-    :param run_func: A callable function that runs the subcommand
-    :param parser_func: A callable function that generates the argument parser for the subcommand
-    :param help: A string that describes the subcommand
-    """
-
-    def __init__(
-        self,
-        run_func: Callable[[Namespace], None],
-        parser_func: Callable[[ModuleParser], None],
-        config_section: str,
-        help: str,  # pylint: disable=redefined-builtin
-    ):
-        self.run_func = run_func
-        self.config_section = config_section
-        self.help = help
-        self.parser_func = parser_func
 
 
 def main() -> None:
     """
     Main function of the SSH-MITM tools, it provides a CLI interface to use the `audit` and `server` subcommands.
     """
-    available_subcommands = {
-        "audit": SubCommand(
-            run_func=run_audit,
-            parser_func=init_audit_parser,
-            config_section="Audit",
-            help="audit tools for ssh servers",
-        ),
-        "server": SubCommand(
-            run_func=run_server,
-            parser_func=init_server_parser,
-            config_section="SSH-Server-Modules",
-            help="start the ssh-mitm server",
-        ),
-    }
+
     prog_name = os.path.basename(os.environ.get("ARGV0", "ssh-mitm"))
     if os.environ.get("container"):
         prog_name = "at.ssh_mitm.server"
@@ -133,22 +94,7 @@ def main() -> None:
         choices=["text", "json"],
         help="defines the log output format (json will suppress stdout)",
     )
-
-    subparsers = parser.add_subparsers(
-        title="Available commands", dest="subparser_name", metavar="subcommand"
-    )
-    subparsers.required = True
-    for sc_name, sc_item in available_subcommands.items():
-        sc_item.parser_func(
-            # TODO: fix 'config_section' argument for suparser not known to mypy
-            subparsers.add_parser(
-                sc_name,
-                allow_abbrev=False,
-                help=sc_item.help,
-                config_section=sc_item.config_section,  # type: ignore
-            )
-        )
-
+    parser.load_subcommands()
     args = parser.parse_args()
 
     root_logger = logging.getLogger()
@@ -176,7 +122,7 @@ def main() -> None:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
 
     try:
-        available_subcommands[args.subparser_name].run_func(args)
+        parser.execute_subcommand(args.subparser_name, args)
     except (AttributeError, KeyError):
         logging.exception("can not run subcommand - invalid subcommand name")
         sys.exit(1)

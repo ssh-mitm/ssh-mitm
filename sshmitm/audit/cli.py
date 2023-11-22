@@ -8,7 +8,7 @@ import sys
 import paramiko
 
 from paramiko.pkey import PublicBlob
-from sshmitm.moduleparser import ModuleParser
+from sshmitm.moduleparser import SubCommand
 from sshmitm.authentication import probe_host, Authenticator
 
 
@@ -80,88 +80,92 @@ def perform_cve_2023_25136(args: argparse.Namespace) -> bool:
     return True
 
 
-def init_audit_parser(parser: ModuleParser) -> None:
-    subparsers = parser.add_subparsers(
-        title="Available commands", dest="audit_subparser_name", metavar="audit-command"
-    )
-    subparsers.required = True
+class Audit(SubCommand):
+    """audit tools for ssh servers"""
 
-    parser_check_publickey = subparsers.add_parser(
-        "check-publickey", help="checks a username and publickey against a server"
-    )
-    parser_check_publickey.add_argument(
-        "--host", type=str, required=True, help="Hostname or IP address"
-    )
-    parser_check_publickey.add_argument(
-        "--port", type=int, default=22, help="port (default: 22)"
-    )
-    parser_check_publickey.add_argument(
-        "--username", type=str, required=True, help="username to check"
-    )
-    parser_check_publickey.add_argument(
-        "--public-key", type=str, required=True, help="publickey to check"
-    )
+    def register_arguments(self) -> None:
+        subparsers = self.parser.add_subparsers(
+            title="Available commands",
+            dest="audit_subparser_name",
+            metavar="audit-command",
+        )
+        subparsers.required = True
 
-    parser_check_privatekey = subparsers.add_parser(
-        "check-privatekey", help="checks a username and privatekey against a server"
-    )
-    parser_check_privatekey.add_argument(
-        "--host", type=str, required=True, help="Hostname or IP address"
-    )
-    parser_check_privatekey.add_argument(
-        "--port", type=int, default=22, help="port (default: 22)"
-    )
-    parser_check_privatekey.add_argument(
-        "--username", type=str, required=True, help="username to check"
-    )
-    parser_check_privatekey.add_argument(
-        "--private-key", type=str, required=True, help="privatekey to check"
-    )
-    parser_check_privatekey.add_argument(
-        "--private-key-passphrase", type=str, help="used to decrypt the private key"
-    )
+        parser_check_publickey = subparsers.add_parser(
+            "check-publickey", help="checks a username and publickey against a server"
+        )
+        parser_check_publickey.add_argument(
+            "--host", type=str, required=True, help="Hostname or IP address"
+        )
+        parser_check_publickey.add_argument(
+            "--port", type=int, default=22, help="port (default: 22)"
+        )
+        parser_check_publickey.add_argument(
+            "--username", type=str, required=True, help="username to check"
+        )
+        parser_check_publickey.add_argument(
+            "--public-key", type=str, required=True, help="publickey to check"
+        )
 
-    parser_scan_auth = subparsers.add_parser(
-        "get-auth", help="checks authentication methods"
-    )
-    parser_scan_auth.add_argument(
-        "--host", type=str, required=True, help="Hostname or IP address"
-    )
-    parser_scan_auth.add_argument(
-        "--port", type=int, default=22, help="port (default: 22)"
-    )
+        parser_check_privatekey = subparsers.add_parser(
+            "check-privatekey", help="checks a username and privatekey against a server"
+        )
+        parser_check_privatekey.add_argument(
+            "--host", type=str, required=True, help="Hostname or IP address"
+        )
+        parser_check_privatekey.add_argument(
+            "--port", type=int, default=22, help="port (default: 22)"
+        )
+        parser_check_privatekey.add_argument(
+            "--username", type=str, required=True, help="username to check"
+        )
+        parser_check_privatekey.add_argument(
+            "--private-key", type=str, required=True, help="privatekey to check"
+        )
+        parser_check_privatekey.add_argument(
+            "--private-key-passphrase", type=str, help="used to decrypt the private key"
+        )
 
-    parser_scan_auth = subparsers.add_parser(
-        "CVE-2023-25136",
-        help="performs a DoS against OpenSSH, which exploirts CVE-2023-25136",
-    )
-    parser_scan_auth.add_argument(
-        "--host", type=str, required=True, help="Hostname or IP address"
-    )
-    parser_scan_auth.add_argument(
-        "--port", type=int, default=22, help="port (default: 22)"
-    )
-    parser_scan_auth.add_argument(
-        "--client-id",
-        dest="client_id",
-        default="PuTTY_Release_0.64",
-        help="client id string, which triggers the exploit",
-    )
+        parser_scan_auth = subparsers.add_parser(
+            "get-auth", help="checks authentication methods"
+        )
+        parser_scan_auth.add_argument(
+            "--host", type=str, required=True, help="Hostname or IP address"
+        )
+        parser_scan_auth.add_argument(
+            "--port", type=int, default=22, help="port (default: 22)"
+        )
 
+        parser_scan_auth = subparsers.add_parser(
+            "CVE-2023-25136",
+            help="performs a DoS against OpenSSH, which exploirts CVE-2023-25136",
+        )
+        parser_scan_auth.add_argument(
+            "--host", type=str, required=True, help="Hostname or IP address"
+        )
+        parser_scan_auth.add_argument(
+            "--port", type=int, default=22, help="port (default: 22)"
+        )
+        parser_scan_auth.add_argument(
+            "--client-id",
+            dest="client_id",
+            default="PuTTY_Release_0.64",
+            help="client id string, which triggers the exploit",
+        )
 
-def run_audit(args: argparse.Namespace) -> None:
-    if args.audit_subparser_name == "check-publickey":
-        if not check_publickey(args):
-            sys.exit(1)
-    if args.audit_subparser_name == "check-privatekey":
-        if not check_privatekey(args):
-            sys.exit(1)
-    elif args.audit_subparser_name == "get-auth":
-        auth_methods = Authenticator.get_auth_methods(args.host, args.port)
-        if auth_methods:
-            print(",".join(auth_methods))
-    elif args.audit_subparser_name == "CVE-2023-25136":
-        if not perform_cve_2023_25136(args):
-            print("ERROR - failed to execute the exploit")
-            sys.exit(1)
-        print("OK -> server seems vulnerable")
+    def execute(self, args: argparse.Namespace) -> None:
+        if args.audit_subparser_name == "check-publickey":
+            if not check_publickey(args):
+                sys.exit(1)
+        if args.audit_subparser_name == "check-privatekey":
+            if not check_privatekey(args):
+                sys.exit(1)
+        elif args.audit_subparser_name == "get-auth":
+            auth_methods = Authenticator.get_auth_methods(args.host, args.port)
+            if auth_methods:
+                print(",".join(auth_methods))
+        elif args.audit_subparser_name == "CVE-2023-25136":
+            if not perform_cve_2023_25136(args):
+                print("ERROR - failed to execute the exploit")
+                sys.exit(1)
+            print("OK -> server seems vulnerable")

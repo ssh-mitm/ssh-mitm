@@ -8,22 +8,16 @@ from sshmitm.forwarders.base import BaseForwarder
 
 
 class SSHBaseForwarder(BaseForwarder):  # pylint: disable=abstract-method
-
     @property
     def client_channel(self) -> Optional[paramiko.Channel]:
         return self.session.ssh_channel
 
     def check_if_channels_are_closed(self) -> bool:
-        if self.client_channel is not None and self._closed(
-            self.client_channel
-        ):
+        if self.client_channel is not None and self._closed(self.client_channel):
             self.server_channel.close()
             self.close_session(self.client_channel)
             return True
-        if (
-            self._closed(self.server_channel)
-            and self.client_channel is not None
-        ):
+        if self._closed(self.server_channel) and self.client_channel is not None:
             self.close_session(self.client_channel)
             return True
         if self.server_channel.exit_status_ready():
@@ -31,10 +25,7 @@ class SSHBaseForwarder(BaseForwarder):  # pylint: disable=abstract-method
             if self.client_channel is not None:
                 self.close_session(self.client_channel)
             return True
-        if (
-            self.client_channel is not None
-            and self.client_channel.exit_status_ready()
-        ):
+        if self.client_channel is not None and self.client_channel.exit_status_ready():
             self.client_channel.recv_exit_status()
             if self.client_channel is not None:
                 self.close_session(self.client_channel)
@@ -69,10 +60,7 @@ class SSHForwarder(SSHBaseForwarder):
             raise
 
     def forward_stdin(self) -> None:
-        if (
-            self.client_channel is not None
-            and self.client_channel.recv_ready()
-        ):
+        if self.client_channel is not None and self.client_channel.recv_ready():
             buf: bytes = self.client_channel.recv(self.BUF_LEN)
             buf = self.stdin(buf)
             self.server_channel.sendall(buf)

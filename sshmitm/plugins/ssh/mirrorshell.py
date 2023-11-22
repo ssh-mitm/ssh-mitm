@@ -69,8 +69,8 @@ class SSHMirrorForwarder(SSHForwarder):
         plugin_group.add_argument(
             "--ssh-terminal-log-formatter",
             dest="ssh_terminal_log_formatter",
-            default='script',
-            choices=['script'],
+            default="script",
+            choices=["script"],
             help="terminal log format for captured ssh session",
         )
 
@@ -82,16 +82,15 @@ class SSHMirrorForwarder(SSHForwarder):
             )
 
         self.sessionlog: Optional[TerminalLogFormat] = None
-        if (
-            self.args.store_ssh_session
-            and self.session.session_log_dir
-        ):
+        if self.args.store_ssh_session and self.session.session_log_dir:
             try:
                 self.sessionlog = ScriptLogFormat(
-                    os.path.join(self.session.session_log_dir, 'terminal_sessions')
+                    os.path.join(self.session.session_log_dir, "terminal_sessions")
                 )
             except Exception:  # pylint: disable=broad-exception-caught
-                logging.exception("Error creating session log dir. terminal logging disabled")
+                logging.exception(
+                    "Error creating session log dir. terminal logging disabled"
+                )
                 self.sessionlog = None
 
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)

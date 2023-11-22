@@ -8,8 +8,9 @@ import pytz
 
 
 class TerminalLogFormat(ABC):
-
-    def __init__(self, logdir: Union[str, os.PathLike[str]], prefix: str = 'session') -> None:
+    def __init__(
+        self, logdir: Union[str, os.PathLike[str]], prefix: str = "session"
+    ) -> None:
         self.logdir = logdir
         self.prefix = prefix
         self.subdirectory = self.get_subdirectory()
@@ -40,15 +41,22 @@ class TerminalLogFormat(ABC):
 
 
 class ScriptLogFormat(TerminalLogFormat):
-
-    def __init__(self, logdir: Union[str, os.PathLike[str]], prefix: str = 'session') -> None:
+    def __init__(
+        self, logdir: Union[str, os.PathLike[str]], prefix: str = "session"
+    ) -> None:
         super().__init__(logdir, prefix)
         timecomponent = str(time.time()).split(".", maxsplit=1)[0]
 
         self.subdirectory.mkdir(parents=True, exist_ok=True)
-        self.file_stdin = (self.subdirectory / Path(f"ssh_in_{timecomponent}.log")).open("wb")
-        self.file_stdout = (self.subdirectory / Path(f"ssh_out_{timecomponent}.log")).open("wb")
-        self.timeingfile = (self.subdirectory / Path(f"ssh_time_{timecomponent}.log")).open("wb")
+        self.file_stdin = (
+            self.subdirectory / Path(f"ssh_in_{timecomponent}.log")
+        ).open("wb")
+        self.file_stdout = (
+            self.subdirectory / Path(f"ssh_out_{timecomponent}.log")
+        ).open("wb")
+        self.timeingfile = (
+            self.subdirectory / Path(f"ssh_time_{timecomponent}.log")
+        ).open("wb")
         self.timestamp: Optional[datetime.datetime] = None
 
         self.file_stdout.write(
