@@ -98,12 +98,15 @@ def set_module_kwargs(
         descriptions.append(entry_point_description)
 
     kwargs["choices"] = sorted(choices)
-    kwargs["help"] = kwargs.get("help") or ""
-    if default_name:
-        kwargs[
-            "help"
-        ] += f"\ndefault module: {Colors.stylize(default_name, fg('blue') + attr('bold'))}"
-    kwargs["help"] += "\navailable modules:\n{}".format("\n".join(descriptions))
+    if len(choices) > 1:
+        kwargs["help"] = kwargs.get("help") or ""
+        if default_name:
+            kwargs[
+                "help"
+            ] += f"\ndefault module: {Colors.stylize(default_name, fg('blue') + attr('bold'))}"
+        kwargs["help"] += "\navailable modules:\n{}".format("\n".join(descriptions))
+    else:
+        kwargs["help"] = argparse.SUPPRESS
     return kwargs
 
 

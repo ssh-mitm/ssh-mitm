@@ -55,12 +55,9 @@ passthrough = "sshmitm.authentication:AuthenticatorPassThrough"
 base = "sshmitm.interfaces.server:ServerInterface"
 
 [project.entry-points."SSHBaseForwarder"]
-base = "sshmitm.forwarders.ssh:SSHForwarder"
 mirrorshell = "sshmitm.plugins.ssh.mirrorshell:SSHMirrorForwarder"
-noshell = "sshmitm.plugins.ssh.noshell:NoShellForwarder"
 
 [project.entry-points."SCPBaseForwarder"]
-base = "sshmitm.forwarders.scp:SCPForwarder"
 debug_traffic = "sshmitm.plugins.scp.debug_traffic:SCPDebugForwarder"
 inject_file = "sshmitm.plugins.scp.inject_file:SCPInjectFile"
 replace_file = "sshmitm.plugins.scp.replace_file:SCPReplaceFile"
@@ -72,16 +69,13 @@ CVE-2022-29154 = "sshmitm.plugins.scp.cve202229154:CVE202229154"
 base = "sshmitm.interfaces.sftp:SFTPProxyServerInterface"
 
 [project.entry-points."SFTPHandlerBasePlugin"]
-base = "sshmitm.forwarders.sftp:SFTPHandlerPlugin"
 replace_file = "sshmitm.plugins.sftp.replace_file:SFTPProxyReplaceHandler"
 store_file = "sshmitm.plugins.sftp.store_file:SFTPHandlerStoragePlugin"
 
 [project.entry-points."RemotePortForwardingBaseForwarder"]
-base = "sshmitm.forwarders.tunnel:RemotePortForwardingForwarder"
 inject = "sshmitm.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardingForwarder"
 
 [project.entry-points."LocalPortForwardingBaseForwarder"]
-base = "sshmitm.forwarders.tunnel:LocalPortForwardingForwarder"
 socks = "sshmitm.plugins.tunnel.socks:SOCKSTunnelForwarder"
 
 [tool.hatch.version]
