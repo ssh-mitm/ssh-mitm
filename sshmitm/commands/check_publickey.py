@@ -1,9 +1,10 @@
 import argparse
+from collections import defaultdict
 import sys
 from pathlib import Path
-from typing import Optional, List
+from typing import Optional, List, Dict
 from rich import print as rich_print
-from sshpubkeys import SSHKey  # type: ignore[import-untyped]
+from sshpubkeys import SSHKey, AuthorizedKeysFile  # type: ignore[import-untyped]
 from sshmitm.moduleparser import SubCommand
 from sshmitm.authentication import PublicKeyEnumerator
 
@@ -35,19 +36,22 @@ class CheckPublickey(SubCommand):
         )
 
     @staticmethod
-    def print_valid_keys(valid_keys: List[str]) -> None:
+    def print_valid_keys(valid_keys: Dict[str, List[str]]) -> None:
         if not valid_keys:
             rich_print("[bold red]:cross_mark: No valid keys found[/bold red]")
             return
         rich_print("[bold green]:heavy_check_mark: Valid keys found[/bold green]")
-        for key in valid_keys:
-            ssh_key = SSHKey(key, strict=True)
-            print(
-                ssh_key.key_type.decode(),
-                ssh_key.bits,
-                ssh_key.hash_sha256(),
-                ssh_key.comment or "",
-            )
+        for filepath, keys in valid_keys.items():
+            for key in keys:
+                ssh_key = SSHKey(key, strict=True)
+                print(
+                    filepath,
+                    "---",
+                    ssh_key.key_type.decode(),
+                    ssh_key.bits,
+                    ssh_key.hash_sha256(),
+                    ssh_key.comment or "",
+                )
 
     def execute(self, args: argparse.Namespace) -> None:
         """
@@ -56,25 +60,27 @@ class CheckPublickey(SubCommand):
 
         :param args: Namespace object that contains the necessary parameters.
         """
-        keys: List[str] = []
+        keys: Dict[str, List[str]] = defaultdict(list)
         for file_path in args.public_keys:
-            with Path(file_path).expanduser().open(
-                "rt", encoding="utf-8"
-            ) as key_handle:
-                key = key_handle.read()
             try:
-                keys.append(key)
-            except ValueError:
-                sys.exit("file is not a valid public key")
+                with Path(file_path).expanduser().open(
+                    "rt", encoding="utf-8"
+                ) as key_handle:
+                    key_file = AuthorizedKeysFile(key_handle, strict=False)
+                for key in key_file.keys:
+                    keys[file_path].append(key.keydata)
+            except FileNotFoundError as exc:
+                sys.exit(str(exc))
 
+        valid_keys: Dict[str, List[str]] = defaultdict(list)
         try:
-            valid_keys = []
             with PublicKeyEnumerator(args.host, args.port) as enumerator:
-                for pubkey in keys:
-                    if enumerator.check_publickey(args.username, pubkey):
-                        valid_keys.append(pubkey)
-            self.print_valid_keys(valid_keys)
-
+                for filename, pubkeys in keys.items():
+                    for pubkey in pubkeys:
+                        if enumerator.check_publickey(args.username, pubkey):
+                            valid_keys[filename].append(pubkey)
         except Exception as exc:  # pylint: disable=broad-exception-caught
             print(exc)
             sys.exit(1)
+        finally:
+            self.print_valid_keys(valid_keys)
