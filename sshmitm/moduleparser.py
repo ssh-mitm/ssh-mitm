@@ -307,8 +307,6 @@ class BaseModule(ABC):
 
 
 class SubCommand(ABC):
-    HAS_CONFIG = True
-
     def __init__(
         self, name: str, subcommand: "argparse._SubParsersAction[ModuleParser]"
     ) -> None:
@@ -334,7 +332,7 @@ class SubCommand(ABC):
 
     @classmethod
     def config_section(cls) -> Optional[str]:
-        return cls.__name__.replace("_", "-") if cls.HAS_CONFIG else None
+        return cls.__name__.replace("_", "-")
 
 
 class ModuleFormatter(argparse.HelpFormatter):

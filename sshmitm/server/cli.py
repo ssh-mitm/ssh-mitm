@@ -1,4 +1,5 @@
 import argparse
+from typing import Optional
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.moduleparser import SubCommand
@@ -26,8 +27,12 @@ from sshmitm.forwarders.tunnel import (
 from sshmitm.session import BaseSession
 
 
-class SSH_Server_Modules(SubCommand):  # pylint: disable=invalid-name
+class SSHServerModules(SubCommand):
     """start the ssh-mitm server"""
+
+    @classmethod
+    def config_section(cls) -> Optional[str]:
+        return "SSH-Server-Modules"
 
     def register_arguments(self) -> None:
         self.parser.add_module(

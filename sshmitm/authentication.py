@@ -5,7 +5,8 @@ import sys
 import socket
 import threading
 
-from typing import Optional, List, Tuple, Union
+from typing import Optional, List, Tuple, Union, Type
+from types import TracebackType
 
 from colored.colored import attr, fg  # type: ignore
 from paramiko import PKey
@@ -89,11 +90,16 @@ class PublicKeyEnumerator:
         if self.sock is not None:
             self.sock.close()
 
-    def __enter__(self):
+    def __enter__(self) -> "PublicKeyEnumerator":
         self.connect()
         return self
 
-    def __exit__(self, exc_type, exc_value, exc_traceback):
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_val: Optional[BaseException],
+        exc_tb: Optional[TracebackType],
+    ) -> None:
         self.close()
 
     def check_publickey(

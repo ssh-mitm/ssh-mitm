@@ -1,17 +1,19 @@
 import argparse
 import sys
 from pathlib import Path
-from paramiko.pkey import PublicBlob
+from typing import Optional, List
 from rich import print as rich_print
 from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 from sshmitm.moduleparser import SubCommand
 from sshmitm.authentication import PublicKeyEnumerator
 
 
-class Check_Publickey(SubCommand):  # pylint: disable=invalid-name
+class CheckPublickey(SubCommand):
     """checks a username and publickey against a server"""
 
-    HAS_CONFIG = False
+    @classmethod
+    def config_section(cls) -> Optional[str]:
+        return None
 
     def register_arguments(self) -> None:
         self.parser.add_argument(
@@ -33,7 +35,7 @@ class Check_Publickey(SubCommand):  # pylint: disable=invalid-name
         )
 
     @staticmethod
-    def print_valid_keys(valid_keys):
+    def print_valid_keys(valid_keys: List[str]) -> None:
         if not valid_keys:
             rich_print("[bold red]:cross_mark: No valid keys found[/bold red]")
             return
@@ -54,7 +56,7 @@ class Check_Publickey(SubCommand):  # pylint: disable=invalid-name
 
         :param args: Namespace object that contains the necessary parameters.
         """
-        keys = []
+        keys: List[str] = []
         for file_path in args.public_keys:
             with Path(file_path).expanduser().open(
                 "rt", encoding="utf-8"

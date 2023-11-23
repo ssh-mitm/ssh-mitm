@@ -1,5 +1,4 @@
 import logging
-import binascii
 import socket
 import threading
 from typing import cast, List, Tuple
@@ -10,6 +9,7 @@ from colored.colored import attr, fg  # type: ignore
 
 from sshmitm.session import Session
 from sshmitm.logging import Colors
+from sshmitm.utils import format_hex
 
 
 class UdpProxy:
@@ -78,36 +78,6 @@ class UdpProxy:
         self.pair_list.append([addr, destination_addr])
         return destination_addr
 
-    @staticmethod
-    def format_hex(data: bytes, hexwidth: int = 19) -> str:
-        """
-        Format the data in hexadecimal format.
-
-        :param data: Data to be formatted
-        :param hexwidth: Width of hexadecimal data (default 19)
-        :return: Formatted hexadecimal data
-        """
-        result = []
-        for i in range(0, len(data), hexwidth):
-            data_part = data[i : i + hexwidth]
-            hexa = list(
-                map(
-                    "".join,
-                    zip(*[iter(binascii.hexlify(data_part).decode("utf-8"))] * 2),
-                )
-            )
-            while hexwidth - len(hexa) > 0:
-                hexa.append(" " * 2)
-            text = "".join([chr(x) if 0x20 <= x < 0x7F else "." for x in data_part])
-            addr = "%04X:    %s    %s" % (  # pylint: disable=consider-using-f-string
-                i,
-                " ".join(hexa),
-                text,
-            )
-            result.append(addr)
-
-        return "\n".join(result)
-
     def receive(self, buff_size: int) -> None:
         """
         Receive incoming messages, decrypt and log the data, and forward it to the target server.
@@ -137,7 +107,7 @@ class UdpProxy:
                 f"timestamp_reply (ms): {int.from_bytes(timestamp_reply, 'big')} (0x{timestamp_reply.hex()})",
                 f"fragment_id: 0x{fragment_id.hex()}",
                 f"final_fragment:  {final_fragment_bool} (0x{final_fragment.hex()})",
-                f"Payload:\n{self.format_hex(payload)}",
+                f"Payload:\n{format_hex(payload)}",
                 "-" * 89,
             ]
             logging.info("\n".join(data_to_print))

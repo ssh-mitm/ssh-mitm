@@ -46,9 +46,9 @@ ssh-mitm = "sshmitm.cli:main"
 ssh-mitm-askpass = "sshmitm.tools.askpass:main"
 
 [project.entry-points."SubCommand"]
-server = "sshmitm.server.cli:SSH_Server_Modules"
+server = "sshmitm.server.cli:SSHServerModules"
 audit = "sshmitm.audit.cli:Audit"
-check-publickey = "sshmitm.commands.check_publickey:Check_Publickey"
+check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
 
 [project.entry-points."BaseSession"]
 base = "sshmitm.session:Session"
