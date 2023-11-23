@@ -5,7 +5,7 @@ import sys
 import socket
 import threading
 
-from typing import Optional, List, Tuple
+from typing import Optional, List, Tuple, Union
 
 from colored.colored import attr, fg  # type: ignore
 from paramiko import PKey
@@ -45,26 +45,24 @@ paramiko.auth_handler.AuthHandler._parse_service_accept = patched_parse_service_
 paramiko.auth_handler.AuthHandler._parse_userauth_info_request = patched_parse_userauth_info_request  # type: ignore[attr-defined] # pylint:disable=protected-access
 
 
-def probe_host(
-    hostname_or_ip: str,
-    port: int,
-    username: str,
-    public_keys: List[paramiko.pkey.PublicBlob]
-) -> bool:
-    """
-    Probe a remote host to determine if the provided public key is authorized for the provided username.
+class PublicKeyEnumerationError(Exception):
+    pass
 
-    The function takes four arguments: hostname_or_ip (a string representing hostname
+
+class PublicKeyEnumerator:
+    """Probe a remote host to determine if the provided public key is authorized for the provided username.
+
+    The PublicKeyEnumerator takes four arguments: hostname_or_ip (a string representing hostname
     or IP address), port (an integer representing the port number), username (a string
     representing the username), and public_key (a public key in paramiko.pkey.PublicBlob format).
     The function returns a boolean indicating if the provided public key is authorized or not.
 
-    The function uses the paramiko library to perform the probe by creating a secure shell (SSH)
+    The PublicKeyEnumerator uses the paramiko library to perform the probe by creating a secure shell (SSH)
     connection to the remote host and performing authentication using the provided username and
     public key. Two helper functions, valid and parse_service_accept, are defined inside the
     probe_host function to assist with the authentication process.
 
-    The probe_host function opens a socket connection to the remote host and starts an
+    The PublicKeyEnumerator function opens a socket connection to the remote host and starts an
     SSH transport using the paramiko library. The function then generates a random private
     key, replaces the public key with the provided key, and performs the public key
     using transport.auth_publickey. The result of the authentication is stored in the
@@ -72,90 +70,127 @@ def probe_host(
     paramiko.ssh_exception.AuthenticationException is raised and caught, leaving the
     valid_key variable as False. Finally, the function returns the value of valid_key,
     which indicates whether the provided public key is authorized or not.
-
-    :param hostname_or_ip: Hostname or IP address of the remote host to probe.
-    :param port: Port of the remote host.
-    :param username: The username to probe authorization for.
-    :param public_key: The public key to use for the probe.
-
-    :returns: True if the provided public key is authorized, False otherwise.
     """
 
-    # pylint: disable=protected-access
-    def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore
-        """
-        A helper function that is called when authentication is successful.
+    def __init__(self, hostname_or_ip: str, port: int) -> None:
+        self.remote_address = (hostname_or_ip, port)
+        self.sock: Optional[socket.socket] = None
+        self.transport: Optional[paramiko.transport.Transport] = None
 
-        Args:
-            msg (paramiko.message.Message): The message that was sent.
-        """
-        del msg  # unused arguments
-        logging.debug("execute patched _parse_userauth_info_request")
-        self.auth_event.set()
-        self.authenticated = True
+    def connect(self) -> None:
+        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self.sock.connect(self.remote_address)
+        self.transport = paramiko.transport.Transport(self.sock)
+        self.transport.start_client()
 
-    def parse_service_accept(self, message: paramiko.message.Message) -> None:  # type: ignore
-        """
-        A helper function that parses the service accept message.
+    def close(self) -> None:
+        if self.transport is not None:
+            self.transport.close()
+        if self.sock is not None:
+            self.sock.close()
 
-        Args:
-            message (paramiko.message.Message): The message to parse.
-        """
-        # https://tools.ietf.org/html/rfc4252#section-7
-        logging.debug("execute patched _parse_service_accept")
-        service = message.get_text()
-        if not (service == "ssh-userauth" and self.auth_method == "publickey"):
-            return self._parse_service_accept(message)  # type: ignore
-        message = paramiko.message.Message()
-        message.add_byte(paramiko.common.cMSG_USERAUTH_REQUEST)
-        message.add_string(self.username)
-        message.add_string("ssh-connection")
-        message.add_string(self.auth_method)
-        message.add_boolean(False)
-        if self.private_key.public_blob.key_type == "ssh-rsa":
-            message.add_string("rsa-sha2-512")
-        else:
-            message.add_string(self.private_key.public_blob.key_type)
-        message.add_string(self.private_key.public_blob.key_blob)
-        self.transport._send_message(message)
-        return None
+    def __enter__(self):
+        self.connect()
+        return self
 
-    valid_key = False
-    sock = None
-    transport = None
+    def __exit__(self, exc_type, exc_value, exc_traceback):
+        self.close()
 
-    with PATCH_LOCK:
-        try:
+    def check_publickey(
+        self, username: str, public_key: Union[str, paramiko.pkey.PublicBlob]
+    ) -> bool:
+        # pylint: disable=protected-access
+        def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore
+            """
+            A helper function that is called when authentication is successful.
+
+            Args:
+                msg (paramiko.message.Message): The message that was sent.
+            """
+            del msg  # unused arguments
+            logging.debug("execute patched _parse_userauth_info_request")
+            self.auth_event.set()
+            self.authenticated = True
+
+        def parse_service_accept(self, message: paramiko.message.Message) -> None:  # type: ignore
+            """
+            A helper function that parses the service accept message.
+
+            Args:
+                message (paramiko.message.Message): The message to parse.
+            """
+            # https://tools.ietf.org/html/rfc4252#section-7
+            logging.debug("execute patched _parse_service_accept")
+            service = message.get_text()
+            if not (service == "ssh-userauth" and self.auth_method == "publickey"):
+                return self._parse_service_accept(message)  # type: ignore
+            message = paramiko.message.Message()
+            message.add_byte(paramiko.common.cMSG_USERAUTH_REQUEST)
+            message.add_string(self.username)
+            message.add_string("ssh-connection")
+            message.add_string(self.auth_method)
+            message.add_boolean(False)
+            if self.private_key.public_blob.key_type == "ssh-rsa":
+                message.add_string("rsa-sha2-512")
+            else:
+                message.add_string(self.private_key.public_blob.key_type)
+            message.add_string(self.private_key.public_blob.key_blob)
+            self.transport._send_message(message)
+            return None
+
+        if not self.sock or not self.transport:
+            raise PublicKeyEnumerationError(
+                "enumerator not connected! use connect() method before enumeration."
+            )
+
+        valid_key = False
+        with PATCH_LOCK:
             paramiko.auth_handler.AuthHandler._parse_service_accept = parse_service_accept  # type: ignore[attr-defined]
             paramiko.auth_handler.AuthHandler._parse_userauth_info_request = valid  # type: ignore[attr-defined]
+            try:
+                # For compatibility with paramiko, we need to generate a random private key and replace
+                # the public key with our data.
+                key: PKey = paramiko.RSAKey.generate(2048)
+                key.public_blob = (
+                    public_key
+                    if isinstance(public_key, paramiko.pkey.PublicBlob)
+                    else paramiko.pkey.PublicBlob.from_string(public_key)
+                )
+                self.transport.auth_publickey(username, key)
+                valid_key = True
+            except (ValueError, paramiko.ssh_exception.AuthenticationException):
+                valid_key = False
+            finally:
+                paramiko.auth_handler.AuthHandler._parse_service_accept = ORIGINAL_parse_service_accept  # type: ignore[attr-defined]
+                paramiko.auth_handler.AuthHandler._parse_userauth_info_request = ORIGINAL_parse_userauth_info_request  # type: ignore[attr-defined]
+        return valid_key
 
-            sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-            sock.connect((hostname_or_ip, port))
-            transport = paramiko.transport.Transport(sock)
-            transport.start_client()
+    @classmethod
+    def probe_host(
+        cls,
+        hostname_or_ip: str,
+        port: int,
+        username: str,
+        public_key: paramiko.pkey.PublicBlob,
+    ) -> bool:
+        """Checks if a single public key is known by the remote host.
 
-            # For compatibility with paramiko, we need to generate a random private key and replace
-            # the public key with our data.
-            for pubkey in public_keys:
-                try:
-                    key: PKey = paramiko.RSAKey.generate(2048)
-                    key.public_blob = pubkey
-                    transport.auth_publickey(username, key)
-                    valid_key = True
-                    if valid_key:
-                        break
-                except paramiko.ssh_exception.AuthenticationException:
-                    pass
+        :param hostname_or_ip: Hostname or IP address of the remote host to probe.
+        :param port: Port of the remote host.
+        :param username: The username to probe authorization for.
+        :param public_key: The public key to use for the probe.
+
+        :returns: True if the provided public key is authorized, False otherwise.
+        """
+        enumerator = cls(hostname_or_ip, port)
+        try:
+            enumerator.connect()
+            return enumerator.check_publickey(username, public_key)
         except Exception:  # pylint: disable=broad-exception-caught
             pass
         finally:
-            if transport is not None:
-                transport.close()
-            if sock is not None:
-                sock.close()
-            paramiko.auth_handler.AuthHandler._parse_service_accept = ORIGINAL_parse_service_accept  # type: ignore[attr-defined]
-            paramiko.auth_handler.AuthHandler._parse_userauth_info_request = ORIGINAL_parse_userauth_info_request  # type: ignore[attr-defined]
-    return valid_key
+            enumerator.close()
+        return False
 
 
 class RemoteCredentials:
@@ -605,9 +640,9 @@ class AuthenticatorPassThrough(Authenticator):
             )
         # A public key is only passed directly from check_auth_publickey.
         # In that case, we need to authenticate the client so that we can wait for the agent!
-        publickeys = [paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())]
+        publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
         try:
-            if probe_host(host, port, username, publickeys):
+            if PublicKeyEnumerator.probe_host(host, port, username, publickey):
                 logging.debug(
                     (
                         "Found valid key for host %s:%s username=%s, key=%s %s %sbits",
