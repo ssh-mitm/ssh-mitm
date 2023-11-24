@@ -24,7 +24,6 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
         plugin_group.add_argument(
             "--tunnel-server-net",
             dest="server_tunnel_net",
-            default="127.0.0.1",
             help="local address/interface where injector sessions are served",
         )
 

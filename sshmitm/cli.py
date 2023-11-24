@@ -70,14 +70,12 @@ def main() -> None:
         "-d",
         "--debug",
         dest="debug",
-        default=False,
         action="store_true",
         help="More verbose output of status information",
     )
     parser_group.add_argument(
         "--paramiko-log-level",
         dest="paramiko_log_level",
-        default="warning",
         choices=["warning", "info", "debug"],
         help="set paramikos log level",
     )
@@ -90,7 +88,6 @@ def main() -> None:
     parser.add_argument(
         "--log-format",
         dest="log_format",
-        default="text",
         choices=["text", "json"],
         help="defines the log output format (json will suppress stdout)",
     )

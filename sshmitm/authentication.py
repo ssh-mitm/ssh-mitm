@@ -276,7 +276,6 @@ class Authenticator(BaseModule):
         honeypot_group.add_argument(
             "--enable-auth-fallback",
             action="store_true",
-            default=False,
             help="enabled the fallback to a hoenypot when authentication not possible",
         )
         honeypot_group.add_argument(
@@ -289,7 +288,6 @@ class Authenticator(BaseModule):
             "--fallback-port",
             dest="fallback_port",
             type=int,
-            default=22,
             help="fallback port for the honeypot",
         )
         honeypot_group.add_argument(
@@ -580,12 +578,25 @@ class Authenticator(BaseModule):
         :param success: indicates if the authentication was successful or not
         """
 
+    def on_session_close(self) -> None:
+        """Performs actions when the session is closed."""
+
 
 class AuthenticatorPassThrough(Authenticator):
     """A subclass of `Authenticator` which passes the authentication to the remote server.
 
     This class reuses the credentials received from the client and sends it directly to the remote server for authentication.
     """
+    @classmethod
+    def parser_arguments(cls) -> None:
+        super().parser_arguments()
+        plugin_group = cls.argument_group()
+        plugin_group.add_argument(
+            "--close-pubkey-enumerator-with-session",
+            dest="close_pubkey_enumerator_with_session",
+            action="store_true",
+            help="closes the pubkey enumerator when the session is close. This can be used to hide tracks.",
+        )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session=session)
@@ -710,7 +721,11 @@ class AuthenticatorPassThrough(Authenticator):
 
             return keys_parsed
 
-        if self.pubkey_enumerator and self.pubkey_enumerator.connected:
+        if (
+            not self.args.close_pubkey_enumerator_with_session
+            and self.pubkey_enumerator
+            and self.pubkey_enumerator.connected
+        ):
             self.pubkey_enumerator.close()
 
         logmessage = []
@@ -779,3 +794,11 @@ class AuthenticatorPassThrough(Authenticator):
             )
 
         logging.info("\n".join(logmessage))
+
+    def on_session_close(self) -> None:
+        if (
+            self.args.close_pubkey_enumerator_with_session
+            and self.pubkey_enumerator
+            and self.pubkey_enumerator.connected
+        ):
+            self.pubkey_enumerator.close()

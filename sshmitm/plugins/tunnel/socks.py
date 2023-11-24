@@ -85,7 +85,6 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
         plugin_group.add_argument(
             "--socks-listen-address",
             dest="socks_listen_address",
-            default="127.0.0.1",
             help="socks server listen address (default: 127.0.0.1)",
         )
         plugin_group.add_argument(

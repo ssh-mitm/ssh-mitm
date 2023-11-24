@@ -56,7 +56,6 @@ class SSHMirrorForwarder(SSHForwarder):
         plugin_group.add_argument(
             "--ssh-mirrorshell-net",
             dest="ssh_mirrorshell_net",
-            default="127.0.0.1",
             help="local address/interface where injector sessions are served",
         )
         plugin_group.add_argument("--ssh-mirrorshell-key", dest="ssh_mirrorshell_key")
@@ -69,7 +68,6 @@ class SSHMirrorForwarder(SSHForwarder):
         plugin_group.add_argument(
             "--ssh-terminal-log-formatter",
             dest="ssh_terminal_log_formatter",
-            default="script",
             choices=["script"],
             help="terminal log format for captured ssh session",
         )
