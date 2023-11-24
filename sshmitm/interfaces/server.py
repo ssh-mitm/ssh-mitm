@@ -197,7 +197,7 @@ class ServerInterface(BaseServerInterface):
                 try:
                     self.possible_auth_methods = (
                         self.session.authenticator.get_auth_methods(
-                            creds.host, creds.port
+                            creds.host, creds.port, username
                         )
                     )
                     logging.info(

@@ -80,6 +80,8 @@ class PublicKeyEnumerator:
         self.connected: bool = False
 
     def connect(self) -> None:
+        if self.connected:
+            return
         self.connected = True
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(self.remote_address)
@@ -342,8 +344,10 @@ class Authenticator(BaseModule):
             port=self.args.remote_port or 22,
         )
 
-    @classmethod
-    def get_auth_methods(cls, host: str, port: int) -> Optional[List[str]]:
+    @abstractmethod
+    def get_auth_methods(
+        self, host: str, port: int, username: Optional[str] = None
+    ) -> Optional[List[str]]:
         """
         Get the available authentication methods for a remote host.
 
@@ -351,20 +355,6 @@ class Authenticator(BaseModule):
         :param port: remote host port.
         :return: a list of strings representing the available authentication methods.
         """
-        auth_methods = None
-        remote_transport = paramiko.Transport((host, port))
-        try:
-            remote_transport.connect()
-        except paramiko.ssh_exception.SSHException:
-            remote_transport.close()
-            return auth_methods
-        try:
-            remote_transport.auth_none("")
-        except paramiko.BadAuthenticationType as err:
-            auth_methods = err.allowed_types
-        finally:
-            remote_transport.close()
-        return auth_methods
 
     def authenticate(
         self,
@@ -587,6 +577,7 @@ class AuthenticatorPassThrough(Authenticator):
 
     This class reuses the credentials received from the client and sends it directly to the remote server for authentication.
     """
+
     @classmethod
     def parser_arguments(cls) -> None:
         super().parser_arguments()
@@ -600,9 +591,33 @@ class AuthenticatorPassThrough(Authenticator):
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session=session)
+
         self.pubkey_enumerator: Optional[PublicKeyEnumerator] = None
         self.pubkey_auth_success: bool = False
         self.valid_key: Optional[PKey] = None
+
+    def get_auth_methods(
+        self, host: str, port: int, username: Optional[str] = None
+    ) -> Optional[List[str]]:
+        """
+        Get the available authentication methods for a remote host.
+
+        :param host: remote host address.
+        :param port: remote host port.
+        :return: a list of strings representing the available authentication methods.
+        """
+        if not self.pubkey_enumerator:
+            self.pubkey_enumerator = PublicKeyEnumerator(host, port)
+            self.pubkey_enumerator.connect()
+
+        auth_methods = None
+        if not self.pubkey_enumerator.transport:
+            raise PublicKeyEnumerationError("pubkey_enumerator not initialized")
+        try:
+            self.pubkey_enumerator.transport.auth_none(username or "")
+        except paramiko.BadAuthenticationType as err:
+            auth_methods = err.allowed_types
+        return auth_methods
 
     def auth_agent(self, username: str, host: str, port: int) -> int:
         return self.connect(username, host, port, AuthenticationMethod.AGENT)
