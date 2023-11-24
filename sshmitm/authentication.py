@@ -61,7 +61,7 @@ class PublicKeyEnumerator:
     The PublicKeyEnumerator uses the paramiko library to perform the probe by creating a secure shell (SSH)
     connection to the remote host and performing authentication using the provided username and
     public key. Two helper functions, valid and parse_service_accept, are defined inside the
-    probe_host function to assist with the authentication process.
+    check_publickey function to assist with the authentication process.
 
     The PublicKeyEnumerator function opens a socket connection to the remote host and starts an
     SSH transport using the paramiko library. The function then generates a random private
@@ -77,14 +77,17 @@ class PublicKeyEnumerator:
         self.remote_address = (hostname_or_ip, port)
         self.sock: Optional[socket.socket] = None
         self.transport: Optional[paramiko.transport.Transport] = None
+        self.connected: bool = False
 
     def connect(self) -> None:
+        self.connected = True
         self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.sock.connect(self.remote_address)
         self.transport = paramiko.transport.Transport(self.sock)
         self.transport.start_client()
 
     def close(self) -> None:
+        self.connected = False
         if self.transport is not None:
             self.transport.close()
         if self.sock is not None:
@@ -144,6 +147,8 @@ class PublicKeyEnumerator:
             self.transport._send_message(message)
             return None
 
+        if not self.connected:
+            self.connect()
         if not self.sock or not self.transport:
             raise PublicKeyEnumerationError(
                 "enumerator not connected! use connect() method before enumeration."
@@ -170,33 +175,6 @@ class PublicKeyEnumerator:
                 paramiko.auth_handler.AuthHandler._parse_service_accept = ORIGINAL_parse_service_accept  # type: ignore[attr-defined]
                 paramiko.auth_handler.AuthHandler._parse_userauth_info_request = ORIGINAL_parse_userauth_info_request  # type: ignore[attr-defined]
         return valid_key
-
-    @classmethod
-    def probe_host(
-        cls,
-        hostname_or_ip: str,
-        port: int,
-        username: str,
-        public_key: paramiko.pkey.PublicBlob,
-    ) -> bool:
-        """Checks if a single public key is known by the remote host.
-
-        :param hostname_or_ip: Hostname or IP address of the remote host to probe.
-        :param port: Port of the remote host.
-        :param username: The username to probe authorization for.
-        :param public_key: The public key to use for the probe.
-
-        :returns: True if the provided public key is authorized, False otherwise.
-        """
-        enumerator = cls(hostname_or_ip, port)
-        try:
-            enumerator.connect()
-            return enumerator.check_publickey(username, public_key)
-        except Exception:  # pylint: disable=broad-exception-caught
-            pass
-        finally:
-            enumerator.close()
-        return False
 
 
 class RemoteCredentials:
@@ -609,6 +587,12 @@ class AuthenticatorPassThrough(Authenticator):
     This class reuses the credentials received from the client and sends it directly to the remote server for authentication.
     """
 
+    def __init__(self, session: "sshmitm.session.Session") -> None:
+        super().__init__(session=session)
+        self.pubkey_enumerator: Optional[PublicKeyEnumerator] = None
+        self.pubkey_auth_success: bool = False
+        self.valid_key: Optional[PKey] = None
+
     def auth_agent(self, username: str, host: str, port: int) -> int:
         return self.connect(username, host, port, AuthenticationMethod.AGENT)
 
@@ -631,6 +615,9 @@ class AuthenticatorPassThrough(Authenticator):
         If the key is not valid, or if there is any error while checking if the key is valid,
         the user will not be authenticated and will not be able to log in.
         """
+        if not self.pubkey_enumerator:
+            self.pubkey_enumerator = PublicKeyEnumerator(host, port)
+
         ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
         ssh_pub_key.parse()
         if key.can_sign():
@@ -648,18 +635,26 @@ class AuthenticatorPassThrough(Authenticator):
         # In that case, we need to authenticate the client so that we can wait for the agent!
         publickey = paramiko.pkey.PublicBlob(key.get_name(), key.asbytes())
         try:
-            if PublicKeyEnumerator.probe_host(host, port, username, publickey):
-                logging.debug(
-                    (
-                        "Found valid key for host %s:%s username=%s, key=%s %s %sbits",
-                        host,
-                        port,
-                        username,
-                        key.get_name(),
-                        ssh_pub_key.hash_sha256(),
-                        ssh_pub_key.bits,
-                    )
+            # ssh sends first a publickey to check if this key is known.
+            # to avoid a second key lookup, a valid key is stored and later during the
+            # real authentication process, the key is compared with the known key.
+            if self.pubkey_auth_success and self.valid_key == key:
+                return paramiko.common.AUTH_SUCCESSFUL
+
+            # this is only the pubkey lookup, which is done by all clients
+            # we store the knwon key to avoid a second key lookup
+            if self.pubkey_enumerator.check_publickey(username, publickey):
+                logging.info(
+                    "Found valid key for host %s:%s username=%s, key=%s %s %sbits",
+                    host,
+                    port,
+                    username,
+                    key.get_name(),
+                    ssh_pub_key.hash_sha256(),
+                    ssh_pub_key.bits,
                 )
+                self.pubkey_auth_success = True
+                self.valid_key = key
                 return paramiko.common.AUTH_SUCCESSFUL
         except EOFError:
             logging.exception(
@@ -714,6 +709,9 @@ class AuthenticatorPassThrough(Authenticator):
                     )
 
             return keys_parsed
+
+        if self.pubkey_enumerator and self.pubkey_enumerator.connected:
+            self.pubkey_enumerator.close()
 
         logmessage = []
         if success:
