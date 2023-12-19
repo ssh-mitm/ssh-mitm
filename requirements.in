@@ -1,7 +1,7 @@
 argcomplete
 colored
 packaging
-paramiko>=3.3,<3.4
+paramiko>=3.3,<3.5
 python-json-logger
 pytz
 pyyaml
