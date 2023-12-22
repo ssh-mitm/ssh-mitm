@@ -35,7 +35,7 @@ class Audit(SubCommand):
 
         parser_scan_auth = subparsers.add_parser(
             "CVE-2023-25136",
-            help="performs a DoS against OpenSSH, which exploirts CVE-2023-25136",
+            help="performs a DoS against OpenSSH, which exploits CVE-2023-25136",
         )
         parser_scan_auth.add_argument(
             "--host", type=str, required=True, help="Hostname or IP address"
