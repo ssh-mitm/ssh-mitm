@@ -43,6 +43,25 @@ class Vulnerability:
         return f"https://nvd.nist.gov/vuln/detail/{self.cve}"
 
 
+class ClientAuditReport:
+    def __init__(
+        self,
+        title: str,
+        *,
+        vulnerable: bool = False,
+        messages: Optional[List[str]] = None,
+    ) -> None:
+        self.title = title
+        self.messages = messages or []
+        self.vulnerable = vulnerable
+
+    def __str__(self) -> str:
+        title_color = "red" if self.vulnerable else "green"
+        value = [f"    {Colors.stylize(self.title, fg(title_color) + attr('bold'))}"]
+        value.extend([f"      * {v}" for v in self.messages])
+        return "\n".join(value)
+
+
 class SSHClientAudit:
     """
     The class SSHClientAudit is used for auditing SSH clients.
@@ -113,7 +132,7 @@ class SSHClientAudit:
         except ValueError:
             return False
 
-    def check_cves(self, vulnerabilities: Dict[str, List[str]]) -> List[str]:
+    def check_cves(self, vulnerabilities: DefaultDict[str, List[Optional[ClientAuditReport]]]) -> List[str]:
         """
         This method returns a list of strings representing the Common Vulnerabilities and Exposures (CVEs) found in the client,
         along with the information available in the `vulnerabilities` dictionary.
@@ -220,7 +239,7 @@ class SSHClientAudit:
             )
         return messages
 
-    def check_key_negotiation(self) -> Dict[str, List[str]]:
+    def check_key_negotiation(self) -> Dict[str, ClientAuditReport]:
         """
         Check if a key negotiation data is known.
 
@@ -244,7 +263,61 @@ class SSHClientAudit:
         messages.append(
             f"Preferred server host key algorithm: {self.key_negotiation_data.server_host_key_algorithms[0]}"
         )
-        return {"clientaudit": messages}
+        report = ClientAuditReport(
+            "CVE-2020-14145 - Fingerprint information leak",
+            vulnerable=False,
+            messages=messages,
+        )
+        return {"clientaudit": report}
+
+    def check_terrapin_attack(self) -> Dict[str, ClientAuditReport]:
+        cha_cha20 = "chacha20-poly1305@openssh.com"
+        etm_suffix = "-etm@openssh.com"
+        cbc_suffix = "-cbc"
+        kex_strict_indicator_client = "kex-strict-c-v00@openssh.com"
+        # kex_strict_indicator_server = "kex-strict-s-v00@openssh.com"
+
+        supports_cha_cha20 = (
+            cha_cha20
+            in self.key_negotiation_data.encryption_algorithms_client_to_server
+            or cha_cha20
+            in self.key_negotiation_data.encryption_algorithms_server_to_client
+        )
+        supports_cbc_etm = (
+            any(
+                algo.endswith(cbc_suffix)
+                for algo in self.key_negotiation_data.encryption_algorithms_client_to_server
+            )
+            and any(
+                mac.endswith(etm_suffix)
+                for mac in self.key_negotiation_data.mac_algorithms_client_to_server
+            )
+        ) or (
+            any(
+                algo.endswith(cbc_suffix)
+                for algo in self.key_negotiation_data.encryption_algorithms_server_to_client
+            )
+            and any(
+                mac.endswith(etm_suffix)
+                for mac in self.key_negotiation_data.mac_algorithms_server_to_client
+            )
+        )
+        supports_strict_kex = (
+            kex_strict_indicator_client in self.key_negotiation_data.kex_algorithms
+        )
+        vulnerable = (supports_cbc_etm or supports_cbc_etm) and not supports_strict_kex
+        title_color = "red" if vulnerable else "green"
+
+        report = ClientAuditReport(
+            "CVE-2023-48795 - Terrapin-Attack", vulnerable=vulnerable
+        )
+        report.messages.append(f"ChaCha20-Poly1305 support:   {supports_cha_cha20}")
+        report.messages.append(f"CBC-EtM support:             {supports_cbc_etm}")
+        report.messages.append(f"Strict key exchange support: {supports_strict_kex}")
+        report.messages.append(
+            f"Mitigation status:           {Colors.stylize('vulnerable' if vulnerable else 'mitigated', fg(title_color))}"
+        )
+        return {"clientaudit": report}
 
     def run_audit(self) -> None:
         """
@@ -252,11 +325,13 @@ class SSHClientAudit:
 
         :param client_id: ID of the client to audit
         """
-        vulnerabilities: DefaultDict[str, List[str]] = defaultdict(list)
+        vulnerabilities: DefaultDict[str, List[Optional[ClientAuditReport]]] = defaultdict(list)
         for audit_type, audit_results in self.check_key_negotiation().items():
-            vulnerabilities[audit_type].extend(audit_results)
+            vulnerabilities[audit_type].append(audit_results)
+        for audit_type, audit_results in self.check_terrapin_attack().items():
+            vulnerabilities[audit_type].append(audit_results)
 
-        vulnerabilities["clientaudit"].extend(self.audit())
+        vulnerabilities["clientaudit"].append(self.audit())
 
         log_output = []
         log_output.extend(
@@ -278,7 +353,8 @@ class SSHClientAudit:
                 "".join(
                     [
                         Colors.stylize(
-                            Colors.emoji("warning") + " client affected by CVEs:\n",
+                            Colors.emoji("warning")
+                            + " CVEs detected by client version string:\n",
                             fg("yellow") + attr("bold"),
                         ),
                         "\n".join(cvemessagelist),
@@ -292,10 +368,11 @@ class SSHClientAudit:
                 "".join(
                     [
                         Colors.stylize(
-                            Colors.emoji("warning") + " client audit tests:\n",
+                            Colors.emoji("warning")
+                            + " detected vulnerabilities by active tests:\n",
                             fg("blue") + attr("bold"),
                         ),
-                        "\n".join([f"  * {v}" for v in client_audits]),
+                        "\n".join([str(v) for v in client_audits if v]),
                     ]
                 )
             )
@@ -313,8 +390,8 @@ class SSHClientAudit:
             },
         )
 
-    def audit(self) -> List[str]:
+    def audit(self) -> Optional[ClientAuditReport]:
         """
         Run audits on all clients.
         """
-        return []
+        return None

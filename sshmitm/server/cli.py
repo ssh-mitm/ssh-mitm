@@ -98,7 +98,7 @@ class SSHServerModules(SubCommand):
         parser_group.add_argument(
             "--listen-address",
             dest="listen_address",
-            help="listen addresses (default all interfaces)"
+            help="listen addresses (default all interfaces)",
         )
         parser_group.add_argument(
             "--listen-port", dest="listen_port", type=int, help="listen port"
