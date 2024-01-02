@@ -4,17 +4,17 @@
 #
 #    pip-compile --no-emit-index-url --output-file=requirements-dev.txt
 #
-argcomplete==3.1.2
+argcomplete==3.2.1
     # via -r requirements.in
-bcrypt==4.0.1
+bcrypt==4.1.2
     # via paramiko
 cffi==1.16.0
     # via
     #   cryptography
     #   pynacl
-colored==2.2.3
+colored==2.2.4
     # via -r requirements.in
-cryptography==41.0.5
+cryptography==41.0.7
     # via
     #   paramiko
     #   sshpubkeys
@@ -26,11 +26,11 @@ mdurl==0.1.2
     # via markdown-it-py
 packaging==23.2
     # via -r requirements.in
-paramiko==3.3.1
+paramiko==3.4.0
     # via -r requirements.in
 pycparser==2.21
     # via cffi
-pygments==2.16.1
+pygments==2.17.2
     # via rich
 pynacl==1.5.0
     # via paramiko
@@ -40,11 +40,11 @@ pytz==2023.3.post1
     # via -r requirements.in
 pyyaml==6.0.1
     # via -r requirements.in
-rich==13.6.0
+rich==13.7.0
     # via -r requirements.in
 six==1.16.0
     # via ecdsa
 sshpubkeys==3.3.1
     # via -r requirements.in
-wrapt==1.15.0
+wrapt==1.16.0
     # via -r requirements.in

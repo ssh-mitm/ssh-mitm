@@ -45,7 +45,7 @@ from paramiko.common import (
 from paramiko.message import Message
 from paramiko.packet import NeedRekeyException
 from paramiko.util import b
-from paramiko.ssh_exception import SSHException
+from paramiko.ssh_exception import SSHException, MessageOrderError
 
 
 from paramiko.transport import _active_threads  # type: ignore
@@ -92,12 +92,18 @@ def transport_send_kex_init(self):  # type: ignore
         )
     else:
         available_server_keys = self.preferred_keys
-        # Signal support for MSG_EXT_INFO.
+        # Signal support for MSG_EXT_INFO so server will send it to us.
         # NOTE: doing this here handily means we don't even consider this
         # value when agreeing on real kex algo to use (which is a common
         # pitfall when adding this apparently).
         if "ext-info-c" not in kex_algos:
             kex_algos.append("ext-info-c")
+
+    # Similar to ext-info, but used in both server modes, so done outside
+    # of above if/else.
+    if self.advertise_strict_kex:
+        which = "s" if self.server_mode else "c"
+        kex_algos.append(f"kex-strict-{which}-v00@openssh.com")
 
     m = Message()
     m.add_byte(cMSG_KEXINIT)
@@ -167,11 +173,13 @@ def transport_run(self):  # type: ignore
                 except NeedRekeyException:
                     continue
                 if ptype == MSG_IGNORE:
+                    self._enforce_strict_kex(ptype)
                     continue
                 elif ptype == MSG_DISCONNECT:
                     self._parse_disconnect(m)
                     break
                 elif ptype == MSG_DEBUG:
+                    self._enforce_strict_kex(ptype)
                     self._parse_debug(m)
                     continue
                 if len(self._expected_packet) > 0:
@@ -181,7 +189,10 @@ def transport_run(self):  # type: ignore
                             # when first_kex_packet_follows is True
                             # this is a workarround at the moment, but connection works
                             continue
-                        raise SSHException(
+                        exc_class = SSHException
+                        if self.agreed_on_strict_kex:
+                            exc_class = MessageOrderError
+                        raise exc_class(
                             "Expecting packet from {!r}, got {:d}".format(
                                 self._expected_packet, ptype
                             )
