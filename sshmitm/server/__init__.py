@@ -19,11 +19,7 @@ from sshpubkeys import SSHKey  # type: ignore
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.logging import Colors
 from sshmitm.console import sshconsole
-from sshmitm.multisocket import (
-    create_server_sock,
-    has_dual_stack,
-    MultipleSocketsListener,
-)
+from sshmitm.multisocket import create_server_sock
 from sshmitm.session import Session
 from sshmitm.forwarders.ssh import SSHBaseForwarder, SSHForwarder
 from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
@@ -43,6 +39,7 @@ class SSHProxyServer:
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
+        listen_address: str,
         listen_port: int,
         *,
         key_file: Optional[str] = None,
@@ -69,8 +66,7 @@ class SSHProxyServer:
         self._hostkey: Optional[PKey] = None
 
         self.listen_port = listen_port
-        self.listen_address = "0.0.0.0"  # nosec
-        self.listen_address_v6 = "::"
+        self.listen_address = listen_address
         self.running = False
 
         self.key_file: Optional[str] = key_file
@@ -127,7 +123,6 @@ class SSHProxyServer:
                 self.ssh_pub_key.hash_sha512(), fg("light_blue") + attr("bold")
             ),
             "listen_address": self.listen_address,
-            "listen_address_v6": self.listen_address_v6,
             "listen_port": self.listen_port,
             "transparen_mode": self.transparent,
         }
@@ -175,7 +170,7 @@ class SSHProxyServer:
             )
             sshconsole.rule(characters=".", style="bright_black")
             print(
-                "{servericon} listen interfaces {listen_address} and {listen_address_v6} on port {listen_port}".format(
+                "{servericon} listen interfaces {listen_address} on port {listen_port}".format(
                     **log_data, servericon=Colors.emoji("computer")
                 )
             )
@@ -291,21 +286,13 @@ class SSHProxyServer:
 
     def start(self) -> None:
         self._clean_environment()
-        sock: Optional[Union[socket, MultipleSocketsListener]] = None
+        sock: Optional[socket] = None
 
         try:
             sock = create_server_sock(
-                (self.listen_address, self.listen_port), transparent=self.transparent
+                (self.listen_address, self.listen_port),
+                transparent=self.transparent,
             )
-            if not has_dual_stack(sock):
-                sock.close()
-                sock = MultipleSocketsListener(
-                    [
-                        (self.listen_address, self.listen_port),
-                        (self.listen_address_v6, self.listen_port),
-                    ],
-                    transparent=self.transparent,
-                )
         except PermissionError as permerror:
             if self.transparent and permerror.errno == 1:
                 logging.error(
@@ -346,6 +333,8 @@ class SSHProxyServer:
             if sys.stdout.isatty():
                 sys.stdout.write("\b\b\r")
                 sys.stdout.flush()
+        except Exception:  # pylint: disable=broad-exception-caught
+            logging.exception("Error creating socket!")
         finally:
             logging.info(
                 "%s %s",

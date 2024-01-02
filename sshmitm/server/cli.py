@@ -96,6 +96,11 @@ class SSHServerModules(SubCommand):
             config_section="SSH-Server-Options",
         )
         parser_group.add_argument(
+            "--listen-address",
+            dest="listen_address",
+            help="listen addresses (default all interfaces)"
+        )
+        parser_group.add_argument(
             "--listen-port", dest="listen_port", type=int, help="listen port"
         )
         parser_group.add_argument(
@@ -135,6 +140,7 @@ class SSHServerModules(SubCommand):
             args.authenticator.REQUEST_AGENT_BREAKIN = True
 
         proxy = SSHProxyServer(
+            args.listen_address,
             args.listen_port,
             key_file=args.host_key,
             key_algorithm=args.host_key_algorithm,

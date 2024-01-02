@@ -45,10 +45,10 @@ from paramiko.common import (
 from paramiko.message import Message
 from paramiko.packet import NeedRekeyException
 from paramiko.util import b
-from paramiko.ssh_exception import SSHException, MessageOrderError
+from paramiko.ssh_exception import SSHException, MessageOrderError  # type: ignore[attr-defined]
 
 
-from paramiko.transport import _active_threads  # type: ignore
+from paramiko.transport import _active_threads  # type: ignore[attr-defined]
 
 
 def transport_send_kex_init(self):  # type: ignore
