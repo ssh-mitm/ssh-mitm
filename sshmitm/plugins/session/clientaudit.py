@@ -102,8 +102,8 @@ class SSHClientAudit:
 
     def between_versions(
         self,
-        version_min: Union[None, int, float, str],
-        version_max: Union[None, int, float, str],
+        version_min: Union[None, float, str],
+        version_max: Union[None, float, str],
     ) -> bool:
         """
         This method returns `True` if the version string is between `version_min` and `version_max`.
