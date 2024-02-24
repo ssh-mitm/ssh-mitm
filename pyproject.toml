@@ -183,7 +183,14 @@ ignore = [
     "SLF001",  # Private member accessed: `_indent`
     "PLR0911", # Too many return statements
     "TRY400",  # Use `logging.exception` instead of `logging.error`
-    "UP024",   # Replace aliased errors with `OSError`
+    "UP024",   # Replace aliased errors with `OSError`,
+    "FBT002",  # Boolean default positional argument in function definition
+    "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
+    "PLR2004", # Magic value used in comparison
+    "FBT001",  # Boolean-typed positional argument in function definition
+    "FBT003",  # Boolean positional value in function call
+    "TRY301",  # Abstract `raise` to an inner function
+    "N818",    # Exception name `MissingHostException` should be named with an Error suffix
 ]
 [tool.ruff.lint.per-file-ignores]
 "sshmitm/workarounds/monkeypatch.py" = ["ALL"]

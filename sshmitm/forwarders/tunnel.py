@@ -11,7 +11,7 @@ from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.session import Session  # noqa
+    from sshmitm.session import Session  # noqa: F401
 
 
 class BaseClientTunnelHandler:

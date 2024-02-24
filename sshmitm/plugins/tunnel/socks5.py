@@ -152,7 +152,7 @@ class Socks5Server:
         clientsock.sendall(Socks5Server.AUTH_PASSWORD_VERSION + b"\x01")
         return False
 
-    def _get_address(  # noqa: C901
+    def _get_address(  # noqa: C901,PLR0915
         self, clientsock: Union[socket.socket, paramiko.Channel]
     ) -> Optional[Tuple[str, int]]:
         """Ermittelt das Ziel aus der Socks Anfrage"""
@@ -200,9 +200,10 @@ class Socks5Server:
             if len(dst_addr_b) != 16 or len(dst_port_b) != 2:
                 msg = "Invalid IPv6 Address"
                 raise Socks5Error(msg)
-            tmp_addr = []
-            for i in range(int(len(dst_addr_b) / 2)):
-                tmp_addr.append(chr(dst_addr_b[2 * i] * 256 + dst_addr_b[2 * i + 1]))
+            tmp_addr = [
+                chr(dst_addr_b[2 * i] * 256 + dst_addr_b[2 * i + 1])
+                for i in range(int(len(dst_addr_b) / 2))
+            ]
             dst_addr = ":".join(tmp_addr)
         else:
             msg = "Unhandled address type"

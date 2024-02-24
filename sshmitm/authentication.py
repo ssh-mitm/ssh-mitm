@@ -110,7 +110,7 @@ class PublicKeyEnumerator:
         self, username: str, public_key: Union[str, paramiko.pkey.PublicBlob]
     ) -> bool:
         # pylint: disable=protected-access
-        def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore[no-untyped-def]
+        def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore[no-untyped-def] # noqa: ANN001
             """
             A helper function that is called when authentication is successful.
 
@@ -122,7 +122,7 @@ class PublicKeyEnumerator:
             self.auth_event.set()
             self.authenticated = True
 
-        def parse_service_accept(self, message: paramiko.message.Message) -> Optional[Any]:  # type: ignore[no-untyped-def]
+        def parse_service_accept(self, message: paramiko.message.Message) -> Optional[Any]:  # type: ignore[no-untyped-def] # noqa: ANN001
             """
             A helper function that parses the service accept message.
 

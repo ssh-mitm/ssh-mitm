@@ -27,6 +27,7 @@ import logging
 import os
 import socket
 import threading
+from types import TracebackType
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, Union, cast
 from uuid import uuid4
 
@@ -45,7 +46,7 @@ if TYPE_CHECKING:
     from paramiko.pkey import PKey
 
     import sshmitm
-    from sshmitm.server import SSHProxyServer  # noqa
+    from sshmitm.server import SSHProxyServer  # noqa: F401
 
 
 class BaseSession(BaseModule):
@@ -366,6 +367,14 @@ class Session(BaseSession):
     def __enter__(self) -> "Session":
         return self
 
-    def __exit__(self, exc_type: Any, exc_value: Any, traceback: Any) -> None:
+    def __exit__(
+        self,
+        exc_type: Optional[Type[BaseException]],
+        exc_value: Optional[BaseException],
+        traceback: Optional[TracebackType]
+    ) -> None:
+        del exc_type
+        del exc_value
+        del traceback
         logging.debug("(%s) session exited", self)
         self.close()

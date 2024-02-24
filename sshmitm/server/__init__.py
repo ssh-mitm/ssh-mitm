@@ -276,11 +276,9 @@ class SSHProxyServer:
             "SSH_ORIGINAL_COMMAND",
             "SSH_TTY",
         ]:
-            try:
+            if env_var in os.environ:
                 del os.environ[env_var]
                 logging.debug("removed %s from environment", env_var)
-            except KeyError:
-                pass
 
     def start(self) -> None:
         self._clean_environment()
@@ -340,9 +338,9 @@ class SSHProxyServer:
                 Colors.stylize("Shutting down server ...", fg("red")),
             )
             # TODO: better shutdown for threads. At the moment we kill the server
-            # sock.close()
+            # sock.close()  # noqa: ERA001
             # for thread in self._threads[:]:
-            #    thread.join()
+            #    thread.join()  # noqa: ERA001
             os._exit(os.EX_OK)
 
     def create_session(
