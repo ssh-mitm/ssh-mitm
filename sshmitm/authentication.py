@@ -688,7 +688,7 @@ class AuthenticatorPassThrough(Authenticator):
             )
         return paramiko.common.AUTH_FAILED
 
-    def post_auth_action(self, success: bool) -> None:
+    def post_auth_action(self, success: bool) -> None:  # noqa: C901
         """
         This method logs information about an authentication event.
 

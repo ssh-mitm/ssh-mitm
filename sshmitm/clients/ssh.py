@@ -91,7 +91,7 @@ class SSHClient(BaseSSHClient):
         self.transport: Optional[paramiko.Transport] = None
         self.connected: bool = False
 
-    def connect(self) -> bool:
+    def connect(self) -> bool:  # noqa: C901
         """
         Connects to the remote host using the specified authentication method.
 

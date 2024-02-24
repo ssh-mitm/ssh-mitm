@@ -35,7 +35,7 @@ class SCPBaseForwarder(BaseForwarder):
         logging.info("got remote command: %s", command)
         return command
 
-    def forward(self) -> None:
+    def forward(self) -> None:  # noqa: C901
         # pylint: disable=protected-access
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)

@@ -62,7 +62,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             return self.session.sftp_client.mkdir(path)
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
-    def open(
+    def open(  # noqa: C901
         self, path: str, flags: int, attr: SFTPAttributes
     ) -> Union[SFTPHandle, int]:
         try:

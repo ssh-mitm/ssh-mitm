@@ -36,7 +36,7 @@ def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
         return False
 
 
-def create_server_sock(  # pylint: disable=too-many-arguments
+def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
     address: Tuple[str, int],
     family: Optional[socket.AddressFamily] = None,  # pylint: disable=no-member
     reuse_addr: Optional[bool] = None,
