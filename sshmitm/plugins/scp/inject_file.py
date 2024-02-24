@@ -12,9 +12,12 @@ exploit method is called. The method exploits both CVE-2019-6111 and CVE-2019-61
 
 import logging
 import os
+from typing import TYPE_CHECKING
 
-import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
+
+if TYPE_CHECKING:
+    import sshmitm
 
 
 class SCPInjectFile(SCPForwarder):
@@ -44,7 +47,7 @@ class SCPInjectFile(SCPForwarder):
     def __new__(cls, *args, **kwargs):  # type: ignore
         del kwargs  # unused arguments
         if args[0].scp_command.find(b"-f") != -1:
-            return super(SCPInjectFile, cls).__new__(cls)
+            return super().__new__(cls)
         logging.debug(
             "SCPClient is not downloading a file, reverting to normal SCPForwarder"
         )
@@ -86,7 +89,7 @@ class SCPInjectFile(SCPForwarder):
         )
         command = "{}{} {} {}\n".format(  # pylint: disable=consider-using-f-string
             self.file_command,
-            "{0:o}".format(  # pylint: disable=consider-using-f-string
+            "{:o}".format(  # pylint: disable=consider-using-f-string
                 self.inject_file_stat.st_mode
             )[2:],
             self.inject_file_stat.st_size,

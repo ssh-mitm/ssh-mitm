@@ -5,18 +5,20 @@ import sys
 import threading
 from abc import abstractmethod
 from types import TracebackType
-from typing import List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Type, Union
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore
 from paramiko import PKey
 from sshpubkeys import SSHKey  # type: ignore
 
-import sshmitm
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.exceptions import MissingHostException
 from sshmitm.logging import Colors
 from sshmitm.moduleparser import BaseModule
+
+if TYPE_CHECKING:
+    import sshmitm
 
 PATCH_LOCK = threading.Lock()
 ORIGINAL_parse_service_accept = paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore[attr-defined] # pylint:disable=protected-access
@@ -149,8 +151,9 @@ class PublicKeyEnumerator:
         if not self.connected:
             self.connect()
         if not self.sock or not self.transport:
+            msg = "enumerator not connected! use connect() method before enumeration."
             raise PublicKeyEnumerationError(
-                "enumerator not connected! use connect() method before enumeration."
+                msg
             )
 
         valid_key = False
@@ -527,7 +530,7 @@ class Authenticator(BaseModule):
         Connects to the SSH server and performs the necessary authentication.
         """
         if not host:
-            raise MissingHostException()
+            raise MissingHostException
 
         auth_status = paramiko.common.AUTH_FAILED
         self.session.ssh_client = SSHClient(
@@ -609,7 +612,8 @@ class AuthenticatorPassThrough(Authenticator):
 
         auth_methods = None
         if not self.pubkey_enumerator.transport:
-            raise PublicKeyEnumerationError("pubkey_enumerator not initialized")
+            msg = "pubkey_enumerator not initialized"
+            raise PublicKeyEnumerationError(msg)
         try:
             self.pubkey_enumerator.transport.auth_none(username or "")
         except paramiko.BadAuthenticationType as err:

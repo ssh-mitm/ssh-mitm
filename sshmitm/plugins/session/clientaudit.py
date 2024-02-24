@@ -7,13 +7,13 @@ from colored.colored import attr, fg  # type: ignore
 from packaging import version
 from paramiko import ECDSAKey
 
-import sshmitm
 from sshmitm.logging import Colors
 from sshmitm.plugins.session.server_host_key_algorithms import (
     SERVER_HOST_KEY_ALGORITHMS,
 )
 
 if TYPE_CHECKING:
+    import sshmitm
     from sshmitm.plugins.session.key_negotiation import KeyNegotiationData
 
 
@@ -151,7 +151,7 @@ class SSHClientAudit:
         if cvelist:
             for cve_entry in cvelist.values():
                 cvemessagelist.append(f"  * {cve_entry.cve}: {cve_entry.url}")
-                if cve_entry.cve in vulnerabilities.keys():
+                if cve_entry.cve in vulnerabilities:
                     if isinstance(vulnerabilities[cve_entry.cve], list):
                         for vulnerability_entry in vulnerabilities[cve_entry.cve]:
                             cvemessagelist.append(f"    - {vulnerability_entry}")

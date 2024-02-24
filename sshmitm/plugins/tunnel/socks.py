@@ -1,12 +1,11 @@
 import logging
 import socket
 import sys
-from typing import List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, List, Optional, Tuple, Union
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore
 
-import sshmitm
 from sshmitm.forwarders.tunnel import (
     BaseClientTunnelHandler,
     LocalPortForwardingForwarder,
@@ -16,6 +15,9 @@ from sshmitm.logging import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 from sshmitm.plugins.tunnel.socks4 import Socks4Error, Socks4Server
 from sshmitm.plugins.tunnel.socks5 import Socks5Error, Socks5Server
+
+if TYPE_CHECKING:
+    import sshmitm
 
 
 class ClientTunnelHandler(BaseClientTunnelHandler):

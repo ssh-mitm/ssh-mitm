@@ -10,11 +10,11 @@ from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
 from rich.markup import escape
 
-import sshmitm
 from sshmitm.logging import Colors
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
 
 if TYPE_CHECKING:
+    import sshmitm
     from sshmitm.session import Session  # noqa
 
 

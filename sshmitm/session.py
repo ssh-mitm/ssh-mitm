@@ -33,10 +33,8 @@ from uuid import uuid4
 import paramiko
 from colored.colored import attr, fg  # type: ignore
 from paramiko import Transport
-from paramiko.pkey import PKey
 from paramiko.ssh_exception import ChannelException
 
-import sshmitm
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
 from sshmitm.logging import THREAD_DATA, Colors
@@ -44,6 +42,9 @@ from sshmitm.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
 
 if TYPE_CHECKING:
+    from paramiko.pkey import PKey
+
+    import sshmitm
     from sshmitm.server import SSHProxyServer  # noqa
 
 
@@ -187,10 +188,9 @@ class Session(BaseSession):
             session_channel_open or ssh_channel_open or scp_channel_open
         )
 
-        return_value = (
+        return (
             self.proxyserver.running and open_channel_exists and not self.closed
         )
-        return return_value
 
     @property
     def transport(self) -> paramiko.Transport:
@@ -206,7 +206,8 @@ class Session(BaseSession):
             key_negotiation.handle_key_negotiation(self)
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
-                    raise ValueError("ciphers must be a tuple")
+                    msg = "ciphers must be a tuple"
+                    raise ValueError(msg)
                 self._transport.get_security_options().ciphers = self.CIPHERS
             host_key: Optional[PKey] = self.proxyserver.host_key
             if host_key is not None:
@@ -279,10 +280,9 @@ class Session(BaseSession):
             not self.scp_requested
             and not self.ssh_requested
             and not self.sftp_requested
-        ):
-            if self.transport.is_active():
-                self.transport.close()
-                return False
+        ) and self.transport.is_active():
+            self.transport.close()
+            return False
 
         self.sftp_client_ready.set()
         return True
@@ -340,15 +340,14 @@ class Session(BaseSession):
                 self.ssh_client.transport.close()
             # With graceful exit the completion_event can be polled to wait, well ..., for completion
             # it can also only be a graceful exit if the ssh client has already been established
-            if self.transport.completion_event is not None:
-                if (
-                    self.transport.completion_event.is_set()
-                    and self.transport.is_active()
-                ):
-                    self.transport.completion_event.clear()
-                    while self.transport.is_active():
-                        if self.transport.completion_event.wait(0.1):
-                            break
+            if self.transport.completion_event is not None and (
+                self.transport.completion_event.is_set()
+                and self.transport.is_active()
+            ):
+                self.transport.completion_event.clear()
+                while self.transport.is_active():
+                    if self.transport.completion_event.wait(0.1):
+                        break
         if self.transport.server_object is not None:
             for tunnel_forwarder in cast(
                 BaseServerInterface, self.transport.server_object

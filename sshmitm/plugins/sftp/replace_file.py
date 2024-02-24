@@ -17,7 +17,8 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             self.session.sftp_client_ready.wait()
             args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
             if self.session.sftp_client is None:
-                raise MissingClient("self.session.sftp_client is None!")
+                msg = "self.session.sftp_client is None!"
+                raise MissingClient(msg)
             stat_remote = self.session.sftp_client.lstat(path)
             if isinstance(stat_remote, int):
                 return stat_remote

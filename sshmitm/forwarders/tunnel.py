@@ -7,10 +7,10 @@ from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 import paramiko
 
-import sshmitm
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
+    import sshmitm
     from sshmitm.session import Session  # noqa
 
 
@@ -125,7 +125,8 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
             self.destination,
         )
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
-            raise ValueError("No SSH client!")
+            msg = "No SSH client!"
+            raise ValueError(msg)
         remote_ch = self.session.ssh_client.transport.open_channel(
             "direct-tcpip", self.destination, self.origin
         )
@@ -136,7 +137,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         # Wait for master channel establishment
         while not self.session.transport.channels_seen:
             time.sleep(0.1)
-        if self.chanid in self.session.transport.channels_seen.keys():  # chanid: 0
+        if self.chanid in self.session.transport.channels_seen:  # chanid: 0
             # Proxyjump (-W / -J) will use the already established master channel
             # stdin and stdout of that channel have to be forwarded over to the ssh-client direct-tcpip channel
             self.local_ch = self.session.channel

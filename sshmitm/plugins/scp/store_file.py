@@ -17,10 +17,12 @@ process_data: This method stores the data transmitted during SCP file transfer t
 import logging
 import os
 import uuid
-from typing import Optional
+from typing import TYPE_CHECKING, Optional
 
-import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
+
+if TYPE_CHECKING:
+    import sshmitm
 
 
 class SCPStorageForwarder(SCPForwarder):

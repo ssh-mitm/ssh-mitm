@@ -27,12 +27,12 @@ import paramiko.hostkeys
 from paramiko.pkey import PKey
 from sshpubkeys import SSHKey  # type: ignore
 
-import sshmitm
 from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
-from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
+    import sshmitm
+    from sshmitm.forwarders.agent import AgentProxy
     from sshmitm.session import Session  # noqa
 
 
@@ -102,7 +102,8 @@ class SSHClient(BaseSSHClient):
         self.transport = paramiko.Transport((self.host, self.port))
         if self.CIPHERS:
             if not isinstance(self.CIPHERS, tuple):
-                raise ValueError("client ciphers must be a tuple")
+                msg = "client ciphers must be a tuple"
+                raise ValueError(msg)
             self.transport.get_security_options().ciphers = self.CIPHERS
 
         try:
@@ -116,7 +117,7 @@ class SSHClient(BaseSSHClient):
                 if self.agent is not None:
                     keys = self.agent.get_keys()
                     if not keys:
-                        raise NoAgentKeys()
+                        raise NoAgentKeys
                     for k in keys:
                         try:
                             self.transport.connect(
@@ -146,7 +147,7 @@ class SSHClient(BaseSSHClient):
             if not self.check_host_key(
                 f"{self.host}:{self.port}", remotekey.get_name(), remotekey
             ):
-                raise InvalidHostKey()
+                raise InvalidHostKey
             self.connected = True
             return True
 

@@ -1,14 +1,16 @@
 import logging
 from socket import socket
-from typing import Optional, Tuple, Union
+from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore
 
-import sshmitm
 from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
 from sshmitm.logging import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
+
+if TYPE_CHECKING:
+    import sshmitm
 
 
 class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):

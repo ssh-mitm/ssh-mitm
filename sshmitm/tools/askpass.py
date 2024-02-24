@@ -28,7 +28,7 @@ import sys
 from typing import NoReturn, Optional
 
 try:
-    import tkinter
+    import tkinter as tk
     from tkinter import ttk
     from tkinter.simpledialog import askstring
 
@@ -50,7 +50,7 @@ def ask_pass(
     """
     dialog_text = primary_message
     if secondary_message:
-        dialog_text = "\n".join([primary_message, secondary_message])
+        dialog_text = f"{primary_message}\n{secondary_message}"
     password = askstring("SSH-MITM - Askpass", dialog_text, show="*")
     if password is not None:
         return password
@@ -67,8 +67,8 @@ def confirm(primary_message: str, secondary_message: Optional[str] = None) -> bo
     """
     dialog_text = primary_message
     if secondary_message:
-        dialog_text = "\n".join([primary_message, secondary_message])
-    answer = tkinter.messagebox.askquestion("SSH-MITM - Askpass", dialog_text, icon="question")  # type: ignore
+        dialog_text = f"{primary_message}\n{secondary_message}"
+    answer = tk.messagebox.askquestion("SSH-MITM - Askpass", dialog_text, icon="question")  # type: ignore
     if answer == "yes":
         return True
     return False
@@ -94,7 +94,7 @@ def main() -> NoReturn:
     if secondary_message == "":
         secondary_message = None
 
-    root = tkinter.Tk()
+    root = tk.Tk()
     root.withdraw()
     style = ttk.Style()
     style.theme_use("clam")

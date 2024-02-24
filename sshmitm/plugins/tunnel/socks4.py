@@ -64,7 +64,8 @@ class Socks4Server:
         try:
             command = Socks4Command(clientsock.recv(1))
         except ValueError as exc:
-            raise Socks4Error("Invalid Socks4 command") from exc
+            msg = "Invalid Socks4 command"
+            raise Socks4Error(msg) from exc
 
         dst_addr_b: bytes
         dst_addr: str
@@ -73,7 +74,8 @@ class Socks4Server:
 
         dst_port_b, dst_addr_b = clientsock.recv(2), clientsock.recv(4)
         if len(dst_addr_b) != 4 or len(dst_port_b) != 2:
-            raise Socks4Error("Invalid IPv4 Address")
+            msg = "Invalid IPv4 Address"
+            raise Socks4Error(msg)
         dst_addr = ".".join([str(i) for i in dst_addr_b])
         dst_port = dst_port_b[0] * 256 + dst_port_b[1]
 
@@ -102,7 +104,8 @@ class Socks4Server:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks4Server.SOCKSVERSION:
-                raise Socks4Error("Invalid Socks4 Version")
+                msg = "Invalid Socks4 Version"
+                raise Socks4Error(msg)
             return self._get_address(clientsock)
         except Socks4Error as sockserror:
             logging.error("Socks4 Error: %s", str(sockserror))

@@ -126,4 +126,5 @@ def create_server_sock(  # pylint: disable=too-many-arguments
                 sock.close()
     if err is not None:
         raise err
-    raise socket.error("getaddrinfo returns an empty list")
+    msg = "getaddrinfo returns an empty list"
+    raise socket.error(msg)

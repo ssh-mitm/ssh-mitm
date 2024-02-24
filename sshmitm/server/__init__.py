@@ -199,8 +199,9 @@ class SSHProxyServer:
                 )
                 sys.exit(1)
         else:
+            msg = f"host key algorithm '{self.key_algorithm}' not supported!"
             raise ValueError(
-                f"host key algorithm '{self.key_algorithm}' not supported!"
+                msg
             )
 
         if not self.key_file:
@@ -208,11 +209,12 @@ class SSHProxyServer:
                 self._hostkey = self.key_algorithm_class.generate(bits=key_algorithm_bits)  # type: ignore
             except ValueError as err:
                 logging.error(str(err))
-                raise KeyGenerationError() from err
+                raise KeyGenerationError from err
         else:
             if not os.path.isfile(self.key_file):
+                msg = f"host key '{self.key_file}' file does not exist"
                 raise FileNotFoundError(
-                    f"host key '{self.key_file}' file does not exist"
+                    msg
                 )
             for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                 try:
@@ -223,7 +225,7 @@ class SSHProxyServer:
                     pass
             else:
                 logging.error("host key format not supported!")
-                raise KeyGenerationError()
+                raise KeyGenerationError
 
         if self._hostkey is not None:
             self.ssh_pub_key = SSHKey(

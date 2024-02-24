@@ -21,7 +21,7 @@ def format_hex(data: bytes, hexwidth: int = 19) -> str:
         while hexwidth - len(hexa) > 0:
             hexa.append(" " * 2)
         text = "".join([chr(x) if 0x20 <= x < 0x7F else "." for x in data_part])
-        addr = "%04X:    %s    %s" % (  # pylint: disable=consider-using-f-string
+        addr = "{:04X}:    {}    {}".format(  # pylint: disable=consider-using-f-string
             i,
             " ".join(hexa),
             text,

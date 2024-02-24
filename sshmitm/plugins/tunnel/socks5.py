@@ -103,9 +103,11 @@ class Socks5Server:
                 for m in clientsock.recv(methods_count)
             ]
         except ValueError as exc:
-            raise Socks5Error("Invalid methods") from exc
+            msg = "Invalid methods"
+            raise Socks5Error(msg) from exc
         if len(methods) != methods_count:
-            raise Socks5Error("Invalid number of methods")
+            msg = "Invalid number of methods"
+            raise Socks5Error(msg)
         return methods
 
     def _authenticate(self, clientsock: Union[socket.socket, paramiko.Channel]) -> bool:
@@ -127,17 +129,20 @@ class Socks5Server:
             return False
 
         if clientsock.recv(1) != Socks5Server.AUTH_PASSWORD_VERSION:
-            raise Socks5Error("Wrong Authentication Version")
+            msg = "Wrong Authentication Version"
+            raise Socks5Error(msg)
 
         username_len: int = int.from_bytes(clientsock.recv(1), byteorder="big")
         username: str = clientsock.recv(username_len).decode("utf8")
         if len(username) != username_len:
-            raise Socks5Error("Invalid username length")
+            msg = "Invalid username length"
+            raise Socks5Error(msg)
 
         password_len: int = int.from_bytes(clientsock.recv(1), byteorder="big")
         password: str = clientsock.recv(password_len).decode("utf8")
         if len(password) != password_len:
-            raise Socks5Error("Invalid password length")
+            msg = "Invalid password length"
+            raise Socks5Error(msg)
 
         if self.check_credentials(username, password):
             clientsock.sendall(Socks5Server.AUTH_PASSWORD_VERSION + b"\x00")
@@ -153,20 +158,24 @@ class Socks5Server:
         """Ermittelt das Ziel aus der Socks Anfrage"""
         # check socks version
         if clientsock.recv(1) != Socks5Server.SOCKSVERSION:
-            raise Socks5Error("Invalid Socks5 Version")
+            msg = "Invalid Socks5 Version"
+            raise Socks5Error(msg)
         # get socks command
         try:
             command = Socks5Command(clientsock.recv(1))
         except ValueError as exc:
-            raise Socks5Error("Invalid Socks5 command") from exc
+            msg = "Invalid Socks5 command"
+            raise Socks5Error(msg) from exc
 
         if clientsock.recv(1) != b"\x00":
-            raise Socks5Error("Reserved byte must be 0x00")
+            msg = "Reserved byte must be 0x00"
+            raise Socks5Error(msg)
 
         try:
             address_type: Socks5AddressType = Socks5AddressType(clientsock.recv(1))
         except ValueError as exc:
-            raise Socks5Error("Invalid Socks5 address type") from exc
+            msg = "Invalid Socks5 address type"
+            raise Socks5Error(msg) from exc
 
         dst_addr_b: bytes
         dst_addr: str
@@ -176,24 +185,28 @@ class Socks5Server:
         if address_type is Socks5AddressType.IPv4:
             dst_addr_b, dst_port_b = clientsock.recv(4), clientsock.recv(2)
             if len(dst_addr_b) != 4 or len(dst_port_b) != 2:
-                raise Socks5Error("Invalid IPv4 Address")
+                msg = "Invalid IPv4 Address"
+                raise Socks5Error(msg)
             dst_addr = ".".join([str(i) for i in dst_addr_b])
         elif address_type is Socks5AddressType.DOMAIN:
             addr_len = int.from_bytes(clientsock.recv(1), byteorder="big")
             dst_addr_b, dst_port_b = clientsock.recv(addr_len), clientsock.recv(2)
             if len(dst_addr_b) != addr_len or len(dst_port_b) != 2:
-                raise Socks5Error("Invalid domain")
+                msg = "Invalid domain"
+                raise Socks5Error(msg)
             dst_addr = "".join([chr(i) for i in dst_addr_b])
         elif address_type is Socks5AddressType.IPv6:
             dst_addr_b, dst_port_b = clientsock.recv(16), clientsock.recv(2)
             if len(dst_addr_b) != 16 or len(dst_port_b) != 2:
-                raise Socks5Error("Invalid IPv6 Address")
+                msg = "Invalid IPv6 Address"
+                raise Socks5Error(msg)
             tmp_addr = []
             for i in range(int(len(dst_addr_b) / 2)):
                 tmp_addr.append(chr(dst_addr_b[2 * i] * 256 + dst_addr_b[2 * i + 1]))
             dst_addr = ":".join(tmp_addr)
         else:
-            raise Socks5Error("Unhandled address type")
+            msg = "Unhandled address type"
+            raise Socks5Error(msg)
 
         dst_port = dst_port_b[0] * 256 + dst_port_b[1]
 
@@ -225,7 +238,8 @@ class Socks5Server:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks5Server.SOCKSVERSION:
-                raise Socks5Error("Invalid Socks5 Version")
+                msg = "Invalid Socks5 Version"
+                raise Socks5Error(msg)
             if self._authenticate(clientsock):
                 return self._get_address(clientsock)
         except Socks5Error as sockserror:

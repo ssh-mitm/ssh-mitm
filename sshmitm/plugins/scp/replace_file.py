@@ -25,9 +25,12 @@ process_data(traffic: bytes) -> bytes: Processes the SCP data and returns the mo
 """
 
 import os
+from typing import TYPE_CHECKING
 
-import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
+
+if TYPE_CHECKING:
+    import sshmitm
 
 
 class SCPReplaceFile(SCPForwarder):

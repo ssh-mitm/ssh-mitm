@@ -1,15 +1,17 @@
 import logging
 import re
 import time
-from typing import Callable, Optional
+from typing import TYPE_CHECKING, Callable, Optional
 
 import paramiko
 from paramiko.common import cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF, cMSG_CHANNEL_REQUEST
 from paramiko.message import Message
 
-import sshmitm
 from sshmitm.apps.mosh import handle_mosh
 from sshmitm.forwarders.base import BaseForwarder
+
+if TYPE_CHECKING:
+    import sshmitm
 
 
 class SCPBaseForwarder(BaseForwarder):
@@ -69,7 +71,8 @@ class SCPBaseForwarder(BaseForwarder):
         try:
             while self.session.running:
                 if self.client_channel is None:
-                    raise ValueError("No SCP Channel available!")
+                    msg = "No SCP Channel available!"
+                    raise ValueError(msg)
                 # redirect stdout <-> stdin und stderr <-> stderr
                 if self.client_channel.recv_ready():
                     buf = self.client_channel.recv(self.BUF_LEN)

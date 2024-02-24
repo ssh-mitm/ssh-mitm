@@ -34,7 +34,7 @@ class UdpProxy:
         listen_ip: str = "",
         listen_port: int = 0,
         buf_size: int = 1024,
-    ):
+    ) -> None:
         self.key = base64.b64decode(key + "==")
         self.listen_ip = listen_ip
         self.listen_port = listen_port

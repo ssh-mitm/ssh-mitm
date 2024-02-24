@@ -3,11 +3,11 @@ from typing import TYPE_CHECKING, Optional
 
 import paramiko
 
-import sshmitm
 from sshmitm.exceptions import MissingClient
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
+    import sshmitm
     from sshmitm.session import Session
 
 
@@ -22,7 +22,8 @@ class BaseForwarder(BaseModule):
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__()
         if session.ssh_client is None or session.ssh_client.transport is None:
-            raise MissingClient("session.ssh_client is None")
+            msg = "session.ssh_client is None"
+            raise MissingClient(msg)
         self.server_channel: paramiko.Channel = (
             session.ssh_client.transport.open_session()
         )

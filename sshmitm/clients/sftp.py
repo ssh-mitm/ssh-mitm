@@ -8,15 +8,17 @@ This module contains the implementation of the SFTP client.
 
 import logging
 import os
-from typing import Any, Callable, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Union
 
 import paramiko
 from paramiko.pkey import PKey
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_file import SFTPFile
 
-import sshmitm
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
+
+if TYPE_CHECKING:
+    import sshmitm
 
 
 class SFTPClient(SSHClient):
@@ -122,7 +124,8 @@ class SFTPClient(SSHClient):
         :raise paramiko.SFTPError: If the handle for the SFTP client is not available.
         """
         if self._sftp is None:
-            raise paramiko.SFTPError("Expected handle")
+            msg = "Expected handle"
+            raise paramiko.SFTPError(msg)
         return self._sftp.open(filename, mode, bufsize)
 
     def chmod(self, path: Union[str, bytes], mode: int) -> int:
@@ -225,7 +228,8 @@ class SFTPClient(SSHClient):
 
         :raises: NotImplementedError
         """
-        raise NotImplementedError("put not implemented")
+        msg = "put not implemented"
+        raise NotImplementedError(msg)
 
     def readlink(self, path: Union[str, bytes]) -> Union[int, str]:
         """

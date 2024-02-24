@@ -124,7 +124,7 @@ class ModuleError(BaseModuleError):
             Union[Type["BaseModule"], Tuple[Type["BaseModule"], ...]]
         ] = None,
         message: Optional[str] = None,
-    ):
+    ) -> None:
         super().__init__()
         self.moduleclass = moduleclass
         self.baseclass = baseclass
@@ -233,11 +233,13 @@ class BaseModule(ABC):
         for param_name, param_value in kwargs.items():
             action = actions.get(param_name)
             if not action:
-                raise KeyError(f"keyword argument {param_name} has no param")
+                msg = f"keyword argument {param_name} has no param"
+                raise KeyError(msg)
             # check if it is an instance of the argument type, ignore mypy error because of false positive
             if hasattr(action, "type") and not isinstance(param_value, action.type):  # type: ignore
+                msg = f"Value {param_value} for parameter is not an instance of {action.type}"
                 raise ValueError(
-                    f"Value {param_value} for parameter is not an instance of {action.type}"
+                    msg
                 )
             setattr(self.args, param_name, param_value)
 
@@ -285,7 +287,8 @@ class BaseModule(ABC):
             )
             cls.parser_arguments()
         if not cls._parser:
-            raise ValueError(f"failed to create ModuleParser for {cls}")
+            msg = f"failed to create ModuleParser for {cls}"
+            raise ValueError(msg)
         return cls._parser
 
     @classmethod

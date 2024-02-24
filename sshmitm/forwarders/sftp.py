@@ -3,12 +3,13 @@ from typing import TYPE_CHECKING, Optional, Type, Union, cast
 
 import paramiko
 
-import sshmitm
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     from _typeshed import ReadableBuffer
+
+    import sshmitm
 
 
 class SFTPHandlerBasePlugin(BaseModule):
