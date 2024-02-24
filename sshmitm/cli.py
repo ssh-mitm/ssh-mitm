@@ -39,10 +39,10 @@ import sys
 
 from paramiko import Transport
 
-from sshmitm.logging import PlainJsonFormatter, Colors, FailSaveLogStream
-from sshmitm.moduleparser import ModuleParser
-from sshmitm.workarounds import transport, monkeypatch
 from sshmitm import __version__ as ssh_mitm_version
+from sshmitm.logging import Colors, FailSaveLogStream, PlainJsonFormatter
+from sshmitm.moduleparser import ModuleParser
+from sshmitm.workarounds import monkeypatch, transport
 
 
 def main() -> None:

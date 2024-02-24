@@ -1,12 +1,14 @@
 import argparse
-from collections import defaultdict
 import sys
+from collections import defaultdict
 from pathlib import Path
-from typing import Optional, List, Dict
+from typing import Dict, List, Optional
+
 from rich import print as rich_print
-from sshpubkeys import SSHKey, AuthorizedKeysFile  # type: ignore[import-untyped]
-from sshmitm.moduleparser import SubCommand
+from sshpubkeys import AuthorizedKeysFile, SSHKey  # type: ignore[import-untyped]
+
 from sshmitm.authentication import PublicKeyEnumerator
+from sshmitm.moduleparser import SubCommand
 
 
 class CheckPublickey(SubCommand):

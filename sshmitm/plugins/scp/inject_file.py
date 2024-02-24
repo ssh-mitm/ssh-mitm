@@ -12,6 +12,7 @@ exploit method is called. The method exploits both CVE-2019-6111 and CVE-2019-61
 
 import logging
 import os
+
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
 

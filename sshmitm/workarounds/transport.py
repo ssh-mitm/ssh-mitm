@@ -148,7 +148,7 @@ def transport_run(self):  # type: ignore
             self._log(
                 DEBUG,
                 "Local version/idstring: {}".format(self.local_version),
-            )  # noqa
+            )
             try:
                 self._check_banner()
             except SSHException:
@@ -196,7 +196,7 @@ def transport_run(self):  # type: ignore
                             "Expecting packet from {!r}, got {:d}".format(
                                 self._expected_packet, ptype
                             )
-                        )  # noqa
+                        )
                     self._expected_packet = tuple()
                     # These message IDs indicate key exchange & will differ
                     # depending on exact exchange algorithm
@@ -218,14 +218,14 @@ def transport_run(self):  # type: ignore
                     elif chanid in self.channels_seen:
                         self._log(
                             DEBUG,
-                            "Ignoring message for dead channel {:d}".format(  # noqa
+                            "Ignoring message for dead channel {:d}".format(
                                 chanid
                             ),
                         )
                     else:
                         self._log(
                             ERROR,
-                            "Channel request for unknown channel {:d}".format(  # noqa
+                            "Channel request for unknown channel {:d}".format(
                                 chanid
                             ),
                         )

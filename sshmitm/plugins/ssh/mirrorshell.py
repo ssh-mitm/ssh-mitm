@@ -1,18 +1,18 @@
 import logging
-import select
-import threading
-import socket
-import time
 import os
+import select
+import socket
+import threading
+import time
 from typing import Optional
 
-from colored.colored import attr, fg  # type: ignore
 import paramiko
+from colored.colored import attr, fg  # type: ignore
 
 import sshmitm
-from sshmitm.logging import Colors
 from sshmitm.forwarders.ssh import SSHForwarder
-from sshmitm.plugins.ssh.terminallogs import TerminalLogFormat, ScriptLogFormat
+from sshmitm.logging import Colors
+from sshmitm.plugins.ssh.terminallogs import ScriptLogFormat, TerminalLogFormat
 
 
 class InjectServer(paramiko.ServerInterface):

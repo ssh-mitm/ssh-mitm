@@ -3,11 +3,11 @@ from socket import socket
 from typing import Optional, Tuple, Union
 
 import paramiko
-from colored.colored import fg, attr  # type: ignore
+from colored.colored import attr, fg  # type: ignore
 
 import sshmitm
-from sshmitm.logging import Colors
 from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
+from sshmitm.logging import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 

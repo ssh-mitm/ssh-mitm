@@ -1,10 +1,10 @@
-import time
 import os
-from typing import Tuple, List, Union
+import time
+from typing import List, Tuple, Union
 
-from paramiko.agent import Agent, AgentKey, AgentServerProxy, AgentClientProxy
-from paramiko.transport import Transport
+from paramiko.agent import Agent, AgentClientProxy, AgentKey, AgentServerProxy
 from paramiko.channel import Channel
+from paramiko.transport import Transport
 
 
 class AgentProxy:

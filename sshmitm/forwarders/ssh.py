@@ -1,8 +1,8 @@
 import logging
 import time
 from typing import Optional
-import paramiko
 
+import paramiko
 
 from sshmitm.forwarders.base import BaseForwarder
 

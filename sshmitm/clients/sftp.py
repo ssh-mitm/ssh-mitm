@@ -8,7 +8,7 @@ This module contains the implementation of the SFTP client.
 
 import logging
 import os
-from typing import Callable, List, Any, Optional, Tuple, Union
+from typing import Any, Callable, List, Optional, Tuple, Union
 
 import paramiko
 from paramiko.pkey import PKey

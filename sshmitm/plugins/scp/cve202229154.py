@@ -4,6 +4,7 @@ can be specified to add an additional file to the rsync command sent to the serv
 The rewritten rsync command is logged for informational purposes.
 """
 import logging
+
 from sshmitm.forwarders.scp import SCPForwarder
 
 

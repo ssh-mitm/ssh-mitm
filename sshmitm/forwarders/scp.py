@@ -1,15 +1,15 @@
 import logging
-import time
 import re
+import time
 from typing import Callable, Optional
 
 import paramiko
-from paramiko.common import cMSG_CHANNEL_REQUEST, cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF
+from paramiko.common import cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF, cMSG_CHANNEL_REQUEST
 from paramiko.message import Message
 
 import sshmitm
-from sshmitm.forwarders.base import BaseForwarder
 from sshmitm.apps.mosh import handle_mosh
+from sshmitm.forwarders.base import BaseForwarder
 
 
 class SCPBaseForwarder(BaseForwarder):
@@ -46,8 +46,8 @@ class SCPBaseForwarder(BaseForwarder):
         # Wait for SCP remote to remote auth, command exec and copy to finish
         if self.session.scp_command.decode("utf8").startswith("scp"):
             if (
-                not self.session.scp_command.find(b" -t ") != -1
-                and not self.session.scp_command.find(b" -f ") != -1
+                self.session.scp_command.find(b" -t ") == -1
+                and self.session.scp_command.find(b" -f ") == -1
             ):
                 if self.client_channel is not None:
                     logging.debug(

@@ -1,22 +1,21 @@
 import logging
 import socket
-from typing import List, Optional, Tuple, Union
 import sys
+from typing import List, Optional, Tuple, Union
 
 import paramiko
-from colored.colored import fg, attr  # type: ignore
+from colored.colored import attr, fg  # type: ignore
 
 import sshmitm
-from sshmitm.logging import Colors
 from sshmitm.forwarders.tunnel import (
     BaseClientTunnelHandler,
-    TunnelForwarder,
     LocalPortForwardingForwarder,
+    TunnelForwarder,
 )
+from sshmitm.logging import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
-
-from sshmitm.plugins.tunnel.socks4 import Socks4Server, Socks4Error
-from sshmitm.plugins.tunnel.socks5 import Socks5Server, Socks5Error
+from sshmitm.plugins.tunnel.socks4 import Socks4Error, Socks4Server
+from sshmitm.plugins.tunnel.socks5 import Socks5Error, Socks5Server
 
 
 class ClientTunnelHandler(BaseClientTunnelHandler):

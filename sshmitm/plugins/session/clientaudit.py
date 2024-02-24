@@ -1,11 +1,10 @@
-import re
 import logging
+import re
 from collections import defaultdict
-from typing import cast, TYPE_CHECKING, List, Optional, Dict, Union, Any, DefaultDict
+from typing import TYPE_CHECKING, Any, DefaultDict, Dict, List, Optional, Union, cast
 
 from colored.colored import attr, fg  # type: ignore
 from packaging import version
-
 from paramiko import ECDSAKey
 
 import sshmitm

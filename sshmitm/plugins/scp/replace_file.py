@@ -25,6 +25,7 @@ process_data(traffic: bytes) -> bytes: Processes the SCP data and returns the mo
 """
 
 import os
+
 import sshmitm
 from sshmitm.forwarders.scp import SCPForwarder
 

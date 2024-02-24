@@ -4,13 +4,11 @@ IPv4 and IPv6.
 """
 
 
-import os
-import sys
-import socket
 import contextlib
-
-from typing import Tuple, Optional
-
+import os
+import socket
+import sys
+from typing import Optional, Tuple
 
 __author__ = "Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>"
 __license__ = "MIT"

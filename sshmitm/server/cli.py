@@ -2,28 +2,24 @@ import argparse
 from typing import Optional
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.moduleparser import SubCommand
-from sshmitm.server import SSHProxyServer
-
 from sshmitm.authentication import (
     Authenticator,
+)
+from sshmitm.forwarders.scp import SCPBaseForwarder
+from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin
+from sshmitm.forwarders.ssh import SSHBaseForwarder
+from sshmitm.forwarders.tunnel import (
+    LocalPortForwardingBaseForwarder,
+    RemotePortForwardingBaseForwarder,
 )
 from sshmitm.interfaces.server import (
     BaseServerInterface,
 )
-from sshmitm.forwarders.scp import SCPBaseForwarder
-from sshmitm.forwarders.ssh import SSHBaseForwarder
-from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin
-
 from sshmitm.interfaces.sftp import (
     BaseSFTPServerInterface,
 )
-
-from sshmitm.forwarders.tunnel import (
-    RemotePortForwardingBaseForwarder,
-    LocalPortForwardingBaseForwarder,
-)
-
+from sshmitm.moduleparser import SubCommand
+from sshmitm.server import SSHProxyServer
 from sshmitm.session import BaseSession
 
 

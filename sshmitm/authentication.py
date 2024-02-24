@@ -1,25 +1,22 @@
-from abc import abstractmethod
 import logging
 import os
-import sys
 import socket
+import sys
 import threading
-
-from typing import Optional, List, Tuple, Union, Type
+from abc import abstractmethod
 from types import TracebackType
-
-from colored.colored import attr, fg  # type: ignore
-from paramiko import PKey
+from typing import List, Optional, Tuple, Type, Union
 
 import paramiko
+from colored.colored import attr, fg  # type: ignore
+from paramiko import PKey
 from sshpubkeys import SSHKey  # type: ignore
 
 import sshmitm
+from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
+from sshmitm.exceptions import MissingHostException
 from sshmitm.logging import Colors
 from sshmitm.moduleparser import BaseModule
-from sshmitm.clients.ssh import SSHClient, AuthenticationMethod
-from sshmitm.exceptions import MissingHostException
-
 
 PATCH_LOCK = threading.Lock()
 ORIGINAL_parse_service_accept = paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore[attr-defined] # pylint:disable=protected-access
@@ -776,10 +773,10 @@ class AuthenticatorPassThrough(Authenticator):
             )
             ssh_pub_key.parse()
             logmessage.append(
-                (
+
                     "\tAccepted-Publickey: "
                     f"{self.session.accepted_key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits"
-                )
+
             )
 
         if self.session.remote_key is not None:

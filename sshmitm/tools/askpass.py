@@ -29,8 +29,8 @@ from typing import NoReturn, Optional
 
 try:
     import tkinter
-    from tkinter.simpledialog import askstring
     from tkinter import ttk
+    from tkinter.simpledialog import askstring
 
     TKINTER_IMPORTED = True
 except ImportError:

@@ -1,9 +1,9 @@
 import logging
 import os
-from typing import BinaryIO, Optional
 import uuid
+from typing import BinaryIO, Optional
 
-from sshmitm.forwarders.sftp import SFTPHandlerPlugin, SFTPBaseHandle
+from sshmitm.forwarders.sftp import SFTPBaseHandle, SFTPHandlerPlugin
 
 
 class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):

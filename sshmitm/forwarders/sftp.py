@@ -1,11 +1,11 @@
 import logging
-from typing import TYPE_CHECKING, Optional, Union, Type, cast
+from typing import TYPE_CHECKING, Optional, Type, Union, cast
 
 import paramiko
 
 import sshmitm
-from sshmitm.moduleparser import BaseModule
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
+from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     from _typeshed import ReadableBuffer

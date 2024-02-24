@@ -2,14 +2,12 @@ import logging
 import re
 from typing import TYPE_CHECKING
 
-from colored.colored import fg, attr  # type: ignore
-
 import pkg_resources
 import yaml
-from paramiko.message import Message
+from colored.colored import attr, fg  # type: ignore
 from paramiko import Transport, common
+from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
-
 from rich.markup import escape
 
 import sshmitm
@@ -80,7 +78,7 @@ class KeyNegotiationData:
         client_version = self.client_version.lower()
         try:
             vulndb = pkg_resources.resource_filename("sshmitm", "data/client_info.yml")
-            with open(vulndb, "r", encoding="utf-8") as file:
+            with open(vulndb, encoding="utf-8") as file:
                 vulnerability_list = yaml.safe_load(file)
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error loading vulnerability database")

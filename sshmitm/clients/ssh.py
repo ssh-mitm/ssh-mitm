@@ -20,18 +20,17 @@ to remote servers, execute commands, and transfer files.
 
 import logging
 from enum import Enum
-
 from typing import TYPE_CHECKING, Optional
-from paramiko.pkey import PKey
 
 import paramiko
 import paramiko.hostkeys
+from paramiko.pkey import PKey
 from sshpubkeys import SSHKey  # type: ignore
 
 import sshmitm
-from sshmitm.moduleparser import BaseModule
+from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
 from sshmitm.forwarders.agent import AgentProxy
-from sshmitm.exceptions import NoAgentKeys, InvalidHostKey
+from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     from sshmitm.session import Session  # noqa

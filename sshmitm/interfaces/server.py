@@ -1,20 +1,20 @@
 import logging
 import os
-from typing import Any, List, Union, Tuple, Type, ByteString, Optional
+from typing import Any, ByteString, List, Optional, Tuple, Type, Union
 
 import paramiko
 from paramiko.pkey import PKey
 from sshpubkeys import SSHKey  # type: ignore
 
 import sshmitm
-from sshmitm.moduleparser import BaseModule
 from sshmitm.authentication import RemoteCredentials
 from sshmitm.clients.sftp import SFTPClient
 from sshmitm.forwarders.tunnel import (
-    TunnelForwarder,
     LocalPortForwardingForwarder,
     RemotePortForwardingForwarder,
+    TunnelForwarder,
 )
+from sshmitm.moduleparser import BaseModule
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):

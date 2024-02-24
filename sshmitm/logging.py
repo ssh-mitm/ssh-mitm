@@ -1,14 +1,14 @@
-from datetime import datetime, timezone
 import logging
 import sys
 import threading
+from datetime import datetime, timezone
 from typing import Any, Dict
-from colored.colored import stylize  # type: ignore
-from rich._emoji_codes import EMOJI
-from rich.logging import RichHandler
-from rich.highlighter import NullHighlighter
-from pythonjsonlogger import jsonlogger
 
+from colored.colored import stylize  # type: ignore
+from pythonjsonlogger import jsonlogger
+from rich._emoji_codes import EMOJI
+from rich.highlighter import NullHighlighter
+from rich.logging import RichHandler
 
 THREAD_DATA = threading.local()
 

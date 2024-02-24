@@ -1,7 +1,7 @@
 import logging
-from enum import Enum
 import socket
-from typing import cast, List, Optional, Tuple, Union
+from enum import Enum
+from typing import List, Optional, Tuple, Union, cast
 
 import paramiko
 
@@ -126,7 +126,7 @@ class Socks5Server:
             logging.warning("client does not offer supported authentication types")
             return False
 
-        if Socks5Server.AUTH_PASSWORD_VERSION != clientsock.recv(1):
+        if clientsock.recv(1) != Socks5Server.AUTH_PASSWORD_VERSION:
             raise Socks5Error("Wrong Authentication Version")
 
         username_len: int = int.from_bytes(clientsock.recv(1), byteorder="big")

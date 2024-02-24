@@ -1,14 +1,14 @@
+import base64
 import logging
 import socket
 import threading
-from typing import cast, List, Tuple
-import base64
+from typing import List, Tuple, cast
 
-from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 from colored.colored import attr, fg  # type: ignore
+from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
-from sshmitm.session import Session
 from sshmitm.logging import Colors
+from sshmitm.session import Session
 from sshmitm.utils import format_hex
 
 

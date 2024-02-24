@@ -22,7 +22,8 @@ import select
 import socket
 import threading
 import time
-from typing import Callable, List, Union, Tuple, Optional
+from typing import Callable, List, Optional, Tuple, Union
+
 import paramiko
 
 

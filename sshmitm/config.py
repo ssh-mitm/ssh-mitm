@@ -1,7 +1,7 @@
-from configparser import ConfigParser
 import os
-import pkg_resources
+from configparser import ConfigParser
 
+import pkg_resources
 
 CONFIGFILE = ConfigParser()
 

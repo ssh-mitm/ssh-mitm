@@ -4,8 +4,8 @@ from typing import TYPE_CHECKING, Optional
 import paramiko
 
 import sshmitm
-from sshmitm.moduleparser import BaseModule
 from sshmitm.exceptions import MissingClient
+from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     from sshmitm.session import Session

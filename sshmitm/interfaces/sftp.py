@@ -1,14 +1,14 @@
 import logging
 import os
-from typing import cast, List, Union
+from typing import List, Union, cast
 
 import paramiko
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 
-from sshmitm.moduleparser import BaseModule
 from sshmitm.exceptions import MissingClient
 from sshmitm.interfaces.server import BaseServerInterface
+from sshmitm.moduleparser import BaseModule
 
 
 class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):

@@ -1,4 +1,3 @@
-# -*- coding: utf-8 -*-
 
 """BaseModule parsing library
 
@@ -19,18 +18,18 @@ All other classes and functions in this module are either legacy or are
 implementation specific and should not be used in production applications.
 """
 
-from abc import ABC, abstractmethod
-import logging
 import argparse
 import inspect
+import logging
 import sys
+from abc import ABC, abstractmethod
 from importlib import import_module
-
-from typing import cast, Any, List, Optional, Sequence, Tuple, Dict, Type, Set, Union
+from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, Union, cast
 
 import argcomplete
 import pkg_resources
 from colored.colored import attr, fg  # type: ignore
+
 from sshmitm.config import CONFIGFILE
 from sshmitm.logging import Colors
 
@@ -227,7 +226,7 @@ class BaseModule(ABC):
         self.args: argparse.Namespace
         parser_retval = self.parser().parse_known_args(args, namespace)
         if parser_retval is None:
-            raise InvalidModuleArguments()
+            raise InvalidModuleArguments
         self.args, _ = parser_retval
 
         actions = {action.dest: action for action in self.parser()._actions}
@@ -253,7 +252,7 @@ class BaseModule(ABC):
                 BaseModule,
                 type(baseclass),
             )
-            raise ModuleError()
+            raise ModuleError
         # add "action" to new arguments
         kwargs["action"] = load_module(baseclass)
         if cls.modules() is not None and cls.parser() is not None:
@@ -523,7 +522,7 @@ class ModuleParser(
                 BaseModule.__name__,
                 type(baseclass).__name__,
             )
-            raise ModuleError()
+            raise ModuleError
         # add "action" to new arguments
         kwargs["action"] = load_module(baseclass)
         action = self.plugin_group.add_argument(

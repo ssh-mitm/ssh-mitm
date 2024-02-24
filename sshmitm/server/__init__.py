@@ -1,37 +1,35 @@
-from binascii import hexlify
 import logging
 import os
 import select
-import time
-import threading
 import sys
+import threading
+import time
+from binascii import hexlify
 from socket import socket
-
-from typing import Optional, Type, Tuple, List, Union
+from typing import List, Optional, Tuple, Type, Union
 
 from colored import attr, fg  # type: ignore
-from rich import print as rich_print
-
-from paramiko import DSSKey, RSAKey, ECDSAKey, Ed25519Key, PKey
+from paramiko import DSSKey, ECDSAKey, Ed25519Key, PKey, RSAKey
 from paramiko.ssh_exception import SSHException
+from rich import print as rich_print
 from sshpubkeys import SSHKey  # type: ignore
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.logging import Colors
+from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.console import sshconsole
-from sshmitm.multisocket import create_server_sock
-from sshmitm.session import Session
-from sshmitm.forwarders.ssh import SSHBaseForwarder, SSHForwarder
+from sshmitm.exceptions import KeyGenerationError
 from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
 from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
-from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
+from sshmitm.forwarders.ssh import SSHBaseForwarder, SSHForwarder
 from sshmitm.forwarders.tunnel import (
     LocalPortForwardingForwarder,
     RemotePortForwardingForwarder,
 )
-from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.interfaces.server import BaseServerInterface, ServerInterface
-from sshmitm.exceptions import KeyGenerationError
+from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
+from sshmitm.logging import Colors
+from sshmitm.multisocket import create_server_sock
+from sshmitm.session import Session
 
 
 class SSHProxyServer:

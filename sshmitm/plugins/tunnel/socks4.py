@@ -1,7 +1,7 @@
 import logging
-from enum import Enum
 import socket
-from typing import cast, Optional, Tuple, Union
+from enum import Enum
+from typing import Optional, Tuple, Union, cast
 
 import paramiko
 
