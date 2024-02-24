@@ -46,6 +46,8 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
     def handle_data(
         self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None
     ) -> bytes:
+        del offset
+        del length
         if self.args.store_sftp_files and self.out_file is not None:
             self.out_file.write(data)
         return data

@@ -64,6 +64,8 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
     def handle_data(
         self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None
     ) -> bytes:
+        del data
+        del offset
         self.data_handled = True
         if self.file_uploaded:
             return b""

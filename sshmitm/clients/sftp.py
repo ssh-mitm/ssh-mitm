@@ -228,6 +228,10 @@ class SFTPClient(SSHClient):
 
         :raises: NotImplementedError
         """
+        del localpath
+        del remotepath
+        del callback
+        del confirm
         msg = "put not implemented"
         raise NotImplementedError(msg)
 

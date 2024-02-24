@@ -53,6 +53,8 @@ def load_module(entry_point_class: Type["BaseModule"]) -> Type["argparse.Action"
             values: Union[str, Sequence[Any], None],
             option_string: Optional[str] = None,
         ) -> None:
+            del parser
+            del option_string
             if values:
                 for entry_point in pkg_resources.iter_entry_points(
                     entry_point_class.__name__
@@ -383,6 +385,7 @@ class ModuleFormatter(argparse.HelpFormatter):
             return join(["\n", heading, item_help, "\n"])
 
     def _split_lines(self, text: str, width: int) -> List[str]:
+        del width
         return text.splitlines()
 
 

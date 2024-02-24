@@ -68,6 +68,7 @@ class SCPReplaceFile(SCPForwarder):
         return traffic_string.encode("UTF-8")
 
     def process_data(self, traffic: bytes) -> bytes:
+        del traffic
         if not self.data_sent:
             self.data_sent = True
             data = self.file_to_send.read()
