@@ -188,9 +188,7 @@ class Session(BaseSession):
             session_channel_open or ssh_channel_open or scp_channel_open
         )
 
-        return (
-            self.proxyserver.running and open_channel_exists and not self.closed
-        )
+        return self.proxyserver.running and open_channel_exists and not self.closed
 
     @property
     def transport(self) -> paramiko.Transport:
@@ -341,8 +339,7 @@ class Session(BaseSession):
             # With graceful exit the completion_event can be polled to wait, well ..., for completion
             # it can also only be a graceful exit if the ssh client has already been established
             if self.transport.completion_event is not None and (
-                self.transport.completion_event.is_set()
-                and self.transport.is_active()
+                self.transport.completion_event.is_set() and self.transport.is_active()
             ):
                 self.transport.completion_event.clear()
                 while self.transport.is_active():

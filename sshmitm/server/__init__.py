@@ -200,9 +200,7 @@ class SSHProxyServer:
                 sys.exit(1)
         else:
             msg = f"host key algorithm '{self.key_algorithm}' not supported!"
-            raise ValueError(
-                msg
-            )
+            raise ValueError(msg)
 
         if not self.key_file:
             try:
@@ -213,9 +211,7 @@ class SSHProxyServer:
         else:
             if not os.path.isfile(self.key_file):
                 msg = f"host key '{self.key_file}' file does not exist"
-                raise FileNotFoundError(
-                    msg
-                )
+                raise FileNotFoundError(msg)
             for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
                 try:
                     key = self._key_from_filepath(self.key_file, pkey_class, None)

@@ -131,7 +131,9 @@ class SSHClientAudit:
         except ValueError:
             return False
 
-    def check_cves(self, vulnerabilities: DefaultDict[str, List[Optional[ClientAuditReport]]]) -> List[str]:
+    def check_cves(
+        self, vulnerabilities: DefaultDict[str, List[Optional[ClientAuditReport]]]
+    ) -> List[str]:
         """
         This method returns a list of strings representing the Common Vulnerabilities and Exposures (CVEs) found in the client,
         along with the information available in the `vulnerabilities` dictionary.
@@ -324,7 +326,9 @@ class SSHClientAudit:
 
         :param client_id: ID of the client to audit
         """
-        vulnerabilities: DefaultDict[str, List[Optional[ClientAuditReport]]] = defaultdict(list)
+        vulnerabilities: DefaultDict[
+            str, List[Optional[ClientAuditReport]]
+        ] = defaultdict(list)
         for audit_type, audit_results in self.check_key_negotiation().items():
             vulnerabilities[audit_type].append(audit_results)
         for audit_type, audit_results in self.check_terrapin_attack().items():

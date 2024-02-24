@@ -1,4 +1,3 @@
-
 """BaseModule parsing library
 
 This module is an extension to the standard Argparse module, which offers the possibility to load to load classes as BaseModule.
@@ -238,9 +237,7 @@ class BaseModule(ABC):
             # check if it is an instance of the argument type, ignore mypy error because of false positive
             if hasattr(action, "type") and not isinstance(param_value, action.type):  # type: ignore
                 msg = f"Value {param_value} for parameter is not an instance of {action.type}"
-                raise ValueError(
-                    msg
-                )
+                raise ValueError(msg)
             setattr(self.args, param_name, param_value)
 
     @classmethod

@@ -152,9 +152,7 @@ class PublicKeyEnumerator:
             self.connect()
         if not self.sock or not self.transport:
             msg = "enumerator not connected! use connect() method before enumeration."
-            raise PublicKeyEnumerationError(
-                msg
-            )
+            raise PublicKeyEnumerationError(msg)
 
         valid_key = False
         with PATCH_LOCK:
@@ -777,10 +775,8 @@ class AuthenticatorPassThrough(Authenticator):
             )
             ssh_pub_key.parse()
             logmessage.append(
-
-                    "\tAccepted-Publickey: "
-                    f"{self.session.accepted_key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits"
-
+                "\tAccepted-Publickey: "
+                f"{self.session.accepted_key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits"
             )
 
         if self.session.remote_key is not None:

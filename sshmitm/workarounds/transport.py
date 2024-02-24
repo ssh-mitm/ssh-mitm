@@ -218,16 +218,12 @@ def transport_run(self):  # type: ignore
                     elif chanid in self.channels_seen:
                         self._log(
                             DEBUG,
-                            "Ignoring message for dead channel {:d}".format(
-                                chanid
-                            ),
+                            "Ignoring message for dead channel {:d}".format(chanid),
                         )
                     else:
                         self._log(
                             ERROR,
-                            "Channel request for unknown channel {:d}".format(
-                                chanid
-                            ),
+                            "Channel request for unknown channel {:d}".format(chanid),
                         )
                         break
                 elif (
