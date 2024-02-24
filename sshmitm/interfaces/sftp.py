@@ -73,7 +73,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
 
             # Code aus dem StubSFTPServer der Paramiko Demo auf GitHub
             if (flags & os.O_CREAT) and attr:
-                attr._flags &= ~attr.FLAG_PERMISSIONS  # type: ignore
+                attr._flags &= ~attr.FLAG_PERMISSIONS  # type: ignore[attr-defined]
             if flags & os.O_WRONLY:
                 fstr = "ab" if flags & os.O_APPEND else "wb"
             elif flags & os.O_RDWR:

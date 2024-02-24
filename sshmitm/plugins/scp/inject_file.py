@@ -44,7 +44,7 @@ class SCPInjectFile(SCPForwarder):
             help="file that is used for injection",
         )
 
-    def __new__(cls, *args, **kwargs):  # type: ignore
+    def __new__(cls, *args, **kwargs):  # type: ignore[no-untyped-def]
         del kwargs  # unused arguments
         if args[0].scp_command.find(b"-f") != -1:
             return super().__new__(cls)

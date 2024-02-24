@@ -1,7 +1,7 @@
 import threading
 from typing import Any
 import paramiko
-import wrapt  # type: ignore
+import wrapt  # type: ignore[import-untyped]
 from sshmitm.logging import THREAD_DATA
 
 
@@ -19,18 +19,18 @@ def do_run(wrapped: Any, instance: Any, *args: Any, **kwargs: Any) -> Any:
 
 
 def patch_thread() -> None:
-    @wrapt.patch_function_wrapper(threading.Thread, "__init__")  # type: ignore
+    @wrapt.patch_function_wrapper(threading.Thread, "__init__")  # type: ignore[misc]
     def thread_init(wrapped: Any, instance: Any, args: Any, kwargs: Any) -> None:
         do_init(wrapped, instance, *args, **kwargs)
 
-    @wrapt.patch_function_wrapper(threading.Thread, "run")  # type: ignore
+    @wrapt.patch_function_wrapper(threading.Thread, "run")  # type: ignore[misc]
     def thread_run(wrapped: Any, instance: Any, args: Any, kwargs: Any) -> None:
         do_run(wrapped, instance, *args, **kwargs)
 
-    @wrapt.patch_function_wrapper(paramiko.transport.Transport, "run")  # type: ignore
+    @wrapt.patch_function_wrapper(paramiko.transport.Transport, "run")  # type: ignore[misc]
     def transport_run(wrapped: Any, instance: Any, args: Any, kwargs: Any) -> None:
         do_run(wrapped, instance, *args, **kwargs)
 
-    @wrapt.patch_function_wrapper(threading.Timer, "run")  # type: ignore
+    @wrapt.patch_function_wrapper(threading.Timer, "run")  # type: ignore[misc]
     def timer_run(wrapped: Any, instance: Any, args: Any, kwargs: Any) -> None:
         do_run(wrapped, instance, *args, **kwargs)

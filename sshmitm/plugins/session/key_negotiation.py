@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING
 
 import pkg_resources
 import yaml
-from colored.colored import attr, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport, common
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
@@ -108,7 +108,7 @@ def handle_key_negotiation(session: "sshmitm.session.Session") -> None:
     # pylint: disable=protected-access
     def intercept_key_negotiation(message: Message) -> None:
         # restore intercept, to not disturb re-keying if this significantly alters the connection
-        session.transport._handler_table[common.MSG_KEXINIT] = Transport._negotiate_keys  # type: ignore
+        session.transport._handler_table[common.MSG_KEXINIT] = Transport._negotiate_keys  # type: ignore[attr-defined]
 
         key_negotiation_data = KeyNegotiationData(session, message)
         key_negotiation_data.show_debug_info()
@@ -116,8 +116,8 @@ def handle_key_negotiation(session: "sshmitm.session.Session") -> None:
 
         # normal operation
         try:
-            Transport._negotiate_keys(session.transport, message)  # type: ignore
+            Transport._negotiate_keys(session.transport, message)  # type: ignore[attr-defined]
         except SSHException as ex:
             logging.error(str(ex))
 
-    session.transport._handler_table[common.MSG_KEXINIT] = intercept_key_negotiation  # type: ignore
+    session.transport._handler_table[common.MSG_KEXINIT] = intercept_key_negotiation  # type: ignore[attr-defined]

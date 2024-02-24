@@ -27,7 +27,7 @@ from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, Union,
 
 import argcomplete
 import pkg_resources
-from colored.colored import attr, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore[import-untyped]
 
 from sshmitm.config import CONFIGFILE
 from sshmitm.logging import Colors
@@ -196,9 +196,9 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
         self.config_section = kwargs.pop("config_section", None)
         super().__init__(*args, **kwargs)
         self.exit_on_error = True
-        self.add_argument = AddArgumentMethod(self, self)  # type: ignore
+        self.add_argument = AddArgumentMethod(self, self)  # type: ignore[method-assign]
 
-    def error(self, message: str) -> None:  # type: ignore
+    def error(self, message: str) -> None:  # type: ignore[override]
         if self.exit_on_error:
             return
         super().error(message)
@@ -208,7 +208,7 @@ class _ModuleArgumentParser(argparse.ArgumentParser):
         group = argparse._ArgumentGroup(  # pylint:disable=protected-access
             self, *args, **kwargs
         )
-        group.add_argument = AddArgumentMethod(self, group, config_section)  # type: ignore
+        group.add_argument = AddArgumentMethod(self, group, config_section)  # type: ignore[method-assign]
         self._action_groups.append(group)
         return group
 
@@ -237,7 +237,7 @@ class BaseModule(ABC):
                 msg = f"keyword argument {param_name} has no param"
                 raise KeyError(msg)
             # check if it is an instance of the argument type, ignore mypy error because of false positive
-            if hasattr(action, "type") and not isinstance(param_value, action.type):  # type: ignore
+            if hasattr(action, "type") and not isinstance(param_value, action.type):  # type: ignore[arg-type]
                 msg = f"Value {param_value} for parameter is not an instance of {action.type}"
                 raise ValueError(msg)
             setattr(self.args, param_name, param_value)
@@ -352,7 +352,7 @@ class ModuleFormatter(argparse.HelpFormatter):
             self.formatter = formatter
             self.parent = parent
             self.heading = heading
-            self.items = []  # type: ignore
+            self.items = []  # type: ignore[var-annotated]
 
         def format_help(self) -> str:
             # pylint: disable=protected-access
@@ -534,7 +534,7 @@ class ModuleParser(
         self._extra_modules.append((action, baseclass))
         logging.debug("Baseclass: %s", baseclass)
 
-    def parse_args(  # type: ignore
+    def parse_args(  # type: ignore[override]
         self,
         args: Optional[Sequence[str]] = None,
         namespace: Optional[argparse.Namespace] = None,
@@ -545,7 +545,7 @@ class ModuleParser(
             return argparse.Namespace()
         return args_namespace
 
-    def parse_known_args(  # type: ignore
+    def parse_known_args(  # type: ignore[override]
         self,
         args: Optional[Sequence[str]] = None,
         namespace: Optional[argparse.Namespace] = None,

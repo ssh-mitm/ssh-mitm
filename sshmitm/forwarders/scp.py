@@ -135,7 +135,7 @@ class SCPBaseForwarder(BaseForwarder):
                     message.add_byte(cMSG_CHANNEL_EOF)
                     message.add_int(self.client_channel.remote_chanid)
                     if self.client_channel.transport is not None:
-                        self.client_channel.transport._send_user_message(message)  # type: ignore
+                        self.client_channel.transport._send_user_message(message)  # type: ignore[attr-defined]
                     self.client_channel.send_exit_status(0)
                     self.close_session(self.client_channel)
                     break
@@ -177,7 +177,7 @@ class SCPBaseForwarder(BaseForwarder):
             message = Message()
             message.add_byte(cMSG_CHANNEL_EOF)
             message.add_int(channel.remote_chanid)
-            channel.transport._send_user_message(message)  # type: ignore
+            channel.transport._send_user_message(message)  # type: ignore[union-attr]
 
             if status is not None and self.client_channel is not None:
                 self.client_channel.send_exit_status(status)
@@ -188,14 +188,14 @@ class SCPBaseForwarder(BaseForwarder):
             message.add_int(channel.remote_chanid)
             message.add_string("eow@openssh.com")
             message.add_boolean(False)
-            channel.transport._send_user_message(message)  # type: ignore
+            channel.transport._send_user_message(message)  # type: ignore[union-attr]
 
         message = Message()
         message.add_byte(cMSG_CHANNEL_CLOSE)
         message.add_int(channel.remote_chanid)
-        channel.transport._send_user_message(message)  # type: ignore
+        channel.transport._send_user_message(message)  # type: ignore[union-attr]
 
-        channel._unlink()  # type: ignore
+        channel._unlink()  # type: ignore[attr-defined]
 
         super().close_session(channel)
         logging.debug("[chan %d] SCP closed", channel.get_id())

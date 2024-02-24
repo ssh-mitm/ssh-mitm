@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Optional
 import paramiko
 import paramiko.hostkeys
 from paramiko.pkey import PKey
-from sshpubkeys import SSHKey  # type: ignore
+from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
 from sshmitm.moduleparser import BaseModule

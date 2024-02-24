@@ -8,11 +8,11 @@ from binascii import hexlify
 from socket import socket
 from typing import List, Optional, Tuple, Type, Union
 
-from colored import attr, fg  # type: ignore
+from colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import DSSKey, ECDSAKey, Ed25519Key, PKey, RSAKey
 from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
-from sshpubkeys import SSHKey  # type: ignore
+from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
@@ -204,7 +204,9 @@ class SSHProxyServer:
 
         if not self.key_file:
             try:
-                self._hostkey = self.key_algorithm_class.generate(bits=key_algorithm_bits)  # type: ignore
+                self._hostkey = self.key_algorithm_class.generate(  # type: ignore[attr-defined]
+                    bits=key_algorithm_bits
+                )
             except ValueError as err:
                 logging.error(str(err))
                 raise KeyGenerationError from err

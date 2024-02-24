@@ -4,7 +4,7 @@ import socket
 import threading
 from typing import List, Tuple, cast
 
-from colored.colored import attr, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore[import-untyped]
 from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
 from sshmitm.logging import Colors
