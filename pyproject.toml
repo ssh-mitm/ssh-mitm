@@ -101,6 +101,8 @@ detached = false
 dependencies = [
     "flake8",
     "Flake8-pyproject",
+    "flake8-docstrings",
+    "flake8-docstrings-complete",
     "mypy",
     "pylint",
 ]
@@ -153,3 +155,36 @@ disable = [
     "too-many-locals",
     "too-many-return-statements"
 ]
+
+[tool.pylint.MASTER]
+load-plugins = "pylint.extensions.docparams"
+
+[tool.ruff.lint]
+select = ["ALL"]
+ignore = [
+    "D",       # Docstring related
+    "E501",    # Line too long
+    "PLR0912", # Too many branches
+    "COM812",  # Trailing comma missing
+    "FA100",   # Missing from __future__ import annotations
+    "T201",    # `print` found
+    "ANN101",  # Missing type annotation for `self` in method
+    "ANN102",  # Missing type annotation for `cls` in classmethod
+    "PTH118",  # `os.path.join()` should be replaced by `Path` with `/` operator
+    "PTH111",  # `os.path.expanduser()` should be replaced by `Path.expanduser()`
+    "PTH113",  # `os.path.isfile()` should be replaced by `Path.is_file()`
+    "PTH116",  # `os.stat()` should be replaced by `Path.stat()`, `Path.owner()`, or `Path.group()`
+    "PTH103",  # `os.makedirs()` should be replaced by `Path.mkdir(parents=True)`
+    "PTH123",  # `open()` should be replaced by `Path.open()`
+    "PTH107",  # `os.remove()` should be replaced by `Path.unlink()`
+    "PTH119",  # `os.path.basename()` should be replaced by `Path.name`
+    "PLR0913", # Too many arguments in function definition
+    "S104",    # Possible binding to all interfaces
+    "SLF001",  # Private member accessed: `_indent`
+    "PLR0911", # Too many return statements
+    "TRY400",  # Use `logging.exception` instead of `logging.error`
+    "UP024",   # Replace aliased errors with `OSError`
+]
+[tool.ruff.lint.per-file-ignores]
+"sshmitm/workarounds/monkeypatch.py" = ["ALL"]
+"sshmitm/workarounds/transport.py" = ["ALL"]
