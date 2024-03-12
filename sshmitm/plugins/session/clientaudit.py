@@ -243,9 +243,6 @@ class SSHClientAudit:
     def check_key_negotiation(self) -> Dict[str, ClientAuditReport]:
         """
         Check if a key negotiation data is known.
-
-        :param client_id: ID of the client to check
-        :return: True if key negotiation data is known, False otherwise
         """
         if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
             logging.warning(
@@ -323,12 +320,10 @@ class SSHClientAudit:
     def run_audit(self) -> None:
         """
         Run an audit on the client with the given ID.
-
-        :param client_id: ID of the client to audit
         """
-        vulnerabilities: DefaultDict[
-            str, List[Optional[ClientAuditReport]]
-        ] = defaultdict(list)
+        vulnerabilities: DefaultDict[str, List[Optional[ClientAuditReport]]] = (
+            defaultdict(list)
+        )
         for audit_type, audit_results in self.check_key_negotiation().items():
             vulnerabilities[audit_type].append(audit_results)
         for audit_type, audit_results in self.check_terrapin_attack().items():

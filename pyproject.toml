@@ -99,16 +99,18 @@ include = [
 [tool.hatch.envs.lint]
 detached = false
 dependencies = [
+    "bandit",
+    "black",
     "flake8",
     "Flake8-pyproject",
-    "flake8-docstrings",
-    "flake8-docstrings-complete",
     "mypy",
     "pylint",
 ]
 
 [tool.hatch.envs.lint.scripts]
 check = [
+    "bandit -r sshmitm",
+    "black --check sshmitm",
     "flake8 sshmitm",
     "pylint sshmitm",
     "mypy sshmitm",

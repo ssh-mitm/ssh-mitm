@@ -8,6 +8,7 @@ The new command is specified using the `--scp-append-string` and `--scp-replace-
 options, respectively.
 
 """
+
 import logging
 
 from sshmitm.forwarders.scp import SCPForwarder
