@@ -116,7 +116,7 @@ class AppStarter:
     @cached_property
     def entry_points(self) -> Dict[str, EntryPoint]:
         eps = entry_points()
-        scripts = eps.select(group="console_scripts")
+        scripts = eps.select(group="console_scripts")  # type: ignore[attr-defined, unused-ignore] # ignore old python < 3.10
         script_eps = {}
         for ep in scripts:
             script_eps[ep.name] = ep
@@ -168,6 +168,8 @@ class AppStarter:
         environment variables, or if no entry point is found, it starts an interpreter.
         Otherwise, it starts the determined entry point.
         """
+        if sys.version_info < (3, 10):
+            sys.exit(f"App starter for {self.argv0} requires Python 3.10 or later")
         if (
             (  # pylint: disable=too-many-boolean-expressions
                 not self.get_entry_point(ignore_default=True) and self.app_interpreter
