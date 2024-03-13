@@ -1,6 +1,7 @@
 from configparser import ConfigParser
 import os
 import argparse
+from importlib.metadata import entry_points
 from venv import EnvBuilder
 from typing import TYPE_CHECKING, Optional
 
@@ -12,10 +13,7 @@ if TYPE_CHECKING:
 
 DEFAULT_CONFIG = """
 [appimage]
-allow_env = True
-restrict_entry_points = False
-allow_interpreter = True
-default_command =
+entry_point =
 """
 
 
@@ -37,10 +35,15 @@ def patch_appimage_venv(context: "SimpleNamespace") -> None:
     config.read_string(DEFAULT_CONFIG)
     if os.path.isfile(os.path.join(appdir, "appimage.ini")):
         config.read(os.path.join(appdir, "appimage.ini"))
-    default_command = config.get("appimage", "default_command")
-    print(default_command)
-    if default_command:
-        os.symlink(appimage_path, os.path.join(context.bin_path, default_command))
+    entry_point = config.get("appimage", "entry_point")
+    if not entry_point:
+        return
+
+    eps = entry_points()
+    scripts = eps.select(group="console_scripts")
+    for ep in scripts:
+        if entry_point in (ep.name, ep.value):
+            os.symlink(python_path, os.path.join(context.bin_path, ep.name))
 
 
 def setup_python_patched(self: EnvBuilder, context: "SimpleNamespace") -> None:
@@ -77,7 +80,6 @@ class SshMitmVenv(SubCommand):
             upgrade=False,
             with_pip=False,
             prompt=None,
-            upgrade_deps=False,
         )
         for d in args.dirs:
             builder.create(d)

@@ -12,9 +12,6 @@
 if [ -z $APPDIR ]; then
     export APPDIR=$(dirname $(readlink -f "$0"))
 fi
-if [ "$ARGV0" == "python" -o "$ARGV0" == "python3" -o "$ARGV0" == "python3.11" ]; then
-    export APP_INTERPRETER=1
-fi
 
 if [ -n $VIRTUAL_ENV ]; then
     export PYTHONUSERBASE="$VIRTUAL_ENV"
