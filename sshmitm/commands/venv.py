@@ -12,13 +12,9 @@ if TYPE_CHECKING:
     from types import SimpleNamespace
 
 
-DEFAULT_CONFIG = """
-[appimage]
-entry_point =
-"""
+SYMLINK_TARGET = "python3"
 
-
-def patch_appimage_venv(context: "SimpleNamespace") -> None:
+def patch_appimage_venv(env_builder: EnvBuilder, context: "SimpleNamespace") -> None:
     # if executed as AppImage override python symlink
     # this is not relevant for extracted AppImages
     appimage_path = os.environ.get("APPIMAGE")
@@ -27,30 +23,23 @@ def patch_appimage_venv(context: "SimpleNamespace") -> None:
         sys.exit("venv command only supported by AppImages")
 
     # replace symlink to appimage instead of python executable
-    python_path = os.path.join(context.bin_path, "python3")
+    python_path = os.path.join(context.bin_path, SYMLINK_TARGET)
     os.remove(python_path)
     os.symlink(appimage_path, python_path)
-
-    # create default command for application
-    config = ConfigParser()
-    config.read_string(DEFAULT_CONFIG)
-    if os.path.isfile(os.path.join(appdir, "appimage.ini")):
-        config.read(os.path.join(appdir, "appimage.ini"))
-    entry_point = config.get("appimage", "entry_point")
-    if not entry_point:
-        return
 
     eps = entry_points()
     scripts = eps.select(group="console_scripts")  # type: ignore[attr-defined, unused-ignore] # ignore old python < 3.10
     for ep in scripts:
-        if entry_point in (ep.name, ep.value):
-            os.symlink(python_path, os.path.join(context.bin_path, ep.name))
+        ep_path = os.path.join(context.bin_path, ep.name)
+        if os.path.isfile(ep_path):
+            continue
+        os.symlink(SYMLINK_TARGET, ep_path)
 
 
 def setup_python_patched(self: EnvBuilder, context: "SimpleNamespace") -> None:
     # call monkey patched function
     self.setup_python_original(context)  # type: ignore[attr-defined]
-    patch_appimage_venv(context)
+    patch_appimage_venv(self, context)
 
 
 class SshMitmVenv(SubCommand):
@@ -59,7 +48,6 @@ class SshMitmVenv(SubCommand):
     @classmethod
     def config_section(cls) -> Optional[str]:
         return None
-
     def register_arguments(self) -> None:
         self.parser.add_argument(
             "dirs",
@@ -67,8 +55,19 @@ class SshMitmVenv(SubCommand):
             nargs="+",
             help="A directory to create the environment in.",
         )
+        self.parser.add_argument(
+            "--without-pip",
+            dest="with_pip",
+            default=True,
+            action="store_false",
+            help="Skips installing or upgrading pip in the "
+            "virtual environment (pip is bootstrapped "
+            "by default)",
+        )
 
     def execute(self, args: argparse.Namespace) -> None:
+        if os.environ.get("VIRTUAL_ENV"):
+            sys.exit("the 'env' command must not run in a virtual python environment!")
         if not hasattr(EnvBuilder, "setup_python_original"):
             # ignore type errors from monkey patching
             EnvBuilder.setup_python_original = EnvBuilder.setup_python  # type: ignore[attr-defined]
@@ -79,7 +78,7 @@ class SshMitmVenv(SubCommand):
             clear=False,
             symlinks=True,
             upgrade=False,
-            with_pip=False,
+            with_pip=args.with_pip,
             prompt=None,
         )
         for d in args.dirs:

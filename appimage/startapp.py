@@ -70,7 +70,7 @@ class AppStarter:
             self.config.read(os.path.join(self.appdir, "appimage.ini"))
 
         self.default_ep = self.config.get("appimage", "entry_point", fallback=None)
-        self.argv0 = os.environ.get("ARGV0")
+        self.argv0 = os.path.basename(os.environ.get("ARGV0"))
         self.env_ep = os.environ.get("APP_ENTRY_POINT")
         self.app_interpreter = os.environ.get("APP_INTERPRETER")
 
