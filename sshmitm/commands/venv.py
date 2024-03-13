@@ -1,4 +1,3 @@
-from configparser import ConfigParser
 import os
 import argparse
 from importlib.metadata import entry_points
@@ -14,7 +13,8 @@ if TYPE_CHECKING:
 
 SYMLINK_TARGET = "python3"
 
-def patch_appimage_venv(env_builder: EnvBuilder, context: "SimpleNamespace") -> None:
+
+def patch_appimage_venv(context: "SimpleNamespace") -> None:
     # if executed as AppImage override python symlink
     # this is not relevant for extracted AppImages
     appimage_path = os.environ.get("APPIMAGE")
@@ -39,7 +39,7 @@ def patch_appimage_venv(env_builder: EnvBuilder, context: "SimpleNamespace") -> 
 def setup_python_patched(self: EnvBuilder, context: "SimpleNamespace") -> None:
     # call monkey patched function
     self.setup_python_original(context)  # type: ignore[attr-defined]
-    patch_appimage_venv(self, context)
+    patch_appimage_venv(context)
 
 
 class SshMitmVenv(SubCommand):
@@ -48,6 +48,7 @@ class SshMitmVenv(SubCommand):
     @classmethod
     def config_section(cls) -> Optional[str]:
         return None
+
     def register_arguments(self) -> None:
         self.parser.add_argument(
             "dirs",
@@ -73,13 +74,6 @@ class SshMitmVenv(SubCommand):
             EnvBuilder.setup_python_original = EnvBuilder.setup_python  # type: ignore[attr-defined]
             EnvBuilder.setup_python = setup_python_patched  # type: ignore[method-assign]
 
-        builder = EnvBuilder(
-            system_site_packages=False,
-            clear=False,
-            symlinks=True,
-            upgrade=False,
-            with_pip=args.with_pip,
-            prompt=None,
-        )
+        builder = EnvBuilder(symlinks=True)
         for d in args.dirs:
             builder.create(d)

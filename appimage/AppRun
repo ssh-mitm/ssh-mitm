@@ -25,7 +25,9 @@ if [ -z $APPDIR ]; then
     export APPDIR=$(dirname $(readlink -f "$0"))
 fi
 
-if [ -n $VIRTUAL_ENV ]; then
+export PYTHONNOUSERSITE=1
+if [ -n "$VIRTUAL_ENV" ]; then
+    unset PYTHONNOUSERSITE
     export PYTHONUSERBASE="$VIRTUAL_ENV"
     export PATH=$VIRTUAL_ENV/bin:$PATH
 fi
