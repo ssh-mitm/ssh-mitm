@@ -110,11 +110,11 @@ dependencies = [
 
 [tool.hatch.envs.lint.scripts]
 check = [
-    "bandit -r sshmitm",
-    "black --check sshmitm",
-    "flake8 sshmitm",
-    "pylint sshmitm",
-    "mypy sshmitm",
+    "bandit -r sshmitm appimage/startapp.py",
+    "black --check sshmitm appimage/startapp.py",
+    "flake8 sshmitm appimage/startapp.py",
+    "pylint sshmitm appimage/startapp.py",
+    "mypy sshmitm appimage/startapp.py",
 ]
 
 [tool.hatch.envs.docs]

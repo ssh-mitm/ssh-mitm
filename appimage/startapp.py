@@ -84,7 +84,7 @@ class AppStarter:
     executing the application.
     """
 
-    def __init__(self):
+    def __init__(self) -> None:
         """
         Initializes the AppStarter instance by reading the default configuration
         and any existing 'appimage.ini' configuration file in the APPDIR.
@@ -123,7 +123,7 @@ class AppStarter:
             script_eps[ep.value] = ep
         return script_eps
 
-    def get_entry_point(self, *, ignore_default=False) -> Optional[EntryPoint]:
+    def get_entry_point(self, *, ignore_default: bool = False) -> Optional[EntryPoint]:
 
         if self.argv0 and self.argv0 in self.entry_points:
             return self.entry_points[self.argv0]
@@ -160,7 +160,7 @@ class AppStarter:
         """
         args = [sys.executable]
         args.extend(sys.argv[1:])
-        os.execvp(sys.executable, args)
+        os.execvp(sys.executable, args)  # nosec
 
     def start(self) -> None:
         """
@@ -169,7 +169,9 @@ class AppStarter:
         Otherwise, it starts the determined entry point.
         """
         if (
-            (not self.get_entry_point(ignore_default=True) and self.app_interpreter)
+            (  # pylint: disable=too-many-boolean-expressions
+                not self.get_entry_point(ignore_default=True) and self.app_interpreter
+            )
             or (not self.default_ep and not self.env_ep and not self.get_entry_point())
             or self.argv0 in ["python", "python3", f"python3.{sys.version_info[1]}"]
         ):

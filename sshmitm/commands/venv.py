@@ -2,6 +2,7 @@ from configparser import ConfigParser
 import os
 import argparse
 from importlib.metadata import entry_points
+import sys
 from venv import EnvBuilder
 from typing import TYPE_CHECKING, Optional
 
@@ -22,8 +23,8 @@ def patch_appimage_venv(context: "SimpleNamespace") -> None:
     # this is not relevant for extracted AppImages
     appimage_path = os.environ.get("APPIMAGE")
     appdir = os.environ.get("APPDIR")
-    if not appimage_path or not appdir:
-        return
+    if not appimage_path or not appdir or sys.version_info < (3, 10):
+        sys.exit("venv command only supported by AppImages")
 
     # replace symlink to appimage instead of python executable
     python_path = os.path.join(context.bin_path, "python3")
@@ -40,7 +41,7 @@ def patch_appimage_venv(context: "SimpleNamespace") -> None:
         return
 
     eps = entry_points()
-    scripts = eps.select(group="console_scripts")
+    scripts = eps.select(group="console_scripts")  # type: ignore[attr-defined, unused-ignore] # ignore old python < 3.10
     for ep in scripts:
         if entry_point in (ep.name, ep.value):
             os.symlink(python_path, os.path.join(context.bin_path, ep.name))
