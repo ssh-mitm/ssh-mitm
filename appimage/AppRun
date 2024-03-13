@@ -27,9 +27,13 @@ fi
 
 export PYTHONNOUSERSITE=1
 if [ -n "$VIRTUAL_ENV" ]; then
-    unset PYTHONNOUSERSITE
-    export PYTHONUSERBASE="$VIRTUAL_ENV"
-    export PATH=$VIRTUAL_ENV/bin:$PATH
+    symlink_path="$VIRTUAL_ENV/bin/python3"
+    symlink_target=$(readlink -f "$symlink_path")
+    if [ "$symlink_target" = "$APPIMAGE" ]; then
+        unset PYTHONNOUSERSITE
+        export PYTHONUSERBASE="$VIRTUAL_ENV"
+        export PATH=$VIRTUAL_ENV/bin:$PATH
+    fi
 fi
 
 # Insert any required environment variable exports here.
@@ -41,4 +45,4 @@ fi
 # The script then delegates control to `startapp.py` by using the Python interpreter included within the AppImage.
 # `startapp.py` is responsible for further initializing and starting the actual Python application.
 # $@ passes all given arguments through to `startapp.py`.
-exec $APPDIR/python/bin/python3 $APPDIR/startapp.py "$@"
+exec $APPDIR/python/bin/python3 -P $APPDIR/startapp.py "$@"

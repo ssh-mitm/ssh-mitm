@@ -67,8 +67,6 @@ class SshMitmVenv(SubCommand):
         )
 
     def execute(self, args: argparse.Namespace) -> None:
-        if os.environ.get("VIRTUAL_ENV"):
-            sys.exit("the 'env' command must not run in a virtual python environment!")
         if not hasattr(EnvBuilder, "setup_python_original"):
             # ignore type errors from monkey patching
             EnvBuilder.setup_python_original = EnvBuilder.setup_python  # type: ignore[attr-defined]

@@ -134,7 +134,7 @@ class AppStarter:
 
         It passes any additional arguments provided in the command line to the interpreter.
         """
-        args = [sys.executable]
+        args = [sys.executable, "-P"]
         args.extend(sys.argv[1:])
         os.execvp(sys.executable, args)  # nosec
 
