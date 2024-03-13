@@ -11,45 +11,20 @@ of an AppImage next to the AppRun.
 The provided AppRun bash script sets up the necessary environment and invokes the application
 using this module. It should be located at the root of the AppImage filesystem.
 
-AppRun Script Overview:
------------------------
-The AppRun script performs the following actions:
-
-1. Sets the APPDIR environment variable if not already set, which specifies the AppImage's mount
-   point directory.
-
-2. Exports additional environment variables required by the Python application.
-
-3. Executes the Python interpreter bundled within the AppImage, passing along any arguments to
-   the startapp.py script, which in turn utilizes this module to launch the application.
-
-AppRun Bash Script:
--------------------
-#!/bin/bash
-
-# Set APPDIR when running directly from the AppDir
-if [ -z $APPDIR ]; then
-    export APPDIR=$(readlink -f $(dirname "$0"))
-fi
-
-# Export environment variables for the Python application
-
-# Start the Python application and pass arguments
-exec $APPDIR/python/bin/python3 $APPDIR/startapp.py $@
-
 Configuration File Format:
 --------------------------
-[appimage]
-allow_env = True                # Allow environment variables to define entry points
-allow_interpreter = True        # Enable starting an interactive Python interpreter
-restrict_entry_points = False   # Restrict usage to predefined entry points if True
-default_command = ssh-mitm      # Set the default command if none is specified
 
-[command:ssh-mitm]              # Configuration for 'ssh-mitm' command
-entry_point = sshmitm.cli:main  # Designates entry point for 'ssh-mitm'
+[appimage]
+entry_point = sshmitm.cli:main  # entry point which uses the module function syntax
+
+or
+
+[appimage]
+entry_point = ssh-mitm  # entry point is set by entrypoint name
 
 Intended Usage:
 ---------------
+
 This module is used within an AppImage environment, with the AppRun entry point calling the
 `start_entry_point` function provided by this module. AppStarter reads the configurations,
 determines the appropriate entry point, and initiates the application.

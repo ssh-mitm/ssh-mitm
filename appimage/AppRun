@@ -6,6 +6,18 @@
 # control to the `startapp.py` script, which is responsible for initiating the main Python
 # application. This setup allows for a layered initialization process, ensuring that the
 # application is launched with the correct context and dependencies within the AppImage's sandbox.
+#
+# AppRun Script Overview:
+# -----------------------
+#
+# The AppRun script performs the following actions:
+#
+# 1. Sets the APPDIR environment variable if not already set, which specifies the AppImage's mount
+#    point directory.
+# 2. Exports additional environment variables required by the Python application.
+# 3. Executes the Python interpreter bundled within the AppImage, passing along any arguments to
+#    the startapp.py script, which in turn utilizes this module to launch the application.
+
 
 # Check if APPDIR is already set, if not, determine and set it to the AppImage's mount directory.
 # APPDIR needs to be set as it specifies the directory where the AppImage content is located.
