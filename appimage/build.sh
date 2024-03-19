@@ -1,8 +1,10 @@
+set -e
+
 if [ -d build/appimage/AppDir ]; then
   rm -r build/appimage/AppDir
 fi
-if [ -f dist/SSH-MITM-x86_64.AppImage ]; then 
-  rm dist/SSH-MITM-x86_64.AppImage; 
+if [ -f dist/SSH-MITM-x86_64.AppImage ]; then
+  rm dist/SSH-MITM-x86_64.AppImage;
 fi
 
 mkdir -p build/appimage/AppDir
@@ -25,9 +27,9 @@ export ARCH=$(uname -m)
 # get the missing tools if necessary
 if [ ! -x build/appimagetool-$ARCH.AppImage ]; then
   curl -L -o build/appimagetool-$ARCH.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$ARCH.AppImage
-  chmod a+x build/appimagetool-$ARCH.AppImage 
+  chmod a+x build/appimagetool-$ARCH.AppImage
 fi
 # the build command itself:
 mkdir -p dist
 cd dist
-../build/appimagetool-$ARCH.AppImage -u "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync" ../build/appimage/AppDir ssh-mitm-x86_64.AppImage 
+../build/appimagetool-$ARCH.AppImage -u "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync" ../build/appimage/AppDir ssh-mitm-x86_64.AppImage

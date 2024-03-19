@@ -30,18 +30,52 @@ This module is used within an AppImage environment, with the AppRun entry point 
 determines the appropriate entry point, and initiates the application.
 """
 
+import argparse
 from configparser import ConfigParser
 from functools import cached_property
 import os
 import sys
 from importlib.metadata import entry_points, EntryPoint
-from typing import Dict, Optional
+from typing import TYPE_CHECKING, Dict, Optional
+from venv import EnvBuilder
+
+if TYPE_CHECKING:
+    from types import SimpleNamespace
 
 
 DEFAULT_CONFIG = """
 [appimage]
 entry_point =
 """
+
+
+def patch_appimage_venv(context: "SimpleNamespace") -> None:
+    symlink_target = "python3"
+    # if executed as AppImage override python symlink
+    # this is not relevant for extracted AppImages
+    appimage_path = os.environ.get("APPIMAGE")
+    appdir = os.environ.get("APPDIR")
+    if not appimage_path or not appdir or sys.version_info < (3, 10):
+        sys.exit("venv command only supported by AppImages")
+
+    # replace symlink to appimage instead of python executable
+    python_path = os.path.join(context.bin_path, symlink_target)
+    os.remove(python_path)
+    os.symlink(appimage_path, python_path)
+
+    eps = entry_points()
+    scripts = eps.select(group="console_scripts")  # type: ignore[attr-defined, unused-ignore] # ignore old python < 3.10
+    for ep in scripts:
+        ep_path = os.path.join(context.bin_path, ep.name)
+        if os.path.isfile(ep_path):
+            continue
+        os.symlink(symlink_target, ep_path)
+
+
+def setup_python_patched(self: EnvBuilder, context: "SimpleNamespace") -> None:
+    # call monkey patched function
+    self.setup_python_original(context)  # type: ignore[attr-defined]
+    patch_appimage_venv(context)
 
 
 class AppStartException(Exception):
@@ -73,7 +107,6 @@ class AppStarter:
         argv0_complete = os.environ.get("ARGV0")
         self.argv0 = os.path.basename(argv0_complete) if argv0_complete else None
         self.env_ep = os.environ.get("APP_ENTRY_POINT")
-        self.app_interpreter = os.environ.get("APP_INTERPRETER")
         self.virtual_env = os.environ.get("VIRTUAL_ENV")
 
     @cached_property
@@ -141,6 +174,53 @@ class AppStarter:
         args.extend(sys.argv[1:])
         os.execvp(sys.executable, args)  # nosec
 
+    def create_venv(self, venv_dir: str) -> None:
+        if not hasattr(EnvBuilder, "setup_python_original"):
+            # ignore type errors from monkey patching
+            EnvBuilder.setup_python_original = EnvBuilder.setup_python  # type: ignore[attr-defined]
+            EnvBuilder.setup_python = setup_python_patched  # type: ignore[method-assign]
+
+        builder = EnvBuilder(symlinks=True)
+        builder.create(venv_dir)
+        sys.exit()
+
+    def parse_python_args(self) -> None:
+        parser = argparse.ArgumentParser(add_help=False)
+        group = parser.add_mutually_exclusive_group()
+        group.add_argument(
+            "--python-help",
+            action="help",
+            default=argparse.SUPPRESS,
+            help="Show this help message and exit.",
+        )
+        group.add_argument(
+            "--python-interpreter",
+            dest="python_interpreter",
+            action="store_true",
+            help="start the python intrpreter",
+        )
+        group.add_argument(
+            "--python-venv",
+            dest="python_venv_dir",
+            help="creates a virtual env pointing to the AppImage",
+        )
+        group.add_argument(
+            "--python-entry-point",
+            dest="python_entry_point",
+            help="start a python entry point from console scripts (e.g. ssh-mitm)",
+        )
+
+        args, _ = parser.parse_known_args()
+        if args.python_interpreter:
+            sys.argv.remove("--python-interpreter")
+            self.start_interpreter()
+        if args.python_venv_dir:
+            self.create_venv(args.python_venv_dir)
+        if args.python_entry_point:
+            sys.argv.remove("--python-entry-point")
+            sys.argv.remove(args.python_entry_point)
+            self.env_ep = args.python_entry_point
+
     def start(self) -> None:
         """
         Determine the entry point and start it. If an interpreter is requested via
@@ -149,13 +229,10 @@ class AppStarter:
         """
         if sys.version_info < (3, 10):
             sys.exit(f"App starter for {self.argv0} requires Python 3.10 or later")
+        self.parse_python_args()
         if (
-            (  # pylint: disable=too-many-boolean-expressions
-                not self.get_entry_point(ignore_default=True) and self.app_interpreter
-            )
-            or (not self.default_ep and not self.env_ep and not self.get_entry_point())
-            or self.argv0 in ["python", "python3", f"python3.{sys.version_info[1]}"]
-        ):
+            not self.default_ep and not self.env_ep and not self.get_entry_point()
+        ) or self.argv0 in ["python", "python3", f"python3.{sys.version_info[1]}"]:
             self.start_interpreter()
         self.start_entry_point()
 
