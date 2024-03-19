@@ -74,6 +74,7 @@ class AppStarter:
         self.argv0 = os.path.basename(argv0_complete) if argv0_complete else None
         self.env_ep = os.environ.get("APP_ENTRY_POINT")
         self.app_interpreter = os.environ.get("APP_INTERPRETER")
+        self.virtual_env = os.environ.get("VIRTUAL_ENV")
 
     @cached_property
     def appdir(self) -> str:
@@ -121,6 +122,8 @@ class AppStarter:
         Raises:
             InvalidEntryPoint: If the entry point does not exist.
         """
+        if self.virtual_env:
+            sys.executable = os.path.join(self.virtual_env, "bin/python3")
         entry_point = self.get_entry_point()
         if entry_point:
             entry_point_loaded = entry_point.load()
