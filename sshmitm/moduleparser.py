@@ -21,6 +21,7 @@ import argparse
 import inspect
 import logging
 import sys
+import os
 from abc import ABC, abstractmethod
 from importlib import import_module
 from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, Union, cast
@@ -389,6 +390,9 @@ class ModuleFormatter(argparse.HelpFormatter):
 class ModuleParser(
     _ModuleArgumentParser
 ):  # pylint: disable=too-many-instance-attributes
+
+    CONFIG_LOADED = False
+
     def __init__(self, **kwargs: Any) -> None:  # pylint: disable=too-many-arguments
         kwargs["formatter_class"] = ModuleFormatter
         super().__init__(add_help=False, **kwargs)
@@ -398,6 +402,23 @@ class ModuleParser(
         self.plugin_group = self.add_argument_group(self.config_section)
         self.subcommand: Optional["argparse._SubParsersAction[ModuleParser]"] = None
         self._registered_subcommands: Dict[str, SubCommand] = {}
+        self.add_config_arg()
+
+    def add_config_arg(self) -> None:
+        self.add_argument(
+            "--config", dest="config_path", help="path to a configuration file"
+        )
+        if ModuleParser.CONFIG_LOADED:
+            return
+        config_path_parser = argparse.ArgumentParser(add_help=False)
+        config_path_parser.add_argument("--config", dest="config_path")
+        args, _ = config_path_parser.parse_known_args()
+        if not args.config_path:
+            return
+        if not os.path.isfile(args.config_path):
+            logging.error("failed to load config file: %s", args.config_path)
+            return
+        CONFIGFILE.read(os.path.expanduser(args.config_path))
 
     def load_subcommands(self) -> None:
         if not self.subcommand:

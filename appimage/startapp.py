@@ -135,10 +135,10 @@ class AppStarter:
 
     def get_entry_point(self, *, ignore_default: bool = False) -> Optional[EntryPoint]:
 
-        if self.argv0 and self.argv0 in self.entry_points:
-            return self.entry_points[self.argv0]
         if self.env_ep and self.env_ep in self.entry_points:
             return self.entry_points[self.env_ep]
+        if self.argv0 and self.argv0 in self.entry_points:
+            return self.entry_points[self.argv0]
         if (
             not ignore_default
             and self.default_ep
