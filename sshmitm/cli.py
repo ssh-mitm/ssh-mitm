@@ -44,6 +44,7 @@ from sshmitm.logging import Colors, FailSaveLogStream, PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import monkeypatch, transport
 
+from sshmitm.moduleparser.config import CONFIGFILE
 
 def main() -> None:
     """
@@ -55,6 +56,7 @@ def main() -> None:
         prog_name = "at.ssh_mitm.server"
 
     parser = ModuleParser(
+        config=CONFIGFILE,
         prog=prog_name,
         description="SSH-MITM Tools",
         allow_abbrev=False,
