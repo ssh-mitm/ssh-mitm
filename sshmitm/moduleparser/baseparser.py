@@ -1,7 +1,10 @@
 import argparse
 import logging
 import sys
-from typing import Any, Optional
+from typing import TYPE_CHECKING, Any, Optional
+
+if TYPE_CHECKING:
+    from configparser import ConfigParser
 
 
 class AddArgumentMethod:
@@ -32,9 +35,9 @@ class AddArgumentMethod:
         arg_dest = self._get_dest(*args, **kwargs)
         arg_action = kwargs.get("action", "store")
 
-        if (
+        if not self.parser.ARGCONF or (
             self.config_section
-            and not self.parser.config.has_option(self.config_section, arg_dest)
+            and not self.parser.ARGCONF.has_option(self.config_section, arg_dest)
             and arg_action != "version"
             and sys.flags.debug
         ):
@@ -48,15 +51,16 @@ class AddArgumentMethod:
 
         if (
             arg_dest
-            and self.parser.config.has_option(self.config_section, arg_dest)
-            and self.parser.config.get(self.config_section, arg_dest)
+            and self.parser.ARGCONF
+            and self.parser.ARGCONF.has_option(self.config_section, arg_dest)
+            and self.parser.ARGCONF.get(self.config_section, arg_dest)
         ):
             if arg_action in ("store", "store_const"):
-                kwargs["default"] = self.parser.config.get(
+                kwargs["default"] = self.parser.ARGCONF.get(
                     self.config_section, arg_dest
                 )
             elif arg_action in ("store_true", "store_false"):
-                kwargs["default"] = self.parser.config.getboolean(
+                kwargs["default"] = self.parser.ARGCONF.getboolean(
                     self.config_section, arg_dest
                 )
         return self._add_argument(*args, **kwargs)
@@ -65,10 +69,15 @@ class AddArgumentMethod:
 class BaseModuleArgumentParser(argparse.ArgumentParser):
     """Enhanced ArgumentParser to suppress warnings and error during module parsing"""
 
-    def __init__(self, config, *args: Any, **kwargs: Any) -> None:
+    ARGCONF = None
+
+    def __init__(
+        self, *args: Any, config: Optional["ConfigParser"] = None, **kwargs: Any
+    ) -> None:
+        if config:
+            BaseModuleArgumentParser.ARGCONF = config
         self.config_section = kwargs.pop("config_section", None)
         super().__init__(*args, **kwargs)
-        self.config = config
         self.exit_on_error = True
         self.add_argument = AddArgumentMethod(  # type: ignore
             parser=self, container=self

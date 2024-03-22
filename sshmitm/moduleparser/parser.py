@@ -22,7 +22,18 @@ import inspect
 import logging
 import os
 from importlib import import_module
-from typing import Any, Dict, List, Optional, Sequence, Set, Tuple, Type, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Set,
+    Tuple,
+    Type,
+    cast,
+)
 
 import argcomplete
 import pkg_resources
@@ -33,6 +44,9 @@ from sshmitm.moduleparser.exceptions import ModuleError
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 
+if TYPE_CHECKING:
+    from configparser import ConfigParser
+
 
 class ModuleParser(
     BaseModuleArgumentParser
@@ -41,10 +55,10 @@ class ModuleParser(
     CONFIG_LOADED = False
 
     def __init__(
-        self, config, *args: Any, **kwargs: Any
+        self, *args: Any, config: Optional["ConfigParser"] = None, **kwargs: Any
     ) -> None:  # pylint: disable=too-many-arguments
         kwargs["formatter_class"] = ModuleFormatter
-        super().__init__(config, add_help=False, *args, **kwargs)
+        super().__init__(add_help=False, *args, config=config, **kwargs)
         self.__kwargs = kwargs
         self._extra_modules: List[Tuple[argparse.Action, type]] = []
         self._module_parsers: Set[argparse.ArgumentParser] = {self}
@@ -54,6 +68,8 @@ class ModuleParser(
         self.add_config_arg()
 
     def add_config_arg(self) -> None:
+        if not self.ARGCONF:
+            return
         self.add_argument(
             "--config", dest="config_path", help="path to a configuration file"
         )
@@ -67,7 +83,7 @@ class ModuleParser(
         if not os.path.isfile(args.config_path):
             logging.error("failed to load config file: %s", args.config_path)
             return
-        self.config.read(os.path.expanduser(args.config_path))
+        self.ARGCONF.read(os.path.expanduser(args.config_path))
 
     def load_subcommands(self) -> None:
         if not self.subcommand:
@@ -114,6 +130,8 @@ class ModuleParser(
             return moduleparsers
 
         for module in modules:
+            if not module:
+                continue
             moduleparsers.append(module.parser())
 
             try:
@@ -174,9 +192,13 @@ class ModuleParser(
                 )
         else:
             arg_dest = self.add_argument._get_dest(*args, **kwargs)  # type: ignore # pylint:disable=protected-access
-            if arg_dest and self.config.has_option(self.config_section, arg_dest):
-                default_value = self.config.get(self.config_section, arg_dest)
-                if self.config.has_section(default_value):
+            if (
+                arg_dest
+                and self.ARGCONF
+                and self.ARGCONF.has_option(self.config_section, arg_dest)
+            ):
+                default_value = self.ARGCONF.get(self.config_section, arg_dest)
+                if self.ARGCONF.has_section(default_value):
                     part_module, part_class = default_value.rsplit(":", 1)
                     module = import_module(part_module)
                     kwargs["default"] = getattr(module, part_class)
