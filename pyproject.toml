@@ -169,6 +169,7 @@ ignore = [
     "PLR0912", # Too many branches
     "COM812",  # Trailing comma missing
     "FA100",   # Missing from __future__ import annotations
+    "FIX002",  # Line contains TODO, consider resolving the issue
     "T201",    # `print` found
     "ANN101",  # Missing type annotation for `self` in method
     "ANN102",  # Missing type annotation for `cls` in classmethod

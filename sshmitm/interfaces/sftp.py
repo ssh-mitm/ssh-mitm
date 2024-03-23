@@ -106,13 +106,14 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
                 fobj.readfile = client_f
             if fobj.writefile:
                 self.chattr(path, attr)
-            return fobj
         except (OSError, IOError) as exc:
             logging.exception("Error")
             return paramiko.SFTPServer.convert_errno(exc.errno)
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error")
             return paramiko.sftp.SFTP_FAILURE
+        else:
+            return fobj
 
     def readlink(self, path: str) -> Union[str, int]:
         self.session.sftp_client_ready.wait()

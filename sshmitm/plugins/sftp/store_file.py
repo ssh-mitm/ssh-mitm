@@ -33,7 +33,8 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
             os.makedirs(self.sftp_storage_dir, exist_ok=True)
 
             self.output_path = os.path.join(self.sftp_storage_dir, self.file_id)
-            self.out_file = open(  # pylint: disable=consider-using-with
+            # open a file descriptor. this is closed when "close" is called on this plugin
+            self.out_file = open(  # pylint: disable=consider-using-with # noqa: SIM115
                 self.output_path, "wb"
             )
 

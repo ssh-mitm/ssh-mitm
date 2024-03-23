@@ -111,7 +111,7 @@ class SCPBaseForwarder(BaseForwarder):
                 if self.client_channel.exit_status_ready():
                     status = self.client_channel.recv_exit_status()
                     self.client_exit_code_received = True
-                    # self.server_channel.send_exit_status(status)
+                    # self.server_channel.send_exit_status(status)  # noqa: ERA001
                     self.close_session(self.client_channel)
                     break
 
@@ -130,7 +130,7 @@ class SCPBaseForwarder(BaseForwarder):
                         # which closes the session
                         continue
 
-                    # TODO: check if EOF should close the session.
+                    # TODO @manfred-kaiser: check if EOF should close the session. # noqa: TD003
                     message = Message()
                     message.add_byte(cMSG_CHANNEL_EOF)
                     message.add_int(self.client_channel.remote_chanid)

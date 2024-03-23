@@ -52,7 +52,7 @@ def main() -> None:
     """
 
     prog_name = os.path.basename(os.environ.get("ARGV0", "ssh-mitm"))
-    if os.environ.get("container"):
+    if os.environ.get("container"):  # noqa: SIM112
         prog_name = "at.ssh_mitm.server"
 
     parser = ModuleParser(

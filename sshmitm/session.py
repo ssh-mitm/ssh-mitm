@@ -371,7 +371,7 @@ class Session(BaseSession):
         self,
         exc_type: Optional[Type[BaseException]],
         exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType]
+        traceback: Optional[TracebackType],
     ) -> None:
         del exc_type
         del exc_value

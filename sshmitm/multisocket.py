@@ -75,7 +75,9 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
     ...     sock, addr = server.accept()
     ...     # handle new sock connection
     """
-    AF_INET6 = getattr(socket, "AF_INET6", 0)  # pylint: disable=invalid-name
+    AF_INET6 = getattr(
+        socket, "AF_INET6", 0
+    )  # pylint: disable=invalid-name # noqa: N806
     host: Optional[str]
     port: int
     host, port = address
@@ -107,8 +109,8 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
                 if hasattr(socket, "IP_TRANSPARENT"):
                     sock.setsockopt(socket.SOL_IP, socket.IP_TRANSPARENT, 1)
                 else:
-                    IP_TRANSPARENT = 19  # pylint: disable=invalid-name
-                    sock.setsockopt(socket.SOL_IP, IP_TRANSPARENT, 1)
+                    ip_transparent = 19
+                    sock.setsockopt(socket.SOL_IP, ip_transparent, 1)
             if res_address_family == AF_INET6:
                 if dual_stack:
                     # enable
@@ -118,11 +120,12 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
                     sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
             sock.bind(res_socket_address)
             sock.listen(queue_size)
-            return sock
         except socket.error as _:
             err = _
             if sock is not None:
                 sock.close()
+        else:
+            return sock
     if err is not None:
         raise err
     msg = "getaddrinfo returns an empty list"

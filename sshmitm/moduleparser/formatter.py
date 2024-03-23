@@ -1,6 +1,8 @@
 import argparse
 from typing import Any, List, Optional
+
 from colored.colored import attr, fg  # type: ignore
+
 from sshmitm.logging import Colors
 
 
@@ -53,4 +55,5 @@ class ModuleFormatter(argparse.HelpFormatter):
             return join(["\n", heading, item_help, "\n"])
 
     def _split_lines(self, text: str, width: int) -> List[str]:
+        del width
         return text.splitlines()

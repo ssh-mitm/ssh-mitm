@@ -1,9 +1,10 @@
 import argparse
 from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Union
+
 import pkg_resources
 from colored.colored import attr, fg  # type: ignore
-from sshmitm.logging import Colors
 
+from sshmitm.logging import Colors
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser.modules import BaseModule
@@ -20,6 +21,8 @@ def load_module(entry_point_class: Type["BaseModule"]) -> Type["argparse.Action"
             values: Union[str, Sequence[Any], None],
             option_string: Optional[str] = None,
         ) -> None:
+            del parser
+            del option_string
             if values:
                 for entry_point in pkg_resources.iter_entry_points(
                     entry_point_class.__name__

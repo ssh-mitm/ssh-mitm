@@ -1,11 +1,13 @@
-from abc import ABC, abstractmethod
 import argparse
 import inspect
 import logging
-from typing import TYPE_CHECKING, cast, Any, Dict, List, Optional, Sequence, Tuple, Type
+from abc import ABC, abstractmethod
+from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Type, cast
+
 import pkg_resources
+
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
-from sshmitm.moduleparser.exceptions import ModuleError, InvalidModuleArguments
+from sshmitm.moduleparser.exceptions import InvalidModuleArguments, ModuleError
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
 
 if TYPE_CHECKING:
@@ -65,7 +67,7 @@ class BaseModule(ABC):
                 )
             )
 
-    @classmethod
+    @classmethod  # noqa: B027
     def parser_arguments(cls) -> None:
         pass
 
@@ -126,7 +128,7 @@ class SubCommand(ABC):
             config_section=self.config_section(),
         )
 
-    def register_arguments(self) -> None:
+    def register_arguments(self) -> None:  # noqa: B027
         pass
 
     @abstractmethod

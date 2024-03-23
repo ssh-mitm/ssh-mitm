@@ -156,7 +156,9 @@ class SSHClientAudit:
                 if cve_entry.cve in vulnerabilities:
                     if isinstance(vulnerabilities[cve_entry.cve], list):
                         for vulnerability_entry in vulnerabilities[cve_entry.cve]:
-                            cvemessagelist.append(f"    - {vulnerability_entry}")
+                            cvemessagelist.append(
+                                f"    - {vulnerability_entry}"
+                            )  # noqa: PERF401
                     else:
                         cvemessagelist.append(
                             "\n".join(
@@ -273,7 +275,7 @@ class SSHClientAudit:
         etm_suffix = "-etm@openssh.com"
         cbc_suffix = "-cbc"
         kex_strict_indicator_client = "kex-strict-c-v00@openssh.com"
-        # kex_strict_indicator_server = "kex-strict-s-v00@openssh.com"
+        # kex_strict_indicator_server = "kex-strict-s-v00@openssh.com"  # noqa: ERA001
 
         supports_cha_cha20 = (
             cha_cha20

@@ -52,7 +52,10 @@ class SCPReplaceFile(SCPForwarder):
 
         self.data_sent = False
         self.file_stat = os.stat(self.args.scp_replace_file)
-        self.file_to_send = open(  # pylint: disable=consider-using-with
+
+        # open a file descriptor. this is closed when file transmission is complete.
+        # this is checked in another method
+        self.file_to_send = open(  # pylint: disable=consider-using-with # noqa: SIM115
             self.args.scp_replace_file, "rb"
         )
 

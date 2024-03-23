@@ -63,16 +63,16 @@ class CheckPublickey(SubCommand):
         :param args: Namespace object that contains the necessary parameters.
         """
         keys: Dict[str, List[str]] = defaultdict(list)
-        for file_path in args.public_keys:
-            try:
+        try:
+            for file_path in args.public_keys:
                 with Path(file_path).expanduser().open(
                     "rt", encoding="utf-8"
                 ) as key_handle:
                     key_file = AuthorizedKeysFile(key_handle, strict=False)
                 for key in key_file.keys:
                     keys[file_path].append(key.keydata)
-            except FileNotFoundError as exc:
-                sys.exit(str(exc))
+        except FileNotFoundError as exc:
+            sys.exit(str(exc))
 
         valid_keys: Dict[str, List[str]] = defaultdict(list)
         try:
@@ -81,7 +81,9 @@ class CheckPublickey(SubCommand):
                     for pubkey in pubkeys:
                         if enumerator.check_publickey(args.username, pubkey):
                             valid_keys[filename].append(pubkey)
-        except Exception as exc:  # pylint: disable=broad-exception-caught
+        except (
+            Exception
+        ) as exc:  # pylint: disable=broad-exception-caught # noqa: BLE001
             print(exc)
             sys.exit(1)
         finally:

@@ -76,11 +76,12 @@ class SFTPClient(SSHClient):
                 logging.debug("ssh_client does not have a transport")
                 return None
             sftp._sftp = paramiko.SFTPClient.from_transport(ssh_client.transport)
-            sftp.connected = True
-            return sftp
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("error creating sftp client")
             return None
+        else:
+            sftp.connected = True
+            return sftp
 
     @property
     def running(self) -> bool:
@@ -106,10 +107,11 @@ class SFTPClient(SSHClient):
             if self.transport is None:
                 return False
             self._sftp = paramiko.SFTPClient.from_transport(self.transport)
-            return True
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("error creating sftp client")
-        return False
+            return False
+        else:
+            return True
 
     def open(
         self, filename: Union[str, bytes], mode: str = "r", bufsize: int = -1
@@ -175,11 +177,12 @@ class SFTPClient(SSHClient):
             return paramiko.sftp.SFTP_FAILURE
         try:
             self._sftp.get(remotepath, localpath, callback)
-            return paramiko.sftp.SFTP_OK
         except (IOError, OSError) as ex:
             logging.error(ex)
             os.remove(localpath)
-        return paramiko.sftp.SFTP_FAILURE
+            return paramiko.sftp.SFTP_FAILURE
+        else:
+            return paramiko.sftp.SFTP_OK
 
     def listdir_attr(self, path: str = ".") -> Union[int, List[SFTPAttributes]]:
         """

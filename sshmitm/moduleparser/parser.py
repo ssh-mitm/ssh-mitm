@@ -38,11 +38,11 @@ from typing import (
 import argcomplete
 import pkg_resources
 
-from sshmitm.moduleparser.modules import BaseModule, SubCommand
-from sshmitm.moduleparser.formatter import ModuleFormatter
-from sshmitm.moduleparser.exceptions import ModuleError
-from sshmitm.moduleparser.utils import load_module, set_module_kwargs
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
+from sshmitm.moduleparser.exceptions import ModuleError
+from sshmitm.moduleparser.formatter import ModuleFormatter
+from sshmitm.moduleparser.modules import BaseModule, SubCommand
+from sshmitm.moduleparser.utils import load_module, set_module_kwargs
 
 if TYPE_CHECKING:
     from configparser import ConfigParser

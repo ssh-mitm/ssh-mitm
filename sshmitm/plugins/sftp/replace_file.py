@@ -52,7 +52,8 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             filename,
             self.args.sftp_replace_file,
         )
-        self.replacement = open(  # pylint: disable=consider-using-with
+        # open a file descriptor. this is closed when "close" is called on this plugin
+        self.replacement = open(  # pylint: disable=consider-using-with # noqa:SIM115
             self.args.sftp_replace_file, "rb"
         )
         self.file_uploaded = False

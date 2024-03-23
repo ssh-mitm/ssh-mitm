@@ -142,7 +142,7 @@ class SSHProxyServer:
             )
             sshconsole.rule("[blue]Configuration", style="blue")
 
-            if os.environ.get("container"):
+            if os.environ.get("container"):  # noqa: SIM112
                 rich_print(
                     "[bold red]:exclamation: You are executing SSH-MITM as Flatpak"
                 )
@@ -251,9 +251,6 @@ class SSHProxyServer:
             cert_path = filename + cert_suffix
         # Blindly try the key path; if no private key, nothing will work.
         key = klass.from_private_key_file(key_path, password)
-        # TODO: change this to 'Loading' instead of 'Trying' sometime; probably
-        # when #387 is released, since this is a critical log message users are
-        # likely testing/filtering for (bah.)
         hexlify(key.get_fingerprint())
         # Attempt to load cert if it exists.
         if os.path.isfile(cert_path):
@@ -337,7 +334,8 @@ class SSHProxyServer:
                 Colors.emoji("exclamation"),
                 Colors.stylize("Shutting down server ...", fg("red")),
             )
-            # TODO: better shutdown for threads. At the moment we kill the server
+            # TODO @manfred-kaiser: better shutdown for threads. At the moment we kill the server
+            # https://github.com/ssh-mitm/ssh-mitm/issues/167
             # sock.close()  # noqa: ERA001
             # for thread in self._threads[:]:
             #    thread.join()  # noqa: ERA001
