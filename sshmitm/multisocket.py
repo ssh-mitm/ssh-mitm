@@ -3,7 +3,6 @@ Utility functions to create server sockets able to listen on both
 IPv4 and IPv6.
 """
 
-
 import contextlib
 import os
 import socket

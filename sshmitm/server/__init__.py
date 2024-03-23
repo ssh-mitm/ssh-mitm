@@ -79,16 +79,16 @@ class SSHProxyServer:
         self.sftp_interface: Type[BaseSFTPServerInterface] = (
             self.sftp_handler.get_interface() or sftp_interface
         )
-        self.server_tunnel_interface: Type[
-            RemotePortForwardingForwarder
-        ] = server_tunnel_interface
-        self.client_tunnel_interface: Type[
-            LocalPortForwardingForwarder
-        ] = client_tunnel_interface
+        self.server_tunnel_interface: Type[RemotePortForwardingForwarder] = (
+            server_tunnel_interface
+        )
+        self.client_tunnel_interface: Type[LocalPortForwardingForwarder] = (
+            client_tunnel_interface
+        )
         # Server Interface
-        self.authentication_interface: Type[
-            BaseServerInterface
-        ] = authentication_interface
+        self.authentication_interface: Type[BaseServerInterface] = (
+            authentication_interface
+        )
         self.authenticator: Type[Authenticator] = authenticator
         self.transparent: bool = transparent
         self.session_class: Type[Session] = session_class

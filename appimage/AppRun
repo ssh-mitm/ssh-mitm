@@ -1,16 +1,65 @@
 #!/bin/bash
 
 # This script is the AppRun entry point used by an AppImage to set up the necessary environment
-# and directory path for the application. It first ensures that the APPDIR variable is defined, 
-# representing the root of the AppImage filesystem. After setting up the environment, it delegates 
-# control to the `startapp.py` script, which is responsible for initiating the main Python 
-# application. This setup allows for a layered initialization process, ensuring that the 
+# and directory path for the application. It first ensures that the APPDIR variable is defined,
+# representing the root of the AppImage filesystem. After setting up the environment, it delegates
+# control to the `startapp.py` script, which is responsible for initiating the main Python
+# application. This setup allows for a layered initialization process, ensuring that the
 # application is launched with the correct context and dependencies within the AppImage's sandbox.
+#
+# AppRun Script Overview:
+# -----------------------
+#
+# The AppRun script performs the following actions:
+#
+# 1. Sets the APPDIR environment variable if not already set, which specifies the AppImage's mount
+#    point directory.
+# 2. Exports additional environment variables required by the Python application.
+# 3. Executes the Python interpreter bundled within the AppImage, passing along any arguments to
+#    the startapp.py script, which in turn utilizes this module to launch the application.
+
 
 # Check if APPDIR is already set, if not, determine and set it to the AppImage's mount directory.
 # APPDIR needs to be set as it specifies the directory where the AppImage content is located.
+
 if [ -z $APPDIR ]; then
-    export APPDIR=$(readlink -f $(dirname "$0"))
+    export APPDIR=$(dirname $(readlink -f "$0"))
+fi
+
+export PYTHONNOUSERSITE=1
+
+if [ -n "$VIRTUAL_ENV" ]; then
+    symlink_path="$VIRTUAL_ENV/bin/python3"
+    symlink_target=$(readlink -f "$symlink_path")
+    if [ "$symlink_target" = "$APPIMAGE" ]; then
+        unset PYTHONNOUSERSITE
+        export PYTHONUSERBASE="$VIRTUAL_ENV"
+        export PATH=$VIRTUAL_ENV/bin:$PATH
+        ENV_LOADED=1
+    fi
+fi
+
+CMD_PATH=$(which $ARGV0)
+if [ -z $ENV_LOADED ] && [ -L $CMD_PATH ]; then
+    link_dir=$(dirname $(realpath -s $CMD_PATH))
+
+    venv_dir=$(dirname "$link_dir/")
+    symlink_path="$link_dir/python3"
+    if [ ! -f $symlink_path ] || [[ "$CMD_PATH" =~ ^/usr/bin ]]; then
+        symlink_path=$(readlink "$CMD_PATH")
+        python_dir=$(dirname $(realpath -s $symlink_path))
+        venv_dir=$(dirname $python_dir)
+    fi
+    symlink_target=$(readlink -f "$symlink_path")
+
+    if [ "$symlink_target" = "$APPIMAGE" ] && \
+       [ -f $venv_dir/pyvenv.cfg ] && \
+       [ -f $venv_dir/bin/activate ]; then
+        source $venv_dir/bin/activate
+        unset PYTHONNOUSERSITE
+        export PYTHONUSERBASE="$venv_dir"
+        export PATH=$venv_dir/bin:$PATH
+    fi
 fi
 
 # Insert any required environment variable exports here.
@@ -22,4 +71,4 @@ fi
 # The script then delegates control to `startapp.py` by using the Python interpreter included within the AppImage.
 # `startapp.py` is responsible for further initializing and starting the actual Python application.
 # $@ passes all given arguments through to `startapp.py`.
-exec $APPDIR/python/bin/python3 $APPDIR/startapp.py "$@"
+exec $APPDIR/python/bin/python3 -P $APPDIR/startapp.py "$@"

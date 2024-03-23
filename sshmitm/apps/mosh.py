@@ -153,10 +153,12 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                     key=mosh_connect_parts[3],
                     target_ip=session.remote_address[0],
                     target_port=int(mosh_connect_parts[2]),
-                    listen_ip="0.0.0.0",
-                    listen_port=0
-                    if session.remote_address[0] == "127.0.0.1"
-                    else cast(int, mosh_connect_parts[2]),
+                    listen_ip="0.0.0.0",  # nosec # mosh server needs to listen on all addresses to intercept traffic
+                    listen_port=(
+                        0
+                        if session.remote_address[0] == "127.0.0.1"
+                        else cast(int, mosh_connect_parts[2])
+                    ),
                 )
                 mosh_port = mosh_proxy.get_bind_port()
                 mosh_proxy.start()

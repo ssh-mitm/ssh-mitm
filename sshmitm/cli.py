@@ -40,6 +40,7 @@ import sys
 from paramiko import Transport
 
 from sshmitm import __version__ as ssh_mitm_version
+from sshmitm.config import CONFIGFILE
 from sshmitm.logging import Colors, FailSaveLogStream, PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import monkeypatch, transport
@@ -55,6 +56,7 @@ def main() -> None:
         prog_name = "at.ssh_mitm.server"
 
     parser = ModuleParser(
+        config=CONFIGFILE,
         prog=prog_name,
         description="SSH-MITM Tools",
         allow_abbrev=False,

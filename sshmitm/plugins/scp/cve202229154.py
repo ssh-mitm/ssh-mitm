@@ -3,6 +3,7 @@ This plugin modifies the behavior of the rsync command in SCP. The rsync-inject-
 can be specified to add an additional file to the rsync command sent to the server.
 The rewritten rsync command is logged for informational purposes.
 """
+
 import logging
 
 from sshmitm.forwarders.scp import SCPForwarder

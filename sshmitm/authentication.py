@@ -351,6 +351,7 @@ class Authenticator(BaseModule):
 
         :param host: remote host address.
         :param port: remote host port.
+        :param username: username which is used during authentication
         :return: a list of strings representing the available authentication methods.
         """
 
@@ -602,6 +603,7 @@ class AuthenticatorPassThrough(Authenticator):
 
         :param host: remote host address.
         :param port: remote host port.
+        :param username: username which is used for authentication
         :return: a list of strings representing the available authentication methods.
         """
         if not self.pubkey_enumerator:

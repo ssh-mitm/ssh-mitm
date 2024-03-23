@@ -14,7 +14,8 @@ def perform_cve_2023_25136(args: argparse.Namespace) -> bool:
     transport = paramiko.Transport(f"{args.host}:{args.port}")
     transport.local_version = f"SSH-2.0-{args.client_id}"
     try:
-        transport.connect(username="", password="")
+        # connect with no username and password
+        transport.connect(username="", password="")  # nosec
     except paramiko.ssh_exception.AuthenticationException:
         return False
     except Exception:  # pylint: disable=broad-exception-caught
