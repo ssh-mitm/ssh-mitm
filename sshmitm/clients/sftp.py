@@ -79,9 +79,8 @@ class SFTPClient(SSHClient):
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("error creating sftp client")
             return None
-        else:
-            sftp.connected = True
-            return sftp
+        sftp.connected = True
+        return sftp
 
     @property
     def running(self) -> bool:
@@ -110,8 +109,7 @@ class SFTPClient(SSHClient):
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("error creating sftp client")
             return False
-        else:
-            return True
+        return True
 
     def open(
         self, filename: Union[str, bytes], mode: str = "r", bufsize: int = -1
@@ -181,8 +179,7 @@ class SFTPClient(SSHClient):
             logging.error(ex)
             os.remove(localpath)
             return paramiko.sftp.SFTP_FAILURE
-        else:
-            return paramiko.sftp.SFTP_OK
+        return paramiko.sftp.SFTP_OK
 
     def listdir_attr(self, path: str = ".") -> Union[int, List[SFTPAttributes]]:
         """

@@ -112,8 +112,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error")
             return paramiko.sftp.SFTP_FAILURE
-        else:
-            return fobj
+        return fobj
 
     def readlink(self, path: str) -> Union[str, int]:
         self.session.sftp_client_ready.wait()

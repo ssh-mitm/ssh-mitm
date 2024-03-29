@@ -75,9 +75,9 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
     ...     sock, addr = server.accept()
     ...     # handle new sock connection
     """
-    AF_INET6 = getattr(
+    AF_INET6 = getattr(  # pylint: disable=invalid-name # noqa: N806
         socket, "AF_INET6", 0
-    )  # pylint: disable=invalid-name # noqa: N806
+    )
     host: Optional[str]
     port: int
     host, port = address
