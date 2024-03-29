@@ -46,23 +46,13 @@ CMD_PATH=${ARGV0} && [[ "$ARGV0" != */* ]] && CMD_PATH=$(which "$ARGV0")
 
 if [ -z $ENV_LOADED ] && [ -L $CMD_PATH ]; then
 
-    PYTHON_SYMLINK_PYTH=$(realpath -s "$CMD_PATH")
-    VENV_DIR="${PYTHON_SYMLINK_PYTH%/*/*}"
-    SYMLINK_PATH="$VENV_DIR/bin/python3"
-    while [ -L SYMLINK_PATH ]; do
-        # Resolve one level of symlink without following further symlinks
-        RESOLVED_LINK=$(readlink "$SYMLINK_PATH")
-
-        # Update SYMLINK_PATH to point to the resolved link for next iteration
-        SYMLINK_PATH=$(realpath -s "$RESOLVED_LINK")
-
-        # Derive the VENV_DIR by stripping off the last two path components
+    SYMLINK_PATH=$(realpath -s "$CMD_PATH")
+    while [ -L $SYMLINK_PATH ]; do
         VENV_DIR=${SYMLINK_PATH%/*/*}
-
         # Check if both pyvenv.cfg and activate exist in this potential VENV_DIR
-        if [ -f "$VENV_DIR/pyvenv.cfg" ] && [ -f "$VENV_DIR/bin/activate" ]; then
-            # Check if the resolved symlink path ultimately points to the APPIMAGE
-            if [ "$(realpath -s "$SYMLINK_PATH")" = "$APPIMAGE" ]; then
+        if [ -f "$VENV_DIR/pyvenv.cfg" ] && [ -f "$VENV_DIR/bin/activate" ] && [ -L "$VENV_DIR/bin/python3" ]; then
+            # Check if python3 points to the APPIMAGE
+            if [ "$(readlink $VENV_DIR/bin/python3)" = "$APPIMAGE" ]; then
                 # Virtual environment found, source activate script
                 source "$VENV_DIR/bin/activate"
                 unset PYTHONNOUSERSITE
@@ -71,6 +61,11 @@ if [ -z $ENV_LOADED ] && [ -L $CMD_PATH ]; then
                 break  # Exit the loop since the virtual environment is found and activated
             fi
         fi
+
+        # Resolve one level of symlink without following further symlinks
+        RESOLVED_LINK=$(readlink "$SYMLINK_PATH")
+        # Update SYMLINK_PATH to point to the resolved link for next iteration
+        SYMLINK_PATH=$(realpath -s "$RESOLVED_LINK")
     done
 fi
 
