@@ -81,8 +81,8 @@ class CheckPublickey(SubCommand):
                     for pubkey in pubkeys:
                         if enumerator.check_publickey(args.username, pubkey):
                             valid_keys[filename].append(pubkey)
-        except (  # pylint: disable=broad-exception-caught # noqa: BLE001
-            Exception
+        except (  # pylint: disable=broad-exception-caught
+            Exception  # noqa: BLE001
         ) as exc:
             print(exc)
             sys.exit(1)

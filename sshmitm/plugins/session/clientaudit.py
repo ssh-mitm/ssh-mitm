@@ -156,9 +156,9 @@ class SSHClientAudit:
                 if cve_entry.cve in vulnerabilities:
                     if isinstance(vulnerabilities[cve_entry.cve], list):
                         for vulnerability_entry in vulnerabilities[cve_entry.cve]:
-                            cvemessagelist.append(
+                            cvemessagelist.append(  # noqa: PERF401
                                 f"    - {vulnerability_entry}"
-                            )  # noqa: PERF401
+                            )
                     else:
                         cvemessagelist.append(
                             "\n".join(

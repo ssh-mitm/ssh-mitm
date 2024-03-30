@@ -58,7 +58,7 @@ class ModuleParser(
         self, *args: Any, config: Optional["ConfigParser"] = None, **kwargs: Any
     ) -> None:  # pylint: disable=too-many-arguments
         kwargs["formatter_class"] = ModuleFormatter
-        super().__init__(add_help=False, *args, config=config, **kwargs)
+        super().__init__(*args, add_help=False, config=config, **kwargs)
         self.__kwargs = kwargs
         self._extra_modules: List[Tuple[argparse.Action, type]] = []
         self._module_parsers: Set[argparse.ArgumentParser] = {self}

@@ -31,11 +31,11 @@ determines the appropriate entry point, and initiates the application.
 """
 
 import argparse
-from configparser import ConfigParser
-from functools import cached_property
 import os
 import sys
-from importlib.metadata import entry_points, EntryPoint
+from configparser import ConfigParser
+from functools import cached_property
+from importlib.metadata import EntryPoint, entry_points
 from typing import TYPE_CHECKING, Dict, Optional
 from venv import EnvBuilder
 
@@ -120,7 +120,7 @@ class AppStarter:
             str: The path to the application directory.
         """
         if "APPDIR" not in os.environ:
-            os.environ["APPDIR"] = os.path.dirname(__file__)
+            os.environ["APPDIR"] = os.path.dirname(__file__)  # noqa: PTH120
         return os.environ["APPDIR"]
 
     @cached_property
@@ -172,7 +172,9 @@ class AppStarter:
         """
         args = [sys.executable, "-P"]
         args.extend(sys.argv[1:])
-        os.execvp(sys.executable, args)  # nosec
+        os.execvp(  # nosec # noqa: S606 # Starting a process without a shell
+            sys.executable, args
+        )
 
     def create_venv(self, venv_dir: str) -> None:
         if not hasattr(EnvBuilder, "setup_python_original"):

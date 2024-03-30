@@ -113,6 +113,7 @@ check = [
     "black --check sshmitm appimage/startapp.py",
     "flake8 sshmitm appimage/startapp.py",
     "pylint sshmitm appimage/startapp.py",
+    "ruff check sshmitm",
     "mypy sshmitm appimage/startapp.py",
 ]
 
@@ -145,17 +146,17 @@ non_interactive = true
 [tool.pylint]
 disable = [
     "duplicate-code",
+    "fixme",
     "line-too-long",
-    "missing-module-docstring",
     "missing-class-docstring",
     "missing-function-docstring",
-    "fixme",
+    "missing-module-docstring",
     "too-few-public-methods",
     "too-many-branches",
     "too-many-instance-attributes",
-    "too-many-statements",
     "too-many-locals",
-    "too-many-return-statements"
+    "too-many-return-statements",
+    "too-many-statements",
 ]
 
 [tool.pylint.MASTER]
@@ -164,36 +165,36 @@ load-plugins = "pylint.extensions.docparams"
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "D",       # Docstring related
-    "E501",    # Line too long
-    "PLR0912", # Too many branches
-    "COM812",  # Trailing comma missing
-    "FA100",   # Missing from __future__ import annotations
-    "FIX002",  # Line contains TODO, consider resolving the issue
-    "T201",    # `print` found
     "ANN101",  # Missing type annotation for `self` in method
     "ANN102",  # Missing type annotation for `cls` in classmethod
-    "PTH118",  # `os.path.join()` should be replaced by `Path` with `/` operator
+    "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
+    "COM812",  # Trailing comma missing
+    "D",       # Docstring related
+    "E501",    # Line too long
+    "FA100",   # Missing from __future__ import annotations
+    "FBT001",  # Boolean-typed positional argument in function definition
+    "FBT002",  # Boolean default positional argument in function definition
+    "FBT003",  # Boolean positional value in function call
+    "FIX002",  # Line contains TODO, consider resolving the issue
+    "N818",    # Exception name `MissingHostException` should be named with an Error suffix
+    "PLR0911", # Too many return statements
+    "PLR0912", # Too many branches
+    "PLR0913", # Too many arguments in function definition
+    "PLR2004", # Magic value used in comparison
+    "PTH103",  # `os.makedirs()` should be replaced by `Path.mkdir(parents=True)`
+    "PTH107",  # `os.remove()` should be replaced by `Path.unlink()`
     "PTH111",  # `os.path.expanduser()` should be replaced by `Path.expanduser()`
     "PTH113",  # `os.path.isfile()` should be replaced by `Path.is_file()`
     "PTH116",  # `os.stat()` should be replaced by `Path.stat()`, `Path.owner()`, or `Path.group()`
-    "PTH103",  # `os.makedirs()` should be replaced by `Path.mkdir(parents=True)`
-    "PTH123",  # `open()` should be replaced by `Path.open()`
-    "PTH107",  # `os.remove()` should be replaced by `Path.unlink()`
+    "PTH118",  # `os.path.join()` should be replaced by `Path` with `/` operator
     "PTH119",  # `os.path.basename()` should be replaced by `Path.name`
-    "PLR0913", # Too many arguments in function definition
+    "PTH123",  # `open()` should be replaced by `Path.open()`
     "S104",    # Possible binding to all interfaces
     "SLF001",  # Private member accessed: `_indent`
-    "PLR0911", # Too many return statements
+    "T201",    # `print` found
+    "TRY301",  # Abstract `raise` to an inner function
     "TRY400",  # Use `logging.exception` instead of `logging.error`
     "UP024",   # Replace aliased errors with `OSError`,
-    "FBT002",  # Boolean default positional argument in function definition
-    "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
-    "PLR2004", # Magic value used in comparison
-    "FBT001",  # Boolean-typed positional argument in function definition
-    "FBT003",  # Boolean positional value in function call
-    "TRY301",  # Abstract `raise` to an inner function
-    "N818",    # Exception name `MissingHostException` should be named with an Error suffix
 ]
 [tool.ruff.lint.per-file-ignores]
 "sshmitm/workarounds/monkeypatch.py" = ["ALL"]
