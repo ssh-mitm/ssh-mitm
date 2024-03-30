@@ -101,10 +101,11 @@ detached = false
 dependencies = [
     "bandit",
     "black",
-    "flake8",
     "Flake8-pyproject",
+    "flake8",
     "mypy",
     "pylint",
+    "ruff",
 ]
 
 [tool.hatch.envs.lint.scripts]
