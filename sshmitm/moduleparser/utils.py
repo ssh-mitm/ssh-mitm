@@ -2,7 +2,7 @@ import argparse
 from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Union
 
 import pkg_resources
-from colored.colored import attr, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore[import-untyped]
 
 from sshmitm.logging import Colors
 

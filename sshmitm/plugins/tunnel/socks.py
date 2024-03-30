@@ -1,7 +1,7 @@
 import logging
 import socket
 import sys
-from typing import TYPE_CHECKING, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, ClassVar, List, Optional, Tuple, Union
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
@@ -100,7 +100,7 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
             help="password for the SOCKS5 server",
         )
 
-    tcpservers: List[TCPServerThread] = []
+    tcpservers: ClassVar[List[TCPServerThread]] = []
 
     # Setup should occur after master channel establishment
 

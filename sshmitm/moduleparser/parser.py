@@ -191,7 +191,9 @@ class ModuleParser(
                     default_value, baseclass
                 )
         else:
-            arg_dest = self.add_argument._get_dest(*args, **kwargs)  # type: ignore # pylint:disable=protected-access
+            arg_dest = self.add_argument._get_dest(  # type: ignore[attr-defined] # pylint:disable=protected-access
+                *args, **kwargs
+            )
             if (
                 arg_dest
                 and self.ARGCONF
@@ -223,7 +225,7 @@ class ModuleParser(
         self._extra_modules.append((action, baseclass))
         logging.debug("Baseclass: %s", baseclass)
 
-    def parse_args(  # type: ignore
+    def parse_args(  # type: ignore[override]
         self,
         args: Optional[Sequence[str]] = None,
         namespace: Optional[argparse.Namespace] = None,
@@ -234,7 +236,7 @@ class ModuleParser(
             return argparse.Namespace()
         return args_namespace
 
-    def parse_known_args(  # type: ignore
+    def parse_known_args(  # type: ignore[override]
         self,
         args: Optional[Sequence[str]] = None,
         namespace: Optional[argparse.Namespace] = None,

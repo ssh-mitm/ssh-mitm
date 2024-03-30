@@ -79,11 +79,9 @@ class BaseModuleArgumentParser(argparse.ArgumentParser):
         self.config_section = kwargs.pop("config_section", None)
         super().__init__(*args, **kwargs)
         self.exit_on_error = True
-        self.add_argument = AddArgumentMethod(  # type: ignore
-            parser=self, container=self
-        )
+        self.add_argument = AddArgumentMethod(parser=self, container=self)  # type: ignore[method-assign]
 
-    def error(self, message: str) -> None:  # type: ignore
+    def error(self, message: str) -> None:  # type: ignore[override]
         if self.exit_on_error:
             return
         super().error(message)
@@ -93,7 +91,7 @@ class BaseModuleArgumentParser(argparse.ArgumentParser):
         group = argparse._ArgumentGroup(  # pylint:disable=protected-access
             self, *args, **kwargs
         )
-        group.add_argument = AddArgumentMethod(  # type: ignore
+        group.add_argument = AddArgumentMethod(  # type: ignore[method-assign]
             parser=self,
             container=group,
             config_section=config_section,

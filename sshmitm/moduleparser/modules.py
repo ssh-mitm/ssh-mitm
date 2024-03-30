@@ -2,7 +2,18 @@ import argparse
 import inspect
 import logging
 from abc import ABC, abstractmethod
-from typing import TYPE_CHECKING, Any, Dict, List, Optional, Sequence, Tuple, Type, cast
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    cast,
+)
 
 import pkg_resources
 
@@ -17,7 +28,7 @@ if TYPE_CHECKING:
 class BaseModule(ABC):
     _parser: Optional[BaseModuleArgumentParser] = None
     _modules: Optional[List[Tuple[argparse.Action, Any]]] = None
-    _argument_groups: Dict[str, argparse._ArgumentGroup] = {}
+    _argument_groups: ClassVar[Dict[str, argparse._ArgumentGroup]] = {}
 
     def __init__(
         self,
@@ -38,7 +49,7 @@ class BaseModule(ABC):
                 msg = f"keyword argument {param_name} has no param"
                 raise KeyError(msg)
             # check if it is an instance of the argument type, ignore mypy error because of false positive
-            if hasattr(action, "type") and not isinstance(param_value, action.type):  # type: ignore
+            if hasattr(action, "type") and not isinstance(param_value, action.type):  # type: ignore[arg-type]
                 msg = f"Value {param_value} for parameter is not an instance of {action.type}"
                 raise ValueError(msg)
             setattr(self.args, param_name, param_value)

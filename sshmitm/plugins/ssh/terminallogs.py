@@ -62,7 +62,7 @@ class ScriptLogFormat(TerminalLogFormat):
 
         self.file_stdout.write(
             "Session started on {}\n".format(  # pylint: disable=consider-using-f-string
-                datetime.datetime.utcnow()
+                datetime.datetime.now(tz=datetime.timezone.utc)
                 .replace(tzinfo=pytz.utc)
                 .strftime("%a %d %b %Y %H:%M:%S %Z")
             ).encode()
@@ -90,9 +90,9 @@ class ScriptLogFormat(TerminalLogFormat):
 
     def write_timingfile(self, text: bytes) -> None:
         if not self.timestamp:
-            self.timestamp = datetime.datetime.now()
+            self.timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
         oldtime = self.timestamp
-        self.timestamp = datetime.datetime.now()
+        self.timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
         diff = self.timestamp - oldtime
         self.timeingfile.write(
             f"{diff.seconds}.{diff.microseconds} {len(text)}\n".encode()

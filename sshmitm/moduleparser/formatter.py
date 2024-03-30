@@ -1,7 +1,7 @@
 import argparse
 from typing import Any, List, Optional
 
-from colored.colored import attr, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore[import-untyped]
 
 from sshmitm.logging import Colors
 
@@ -22,7 +22,7 @@ class ModuleFormatter(argparse.HelpFormatter):
             self.formatter = formatter
             self.parent = parent
             self.heading = heading
-            self.items = []  # type: ignore
+            self.items = []  # type: ignore[var-annotated]
 
         def format_help(self) -> str:
             # pylint: disable=protected-access
