@@ -7,7 +7,7 @@ import time
 from typing import TYPE_CHECKING, Optional
 
 import paramiko
-from colored.colored import attr, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore[import-untyped]
 
 from sshmitm.forwarders.ssh import SSHForwarder
 from sshmitm.logging import Colors
@@ -23,9 +23,11 @@ class InjectServer(paramiko.ServerInterface):
         self.injector_channel: Optional[paramiko.channel.Channel] = None
 
     def check_auth_none(self, username: str) -> int:
+        del username
         return paramiko.common.AUTH_SUCCESSFUL
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del chanid
         if kind == "session":
             return paramiko.common.OPEN_SUCCEEDED
         return paramiko.common.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
@@ -44,6 +46,13 @@ class InjectServer(paramiko.ServerInterface):
         pixelheight: int,
         modes: bytes,
     ) -> bool:
+        del channel
+        del term
+        del width
+        del height
+        del pixelwidth
+        del pixelheight
+        del modes
         return True
 
 

@@ -38,11 +38,11 @@ from typing import (
 import argcomplete
 import pkg_resources
 
-from sshmitm.moduleparser.modules import BaseModule, SubCommand
-from sshmitm.moduleparser.formatter import ModuleFormatter
-from sshmitm.moduleparser.exceptions import ModuleError
-from sshmitm.moduleparser.utils import load_module, set_module_kwargs
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
+from sshmitm.moduleparser.exceptions import ModuleError
+from sshmitm.moduleparser.formatter import ModuleFormatter
+from sshmitm.moduleparser.modules import BaseModule, SubCommand
+from sshmitm.moduleparser.utils import load_module, set_module_kwargs
 
 if TYPE_CHECKING:
     from configparser import ConfigParser
@@ -58,7 +58,7 @@ class ModuleParser(
         self, *args: Any, config: Optional["ConfigParser"] = None, **kwargs: Any
     ) -> None:  # pylint: disable=too-many-arguments
         kwargs["formatter_class"] = ModuleFormatter
-        super().__init__(add_help=False, *args, config=config, **kwargs)
+        super().__init__(*args, add_help=False, config=config, **kwargs)
         self.__kwargs = kwargs
         self._extra_modules: List[Tuple[argparse.Action, type]] = []
         self._module_parsers: Set[argparse.ArgumentParser] = {self}
@@ -191,7 +191,9 @@ class ModuleParser(
                     default_value, baseclass
                 )
         else:
-            arg_dest = self.add_argument._get_dest(*args, **kwargs)  # type: ignore # pylint:disable=protected-access
+            arg_dest = self.add_argument._get_dest(  # type: ignore[attr-defined] # pylint:disable=protected-access
+                *args, **kwargs
+            )
             if (
                 arg_dest
                 and self.ARGCONF
@@ -223,7 +225,7 @@ class ModuleParser(
         self._extra_modules.append((action, baseclass))
         logging.debug("Baseclass: %s", baseclass)
 
-    def parse_args(  # type: ignore
+    def parse_args(  # type: ignore[override]
         self,
         args: Optional[Sequence[str]] = None,
         namespace: Optional[argparse.Namespace] = None,
@@ -234,7 +236,7 @@ class ModuleParser(
             return argparse.Namespace()
         return args_namespace
 
-    def parse_known_args(  # type: ignore
+    def parse_known_args(  # type: ignore[override]
         self,
         args: Optional[Sequence[str]] = None,
         namespace: Optional[argparse.Namespace] = None,

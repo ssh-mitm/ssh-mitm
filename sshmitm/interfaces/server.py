@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any, ByteString, List, Optional, Tuple, Type, 
 
 import paramiko
 from paramiko.pkey import PKey
-from sshpubkeys import SSHKey  # type: ignore
+from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.clients.sftp import SFTPClient
 from sshmitm.moduleparser import BaseModule

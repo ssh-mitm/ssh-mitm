@@ -19,7 +19,7 @@ class AgentProxy:
         self.agents.append(self.agent)
         # should be able to be closed now, but for some reason there is a race
         # agent is still sending over the channel
-        # agent.close()
+        # agent.close()  # noqa: ERA001
 
     def get_keys(self) -> Tuple[AgentKey, ...]:
         return self.keys

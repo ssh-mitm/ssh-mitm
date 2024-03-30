@@ -1,11 +1,24 @@
-from abc import ABC, abstractmethod
 import argparse
 import inspect
 import logging
-from typing import TYPE_CHECKING, cast, Any, Dict, List, Optional, Sequence, Tuple, Type
+from abc import ABC, abstractmethod
+from typing import (
+    TYPE_CHECKING,
+    Any,
+    ClassVar,
+    Dict,
+    List,
+    Optional,
+    Sequence,
+    Tuple,
+    Type,
+    cast,
+)
+
 import pkg_resources
+
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
-from sshmitm.moduleparser.exceptions import ModuleError, InvalidModuleArguments
+from sshmitm.moduleparser.exceptions import InvalidModuleArguments, ModuleError
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
 
 if TYPE_CHECKING:
@@ -15,7 +28,7 @@ if TYPE_CHECKING:
 class BaseModule(ABC):
     _parser: Optional[BaseModuleArgumentParser] = None
     _modules: Optional[List[Tuple[argparse.Action, Any]]] = None
-    _argument_groups: Dict[str, argparse._ArgumentGroup] = {}
+    _argument_groups: ClassVar[Dict[str, argparse._ArgumentGroup]] = {}
 
     def __init__(
         self,
@@ -36,7 +49,7 @@ class BaseModule(ABC):
                 msg = f"keyword argument {param_name} has no param"
                 raise KeyError(msg)
             # check if it is an instance of the argument type, ignore mypy error because of false positive
-            if hasattr(action, "type") and not isinstance(param_value, action.type):  # type: ignore
+            if hasattr(action, "type") and not isinstance(param_value, action.type):  # type: ignore[arg-type]
                 msg = f"Value {param_value} for parameter is not an instance of {action.type}"
                 raise ValueError(msg)
             setattr(self.args, param_name, param_value)
@@ -65,7 +78,7 @@ class BaseModule(ABC):
                 )
             )
 
-    @classmethod
+    @classmethod  # noqa: B027
     def parser_arguments(cls) -> None:
         pass
 
@@ -126,7 +139,7 @@ class SubCommand(ABC):
             config_section=self.config_section(),
         )
 
-    def register_arguments(self) -> None:
+    def register_arguments(self) -> None:  # noqa: B027
         pass
 
     @abstractmethod

@@ -8,11 +8,11 @@ from binascii import hexlify
 from socket import socket
 from typing import List, Optional, Tuple, Type, Union
 
-from colored import attr, fg  # type: ignore
+from colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import DSSKey, ECDSAKey, Ed25519Key, PKey, RSAKey
 from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
-from sshpubkeys import SSHKey  # type: ignore
+from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
@@ -142,7 +142,7 @@ class SSHProxyServer:
             )
             sshconsole.rule("[blue]Configuration", style="blue")
 
-            if os.environ.get("container"):
+            if os.environ.get("container"):  # noqa: SIM112
                 rich_print(
                     "[bold red]:exclamation: You are executing SSH-MITM as Flatpak"
                 )
@@ -180,7 +180,7 @@ class SSHProxyServer:
                 rich_print("[bold red]:exclamation: Debug mode enabled")
             sshconsole.rule("[red]waiting for connections", style="red")
 
-    def generate_host_key(self) -> None:
+    def generate_host_key(self) -> None:  # noqa: C901
         self.key_algorithm_class = None
         key_algorithm_bits = None
         if self.key_algorithm == "dss":
@@ -204,7 +204,9 @@ class SSHProxyServer:
 
         if not self.key_file:
             try:
-                self._hostkey = self.key_algorithm_class.generate(bits=key_algorithm_bits)  # type: ignore
+                self._hostkey = self.key_algorithm_class.generate(  # type: ignore[attr-defined]
+                    bits=key_algorithm_bits
+                )
             except ValueError as err:
                 logging.error(str(err))
                 raise KeyGenerationError from err
@@ -249,9 +251,6 @@ class SSHProxyServer:
             cert_path = filename + cert_suffix
         # Blindly try the key path; if no private key, nothing will work.
         key = klass.from_private_key_file(key_path, password)
-        # TODO: change this to 'Loading' instead of 'Trying' sometime; probably
-        # when #387 is released, since this is a critical log message users are
-        # likely testing/filtering for (bah.)
         hexlify(key.get_fingerprint())
         # Attempt to load cert if it exists.
         if os.path.isfile(cert_path):
@@ -274,11 +273,9 @@ class SSHProxyServer:
             "SSH_ORIGINAL_COMMAND",
             "SSH_TTY",
         ]:
-            try:
+            if env_var in os.environ:
                 del os.environ[env_var]
                 logging.debug("removed %s from environment", env_var)
-            except KeyError:
-                pass
 
     def start(self) -> None:
         self._clean_environment()
@@ -337,10 +334,11 @@ class SSHProxyServer:
                 Colors.emoji("exclamation"),
                 Colors.stylize("Shutting down server ...", fg("red")),
             )
-            # TODO: better shutdown for threads. At the moment we kill the server
-            # sock.close()
+            # TODO @manfred-kaiser: better shutdown for threads. At the moment we kill the server
+            # https://github.com/ssh-mitm/ssh-mitm/issues/167
+            # sock.close()  # noqa: ERA001
             # for thread in self._threads[:]:
-            #    thread.join()
+            #    thread.join()  # noqa: ERA001
             os._exit(os.EX_OK)
 
     def create_session(

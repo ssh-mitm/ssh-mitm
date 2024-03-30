@@ -18,7 +18,8 @@ def perform_cve_2023_25136(args: argparse.Namespace) -> bool:
         transport.connect(username="", password="")  # nosec
     except paramiko.ssh_exception.AuthenticationException:
         return False
-    except Exception:  # pylint: disable=broad-exception-caught
+    except Exception:  # pylint: disable=broad-exception-caught # noqa: BLE001
+        # catch all exceptions to avoid applicaiton crashes
         logging.error("error executing check for CVE-2023-25136")
     return True
 

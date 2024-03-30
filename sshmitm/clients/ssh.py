@@ -25,7 +25,7 @@ from typing import TYPE_CHECKING, Optional
 import paramiko
 import paramiko.hostkeys
 from paramiko.pkey import PKey
-from sshpubkeys import SSHKey  # type: ignore
+from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
 from sshmitm.moduleparser import BaseModule
@@ -33,7 +33,7 @@ from sshmitm.moduleparser import BaseModule
 if TYPE_CHECKING:
     import sshmitm
     from sshmitm.forwarders.agent import AgentProxy
-    from sshmitm.session import Session  # noqa
+    from sshmitm.session import Session  # noqa: F401
 
 
 class AuthenticationMethod(Enum):
@@ -42,7 +42,7 @@ class AuthenticationMethod(Enum):
     used to connect to a remote host.
     """
 
-    PASSWORD = "password"  # nosec
+    PASSWORD = "password"  # nosec # noqa: S105
     PUBLICKEY = "publickey"
     AGENT = "agent"
 
@@ -91,7 +91,7 @@ class SSHClient(BaseSSHClient):
         self.transport: Optional[paramiko.Transport] = None
         self.connected: bool = False
 
-    def connect(self) -> bool:
+    def connect(self) -> bool:  # noqa: C901
         """
         Connects to the remote host using the specified authentication method.
 
@@ -149,7 +149,8 @@ class SSHClient(BaseSSHClient):
             ):
                 raise InvalidHostKey
             self.connected = True
-            return True
+            # return True to force a login
+            return True  # noqa: TRY300
 
         except paramiko.SSHException:
             message = "general ssh error"

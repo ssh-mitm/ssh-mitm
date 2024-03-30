@@ -29,9 +29,8 @@ fi
 export PYTHONNOUSERSITE=1
 
 if [ -n "$VIRTUAL_ENV" ]; then
-    symlink_path="$VIRTUAL_ENV/bin/python3"
-    symlink_target=$(readlink -f "$symlink_path")
-    if [ "$symlink_target" = "$APPIMAGE" ]; then
+    RESOLVED_PYTHON3=$(readlink -f "$VIRTUAL_ENV/bin/python3")
+    if [ "$RESOLVED_PYTHON3" = "$APPIMAGE" ]; then
         unset PYTHONNOUSERSITE
         export PYTHONUSERBASE="$VIRTUAL_ENV"
         export PATH=$VIRTUAL_ENV/bin:$PATH
@@ -39,33 +38,36 @@ if [ -n "$VIRTUAL_ENV" ]; then
     fi
 fi
 
-CMD_PATH=$(which $ARGV0)
+
+# If the command includes a '/', it's either a relative path or an absolute path.
+# Otherwise, the command must be searched for in $PATH.
+# a bash subshell for which is only started when no path part is found
+CMD_PATH=${ARGV0} && [[ "$ARGV0" != */* ]] && CMD_PATH=$(which "$ARGV0")
+
 if [ -z $ENV_LOADED ] && [ -L $CMD_PATH ]; then
-    link_dir=$(dirname $(realpath -s $CMD_PATH))
 
-    venv_dir=$(dirname "$link_dir/")
-    symlink_path="$link_dir/python3"
-    if [ ! -f $symlink_path ] || [[ "$CMD_PATH" =~ ^/usr/bin ]]; then
-        symlink_path=$(readlink "$CMD_PATH")
-        python_dir=$(dirname $(realpath -s $symlink_path))
-        venv_dir=$(dirname $python_dir)
-    fi
-    symlink_target=$(readlink -f "$symlink_path")
+    SYMLINK_PATH=$(realpath -s "$CMD_PATH")
+    while [ -L $SYMLINK_PATH ]; do
+        VENV_DIR=${SYMLINK_PATH%/*/*}
+        # Check if both pyvenv.cfg and activate exist in this potential VENV_DIR
+        if [ -f "$VENV_DIR/pyvenv.cfg" ] && [ -f "$VENV_DIR/bin/activate" ] && [ -L "$VENV_DIR/bin/python3" ]; then
+            # Check if python3 points to the APPIMAGE
+            if [ "$(readlink $VENV_DIR/bin/python3)" = "$APPIMAGE" ]; then
+                # Virtual environment found, source activate script
+                source "$VENV_DIR/bin/activate"
+                unset PYTHONNOUSERSITE
+                export PYTHONUSERBASE="$VENV_DIR"
+                export PATH="$VENV_DIR/bin:$PATH"
+                break  # Exit the loop since the virtual environment is found and activated
+            fi
+        fi
 
-    if [ "$symlink_target" = "$APPIMAGE" ] && \
-       [ -f $venv_dir/pyvenv.cfg ] && \
-       [ -f $venv_dir/bin/activate ]; then
-        source $venv_dir/bin/activate
-        unset PYTHONNOUSERSITE
-        export PYTHONUSERBASE="$venv_dir"
-        export PATH=$venv_dir/bin:$PATH
-    fi
+        # Resolve one level of symlink without following further symlinks
+        RESOLVED_LINK=$(readlink "$SYMLINK_PATH")
+        # Update SYMLINK_PATH to point to the resolved link for next iteration
+        SYMLINK_PATH=$(realpath -s "$RESOLVED_LINK")
+    done
 fi
-
-# Insert any required environment variable exports here.
-# This is where you would configure the environment variables needed by the Python application.
-# For instance: export PYTHONPATH=$APPDIR/some/path
-
 
 
 # The script then delegates control to `startapp.py` by using the Python interpreter included within the AppImage.

@@ -52,7 +52,7 @@ def main() -> None:
     """
 
     prog_name = os.path.basename(os.environ.get("ARGV0", "ssh-mitm"))
-    if os.environ.get("container"):
+    if os.environ.get("container"):  # noqa: SIM112
         prog_name = "at.ssh_mitm.server"
 
     parser = ModuleParser(
@@ -102,7 +102,7 @@ def main() -> None:
         Colors.stylize_func = False
         root_logger.handlers.clear()
         log_handler = logging.StreamHandler(stream=FailSaveLogStream(debug=args.debug))
-        formatter = PlainJsonFormatter()  # type: ignore
+        formatter = PlainJsonFormatter()  # type: ignore[no-untyped-call]
         log_handler.setFormatter(formatter)
         root_logger.addHandler(log_handler)
     else:
@@ -110,8 +110,8 @@ def main() -> None:
 
     if not args.disable_workarounds:
         monkeypatch.patch_thread()
-        Transport.run = transport.transport_run  # type: ignore # pylint: disable=protected-access
-        Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore # pylint: disable=protected-access
+        Transport.run = transport.transport_run  # type: ignore[method-assign] # pylint: disable=protected-access
+        Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore[attr-defined] # pylint: disable=protected-access
 
     if args.paramiko_log_level == "debug":
         logging.getLogger("paramiko").setLevel(logging.DEBUG)

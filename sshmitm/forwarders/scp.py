@@ -35,7 +35,7 @@ class SCPBaseForwarder(BaseForwarder):
         logging.info("got remote command: %s", command)
         return command
 
-    def forward(self) -> None:
+    def forward(self) -> None:  # noqa: C901,PLR0915
         # pylint: disable=protected-access
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
@@ -111,7 +111,7 @@ class SCPBaseForwarder(BaseForwarder):
                 if self.client_channel.exit_status_ready():
                     status = self.client_channel.recv_exit_status()
                     self.client_exit_code_received = True
-                    # self.server_channel.send_exit_status(status)
+                    # self.server_channel.send_exit_status(status)  # noqa: ERA001
                     self.close_session(self.client_channel)
                     break
 
@@ -130,12 +130,12 @@ class SCPBaseForwarder(BaseForwarder):
                         # which closes the session
                         continue
 
-                    # TODO: check if EOF should close the session.
+                    # TODO @manfred-kaiser: check if EOF should close the session. # noqa: TD003
                     message = Message()
                     message.add_byte(cMSG_CHANNEL_EOF)
                     message.add_int(self.client_channel.remote_chanid)
                     if self.client_channel.transport is not None:
-                        self.client_channel.transport._send_user_message(message)  # type: ignore
+                        self.client_channel.transport._send_user_message(message)  # type: ignore[attr-defined]
                     self.client_channel.send_exit_status(0)
                     self.close_session(self.client_channel)
                     break
@@ -177,7 +177,7 @@ class SCPBaseForwarder(BaseForwarder):
             message = Message()
             message.add_byte(cMSG_CHANNEL_EOF)
             message.add_int(channel.remote_chanid)
-            channel.transport._send_user_message(message)  # type: ignore
+            channel.transport._send_user_message(message)  # type: ignore[union-attr]
 
             if status is not None and self.client_channel is not None:
                 self.client_channel.send_exit_status(status)
@@ -188,14 +188,14 @@ class SCPBaseForwarder(BaseForwarder):
             message.add_int(channel.remote_chanid)
             message.add_string("eow@openssh.com")
             message.add_boolean(False)
-            channel.transport._send_user_message(message)  # type: ignore
+            channel.transport._send_user_message(message)  # type: ignore[union-attr]
 
         message = Message()
         message.add_byte(cMSG_CHANNEL_CLOSE)
         message.add_int(channel.remote_chanid)
-        channel.transport._send_user_message(message)  # type: ignore
+        channel.transport._send_user_message(message)  # type: ignore[union-attr]
 
-        channel._unlink()  # type: ignore
+        channel._unlink()  # type: ignore[attr-defined]
 
         super().close_session(channel)
         logging.debug("[chan %d] SCP closed", channel.get_id())

@@ -5,12 +5,12 @@ import sys
 import threading
 from abc import abstractmethod
 from types import TracebackType
-from typing import TYPE_CHECKING, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union
 
 import paramiko
-from colored.colored import attr, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import PKey
-from sshpubkeys import SSHKey  # type: ignore
+from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.exceptions import MissingHostException
@@ -110,7 +110,7 @@ class PublicKeyEnumerator:
         self, username: str, public_key: Union[str, paramiko.pkey.PublicBlob]
     ) -> bool:
         # pylint: disable=protected-access
-        def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore
+        def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore[no-untyped-def] # noqa: ANN001
             """
             A helper function that is called when authentication is successful.
 
@@ -122,7 +122,7 @@ class PublicKeyEnumerator:
             self.auth_event.set()
             self.authenticated = True
 
-        def parse_service_accept(self, message: paramiko.message.Message) -> None:  # type: ignore
+        def parse_service_accept(self, message: paramiko.message.Message) -> Optional[Any]:  # type: ignore[no-untyped-def] # noqa: ANN001
             """
             A helper function that parses the service accept message.
 
@@ -133,7 +133,7 @@ class PublicKeyEnumerator:
             logging.debug("execute patched _parse_service_accept")
             service = message.get_text()
             if not (service == "ssh-userauth" and self.auth_method == "publickey"):
-                return self._parse_service_accept(message)  # type: ignore
+                return self._parse_service_accept(message)
             message = paramiko.message.Message()
             message.add_byte(paramiko.common.cMSG_USERAUTH_REQUEST)
             message.add_string(self.username)
@@ -690,7 +690,7 @@ class AuthenticatorPassThrough(Authenticator):
             )
         return paramiko.common.AUTH_FAILED
 
-    def post_auth_action(self, success: bool) -> None:
+    def post_auth_action(self, success: bool) -> None:  # noqa: C901
         """
         This method logs information about an authentication event.
 

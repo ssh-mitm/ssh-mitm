@@ -62,7 +62,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             return self.session.sftp_client.mkdir(path)
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
-    def open(
+    def open(  # noqa: C901
         self, path: str, flags: int, attr: SFTPAttributes
     ) -> Union[SFTPHandle, int]:
         try:
@@ -73,7 +73,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
 
             # Code aus dem StubSFTPServer der Paramiko Demo auf GitHub
             if (flags & os.O_CREAT) and attr:
-                attr._flags &= ~attr.FLAG_PERMISSIONS  # type: ignore
+                attr._flags &= ~attr.FLAG_PERMISSIONS  # type: ignore[attr-defined]
             if flags & os.O_WRONLY:
                 fstr = "ab" if flags & os.O_APPEND else "wb"
             elif flags & os.O_RDWR:
@@ -106,13 +106,13 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
                 fobj.readfile = client_f
             if fobj.writefile:
                 self.chattr(path, attr)
-            return fobj
         except (OSError, IOError) as exc:
             logging.exception("Error")
             return paramiko.SFTPServer.convert_errno(exc.errno)
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error")
             return paramiko.sftp.SFTP_FAILURE
+        return fobj
 
     def readlink(self, path: str) -> Union[str, int]:
         self.session.sftp_client_ready.wait()

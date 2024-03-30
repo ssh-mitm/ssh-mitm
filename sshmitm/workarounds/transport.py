@@ -51,7 +51,7 @@ from paramiko.ssh_exception import SSHException, MessageOrderError
 from paramiko.transport import _active_threads  # type: ignore[attr-defined]
 
 
-def transport_send_kex_init(self):  # type: ignore
+def transport_send_kex_init(self):  # type: ignore[no-untyped-def]
     """
     announce to the other side that we'd like to negotiate keys, and what
     kind of key negotiation we support.
@@ -125,7 +125,7 @@ def transport_send_kex_init(self):  # type: ignore
     self._send_message(m)
 
 
-def transport_run(self):  # type: ignore
+def transport_run(self):  # type: ignore[no-untyped-def]
     # (use the exposed "run" method, because if we specify a thread target
     # of a private method, threading.Thread will keep a reference to it
     # indefinitely, creating a GC cycle and not letting Transport ever be
@@ -267,7 +267,7 @@ def transport_run(self):  # type: ignore
                 else:  # empty tuple, e.g. socket.timeout
                     emsg = str(e) or repr(e)
             else:
-                emsg = e.args  # type: ignore
+                emsg = e.args  # type: ignore[assignment]
             self._log(ERROR, "Socket exception: " + emsg)
             self.saved_exception = e
         except Exception as e:

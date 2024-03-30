@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, DefaultDict, Dict, List, Optional, Union, cast
 
-from colored.colored import attr, fg  # type: ignore
+from colored.colored import attr, fg  # type: ignore[import-untyped]
 from packaging import version
 from paramiko import ECDSAKey
 
@@ -102,8 +102,8 @@ class SSHClientAudit:
 
     def between_versions(
         self,
-        version_min: Union[None, int, float, str],
-        version_max: Union[None, int, float, str],
+        version_min: Union[None, float, str],
+        version_max: Union[None, float, str],
     ) -> bool:
         """
         This method returns `True` if the version string is between `version_min` and `version_max`.
@@ -156,7 +156,9 @@ class SSHClientAudit:
                 if cve_entry.cve in vulnerabilities:
                     if isinstance(vulnerabilities[cve_entry.cve], list):
                         for vulnerability_entry in vulnerabilities[cve_entry.cve]:
-                            cvemessagelist.append(f"    - {vulnerability_entry}")
+                            cvemessagelist.append(  # noqa: PERF401
+                                f"    - {vulnerability_entry}"
+                            )
                     else:
                         cvemessagelist.append(
                             "\n".join(
@@ -273,7 +275,7 @@ class SSHClientAudit:
         etm_suffix = "-etm@openssh.com"
         cbc_suffix = "-cbc"
         kex_strict_indicator_client = "kex-strict-c-v00@openssh.com"
-        # kex_strict_indicator_server = "kex-strict-s-v00@openssh.com"
+        # kex_strict_indicator_server = "kex-strict-s-v00@openssh.com"  # noqa: ERA001
 
         supports_cha_cha20 = (
             cha_cha20

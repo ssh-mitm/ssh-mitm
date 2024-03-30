@@ -12,7 +12,7 @@ exploit method is called. The method exploits both CVE-2019-6111 and CVE-2019-61
 
 import logging
 import os
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Union
 
 from sshmitm.forwarders.scp import SCPForwarder
 
@@ -44,7 +44,7 @@ class SCPInjectFile(SCPForwarder):
             help="file that is used for injection",
         )
 
-    def __new__(cls, *args, **kwargs):  # type: ignore
+    def __new__(cls, *args, **kwargs) -> Union[SCPForwarder, "SCPInjectFile"]:  # type: ignore[misc, no-untyped-def] # noqa: ANN002, ANN003
         del kwargs  # unused arguments
         if args[0].scp_command.find(b"-f") != -1:
             return super().__new__(cls)
@@ -89,7 +89,7 @@ class SCPInjectFile(SCPForwarder):
         )
         command = "{}{} {} {}\n".format(  # pylint: disable=consider-using-f-string
             self.file_command,
-            "{:o}".format(  # pylint: disable=consider-using-f-string
+            "{:o}".format(  # pylint: disable=consider-using-f-string # noqa: UP032
                 self.inject_file_stat.st_mode
             )[2:],
             self.inject_file_stat.st_size,
