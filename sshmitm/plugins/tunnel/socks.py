@@ -125,7 +125,7 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
 
         logging.info(
             (
-                "%s %s - local port forwading\n"
+                "%s %s - local port forwarding\n"
                 "%s %s\n"
                 "  %s\n"
                 "    * socat: %s\n"

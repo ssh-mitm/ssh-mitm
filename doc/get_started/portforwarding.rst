@@ -164,7 +164,7 @@ SSH-MITM supports both local and remote port forwarding.
 No further configuration is required for this.
 
 
-Local port forwading
+Local port forwarding
 --------------------
 
 .. figure:: /images/ssh-mitm_client_port_inject.png
@@ -179,7 +179,7 @@ The corresponding commands are displayed in the output of SSH-MITM.
 .. code-block:: none
   :class: no-copybutton
 
-  INFO     ℹ a9ed77c5-ef1b-42ec-b0f7-57594f4a7b42 - local port forwading
+  INFO     ℹ a9ed77c5-ef1b-42ec-b0f7-57594f4a7b42 - local port forwarding
       SOCKS port: 39859
         SOCKS4:
           * socat: socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport=39859
@@ -199,7 +199,7 @@ This makes it possible to use any proram over a passed through port with SSH-MIT
 However, it is also possible to let a vulnerability scanner that can communicate via SOCKS scan a network behind it via the connection established by SSH-MITM.
 
 
-Remote port forwading
+Remote port forwarding
 ---------------------
 
 .. figure:: /images/ssh-mitm_server_port_inject.png
