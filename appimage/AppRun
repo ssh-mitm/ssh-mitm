@@ -22,6 +22,8 @@
 # Check if APPDIR is already set, if not, determine and set it to the AppImage's mount directory.
 # APPDIR needs to be set as it specifies the directory where the AppImage content is located.
 
+set -e
+
 if [ -z $APPDIR ]; then
     export APPDIR=$(dirname $(readlink -f "$0"))
 fi
@@ -42,9 +44,9 @@ fi
 # If the command includes a '/', it's either a relative path or an absolute path.
 # Otherwise, the command must be searched for in $PATH.
 # a bash subshell for which is only started when no path part is found
-CMD_PATH=${ARGV0} && [[ "$ARGV0" != */* ]] && CMD_PATH=$(which "$ARGV0")
+CMD_PATH=${ARGV0} && [[ "$ARGV0" != */* ]] && CMD_PATH=$(which "$ARGV0" 2>/dev/null || echo "AppRun")
 
-if [ -z $ENV_LOADED ] && [ -L $CMD_PATH ]; then
+if [ -z $ENV_LOADED ] && [ -L "$CMD_PATH" ]; then
 
     SYMLINK_PATH=$(realpath -s "$CMD_PATH")
     while [ -L $SYMLINK_PATH ]; do

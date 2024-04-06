@@ -1,5 +1,14 @@
 set -e
 
+# detect machine's architecture
+export ARCH=$(uname -m)
+
+# define download urls
+python_download_url="https://github.com/indygreg/python-build-standalone/releases/download/20230726/cpython-3.11.4+20230726-x86_64_v2-unknown-linux-gnu-pgo+lto-full.tar.zst"
+appimagetool_download_url="https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$ARCH.AppImage"
+
+
+# cleanup old build process
 if [ -d build/appimage/AppDir ]; then
   rm -r build/appimage/AppDir
 fi
@@ -7,10 +16,13 @@ if [ -f dist/SSH-MITM-x86_64.AppImage ]; then
   rm dist/SSH-MITM-x86_64.AppImage;
 fi
 
+
+# create new AppImage
+
 mkdir -p build/appimage/AppDir
 
 if [ ! -f build/python.tar.zst ]; then
-  curl -L -o build/python.tar.zst  https://github.com/indygreg/python-build-standalone/releases/download/20230726/cpython-3.11.4+20230726-x86_64_v2-unknown-linux-gnu-pgo+lto-full.tar.zst
+  curl -L -o build/python.tar.zst  "$python_download_url"
 fi
 tar --use-compress-program=unzstd -xvf build/python.tar.zst -C build/appimage/AppDir --transform 's/python\/install/python/' python/install
 
@@ -20,8 +32,6 @@ build/appimage/AppDir/python/bin/python3 -m pip install -r requirements-dev.txt 
 cp appimage/AppRun build/appimage/AppDir/
 cp appimage/ssh-mitm* build/appimage/AppDir/
 
-# detect machine's architecture
-export ARCH=$(uname -m)
 # get the missing tools if necessary
 if [ ! -x build/appimagetool-$ARCH.AppImage ]; then
   curl -L -o build/appimagetool-$ARCH.AppImage https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$ARCH.AppImage
