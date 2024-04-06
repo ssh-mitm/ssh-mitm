@@ -18,7 +18,6 @@ build/appimage/AppDir/python/bin/python3 -m pip install -r requirements-dev.txt 
 
 # install files in AppDir
 cp appimage/AppRun build/appimage/AppDir/
-cp appimage/startapp.py build/appimage/AppDir/
 cp appimage/appimage.ini build/appimage/AppDir/
 cp appimage/ssh-mitm* build/appimage/AppDir/
 

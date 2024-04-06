@@ -250,6 +250,8 @@ def start_entry_point() -> None:
     any issues that it cannot handle (such as configuration errors, missing entry points, etc.),
     it will raise an AppStartException.
     """
+    if not os.environ.get("APPDIR"):
+        sys.exit("This module must be started from an AppImage!")
     appstarter = AppStarter()
     try:
         appstarter.start()
