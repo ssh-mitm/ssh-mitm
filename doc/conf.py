@@ -41,7 +41,11 @@ extensions = [
 
 html_title = "SSH-MITM"
 html_theme = "pydata_sphinx_theme"
-html_sidebars = {"index": [], "**": ["sidebar-nav-bs"]}
+html_sidebars = {
+    "index": [],
+    "changelog": [],
+    "**": ["sidebar-nav-bs"],
+}
 html_logo = "_static/ssh-mitm-64.png"
 
 html_theme_options = {
