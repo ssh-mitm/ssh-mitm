@@ -36,6 +36,7 @@ extensions = [
     "sphinx.ext.autosectionlabel",
     "sphinxcontrib.mermaid",
     "sphinx_autodoc_typehints",
+    "sphinx_mdinclude",
 ]
 
 html_title = "SSH-MITM"

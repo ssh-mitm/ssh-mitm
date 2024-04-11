@@ -8,3 +8,4 @@ sphinx-copybutton
 sphinxcontrib-mermaid
 sphinx-togglebutton
 sphinx-autodoc-typehints
+sphinx_mdinclude
