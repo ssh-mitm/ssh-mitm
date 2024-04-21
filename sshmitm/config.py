@@ -1,12 +1,13 @@
 import os
 from configparser import ConfigParser
 
-import pkg_resources
+from sshmitm.utils import resources
 
 CONFIGFILE = ConfigParser()
 
 # read default config
-CONFIGFILE.read(pkg_resources.resource_filename("sshmitm", "data/default.ini"))
+conf = resources.files("sshmitm") / "data/default.ini"
+CONFIGFILE.read_string(conf.read_text())
 
 configfile_path_list = [
     "/etc/ssh-mitm.ini",

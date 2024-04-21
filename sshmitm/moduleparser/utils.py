@@ -1,10 +1,10 @@
 import argparse
 from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Union
 
-import pkg_resources
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
 from sshmitm.logging import Colors
+from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser.modules import BaseModule
@@ -24,10 +24,10 @@ def load_module(entry_point_class: Type["BaseModule"]) -> Type["argparse.Action"
             del parser
             del option_string
             if values:
-                for entry_point in pkg_resources.iter_entry_points(
-                    entry_point_class.__name__
+                for entry_point in metadata.entry_points(
+                    group=entry_point_class.__name__
                 ):
-                    if values in (entry_point.name, entry_point.module_name):
+                    if values in (entry_point.name, entry_point.module):
                         values = [entry_point.load()]
                         setattr(namespace, self.dest, values[0] if values else None)
                         break
@@ -39,7 +39,7 @@ def set_module_kwargs(
     entry_point_class: Type["BaseModule"], **kwargs: Any
 ) -> Dict[str, Any]:
     entry_points = sorted(
-        pkg_resources.iter_entry_points(entry_point_class.__name__),
+        metadata.entry_points(group=entry_point_class.__name__),
         key=lambda x: x.name,
     )
     if not entry_points:

@@ -1,5 +1,7 @@
 argcomplete
 colored
+importlib_metadata>=4.6; python_version < "3.10"
+importlib_resources>=5.0; python_version < "3.10"
 packaging
 paramiko>=3.4,<3.5
 python-json-logger
