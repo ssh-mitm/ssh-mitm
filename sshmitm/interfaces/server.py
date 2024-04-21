@@ -1,6 +1,6 @@
 import logging
 import os
-from typing import TYPE_CHECKING, Any, ByteString, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union
 
 import paramiko
 from paramiko.pkey import PKey
@@ -448,7 +448,7 @@ class ServerInterface(BaseServerInterface):
         channel: paramiko.Channel,
         single_connection: bool,
         auth_protocol: str,
-        auth_cookie: ByteString,
+        auth_cookie: Union[bytes, bytearray],
         screen_number: int,
     ) -> bool:
         logging.debug(

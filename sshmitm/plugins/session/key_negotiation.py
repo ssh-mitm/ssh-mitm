@@ -2,7 +2,6 @@ import logging
 import re
 from typing import TYPE_CHECKING
 
-import pkg_resources
 import yaml
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport, common
@@ -12,6 +11,7 @@ from rich.markup import escape
 
 from sshmitm.logging import Colors
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
+from sshmitm.utils import resources
 
 if TYPE_CHECKING:
     import sshmitm
@@ -77,9 +77,8 @@ class KeyNegotiationData:
         vulnerability_list = None
         client_version = self.client_version.lower()
         try:
-            vulndb = pkg_resources.resource_filename("sshmitm", "data/client_info.yml")
-            with open(vulndb, encoding="utf-8") as file:
-                vulnerability_list = yaml.safe_load(file)
+            vulndb = resources.files("sshmitm") / "data/client_info.yml"
+            vulnerability_list = yaml.safe_load(vulndb.read_text(encoding="utf-8"))
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error loading vulnerability database")
             return

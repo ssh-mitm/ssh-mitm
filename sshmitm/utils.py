@@ -1,4 +1,13 @@
 import binascii
+import sys
+
+__all__ = ["format_hex", "metadata", "resources"]
+
+if sys.version_info >= (3, 10):
+    from importlib import metadata, resources
+else:
+    import importlib_metadata as metadata
+    import importlib_resources as resources
 
 
 def format_hex(data: bytes, hexwidth: int = 19) -> str:

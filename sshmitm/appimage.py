@@ -36,9 +36,10 @@ import sys
 from configparser import ConfigParser
 from functools import cached_property
 from importlib.metadata import EntryPoint, entry_points
-from importlib.resources import files
 from typing import TYPE_CHECKING, Dict, Optional
 from venv import EnvBuilder
+
+from sshmitm.utils import resources
 
 if TYPE_CHECKING:
     from types import SimpleNamespace
@@ -101,9 +102,8 @@ class AppStarter:
         """
         self.config = ConfigParser()
         self.config.read_string(DEFAULT_CONFIG)
-        config_path = files('sshmitm.data').joinpath('appimage.ini')
-        if config_path.exists():
-            self.config.read(config_path)
+        config_path = resources.files("sshmitm.data").joinpath("appimage.ini")
+        self.config.read_string(config_path.read_text())
 
         self.default_ep = self.config.get("appimage", "entry_point", fallback=None)
         argv0_complete = os.environ.get("ARGV0")

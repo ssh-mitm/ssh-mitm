@@ -36,13 +36,13 @@ from typing import (
 )
 
 import argcomplete
-import pkg_resources
 
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import ModuleError
 from sshmitm.moduleparser.formatter import ModuleFormatter
 from sshmitm.moduleparser.modules import BaseModule, SubCommand
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
+from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
     from configparser import ConfigParser
@@ -92,7 +92,7 @@ class ModuleParser(
             )
             self.subcommand.required = True
 
-        for entry_point in pkg_resources.iter_entry_points(SubCommand.__name__):
+        for entry_point in metadata.entry_points(group=SubCommand.__name__):
             if entry_point.name in self._registered_subcommands:
                 continue
             subcommand_cls = cast(Type[SubCommand], entry_point.load())
