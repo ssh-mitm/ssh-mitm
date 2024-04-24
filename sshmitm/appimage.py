@@ -103,7 +103,7 @@ class AppStarter:
         self.config = ConfigParser()
         self.config.read_string(DEFAULT_CONFIG)
         config_path = resources.files("sshmitm.data").joinpath("appimage.ini")
-        self.config.read_string(config_path.read_text())
+        self.config.read_string(config_path.read_text(encoding="utf-8"))
 
         self.default_ep = self.config.get("appimage", "entry_point", fallback=None)
         argv0_complete = os.environ.get("ARGV0")
