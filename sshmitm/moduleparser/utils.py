@@ -25,7 +25,7 @@ def load_module(entry_point_class: Type["BaseModule"]) -> Type["argparse.Action"
             del option_string
             if values:
                 for entry_point in metadata.entry_points(
-                    group=entry_point_class.__name__
+                    group=f"sshmitm.{entry_point_class.__name__}"
                 ):
                     if values in (entry_point.name, entry_point.module):
                         values = [entry_point.load()]
@@ -39,7 +39,9 @@ def set_module_kwargs(
     entry_point_class: Type["BaseModule"], **kwargs: Any
 ) -> Dict[str, Any]:
     entry_points = sorted(
-        metadata.entry_points(group=entry_point_class.__name__),
+        metadata.entry_points(
+            group=f"sshmitm.{entry_point_class.__name__}"
+        ),
         key=lambda x: x.name,
     )
     if not entry_points:

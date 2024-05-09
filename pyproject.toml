@@ -46,24 +46,24 @@ Tracker = "https://github.com/ssh-mitm/ssh-mitm/issues"
 ssh-mitm = "sshmitm.cli:main"
 ssh-mitm-askpass = "sshmitm.tools.askpass:main"
 
-[project.entry-points."SubCommand"]
+[project.entry-points."sshmitm.SubCommand"]
 server = "sshmitm.server.cli:SSHServerModules"
 audit = "sshmitm.audit.cli:Audit"
 check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
 
-[project.entry-points."BaseSession"]
+[project.entry-points."sshmitm.BaseSession"]
 base = "sshmitm.session:Session"
 
-[project.entry-points."Authenticator"]
+[project.entry-points."sshmitm.Authenticator"]
 passthrough = "sshmitm.authentication:AuthenticatorPassThrough"
 
-[project.entry-points."BaseServerInterface"]
+[project.entry-points."sshmitm.BaseServerInterface"]
 base = "sshmitm.interfaces.server:ServerInterface"
 
-[project.entry-points."SSHBaseForwarder"]
+[project.entry-points."sshmitm.SSHBaseForwarder"]
 mirrorshell = "sshmitm.plugins.ssh.mirrorshell:SSHMirrorForwarder"
 
-[project.entry-points."SCPBaseForwarder"]
+[project.entry-points."sshmitm.SCPBaseForwarder"]
 debug_traffic = "sshmitm.plugins.scp.debug_traffic:SCPDebugForwarder"
 inject_file = "sshmitm.plugins.scp.inject_file:SCPInjectFile"
 replace_file = "sshmitm.plugins.scp.replace_file:SCPReplaceFile"
@@ -71,17 +71,17 @@ store_file = "sshmitm.plugins.scp.store_file:SCPStorageForwarder"
 replace-command = "sshmitm.plugins.scp.rewrite_command:SCPRewriteCommand"
 CVE-2022-29154 = "sshmitm.plugins.scp.cve202229154:CVE202229154"
 
-[project.entry-points."BaseSFTPServerInterface"]
+[project.entry-points."sshmitm.BaseSFTPServerInterface"]
 base = "sshmitm.interfaces.sftp:SFTPProxyServerInterface"
 
-[project.entry-points."SFTPHandlerBasePlugin"]
+[project.entry-points."sshmitm.SFTPHandlerBasePlugin"]
 replace_file = "sshmitm.plugins.sftp.replace_file:SFTPProxyReplaceHandler"
 store_file = "sshmitm.plugins.sftp.store_file:SFTPHandlerStoragePlugin"
 
-[project.entry-points."RemotePortForwardingBaseForwarder"]
+[project.entry-points."sshmitm.RemotePortForwardingBaseForwarder"]
 inject = "sshmitm.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardingForwarder"
 
-[project.entry-points."LocalPortForwardingBaseForwarder"]
+[project.entry-points."sshmitm.LocalPortForwardingBaseForwarder"]
 socks = "sshmitm.plugins.tunnel.socks:SOCKSTunnelForwarder"
 
 [tool.hatch.version]

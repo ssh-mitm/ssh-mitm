@@ -121,7 +121,9 @@ class BaseModule(ABC):
     def load_from_entrypoint(
         name: str, entry_point_class: Type["BaseModule"]
     ) -> Optional[Type["BaseModule"]]:
-        for entry_point in metadata.entry_points(group=entry_point_class.__name__):
+        for entry_point in metadata.entry_points(
+            group=f"sshmitm.{entry_point_class.__name__}"
+        ):
             if name in (entry_point.name, entry_point.module):
                 return cast(Type[BaseModule], entry_point.load())
         return None

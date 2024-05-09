@@ -92,7 +92,9 @@ class ModuleParser(
             )
             self.subcommand.required = True
 
-        for entry_point in metadata.entry_points(group=SubCommand.__name__):
+        for entry_point in metadata.entry_points(
+            group=f"sshmitm.{SubCommand.__name__}"
+        ):
             if entry_point.name in self._registered_subcommands:
                 continue
             subcommand_cls = cast(Type[SubCommand], entry_point.load())
