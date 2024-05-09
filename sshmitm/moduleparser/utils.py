@@ -39,9 +39,7 @@ def set_module_kwargs(
     entry_point_class: Type["BaseModule"], **kwargs: Any
 ) -> Dict[str, Any]:
     entry_points = sorted(
-        metadata.entry_points(
-            group=f"sshmitm.{entry_point_class.__name__}"
-        ),
+        metadata.entry_points(group=f"sshmitm.{entry_point_class.__name__}"),
         key=lambda x: x.name,
     )
     if not entry_points:
