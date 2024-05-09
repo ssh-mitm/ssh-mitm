@@ -27,6 +27,10 @@ Dropbear:
   version_regex:
     - ssh-2.0-dropbear_([0-9]+\.[0-9]+)
   vulnerabilities:
+    CVE-2023-48795:
+      version_max: 2022.83
+      cvss: 5.9
+      description: Terrapin attack
     CVE-2021-36369:
       version_max: 2020.81
       cvss: 7.5
@@ -91,42 +95,68 @@ OpenSSH:
   version_regex:
     - ssh-2.0-openssh_([0-9]+\.[0-9]+)p?.*
   vulnerabilities:
-    CVE-2023-25136:
-      version_max: 9.3
-      cvss: N/A
-      docs: true
-      description: remote code execution in ssh-agent
+    CVE-2023-51767:
+      version_max: 9.6
+      cvss: 7.0
+      description: Row hammer threat allows authentication bypass in shared DRAM.
+    CVE-2023-51385:
+      version_max: 9.5
+      cvss: 6.5
+      description: OS command injection through expansion tokens referencing usernames or hostnames containing shell metacharacters in certain configurations
+    CVE-2023-51384:
+      version_max: 9.5
+      cvss: 5.5
+      description: ssh-agent applies destination constraints only to the first PKCS#11 key
+    CVE-2023-48795:
+      version_max: 9.5
+      cvss: 5.9
+      description: Terrapin attack
+    CVE-2023-38408:
+      version_max: 9.2
+      cvss: 9.8
+      description: The PKCS#11 feature has a vulnerable search path in ssh-agent, enabling remote code execution.
+    CVE-2023-28531:
+      version_min: 8.9
+      version_max: 9.2
+      cvss: 9.8
+      description: ssh-add improperly adds smartcard keys to ssh-agent, bypassing intended destination restrictions.
     CVE-2023-25136:
       version_min: 9.1
       version_max: 9.1
-      cvss: 9.8
+      cvss: 6.5
       docs: true
-      description: remote code execution in sshd
+      description: A double-free vulnerability allows unauthenticated remote attackers to potentially execute code by manipulating memory.
     CVE-2016-20012:
       version_max: 8.7
       cvss: N/A
       docs: true
       description: enumerate usernames via challenge response
+    CVE-2021-41617:
+      version_min: 6.2
+      version_max: 8.7
+      cvss: 7.0
+      description: Certain configurations allow privilege escalation due to improperly initialized supplemental groups in sshd.
     CVE-2021-36368:
       version_max: 8.8
       cvss: 3.7
       docs: true
+      description: A vulnerability allows attackers to modify server settings undetected, potentially misusing FIDO authentication confirmations.
     CVE-2021-28041:
       version_min: 8.2
       version_max: 8.4
       cvss: 4.6
-      description: double free via ssh-agent
+      description: ssh-agent has a double free vulnerability affecting legacy systems with unrestricted socket access.
     CVE-2020-15778:
       version_max: 8.2
       cvss: 6.8
       docs: true
-      description: command injection via anomalous argument transfers
+      description: SCP allows command injection via backtick characters in destination arguments, risking workflow integrity.
     CVE-2020-14145:
       version_min: 5.7
       version_max: 8.9
       cvss: 4.3
       docs: true
-      description: information leak via algorithm negotiation
+      description: Observable discrepancy in client-side algorithm negotiation allows information leaks, enabling man-in-the-middle attacks.
     CVE-2020-12062:
       version_min: 8.2
       version_max: 8.2
@@ -217,6 +247,15 @@ PuTTY_Release:
   version_regex:
     - ssh-2.0-putty_release_(0\.[0-9]+)
   vulnerabilities:
+    CVE-2024-31497:
+      version_min: 0.68
+      version_max: 0.80
+      cvss: N/A
+      description: ecdsa private key recovery by malicious remote server
+    CVE-2023-48795:
+      version_max: 0.79
+      cvss: 5.9
+      description: Terrapin attack
     CVE-2021-36367:
       version_max: 0.71
       cvss: 8.1
