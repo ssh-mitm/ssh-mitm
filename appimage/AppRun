@@ -31,6 +31,5 @@ fi
 # The script then delegates control to `startapp.py` by using the Python interpreter included within the AppImage.
 # `startapp.py` is responsible for further initializing and starting the actual Python application.
 # $@ passes all given arguments through to `startapp.py`.
-export PYTHON_ENTRY_POINT="ssh-mitm"
 
-exec $APPDIR/python/bin/python3 -P -I -m appimage "$@"
+exec $APPDIR/python/bin/python3 -P -m appimage ssh-mitm "$@"
