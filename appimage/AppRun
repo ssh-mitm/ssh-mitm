@@ -32,4 +32,4 @@ fi
 # `startapp.py` is responsible for further initializing and starting the actual Python application.
 # $@ passes all given arguments through to `startapp.py`.
 
-exec $APPDIR/python/bin/python3 -P -m appimage ssh-mitm "$@"
+exec $APPDIR/python/bin/python3 -P -m appimage --python-main ssh-mitm "$@"
