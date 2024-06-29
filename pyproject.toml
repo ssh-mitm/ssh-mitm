@@ -197,6 +197,7 @@ ignore = [
     "TRY301",  # Abstract `raise` to an inner function
     "TRY400",  # Use `logging.exception` instead of `logging.error`
     "UP024",   # Replace aliased errors with `OSError`,
+    "UP037",   # Remove quotes from type annotation
 ]
 [tool.ruff.lint.per-file-ignores]
 "sshmitm/workarounds/monkeypatch.py" = ["ALL"]
