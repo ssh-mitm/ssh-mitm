@@ -24,7 +24,7 @@ if TYPE_CHECKING:
     from sshmitm.moduleparser import ModuleParser
 
 
-class BaseModule(ABC):  # noqa: B024
+class BaseModule(ABC):
     _parser: Optional[BaseModuleArgumentParser] = None
     _modules: Optional[List[Tuple[argparse.Action, Any]]] = None
     _argument_groups: ClassVar[Dict[str, argparse._ArgumentGroup]] = {}
