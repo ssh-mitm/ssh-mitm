@@ -7,9 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
-### Added
+## [5.0.0] - 2024-06-29
 
-- AppImage is able to create virtual python environments to be used to develop plugins
+### Changed
+
+- easier plugin development
+- SSH-MITM uses "appimage" module to start the AppImage
+- merged SOCKS4 and SOCKS5 module in a single module
+- prepend entry points with "sshmitm" to avoid name conflicts
+- updated vulnerability db
 
 
 ## [4.1.1] - 2023-11-01
@@ -421,7 +427,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/4.1.1...master
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/5.0.0...master
+[5.0.0]: https://github.com/ssh-mitm/ssh-mitm/compare/4.1.1...5.0.0
 [4.1.1]: https://github.com/ssh-mitm/ssh-mitm/compare/4.1.0...4.1.1
 [4.1.0]: https://github.com/ssh-mitm/ssh-mitm/compare/4.0.0...4.1.0
 [4.0.0]: https://github.com/ssh-mitm/ssh-mitm/compare/3.0.2...4.0.0
