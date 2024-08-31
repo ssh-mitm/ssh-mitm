@@ -7,7 +7,7 @@ from typing import List, Tuple, cast
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
-from sshmitm.logging import Colors
+from sshmitm.logger import Colors
 from sshmitm.session import Session
 from sshmitm.utils import format_hex
 

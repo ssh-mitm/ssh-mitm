@@ -11,7 +11,7 @@ from sshmitm.forwarders.tunnel import (
     LocalPortForwardingForwarder,
     TunnelForwarder,
 )
-from sshmitm.logging import Colors
+from sshmitm.logger import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 from sshmitm.plugins.tunnel.socks4 import Socks4Error, Socks4Server
 from sshmitm.plugins.tunnel.socks5 import Socks5Error, Socks5Server

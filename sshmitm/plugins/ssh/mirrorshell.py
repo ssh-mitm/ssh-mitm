@@ -10,7 +10,7 @@ import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
 from sshmitm.forwarders.ssh import SSHForwarder
-from sshmitm.logging import Colors
+from sshmitm.logger import Colors
 from sshmitm.plugins.ssh.terminallogs import ScriptLogFormat, TerminalLogFormat
 
 if TYPE_CHECKING:

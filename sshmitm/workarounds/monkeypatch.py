@@ -2,7 +2,7 @@ import threading
 from typing import Any
 import paramiko
 import wrapt  # type: ignore[import-untyped]
-from sshmitm.logging import THREAD_DATA
+from sshmitm.logger import THREAD_DATA
 
 
 def do_init(wrapped: Any, instance: Any, *args: Any, **kwargs: Any) -> Any:

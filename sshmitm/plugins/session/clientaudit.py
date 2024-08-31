@@ -7,7 +7,7 @@ from colored.colored import attr, fg  # type: ignore[import-untyped]
 from packaging import version
 from paramiko import ECDSAKey
 
-from sshmitm.logging import Colors
+from sshmitm.logger import Colors
 from sshmitm.plugins.session.server_host_key_algorithms import (
     SERVER_HOST_KEY_ALGORITHMS,
 )
