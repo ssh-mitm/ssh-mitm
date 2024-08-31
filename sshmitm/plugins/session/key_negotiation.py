@@ -9,7 +9,7 @@ from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
 from rich.markup import escape
 
-from sshmitm.logging import Colors
+from sshmitm.logger import Colors
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
 from sshmitm.utils import resources
 

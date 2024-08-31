@@ -14,7 +14,7 @@ from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.exceptions import MissingHostException
-from sshmitm.logging import Colors
+from sshmitm.logger import Colors
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:

@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Union
 
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
-from sshmitm.logging import Colors
+from sshmitm.logger import Colors
 from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
