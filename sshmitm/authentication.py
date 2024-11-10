@@ -82,8 +82,7 @@ class PublicKeyEnumerator:
         if self.connected:
             return
         self.connected = True
-        self.sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.sock.connect(self.remote_address)
+        self.sock = socket.create_connection(self.remote_address)
         self.transport = paramiko.transport.Transport(self.sock)
         self.transport.start_client()
 
