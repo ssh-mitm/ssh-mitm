@@ -130,4 +130,4 @@ This feature allowes an auditor the check if the client is resistant against age
 
 .. code-block:: bash
 
-    $ ssh -mitm --remote-host 192.168.0.x:PORT --request-agent-breakin
+    $ ssh-mitm --remote-host 192.168.0.x:PORT --request-agent-breakin
