@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [5.0.1] - 2025-01-22
+
 ### Added
 
 - AppImage - added option to use extracted squashfs-root
@@ -438,7 +440,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/5.0.0...master
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/5.0.1...master
+[5.0.1]: https://github.com/ssh-mitm/ssh-mitm/compare/5.0.0...5.0.1
 [5.0.0]: https://github.com/ssh-mitm/ssh-mitm/compare/4.1.1...5.0.0
 [4.1.1]: https://github.com/ssh-mitm/ssh-mitm/compare/4.1.0...4.1.1
 [4.1.0]: https://github.com/ssh-mitm/ssh-mitm/compare/4.0.0...4.1.0
