@@ -116,7 +116,7 @@ check = [
     "flake8 sshmitm",
     "pylint sshmitm",
     "ruff check sshmitm",
-    "mypy sshmitm",
+    "- mypy sshmitm",
 ]
 
 [tool.hatch.envs.docs]
@@ -157,6 +157,7 @@ disable = [
     "too-many-branches",
     "too-many-instance-attributes",
     "too-many-locals",
+    "too-many-positional-arguments",
     "too-many-return-statements",
     "too-many-statements",
 ]
@@ -167,8 +168,6 @@ load-plugins = "pylint.extensions.docparams"
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
-    "ANN101",  # Missing type annotation for `self` in method
-    "ANN102",  # Missing type annotation for `cls` in classmethod
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     "COM812",  # Trailing comma missing
     "D",       # Docstring related

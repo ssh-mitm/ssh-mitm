@@ -47,7 +47,7 @@ def set_module_kwargs(
 
     choices = []
     descriptions = []
-    default_value = kwargs.get("default", None)
+    default_value = kwargs.get("default")
     default_name = None
     for entry_point in entry_points:
         choices.append(entry_point.name)

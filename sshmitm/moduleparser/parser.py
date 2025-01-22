@@ -1,3 +1,5 @@
+# noqa: A005 # Module `parser` shadows a Python standard-library module
+
 """BaseModule parsing library
 
 This module is an extension to the standard Argparse module, which offers the possibility to load to load classes as BaseModule.

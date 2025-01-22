@@ -1,3 +1,5 @@
+# noqa: A005 # Module `formatter` shadows a Python standard-library module
+
 import argparse
 from typing import Any, List, Optional
 
@@ -43,11 +45,7 @@ class ModuleFormatter(argparse.HelpFormatter):
                 current_indent = (
                     self.formatter._current_indent
                 )  # pylint: disable=protected-access
-                heading = "%*s%s:\n" % (  # pylint: disable=consider-using-f-string
-                    current_indent,
-                    "",
-                    Colors.stylize(self.heading, fg("red") + attr("bold")),
-                )
+                heading = f"{' ' * current_indent}{Colors.stylize(self.heading, fg('red') + attr('bold'))}:\n"
             else:
                 heading = ""
 
