@@ -7,6 +7,17 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- AppImage - added option to use extracted squashfs-root
+
+### Fixed
+
+- Rename logging.py to logger.py to avoid naming conflict in jsonlogger when in debug mode - fiexed by [francisfueconcillo](https://github.com/francisfueconcillo)
+- fix connection call for IPv6 SSH servers - fixed by [ lmm-git](https://github.com/lmm-git)
+- fixed typos by [Weltolk](https://github.com/Weltolk)
+
+
 ## [5.0.0] - 2024-06-29
 
 ### Changed
