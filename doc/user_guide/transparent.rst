@@ -93,7 +93,7 @@ To prevent ARP spoofing from affecting critical devices, a static ARP entry can 
 ``ip`` command. This ensures that the system maintains the correct mapping between an IP address
 and a hardware address (MAC address), preventing unwanted changes.
 
-**Adding a Static ARP Entry with ``ip``**
+**Adding a Static ARP Entry**
 
 In modern Linux distributions, the ``ip`` command replaces the older ``arp`` command for managing
 neighbor entries. The following command adds a permanent ARP entry:
