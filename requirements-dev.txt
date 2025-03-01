@@ -16,7 +16,7 @@ cffi==1.16.0
     #   pynacl
 colored==2.2.4
     # via -r requirements.in
-cryptography==42.0.8
+cryptography==43.0.1
     # via
     #   paramiko
     #   sshpubkeys
