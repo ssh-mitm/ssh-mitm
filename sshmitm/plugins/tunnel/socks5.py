@@ -124,7 +124,7 @@ class Socks5Server:
                 Socks5Server.SOCKSVERSION + Socks5AuthenticationType.PASSWORD
             )
         else:
-            clientsock.sendall(Socks5Server.SOCKSVERSION + b"\xFF")
+            clientsock.sendall(Socks5Server.SOCKSVERSION + b"\xff")
             logging.warning("client does not offer supported authentication types")
             return False
 

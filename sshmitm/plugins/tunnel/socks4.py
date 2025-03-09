@@ -33,8 +33,8 @@ class Socks4Command(Socks4Types):
 class Socks4CommandReply(Socks4Types):
     """Bestättigungen für den Socks Proxy"""
 
-    SUCCESS = b"\x5A"
-    FAILED = b"\x5B"
+    SUCCESS = b"\x5a"
+    FAILED = b"\x5b"
 
 
 class Socks4Server:
