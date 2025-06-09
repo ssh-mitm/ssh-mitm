@@ -30,6 +30,7 @@ import threading
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, Union, cast
 from uuid import uuid4
+from multiprocessing import Condition
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
@@ -128,6 +129,8 @@ class Session(BaseSession):
         self.ssh_requested: bool = False
         self.ssh_channel: Optional[paramiko.Channel] = None
         self.ssh_client: Optional[sshmitm.clients.ssh.SSHClient] = None
+        self.ssh_client_auth_finished: bool = False
+        self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
 
         self.scp_requested: bool = False

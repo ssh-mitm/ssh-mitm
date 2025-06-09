@@ -486,11 +486,16 @@ class ProxySFTPServer(paramiko.SFTPServer):
     def start_subsystem(
         self, name: str, transport: paramiko.Transport, channel: paramiko.Channel
     ) -> None:
-        self.session.sftp_client = SFTPClient.from_client(self.session.ssh_client)
-        if not self.session.sftp_client:
-            return
-        self.session.sftp_client.subsystem_count += 1
-        super().start_subsystem(name, transport, channel)
+        with self.session.ssh_client_created:
+            self.session.ssh_client_created.wait_for(
+                lambda: self.session.ssh_client_auth_finished
+            )
+            self.session.sftp_client = SFTPClient.from_client(self.session.ssh_client)
+            if not self.session.sftp_client:
+                logging.error("no sftp client available")
+                return
+            self.session.sftp_client.subsystem_count += 1
+            super().start_subsystem(name, transport, channel)
 
     def finish_subsystem(self) -> None:
         super().finish_subsystem()

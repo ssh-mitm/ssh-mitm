@@ -531,25 +531,28 @@ class Authenticator(BaseModule):
             raise MissingHostException
 
         auth_status = paramiko.common.AUTH_FAILED
-        self.session.ssh_client = SSHClient(
-            host, port, method, password, user, key, self.session
-        )
-        self.pre_auth_action()
-        try:
-            if (
-                self.session.ssh_client is not None
-                and self.session.ssh_client.connect()
-            ):
-                auth_status = paramiko.common.AUTH_SUCCESSFUL
-        except paramiko.SSHException:
-            logging.error(
-                Colors.stylize(
-                    "Connection to remote server refused", fg("red") + attr("bold")
-                )
+        with self.session.ssh_client_created:
+            self.session.ssh_client = SSHClient(
+                host, port, method, password, user, key, self.session
             )
-            return paramiko.common.AUTH_FAILED
-        if run_post_auth:
-            self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
+            self.pre_auth_action()
+            try:
+                if (
+                    self.session.ssh_client is not None
+                    and self.session.ssh_client.connect()
+                ):
+                    auth_status = paramiko.common.AUTH_SUCCESSFUL
+            except paramiko.SSHException:
+                logging.error(
+                    Colors.stylize(
+                        "Connection to remote server refused", fg("red") + attr("bold")
+                    )
+                )
+                return paramiko.common.AUTH_FAILED
+            if run_post_auth:
+                self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
+            self.session.ssh_client_auth_finished = True
+            self.session.ssh_client_created.notify_all()
         return auth_status
 
     def pre_auth_action(self) -> None:

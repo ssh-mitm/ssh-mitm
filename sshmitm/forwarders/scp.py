@@ -4,7 +4,7 @@ import time
 from typing import TYPE_CHECKING, Callable, Optional
 
 import paramiko
-from paramiko.common import cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_EOF, cMSG_CHANNEL_REQUEST
+from paramiko.common import cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_REQUEST
 from paramiko.message import Message
 
 from sshmitm.apps.mosh import handle_mosh
@@ -98,6 +98,7 @@ class SCPBaseForwarder(BaseForwarder):
                     )
 
                 if self.server_channel.exit_status_ready():
+                    logging.debug("Exit from server ready")
                     status = self.server_channel.recv_exit_status()
                     self.server_exit_code_received = True
                     self.close_session_with_status(self.client_channel, status)
@@ -109,6 +110,7 @@ class SCPBaseForwarder(BaseForwarder):
                     time.sleep(0.1)
                     break
                 if self.client_channel.exit_status_ready():
+                    logging.debug("Exit from client ready")
                     status = self.client_channel.recv_exit_status()
                     self.client_exit_code_received = True
                     # self.server_channel.send_exit_status(status)  # noqa: ERA001
@@ -125,22 +127,11 @@ class SCPBaseForwarder(BaseForwarder):
                     self.close_session(self.client_channel)
                     break
                 if self.client_channel.eof_received:
-                    if self.session.scp_command.startswith(b"git-receive-pack"):
-                        # ignore git-receive-pack commands because those can contain EOF,
-                        # which closes the session
-                        continue
-
-                    # TODO @manfred-kaiser: check if EOF should close the session. # noqa: TD003
-                    message = Message()
-                    message.add_byte(cMSG_CHANNEL_EOF)
-                    message.add_int(self.client_channel.remote_chanid)
-                    if self.client_channel.transport is not None:
-                        self.client_channel.transport._send_user_message(message)  # type: ignore[attr-defined]
-                    self.client_channel.send_exit_status(0)
-                    self.close_session(self.client_channel)
-                    break
+                    logging.debug("client channel eof received")
+                    self.server_channel.shutdown_write()
                 if self.server_channel.eof_received:
                     logging.debug("server channel eof received")
+                    self.client_channel.shutdown_write()
 
                 time.sleep(0.1)
         except Exception:
@@ -173,12 +164,7 @@ class SCPBaseForwarder(BaseForwarder):
         if channel.closed:
             return
 
-        if not channel.eof_received or self.server_exit_code_received:
-            message = Message()
-            message.add_byte(cMSG_CHANNEL_EOF)
-            message.add_int(channel.remote_chanid)
-            channel.transport._send_user_message(message)  # type: ignore[union-attr]
-
+        if self.server_exit_code_received:
             if status is not None and self.client_channel is not None:
                 self.client_channel.send_exit_status(status)
                 logging.debug("sent exit status to client: %s", status)
