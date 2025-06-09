@@ -51,7 +51,7 @@ class UdpProxy:
 
         :return: Port number
         """
-        return cast(int, self.socket.getsockname()[1])
+        return cast("int", self.socket.getsockname()[1])
 
     def start(self) -> None:
         """
@@ -157,7 +157,7 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                     listen_port=(
                         0
                         if session.remote_address[0] == "127.0.0.1"
-                        else cast(int, mosh_connect_parts[2])
+                        else cast("int", mosh_connect_parts[2])
                     ),
                 )
                 mosh_port = mosh_proxy.get_bind_port()

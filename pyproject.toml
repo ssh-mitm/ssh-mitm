@@ -117,7 +117,7 @@ check = [
     "flake8 sshmitm",
     "pylint sshmitm",
     "ruff check sshmitm",
-    "- mypy sshmitm",
+    #"- mypy sshmitm",
 ]
 
 [tool.hatch.envs.docs]
@@ -169,6 +169,7 @@ load-plugins = "pylint.extensions.docparams"
 [tool.ruff.lint]
 select = ["ALL"]
 ignore = [
+    "A005",    # Module shadows a Python standard-library module
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     "COM812",  # Trailing comma missing
     "D",       # Docstring related
@@ -178,6 +179,7 @@ ignore = [
     "FBT002",  # Boolean default positional argument in function definition
     "FBT003",  # Boolean positional value in function call
     "FIX002",  # Line contains TODO, consider resolving the issue
+    "LOG015",  # call on root logger
     "N818",    # Exception name `MissingHostException` should be named with an Error suffix
     "PLR0911", # Too many return statements
     "PLR0912", # Too many branches

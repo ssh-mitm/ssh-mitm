@@ -17,10 +17,10 @@ class Socks4Types(Enum):
         return str(self.value)
 
     def __add__(self, other: bytes) -> bytes:
-        return cast(bytes, self.value) + other
+        return cast("bytes", self.value) + other
 
     def __radd__(self, other: bytes) -> bytes:
-        return other + cast(bytes, self.value)
+        return other + cast("bytes", self.value)
 
 
 class Socks4Command(Socks4Types):

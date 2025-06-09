@@ -30,7 +30,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         remotestat = self.stat(path)
         if isinstance(remotestat, int):
             return remotestat
-        oldattr = paramiko.SFTPAttributes.from_stat(cast(os.stat_result, remotestat))
+        oldattr = paramiko.SFTPAttributes.from_stat(cast("os.stat_result", remotestat))
         if not attr.st_uid:
             attr.st_uid = oldattr.st_uid
         if not attr.st_gid:

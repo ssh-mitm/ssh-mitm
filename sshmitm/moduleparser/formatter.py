@@ -1,4 +1,4 @@
-# noqa: A005 # Module `formatter` shadows a Python standard-library module
+# Module `formatter` shadows a Python standard-library module
 
 import argparse
 from typing import Any, List, Optional

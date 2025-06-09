@@ -27,10 +27,10 @@ import logging
 import os
 import socket
 import threading
+from multiprocessing import Condition
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, Union, cast
 from uuid import uuid4
-from multiprocessing import Condition
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
@@ -38,7 +38,7 @@ from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
 from sshmitm.forwarders.agent import AgentProxy
-from sshmitm.interfaces.server import BaseServerInterface, ProxySFTPServer
+from sshmitm.interfaces.server import ProxySFTPServer
 from sshmitm.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
@@ -47,6 +47,7 @@ if TYPE_CHECKING:
     from paramiko.pkey import PKey
 
     import sshmitm
+    from sshmitm.interfaces.server import BaseServerInterface
     from sshmitm.server import SSHProxyServer  # noqa: F401
 
 
@@ -351,7 +352,7 @@ class Session(BaseSession):
                         break
         if self.transport.server_object is not None:
             for tunnel_forwarder in cast(
-                BaseServerInterface, self.transport.server_object
+                "BaseServerInterface", self.transport.server_object
             ).forwarders:
                 tunnel_forwarder.close()
                 tunnel_forwarder.join()

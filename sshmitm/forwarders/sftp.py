@@ -24,7 +24,7 @@ class SFTPHandlerBasePlugin(BaseModule):
 
     @classmethod
     def get_file_handle(cls) -> Type["SFTPBaseHandle"]:
-        return cast(Type[SFTPBaseHandle], SFTPBaseHandle)
+        return cast("Type[SFTPBaseHandle]", SFTPBaseHandle)
 
     def close(self) -> None:
         pass

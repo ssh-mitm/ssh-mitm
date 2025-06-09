@@ -125,7 +125,7 @@ class BaseModule(ABC):  # noqa: B024
             group=f"sshmitm.{entry_point_class.__name__}"
         ):
             if name in (entry_point.name, entry_point.module):
-                return cast(Type[BaseModule], entry_point.load())
+                return cast("Type[BaseModule]", entry_point.load())
         return None
 
 

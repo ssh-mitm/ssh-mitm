@@ -1,4 +1,4 @@
-# noqa: A005 # Module `parser` shadows a Python standard-library module
+# Module `parser` shadows a Python standard-library module
 
 """BaseModule parsing library
 
@@ -99,7 +99,7 @@ class ModuleParser(
         ):
             if entry_point.name in self._registered_subcommands:
                 continue
-            subcommand_cls = cast(Type[SubCommand], entry_point.load())
+            subcommand_cls = cast("Type[SubCommand]", entry_point.load())
             subcommand = subcommand_cls(entry_point.name, self.subcommand)
             subcommand.register_arguments()
             self._registered_subcommands[entry_point.name] = subcommand

@@ -82,8 +82,8 @@ class SSHClientAudit:
         self.client_name: Optional[str] = client_name
         self.client_version: str = client_version
         self.client_info: Dict[str, Dict[str, Any]] = client_info or {}
-        self.product_name: Optional[str] = cast(str, self.client_info.get("name", ""))
-        self.vendor_url: Optional[str] = cast(str, self.client_info.get("url", ""))
+        self.product_name: Optional[str] = cast("str", self.client_info.get("name", ""))
+        self.vendor_url: Optional[str] = cast("str", self.client_info.get("url", ""))
 
     def get_version_string(self) -> Optional[str]:
         """

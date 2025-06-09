@@ -69,7 +69,7 @@ def confirm(primary_message: str, secondary_message: Optional[str] = None) -> bo
     if secondary_message:
         dialog_text = f"{primary_message}\n{secondary_message}"
     answer = tk.messagebox.askquestion("SSH-MITM - Askpass", dialog_text, icon="question")  # type: ignore[attr-defined]
-    return cast(str, answer) == "yes"
+    return cast("str", answer) == "yes"
 
 
 def main() -> NoReturn:
