@@ -89,7 +89,7 @@ class SCPInjectFile(SCPForwarder):
         )
         command = "{}{} {} {}\n".format(  # pylint: disable=consider-using-f-string
             self.file_command,
-            "{:o}".format(  # pylint: disable=consider-using-f-string # noqa: UP032
+            "{:o}".format(  # pylint: disable=consider-using-f-string
                 self.inject_file_stat.st_mode
             )[2:],
             self.inject_file_stat.st_size,

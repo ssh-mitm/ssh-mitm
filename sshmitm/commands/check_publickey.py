@@ -65,9 +65,11 @@ class CheckPublickey(SubCommand):
         keys: Dict[str, List[str]] = defaultdict(list)
         try:
             for file_path in args.public_keys:
-                with Path(file_path).expanduser().open(
-                    "rt", encoding="utf-8"
-                ) as key_handle:
+                with (
+                    Path(file_path)
+                    .expanduser()
+                    .open("rt", encoding="utf-8") as key_handle
+                ):
                     key_file = AuthorizedKeysFile(key_handle, strict=False)
                 for key in key_file.keys:
                     keys[file_path].append(key.keydata)

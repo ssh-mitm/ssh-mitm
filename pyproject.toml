@@ -102,7 +102,7 @@ include = [
 detached = false
 dependencies = [
     "bandit",
-    "black",
+    "black~=25.0",
     "Flake8-pyproject",
     "flake8",
     "mypy",
@@ -198,8 +198,7 @@ ignore = [
     "T201",    # `print` found
     "TRY301",  # Abstract `raise` to an inner function
     "TRY400",  # Use `logging.exception` instead of `logging.error`
-    "UP024",   # Replace aliased errors with `OSError`,
-    "UP037",   # Remove quotes from type annotation
+    "UP",      # pyupgrade (UP) relevant errors
 ]
 [tool.ruff.lint.per-file-ignores]
 "sshmitm/workarounds/monkeypatch.py" = ["ALL"]
