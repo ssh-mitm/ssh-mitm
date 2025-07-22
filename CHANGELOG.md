@@ -7,10 +7,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- added example check_file plugin - will be improved to send files to ClamAV
+- added option to use ssh private keys for remote authentication
+
 ### Fixed
 
 - Resolved issue with EOF handling during remote command execution.
 - Ensured subsystems are started only after SSH client is fully initialized and authenticated.
+- Fixed issues with SFTP file transfers
 
 
 ## [5.0.1] - 2025-01-22

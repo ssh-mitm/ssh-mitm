@@ -224,6 +224,27 @@ class RemoteCredentials:
         (int) an optional integer representing the port number used to connect to the remote host. This argument is optional and if not specified, the value will be `None`.
         """
 
+    @staticmethod
+    def load_private_key(path: str, passphrase: str = None) -> paramiko.PKey:
+        """
+        Lädt einen OpenSSH Private Key aus einer Datei und gibt ein Paramiko PKey-Objekt zurück.
+
+        :param path: Pfad zur Private-Key-Datei (z. B. ~/.ssh/id_ed25519)
+        :param passphrase: Optionales Passwort für verschlüsselte Schlüssel
+        :return: Instanz von paramiko.PKey (z. B. RSAKey, Ed25519Key, ECDSAKey)
+        :raises: paramiko.ssh_exception.SSHException bei ungültigem oder unbekanntem Format
+        """
+        with open(path, "r", encoding="utf-8") as f:
+            key_data = f.read()
+
+        for key_cls in [paramiko.Ed25519Key, paramiko.ECDSAKey, paramiko.RSAKey, paramiko.DSSKey]:
+            try:
+                return key_cls.from_private_key_file(path, password=passphrase)
+            except paramiko.SSHException:
+                continue
+
+        raise paramiko.SSHException("Unbekanntes oder ungültiges Schlüsselformat.")
+
 
 class Authenticator(BaseModule):
     """Options for remote authentication."""
@@ -259,6 +280,11 @@ class Authenticator(BaseModule):
             "--auth-password",
             dest="auth_password",
             help="password for remote authentication",
+        )
+        plugin_group.add_argument(
+            "--auth-key",
+            dest="auth_key",
+            help="ssh private key for remote authentication",
         )
 
         plugin_group.add_argument(
@@ -325,6 +351,8 @@ class Authenticator(BaseModule):
         :param key: remote host private key.
         :return: an object of RemoteCredentials class.
         """
+        if self.args.auth_key:
+            key = RemoteCredentials.load_private_key(self.args.auth_key)
         if self.session.proxyserver.transparent:
             return RemoteCredentials(
                 username=self.args.auth_username or username,
