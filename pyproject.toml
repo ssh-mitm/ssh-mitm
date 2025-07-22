@@ -77,6 +77,7 @@ base = "sshmitm.interfaces.sftp:SFTPProxyServerInterface"
 [project.entry-points."sshmitm.SFTPHandlerBasePlugin"]
 replace_file = "sshmitm.plugins.sftp.replace_file:SFTPProxyReplaceHandler"
 store_file = "sshmitm.plugins.sftp.store_file:SFTPHandlerStoragePlugin"
+check_file = "sshmitm.plugins.sftp.check_file:SFTPHandlerCheckFilePlugin"
 
 [project.entry-points."sshmitm.RemotePortForwardingBaseForwarder"]
 inject = "sshmitm.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardingForwarder"
