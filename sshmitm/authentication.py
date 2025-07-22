@@ -225,25 +225,33 @@ class RemoteCredentials:
         """
 
     @staticmethod
-    def load_private_key(path: str, passphrase: str = None) -> paramiko.PKey:
+    def load_private_key(path: str, passphrase: Optional[str] = None) -> paramiko.PKey:
         """
-        Lädt einen OpenSSH Private Key aus einer Datei und gibt ein Paramiko PKey-Objekt zurück.
+        Loads an OpenSSH private key from a file and returns a Paramiko PKey object.
 
-        :param path: Pfad zur Private-Key-Datei (z. B. ~/.ssh/id_ed25519)
-        :param passphrase: Optionales Passwort für verschlüsselte Schlüssel
-        :return: Instanz von paramiko.PKey (z. B. RSAKey, Ed25519Key, ECDSAKey)
-        :raises: paramiko.ssh_exception.SSHException bei ungültigem oder unbekanntem Format
+        :param path: Path to the private key file (e.g., ~/.ssh/id_ed25519)
+        :param passphrase: Optional password for encrypted keys
+        :return: Instance of paramiko.PKey (e.g., RSAKey, Ed25519Key, ECDSAKey)
+        :raises: paramiko.ssh_exception.SSHException for invalid or unknown key format
         """
         with open(path, "r", encoding="utf-8") as f:
-            key_data = f.read()
+            f.read()
 
-        for key_cls in [paramiko.Ed25519Key, paramiko.ECDSAKey, paramiko.RSAKey, paramiko.DSSKey]:
+        for key_cls in [
+            paramiko.Ed25519Key,
+            paramiko.ECDSAKey,
+            paramiko.RSAKey,
+            paramiko.DSSKey,
+        ]:
             try:
                 return key_cls.from_private_key_file(path, password=passphrase)
-            except paramiko.SSHException:
+            except (  # noqa: PERF203 # `try`-`except` within a loop incurs performance overhead
+                paramiko.SSHException
+            ):
                 continue
 
-        raise paramiko.SSHException("Unbekanntes oder ungültiges Schlüsselformat.")
+        msg = "Unbekanntes oder ungültiges Schlüsselformat."
+        raise paramiko.SSHException(msg)
 
 
 class Authenticator(BaseModule):
