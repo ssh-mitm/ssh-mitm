@@ -56,8 +56,8 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         self.readfile: Optional[paramiko.sftp_file.SFTPFile] = None
 
     def close(self) -> None:
-        super().close()
         self.plugin.close()
+        super().close()
 
     def read(self, offset: int, length: int) -> Union[bytes, int]:
         logging.debug("R_OFFSET: %s", offset)
@@ -74,5 +74,6 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         data = self.plugin.handle_data(data, offset=offset)
         if self.writefile is None:
             return paramiko.sftp.SFTP_FAILURE
-        self.writefile.write(data)
+        if data:
+            self.writefile.write(data)
         return paramiko.sftp.SFTP_OK
