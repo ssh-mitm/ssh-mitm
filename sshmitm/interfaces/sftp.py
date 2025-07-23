@@ -1,6 +1,5 @@
 import logging
-import os
-from typing import List, Union, cast
+from typing import TYPE_CHECKING, List, Union, cast
 
 import paramiko
 from paramiko.sftp_attr import SFTPAttributes
@@ -9,6 +8,9 @@ from paramiko.sftp_handle import SFTPHandle
 from sshmitm.exceptions import MissingClient
 from sshmitm.interfaces.server import BaseServerInterface
 from sshmitm.moduleparser import BaseModule
+
+if TYPE_CHECKING:
+    import os
 
 
 class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):
@@ -62,7 +64,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             return self.session.sftp_client.mkdir(path)
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
-    def open(  # noqa: C901
+    def open(
         self, path: str, flags: int, attr: SFTPAttributes
     ) -> Union[SFTPHandle, int]:
         try:
@@ -71,41 +73,11 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
                 msg = "self.session.sftp_client is None!"
                 raise MissingClient(msg)
 
-            # Code aus dem StubSFTPServer der Paramiko Demo auf GitHub
-            if (flags & os.O_CREAT) and attr:
-                attr._flags &= ~attr.FLAG_PERMISSIONS  # type: ignore[attr-defined]
-            if flags & os.O_WRONLY:
-                fstr = "ab" if flags & os.O_APPEND else "wb"
-            elif flags & os.O_RDWR:
-                fstr = "a+b" if flags & os.O_APPEND else "r+b"
-            else:
-                # O_RDONLY (== 0)
-                fstr = "rb"
-
-            try:
-                if self.session.sftp_client is None:
-                    return paramiko.sftp.SFTP_FAILURE
-                client_f = self.session.sftp_client.open(path, fstr)
-            except Exception:  # pylint: disable=broad-exception-caught
-                logging.exception("Error file")
-                return paramiko.sftp.SFTP_FAILURE
-
             sftp_handler = self.session.proxyserver.sftp_handler
             sftp_file_handle = sftp_handler.get_file_handle()
-            fobj = sftp_file_handle(self.session, sftp_handler, path)
+            fobj = sftp_file_handle(self, self.session, sftp_handler, path, flags, attr)
+            fobj.open_remote_file()
 
-            # writeonly
-            if fstr in ("wb", "ab"):
-                fobj.writefile = client_f
-            # readonly
-            elif fstr == "rb":
-                fobj.readfile = client_f
-            # read and write
-            elif fstr in ("a+b", "r+b"):
-                fobj.writefile = client_f
-                fobj.readfile = client_f
-            if fobj.writefile:
-                self.chattr(path, attr)
         except (OSError, IOError) as exc:
             logging.exception("Error")
             return paramiko.SFTPServer.convert_errno(exc.errno)
