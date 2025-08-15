@@ -18,6 +18,7 @@ from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.console import sshconsole
 from sshmitm.exceptions import KeyGenerationError
+from sshmitm.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
 from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
 from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
 from sshmitm.forwarders.ssh import SSHBaseForwarder, SSHForwarder
@@ -45,6 +46,7 @@ class SSHProxyServer:
         key_length: int = 2048,
         ssh_interface: Type[SSHBaseForwarder] = SSHForwarder,
         scp_interface: Type[SCPBaseForwarder] = SCPForwarder,
+        netconf_interface: Type[NetconfBaseForwarder] = NetconfForwarder,
         sftp_interface: Type[BaseSFTPServerInterface] = SFTPProxyServerInterface,
         sftp_handler: Type[SFTPHandlerBasePlugin] = SFTPHandlerPlugin,
         server_tunnel_interface: Type[
@@ -75,6 +77,7 @@ class SSHProxyServer:
 
         self.ssh_interface: Type[SSHBaseForwarder] = ssh_interface
         self.scp_interface: Type[SCPBaseForwarder] = scp_interface
+        self.netconf_interface: Type[NetconfBaseForwarder] = netconf_interface
         self.sftp_handler: Type[SFTPHandlerBasePlugin] = sftp_handler
         self.sftp_interface: Type[BaseSFTPServerInterface] = (
             self.sftp_handler.get_interface() or sftp_interface
@@ -364,6 +367,11 @@ class SSHProxyServer:
                             session.scp_requested = False
                             scp_interface = self.scp_interface(session)
                             thread = threading.Thread(target=scp_interface.forward)
+                            thread.start()
+                        elif session.netconf_requested and self.netconf_interface:
+                            session.netconf_requested = False
+                            netconf_interface = self.netconf_interface(session)
+                            thread = threading.Thread(target=netconf_interface.forward)
                             thread.start()
 
                 else:
