@@ -2,6 +2,7 @@ import logging
 from typing import TYPE_CHECKING, List, Union, cast
 
 import paramiko
+from paramiko.sftp import SFTP_NO_SUCH_FILE
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 
@@ -53,7 +54,11 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         if self.session.sftp_client is None:
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
-        return self.session.sftp_client.lstat(path)
+        try:
+            return self.session.sftp_client.lstat(path)
+        except FileNotFoundError:
+            logging.debug("File %s not found", path)
+            return SFTP_NO_SUCH_FILE
 
     def mkdir(self, path: str, attr: SFTPAttributes) -> int:
         self.session.sftp_client_ready.wait()
@@ -119,7 +124,11 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         if self.session.sftp_client is None:
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
-        return self.session.sftp_client.stat(path)
+        try:
+            return self.session.sftp_client.stat(path)
+        except FileNotFoundError:
+            logging.debug("File %s not found", path)
+            return SFTP_NO_SUCH_FILE
 
     def symlink(self, target_path: str, path: str) -> int:
         self.session.sftp_client_ready.wait()

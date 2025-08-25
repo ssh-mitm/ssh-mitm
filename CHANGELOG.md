@@ -17,6 +17,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Resolved issue with EOF handling during remote command execution.
 - Ensured subsystems are started only after SSH client is fully initialized and authenticated.
 - Fixed issues with SFTP file transfers
+- Fixed stat and lstat command in sftp interface by returning SFTP_NO_SUCH_FILE if remote file does not exist
 
 
 ## [5.0.1] - 2025-01-22
