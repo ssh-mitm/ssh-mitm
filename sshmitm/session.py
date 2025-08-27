@@ -215,8 +215,12 @@ class Session(BaseSession):
             host_key: Optional[PKey] = self.proxyserver.host_key
             if host_key is not None:
                 self._transport.add_server_key(host_key)
+            # this will set the subsystemhandler to ProxySFTPServer and passes the arguments
             self._transport.set_subsystem_handler(
-                "sftp", ProxySFTPServer, self.proxyserver.sftp_interface, self
+                name="sftp",
+                handler=ProxySFTPServer,
+                sftp_si=self.proxyserver.sftp_interface,
+                session=self,
             )
 
         return self._transport

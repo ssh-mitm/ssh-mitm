@@ -1,9 +1,12 @@
 import logging
 import os
+import struct
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union
 
 import paramiko
+from paramiko.message import Message
 from paramiko.pkey import PKey
+from paramiko.sftp import _VERSION, CMD_INIT, CMD_VERSION, SFTPError
 from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.clients.sftp import SFTPClient
@@ -483,6 +486,22 @@ class ProxySFTPServer(paramiko.SFTPServer):
         self.session = session
         self.session.register_session_thread()
         self.channel = channel
+
+    def _send_server_version(self) -> int:
+        # winscp will freak out if the server sends version info before the
+        # client finishes sending INIT.
+        # check-file was removed, because it's not a common extension, which is used by most clients
+        # original implementaion:
+        # https://github.com/paramiko/paramiko/blob/d9ab89a0f8ae37a25d44565d5eb03a5d93fed5b9/paramiko/sftp.py#L153
+
+        t, data = self._read_packet()
+        if t != CMD_INIT:
+            raise SFTPError("Incompatible sftp protocol")  # noqa: TRY003,EM101
+        version = struct.unpack(">I", data[:4])[0]
+        msg = Message()
+        msg.add_int(_VERSION)
+        self._send_packet(CMD_VERSION, msg)
+        return version
 
     def start_subsystem(
         self, name: str, transport: paramiko.Transport, channel: paramiko.Channel
