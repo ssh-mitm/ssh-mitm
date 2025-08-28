@@ -77,6 +77,8 @@ class SSHClient(BaseSSHClient):
         user: str,
         key: Optional[PKey],
         session: "sshmitm.session.Session",
+        fingerprints: Optional[str] = None,
+        disable_fingerprint_warning: bool = False,
     ) -> None:
         super().__init__()
         self.session: "sshmitm.session.Session" = session
@@ -90,6 +92,10 @@ class SSHClient(BaseSSHClient):
         self.key: Optional[PKey] = key
         self.transport: Optional[paramiko.Transport] = None
         self.connected: bool = False
+        self.fingerprints: list[str] = [
+            f.strip() for f in (fingerprints or "").split(",") if f.strip()
+        ]
+        self.disable_fingerprint_warning: bool = disable_fingerprint_warning
 
     def connect(self) -> bool:  # noqa: C901
         """
@@ -178,5 +184,25 @@ class SSHClient(BaseSSHClient):
         :param key: Key of the remote server.
         :return: True if the host key is valid, False otherwise.
         """
-        del hostname, keytype, key  # unused arguments
-        return True
+        logging.debug(
+            "Remote server fingerprint: %s - %s - %s",
+            hostname,
+            keytype,
+            key.fingerprint,
+        )
+        if not self.fingerprints:
+            if not self.disable_fingerprint_warning:
+                logging.warning(
+                    "remote fingerprint verification not enabled. use '--remote-fingerprints' argument to enable it. accepting %s",
+                    key.fingerprint,
+                )
+            return True
+        fingerprint_valid = key.fingerprint in self.fingerprints
+        if not fingerprint_valid:
+            logging.error(
+                "remote fingerprint %s does not match provided fingerprints",
+                key.fingerprint,
+            )
+        elif not self.disable_fingerprint_warning:
+            logging.info("remote fingerprint matches provided fingerprint")
+        return fingerprint_valid

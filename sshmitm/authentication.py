@@ -280,6 +280,18 @@ class Authenticator(BaseModule):
             help="remote port to connect to (default 22)",
         )
         plugin_group.add_argument(
+            "--remote-fingerprints",
+            type=str,
+            dest="remote_fingerprints",
+            help="comma-separated fingerprints; empty disables check",
+        )
+        plugin_group.add_argument(
+            "--disable-remote-fingerprint-warning",
+            dest="disable_remote_fingerprint_warning",
+            action="store_true",
+            help="disables the warning if no remote fingerprints are provided",
+        )
+        plugin_group.add_argument(
             "--auth-username",
             dest="auth_username",
             help="username for remote authentication",
@@ -569,7 +581,15 @@ class Authenticator(BaseModule):
         auth_status = paramiko.common.AUTH_FAILED
         with self.session.ssh_client_created:
             self.session.ssh_client = SSHClient(
-                host, port, method, password, user, key, self.session
+                host,
+                port,
+                method,
+                password,
+                user,
+                key,
+                self.session,
+                self.args.remote_fingerprints,
+                self.args.disable_remote_fingerprint_warning,
             )
             self.pre_auth_action()
             try:
