@@ -7,7 +7,6 @@ import paramiko
 from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.sftp import _VERSION, CMD_INIT, CMD_VERSION, SFTPError
-from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.clients.sftp import SFTPClient
 from sshmitm.moduleparser import BaseModule
@@ -273,14 +272,12 @@ class ServerInterface(BaseServerInterface):
         )
 
     def check_auth_publickey(self, username: str, key: PKey) -> int:
-        ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
-        ssh_pub_key.parse()
         logging.debug(
             "check_auth_publickey: username=%s, key=%s %s %sbits",
             username,
             key.get_name(),
-            ssh_pub_key.hash_sha256(),
-            ssh_pub_key.bits,
+            key.fingerprint,
+            key.get_bits(),
         )
 
         if self.session.session_log_dir:

@@ -1,7 +1,11 @@
+import base64
 import binascii
+import hashlib
 import sys
 
-__all__ = ["format_hex", "metadata", "resources"]
+from paramiko import PKey
+
+__all__ = ["SSHPubKey", "format_hex", "metadata", "resources"]
 
 if sys.version_info >= (3, 10):
     from importlib import metadata, resources
@@ -38,3 +42,30 @@ def format_hex(data: bytes, hexwidth: int = 19) -> str:
         result.append(addr)
 
     return "\n".join(result)
+
+
+class SSHPubKey:
+
+    def __init__(self, key: PKey) -> None:
+        self.key = key
+
+    def hash_md5(self) -> str:
+        """Calculate md5 fingerprint.
+
+        For specification, see RFC4716, section 4."""
+        fp_plain = hashlib.md5(self.key.asbytes(), usedforsecurity=False).hexdigest()
+        return "MD5:" + ":".join(a + b for a, b in zip(fp_plain[::2], fp_plain[1::2]))
+
+    def hash_sha256(self) -> str:
+        """Calculate sha256 fingerprint."""
+        fp_plain = hashlib.sha256(self.key.asbytes()).digest()
+        return (b"SHA256:" + base64.b64encode(fp_plain).replace(b"=", b"")).decode(
+            "utf-8"
+        )
+
+    def hash_sha512(self) -> str:
+        """Calculates sha512 fingerprint."""
+        fp_plain = hashlib.sha512(self.key.asbytes()).digest()
+        return (b"SHA512:" + base64.b64encode(fp_plain).replace(b"=", b"")).decode(
+            "utf-8"
+        )

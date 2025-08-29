@@ -703,15 +703,13 @@ class AuthenticatorPassThrough(Authenticator):
         if not self.pubkey_enumerator:
             self.pubkey_enumerator = PublicKeyEnumerator(host, port)
 
-        ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
-        ssh_pub_key.parse()
         if key.can_sign():
             logging.debug(
                 "AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits",
                 username,
                 key.get_name(),
-                ssh_pub_key.hash_sha256(),
-                ssh_pub_key.bits,
+                key.fingerprint,
+                key.get_bits(),
             )
             return self.connect(
                 username, host, port, AuthenticationMethod.PUBLICKEY, key=key
@@ -735,8 +733,8 @@ class AuthenticatorPassThrough(Authenticator):
                     port,
                     username,
                     key.get_name(),
-                    ssh_pub_key.hash_sha256(),
-                    ssh_pub_key.bits,
+                    key.fingerprint,
+                    key.get_bits(),
                 )
                 self.pubkey_auth_success = True
                 self.valid_key = key
@@ -830,22 +828,14 @@ class AuthenticatorPassThrough(Authenticator):
             self.session.accepted_key is not None
             and self.session.remote_key != self.session.accepted_key
         ):
-            ssh_pub_key = SSHKey(
-                f"{self.session.accepted_key.get_name()} {self.session.accepted_key.get_base64()}"
-            )
-            ssh_pub_key.parse()
             logmessage.append(
                 "\tAccepted-Publickey: "
-                f"{self.session.accepted_key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits"
+                f"{self.session.accepted_key.get_name()} {self.session.accepted_key.fingerprint} {self.session.accepted_key.get_bits()}bits"
             )
 
         if self.session.remote_key is not None:
-            ssh_pub_key = SSHKey(
-                f"{self.session.remote_key.get_name()} {self.session.remote_key.get_base64()}"
-            )
-            ssh_pub_key.parse()
             logmessage.append(
-                f"\tRemote-Publickey: {self.session.remote_key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits"
+                f"\tRemote-Publickey: {self.session.remote_key.get_name()} {self.session.remote_key.fingerprint} {self.session.remote_key.get_bits()}bits"
             )
 
         ssh_keys = None

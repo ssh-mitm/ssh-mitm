@@ -25,7 +25,6 @@ from typing import TYPE_CHECKING, Optional
 import paramiko
 import paramiko.hostkeys
 from paramiko.pkey import PKey
-from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
 from sshmitm.moduleparser import BaseModule
@@ -129,14 +128,12 @@ class SSHClient(BaseSSHClient):
                             self.transport.connect(
                                 username=self.user, password=self.password, pkey=k
                             )
-                            ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
-                            ssh_pub_key.parse()
                             logging.debug(
                                 "ssh-mitm connected to remote host with username=%s, key=%s %s %sbits",
                                 self.user,
                                 k.get_name(),
-                                ssh_pub_key.hash_sha256(),
-                                ssh_pub_key.bits,
+                                k.fingerprint,
+                                k.get_bits(),
                             )
                             break
                         except paramiko.AuthenticationException:
