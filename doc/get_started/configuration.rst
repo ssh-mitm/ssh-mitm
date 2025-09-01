@@ -7,7 +7,9 @@
 
 
 .. confval:: [SSH-MITM]
+
    .. code-block:: ini
+
       [SSH-MITM]
       debug = False
       paramiko-log-level = warning
@@ -284,7 +286,9 @@ SFTP-Handler-Plugins
 --------------------
 
 .. confval:: [sshmitm.plugins.sftp.store_file:SFTPHandlerStoragePlugin]
+
    .. code-block:: ini
+
       [sshmitm.plugins.sftp.store_file:SFTPHandlerStoragePlugin]
       store-sftp-files = False
 
