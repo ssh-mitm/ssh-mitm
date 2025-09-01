@@ -12,6 +12,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added example check_file plugin - will be improved to send files to ClamAV
 - added option to use ssh private keys for remote authentication
 - added option to provide remote ssh server fingerprints
+- added new authentication plugin "AuthenticatorRemote" which allows to provide remote credentials without passthrough 
 
 ### Fixed
 
