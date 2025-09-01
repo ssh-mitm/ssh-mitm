@@ -40,7 +40,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             "--sftp-replace-file",
             dest="sftp_replace_file",
             required=True,
-            help="file that is used for replacement",
+            help="Specifies the path to the file that will be used for replacement during SFTP file transfers. This option is required.",
         )
 
     def __init__(self, sftp: SFTPBaseHandle, filename: str) -> None:

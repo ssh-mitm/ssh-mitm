@@ -19,7 +19,7 @@ class CVE202229154(SCPForwarder):
             "--rsync-inject-file",
             dest="rsync_inject_file",
             required=True,
-            help="inject an additional file in the rsync command sent to the server",
+            help="Specifies the path to the file that will be injected into the rsync command sent to the server. This option is required.",
         )
 
     def rewrite_scp_command(self, command: str) -> str:

@@ -23,12 +23,12 @@ class SCPRewriteCommand(SCPForwarder):
         plugin_group.add_argument(
             "--scp-append-string",
             dest="scp_append_string",
-            help="append a string to the existing command",
+            help="Specifies a string that will be appended to the existing SCP command during execution.",
         )
         plugin_group.add_argument(
             "--scp-replace-string",
             dest="scp_replace_string",
-            help="replace the command with another command",
+            help="Specifies a string that will replace the original SCP command during execution.",
         )
 
     def rewrite_scp_command(self, command: str) -> str:

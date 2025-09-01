@@ -86,18 +86,18 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
         plugin_group.add_argument(
             "--socks-listen-address",
             dest="socks_listen_address",
-            help="socks server listen address (default: 127.0.0.1)",
+            help="Specifies the listen address for the SOCKS server. Default is 127.0.0.1.",
         )
         plugin_group.add_argument(
             "--socks5-username",
             dest="socks5_username",
-            help="username for the SOCKS5 server",
+            help="Specifies the username for authenticating with the SOCKS5 server.",
         )
         plugin_group.add_argument(
             "--socks5-password",
             dest="socks5_password",
             required="--socks5-username" in sys.argv,
-            help="password for the SOCKS5 server",
+            help="Specifies the password for authenticating with the SOCKS5 server. Required if a username is provided.",
         )
 
     tcpservers: ClassVar[List[TCPServerThread]] = []

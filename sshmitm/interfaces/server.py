@@ -43,69 +43,75 @@ class ServerInterface(BaseServerInterface):
     def parser_arguments(cls) -> None:
         plugin_group = cls.argument_group()
         plugin_group.add_argument(
-            "--disable-ssh", dest="disable_ssh", action="store_true", help="disable ssh"
+            "--disable-ssh",
+            dest="disable_ssh",
+            action="store_true",
+            help="Disables SSH functionality, preventing SSH connections to the server.",
         )
         plugin_group.add_argument(
-            "--disable-scp", dest="disable_scp", action="store_true", help="disable scp"
+            "--disable-scp",
+            dest="disable_scp",
+            action="store_true",
+            help="Disables SCP (Secure Copy Protocol) functionality, preventing file transfers via SCP.",
         )
         plugin_group.add_argument(
             "--disable-password-auth",
             dest="disable_password_auth",
             action="store_true",
-            help="disable password authentication",
+            help="Disables password-based authentication, forcing clients to use alternative authentication methods.",
         )
         plugin_group.add_argument(
             "--disable-publickey-auth",
             dest="disable_pubkey_auth",
             action="store_true",
-            help="disable public key authentication (not RFC-4252 conform)",
+            help="Disables public key authentication. Note that this is not RFC-4252 compliant.",
         )
         plugin_group.add_argument(
             "--accept-first-publickey",
             dest="accept_first_publickey",
             action="store_true",
-            help="accepts the first key - does not check if user is allowed to login with publickey authentication",
+            help="Accepts the first public key provided by the client without checking if the user is allowed to log in using public key authentication.",
         )
         plugin_group.add_argument(
             "--disallow-publickey-auth",
             dest="disallow_publickey_auth",
             action="store_true",
-            help="disallow public key authentication but still checks if publickey authentication would be possible",
+            help="Disallows public key authentication but still verifies whether public key authentication would be possible.",
         )
         plugin_group.add_argument(
             "--enable-none-auth",
             dest="enable_none_auth",
             action="store_true",
-            help='enable "none" authentication',
+            help='Enables "none" authentication, which allows connections without any authentication.',
         )
         plugin_group.add_argument(
             "--enable-trivial-auth",
             dest="enable_trivial_auth",
             action="store_true",
-            help='enables "trivial success authentication" phishing attack',
+            help='Enables "trivial success authentication" phishing attack, which simulates a successful authentication without actual validation.',
         )
         plugin_group.add_argument(
             "--enable-keyboard-interactive-auth",
             dest="enable_keyboard_interactive_auth",
             action="store_true",
-            help='enable "keyboard-interactive" authentication',
+            help='Enables "keyboard-interactive" authentication, allowing interactive authentication prompts.',
         )
         plugin_group.add_argument(
             "--disable-keyboard-interactive-prompts",
             dest="disable_keyboard_interactive_prompts",
             action="store_true",
-            help="disable prompts for keyboard-interactive",
+            help="Disables prompts for keyboard-interactive authentication, preventing interactive authentication challenges.",
         )
         plugin_group.add_argument(
             "--extra-auth-methods",
             dest="extra_auth_methods",
-            help="extra authentication mehtod names",
+            help="Specifies additional authentication method names that are supported by the server.",
         )
         plugin_group.add_argument(
             "--disable-auth-method-lookup",
             dest="disable_auth_method_lookup",
             action="store_true",
-            help="disable auth method lookup on remote server during authentication",
+            help="Disables the lookup of supported authentication methods on the remote server during the authentication process.",
         )
 
     def check_channel_exec_request(

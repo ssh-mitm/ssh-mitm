@@ -35,13 +35,13 @@ class SCPStorageForwarder(SCPForwarder):
             "--store-scp-files",
             dest="store_scp_files",
             action="store_true",
-            help="store files from scp",
+            help="Enables the storage of files transferred via SCP (Secure Copy Protocol).",
         )
         plugin_group.add_argument(
             "--store-command-data",
             dest="store_command_data",
             action="store_true",
-            help="store data from non-interactive ssh commands",
+            help="Enables the storage of data from non-interactive SSH commands.",
         )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
