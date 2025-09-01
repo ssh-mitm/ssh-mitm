@@ -9,7 +9,7 @@ from socket import socket
 from typing import List, Optional, Tuple, Type, Union
 
 from colored import attr, fg  # type: ignore[import-untyped]
-from paramiko import DSSKey, ECDSAKey, Ed25519Key, PKey, RSAKey
+from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey
 from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
 
@@ -179,10 +179,7 @@ class SSHProxyServer:
     def generate_host_key(self) -> None:  # noqa: C901
         self.key_algorithm_class = None
         key_algorithm_bits = None
-        if self.key_algorithm == "dss":
-            self.key_algorithm_class = DSSKey
-            key_algorithm_bits = self.key_length
-        elif self.key_algorithm == "rsa":
+        if self.key_algorithm == "rsa":
             self.key_algorithm_class = RSAKey
             key_algorithm_bits = self.key_length
         elif self.key_algorithm == "ecdsa":
@@ -210,7 +207,7 @@ class SSHProxyServer:
             if not os.path.isfile(self.key_file):
                 msg = f"host key '{self.key_file}' file does not exist"
                 raise FileNotFoundError(msg)
-            for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
+            for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
                 try:
                     key = self._key_from_filepath(self.key_file, pkey_class, None)
                     self._hostkey = key

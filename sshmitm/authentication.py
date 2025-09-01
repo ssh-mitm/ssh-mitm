@@ -241,7 +241,6 @@ class RemoteCredentials:
             paramiko.Ed25519Key,
             paramiko.ECDSAKey,
             paramiko.RSAKey,
-            paramiko.DSSKey,
         ]:
             try:
                 return key_cls.from_private_key_file(path, password=passphrase)

@@ -4,7 +4,7 @@ colored
 importlib_metadata>=4.6; python_version < "3.10"
 importlib_resources>=5.0; python_version < "3.10"
 packaging
-paramiko>=3.5,<3.6
+paramiko>=4.0,<4.1
 python-json-logger
 pytz
 pyyaml
