@@ -176,7 +176,7 @@ class SSHProxyServer:
                 rich_print("[bold red]:exclamation: Debug mode enabled")
             sshconsole.rule("[red]waiting for connections", style="red")
 
-    def generate_host_key(self) -> None:  # noqa: C901
+    def generate_host_key(self) -> None:
         self.key_algorithm_class = None
         key_algorithm_bits = None
         if self.key_algorithm == "rsa":

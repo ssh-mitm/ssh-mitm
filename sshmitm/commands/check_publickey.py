@@ -5,10 +5,10 @@ from pathlib import Path
 from typing import Dict, List, Optional
 
 from rich import print as rich_print
-from sshpubkeys import AuthorizedKeysFile, SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.authentication import PublicKeyEnumerator
 from sshmitm.moduleparser import SubCommand
+from sshmitm.utils import SSHPubKey
 
 
 class CheckPublickey(SubCommand):
@@ -42,15 +42,17 @@ class CheckPublickey(SubCommand):
         if not valid_keys:
             rich_print("[bold red]:cross_mark: No valid keys found[/bold red]")
             return
+
         rich_print("[bold green]:heavy_check_mark: Valid keys found[/bold green]")
+
         for filepath, keys in valid_keys.items():
-            for key in keys:
-                ssh_key = SSHKey(key, strict=True)
+            for key_line in keys:
+                ssh_key = SSHPubKey.from_ssh_line(key_line)
                 print(
                     filepath,
                     "---",
-                    ssh_key.key_type.decode(),
-                    ssh_key.bits,
+                    ssh_key.get_name(),
+                    ssh_key.get_bits(),
                     ssh_key.hash_sha256(),
                     ssh_key.comment or "",
                 )
@@ -70,9 +72,10 @@ class CheckPublickey(SubCommand):
                     .expanduser()
                     .open("rt", encoding="utf-8") as key_handle
                 ):
-                    key_file = AuthorizedKeysFile(key_handle, strict=False)
-                for key in key_file.keys:
-                    keys[file_path].append(key.keydata)
+                    for line in key_handle:
+                        stripped_line = line.strip()
+                        if stripped_line and not stripped_line.startswith("#"):
+                            keys[file_path].append(stripped_line)
         except FileNotFoundError as exc:
             sys.exit(str(exc))
 

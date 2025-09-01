@@ -27,6 +27,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Removed SSH extension "check-file", which was announced by Paramiko – [draft-ietf-secsh-filexfer-extensions-00 §3](https://datatracker.ietf.org/doc/html/draft-ietf-secsh-filexfer-extensions-00#section-3)
 - update paramiko requirements to 4.0
 - removed support for DSS keys
+- replaced sshpubkeys module with paramiko based utility class to handle ssh public keys
 
 
 ## [5.0.1] - 2025-01-22

@@ -9,5 +9,4 @@ python-json-logger
 pytz
 pyyaml
 rich
-sshpubkeys
 wrapt

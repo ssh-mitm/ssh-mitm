@@ -5,17 +5,17 @@ import sys
 import threading
 from abc import abstractmethod
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import PKey
-from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.exceptions import MissingHostException
 from sshmitm.logger import Colors
 from sshmitm.moduleparser import BaseModule
+from sshmitm.utils import SSHPubKey
 
 if TYPE_CHECKING:
     import sshmitm
@@ -763,20 +763,15 @@ class AuthenticatorPassThrough(Authenticator):
         All this information can be saved to a log file for later review.
         """
 
-        def get_agent_pubkeys() -> List[Tuple[str, SSHKey, bool, str]]:
+        def get_agent_pubkeys() -> List[SSHPubKey]:
             pubkeyfile_path = None
 
-            keys_parsed: List[Tuple[str, SSHKey, bool, str]] = []
+            keys_parsed: List[SSHPubKey] = []
             if self.session.agent is None:
                 return keys_parsed
 
             keys = self.session.agent.get_keys()
-            for k in keys:
-                ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
-                ssh_pub_key.parse()
-                keys_parsed.append(
-                    (k.get_name(), ssh_pub_key, k.can_sign(), k.get_base64())
-                )
+            keys_parsed.extend(SSHPubKey(key) for key in keys)
 
             if self.session.session_log_dir:
                 os.makedirs(self.session.session_log_dir, exist_ok=True)
@@ -784,11 +779,11 @@ class AuthenticatorPassThrough(Authenticator):
                     self.session.session_log_dir, "publickeys"
                 )
                 with open(pubkeyfile_path, "a+", encoding="utf-8") as pubkeyfile:
-                    pubkeyfile.write(
-                        "".join(
-                            [f"{k[0]} {k[3]} saved-from-agent\n" for k in keys_parsed]
+                    for ssh_pub_key in keys_parsed:
+                        comment = "saved-from-agent"
+                        pubkeyfile.write(
+                            f"{ssh_pub_key.get_name()} {ssh_pub_key.get_base64()} {comment}\n"
                         )
-                    )
 
             return keys_parsed
 
@@ -848,7 +843,7 @@ class AuthenticatorPassThrough(Authenticator):
             logmessage.append(
                 "\n".join(
                     [
-                        f"\t\tAgent-Key: {k[0]} {k[1].hash_sha256()} {k[1].bits}bits, can sign: {k[2]}"
+                        f"\t\tAgent-Key: {k.get_name()} {k.hash_sha256()} {k.get_bits()}bits, can sign: {k.can_sign()}"
                         for k in ssh_keys
                     ]
                 )
