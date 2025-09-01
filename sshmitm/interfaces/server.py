@@ -438,10 +438,11 @@ class ServerInterface(BaseServerInterface):
             pixelwidth,
             pixelheight,
         )
-        if self.session.ssh_channel:
-            self.session.ssh_channel.resize_pty(width, height, pixelwidth, pixelheight)
-            return True
-        return False
+        if not self.session.ssh_remote_channel:
+            logging.error("session.ssh_remote_channel not initialized!")
+            return False
+        self.session.ssh_remote_channel.resize_pty(width, height, pixelwidth, pixelheight)
+        return True
 
     def check_channel_x11_request(  # pylint: disable=too-many-arguments
         self,

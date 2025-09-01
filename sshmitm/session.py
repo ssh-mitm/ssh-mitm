@@ -133,6 +133,7 @@ class Session(BaseSession):
         self.ssh_client_auth_finished: bool = False
         self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
+        self.ssh_remote_channel: Optional[paramiko.Channel] = None
 
         self.scp_requested: bool = False
         self.scp_channel: Optional[paramiko.Channel] = None

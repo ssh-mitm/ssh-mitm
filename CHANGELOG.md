@@ -19,6 +19,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Ensured subsystems are started only after SSH client is fully initialized and authenticated.
 - Fixed issues with SFTP file transfers
 - Fixed stat and lstat command in sftp interface by returning SFTP_NO_SUCH_FILE if remote file does not exist
+- fix #187 - forward pty change requests to the remote server
 
 ### Changed
 
