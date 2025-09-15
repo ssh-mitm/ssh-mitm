@@ -133,6 +133,7 @@ class Session(BaseSession):
         self.ssh_client_auth_finished: bool = False
         self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
+        self.ssh_remote_channel: Optional[paramiko.Channel] = None
 
         self.scp_requested: bool = False
         self.scp_channel: Optional[paramiko.Channel] = None
@@ -228,8 +229,12 @@ class Session(BaseSession):
             host_key: Optional[PKey] = self.proxyserver.host_key
             if host_key is not None:
                 self._transport.add_server_key(host_key)
+            # this will set the subsystemhandler to ProxySFTPServer and passes the arguments
             self._transport.set_subsystem_handler(
-                "sftp", ProxySFTPServer, self.proxyserver.sftp_interface, self
+                name="sftp",
+                handler=ProxySFTPServer,
+                sftp_si=self.proxyserver.sftp_interface,
+                session=self,
             )
             self._transport.set_subsystem_handler(
                 "netconf", ProxyNetconfServer, self.proxyserver.netconf_interface, self

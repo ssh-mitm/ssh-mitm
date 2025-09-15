@@ -9,10 +9,9 @@ from socket import socket
 from typing import List, Optional, Tuple, Type, Union
 
 from colored import attr, fg  # type: ignore[import-untyped]
-from paramiko import DSSKey, ECDSAKey, Ed25519Key, PKey, RSAKey
+from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey
 from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
-from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
@@ -31,6 +30,7 @@ from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInte
 from sshmitm.logger import Colors
 from sshmitm.multisocket import create_server_sock
 from sshmitm.session import Session
+from sshmitm.utils import SSHPubKey
 
 
 class SSHProxyServer:
@@ -73,7 +73,6 @@ class SSHProxyServer:
         self.key_algorithm: str = key_algorithm
         self.key_algorithm_class: Optional[Type[PKey]] = None
         self.key_length: int = key_length
-        self.ssh_pub_key: Optional[SSHKey] = None
 
         self.ssh_interface: Type[SSHBaseForwarder] = ssh_interface
         self.scp_interface: Type[SCPBaseForwarder] = scp_interface
@@ -104,24 +103,21 @@ class SSHProxyServer:
             sys.exit(1)
 
     def print_serverinfo(self, json_log: bool = False) -> None:
-        if (
-            self.ssh_pub_key is None
-            or self.key_algorithm_class is None
-            or self._hostkey is None
-        ):
+        if self.key_algorithm_class is None or self._hostkey is None:
             return
+        ssh_host_key_pub = SSHPubKey(self._hostkey)
         log_data = {
             "keygeneration": "loaded" if self.key_file else "generated temporary",
             "algorithm": self.key_algorithm_class.__name__,
             "bits": self._hostkey.get_bits(),
             "md5": Colors.stylize(
-                self.ssh_pub_key.hash_md5(), fg("light_blue") + attr("bold")
+                ssh_host_key_pub.hash_md5(), fg("light_blue") + attr("bold")
             ),
             "sha256": Colors.stylize(
-                self.ssh_pub_key.hash_sha256(), fg("light_blue") + attr("bold")
+                ssh_host_key_pub.hash_sha256(), fg("light_blue") + attr("bold")
             ),
             "sha512": Colors.stylize(
-                self.ssh_pub_key.hash_sha512(), fg("light_blue") + attr("bold")
+                ssh_host_key_pub.hash_sha512(), fg("light_blue") + attr("bold")
             ),
             "listen_address": self.listen_address,
             "listen_port": self.listen_port,
@@ -183,13 +179,10 @@ class SSHProxyServer:
                 rich_print("[bold red]:exclamation: Debug mode enabled")
             sshconsole.rule("[red]waiting for connections", style="red")
 
-    def generate_host_key(self) -> None:  # noqa: C901
+    def generate_host_key(self) -> None:
         self.key_algorithm_class = None
         key_algorithm_bits = None
-        if self.key_algorithm == "dss":
-            self.key_algorithm_class = DSSKey
-            key_algorithm_bits = self.key_length
-        elif self.key_algorithm == "rsa":
+        if self.key_algorithm == "rsa":
             self.key_algorithm_class = RSAKey
             key_algorithm_bits = self.key_length
         elif self.key_algorithm == "ecdsa":
@@ -217,7 +210,7 @@ class SSHProxyServer:
             if not os.path.isfile(self.key_file):
                 msg = f"host key '{self.key_file}' file does not exist"
                 raise FileNotFoundError(msg)
-            for pkey_class in (RSAKey, DSSKey, ECDSAKey, Ed25519Key):
+            for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
                 try:
                     key = self._key_from_filepath(self.key_file, pkey_class, None)
                     self._hostkey = key
@@ -227,12 +220,6 @@ class SSHProxyServer:
             else:
                 logging.error("host key format not supported!")
                 raise KeyGenerationError
-
-        if self._hostkey is not None:
-            self.ssh_pub_key = SSHKey(
-                f"{self._hostkey.get_name()} {self._hostkey.get_base64()}"
-            )
-            self.ssh_pub_key.parse()
 
     def _key_from_filepath(
         self, filename: str, klass: Type[PKey], password: Optional[str]

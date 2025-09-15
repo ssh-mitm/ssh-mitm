@@ -1,10 +1,12 @@
 import logging
 import os
+import struct
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union
 
 import paramiko
+from paramiko.message import Message
 from paramiko.pkey import PKey
-from sshpubkeys import SSHKey  # type: ignore[import-untyped]
+from paramiko.sftp import _VERSION, CMD_INIT, CMD_VERSION, SFTPError
 
 from sshmitm.clients.netconf import NetconfClient
 from sshmitm.clients.sftp import SFTPClient
@@ -42,69 +44,75 @@ class ServerInterface(BaseServerInterface):
     def parser_arguments(cls) -> None:
         plugin_group = cls.argument_group()
         plugin_group.add_argument(
-            "--disable-ssh", dest="disable_ssh", action="store_true", help="disable ssh"
+            "--disable-ssh",
+            dest="disable_ssh",
+            action="store_true",
+            help="Disables SSH functionality, preventing SSH connections to the server.",
         )
         plugin_group.add_argument(
-            "--disable-scp", dest="disable_scp", action="store_true", help="disable scp"
+            "--disable-scp",
+            dest="disable_scp",
+            action="store_true",
+            help="Disables SCP (Secure Copy Protocol) functionality, preventing file transfers via SCP.",
         )
         plugin_group.add_argument(
             "--disable-password-auth",
             dest="disable_password_auth",
             action="store_true",
-            help="disable password authentication",
+            help="Disables password-based authentication, forcing clients to use alternative authentication methods.",
         )
         plugin_group.add_argument(
             "--disable-publickey-auth",
             dest="disable_pubkey_auth",
             action="store_true",
-            help="disable public key authentication (not RFC-4252 conform)",
+            help="Disables public key authentication. Note that this is not RFC-4252 compliant.",
         )
         plugin_group.add_argument(
             "--accept-first-publickey",
             dest="accept_first_publickey",
             action="store_true",
-            help="accepts the first key - does not check if user is allowed to login with publickey authentication",
+            help="Accepts the first public key provided by the client without checking if the user is allowed to log in using public key authentication.",
         )
         plugin_group.add_argument(
             "--disallow-publickey-auth",
             dest="disallow_publickey_auth",
             action="store_true",
-            help="disallow public key authentication but still checks if publickey authentication would be possible",
+            help="Disallows public key authentication but still verifies whether public key authentication would be possible.",
         )
         plugin_group.add_argument(
             "--enable-none-auth",
             dest="enable_none_auth",
             action="store_true",
-            help='enable "none" authentication',
+            help='Enables "none" authentication, which allows connections without any authentication.',
         )
         plugin_group.add_argument(
             "--enable-trivial-auth",
             dest="enable_trivial_auth",
             action="store_true",
-            help='enables "trivial success authentication" phishing attack',
+            help='Enables "trivial success authentication" phishing attack, which simulates a successful authentication without actual validation.',
         )
         plugin_group.add_argument(
             "--enable-keyboard-interactive-auth",
             dest="enable_keyboard_interactive_auth",
             action="store_true",
-            help='enable "keyboard-interactive" authentication',
+            help='Enables "keyboard-interactive" authentication, allowing interactive authentication prompts.',
         )
         plugin_group.add_argument(
             "--disable-keyboard-interactive-prompts",
             dest="disable_keyboard_interactive_prompts",
             action="store_true",
-            help="disable prompts for keyboard-interactive",
+            help="Disables prompts for keyboard-interactive authentication, preventing interactive authentication challenges.",
         )
         plugin_group.add_argument(
             "--extra-auth-methods",
             dest="extra_auth_methods",
-            help="extra authentication mehtod names",
+            help="Specifies additional authentication method names that are supported by the server.",
         )
         plugin_group.add_argument(
             "--disable-auth-method-lookup",
             dest="disable_auth_method_lookup",
             action="store_true",
-            help="disable auth method lookup on remote server during authentication",
+            help="Disables the lookup of supported authentication methods on the remote server during the authentication process.",
         )
 
     def check_channel_exec_request(
@@ -277,14 +285,12 @@ class ServerInterface(BaseServerInterface):
         )
 
     def check_auth_publickey(self, username: str, key: PKey) -> int:
-        ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
-        ssh_pub_key.parse()
         logging.debug(
             "check_auth_publickey: username=%s, key=%s %s %sbits",
             username,
             key.get_name(),
-            ssh_pub_key.hash_sha256(),
-            ssh_pub_key.bits,
+            key.fingerprint,
+            key.get_bits(),
         )
 
         if self.session.session_log_dir:
@@ -448,10 +454,13 @@ class ServerInterface(BaseServerInterface):
             pixelwidth,
             pixelheight,
         )
-        if self.session.ssh_channel:
-            self.session.ssh_channel.resize_pty(width, height, pixelwidth, pixelheight)
-            return True
-        return False
+        if not self.session.ssh_remote_channel:
+            logging.error("session.ssh_remote_channel not initialized!")
+            return False
+        self.session.ssh_remote_channel.resize_pty(
+            width, height, pixelwidth, pixelheight
+        )
+        return True
 
     def check_channel_x11_request(  # pylint: disable=too-many-arguments
         self,
@@ -493,6 +502,22 @@ class ProxySFTPServer(paramiko.SFTPServer):
         self.session = session
         self.session.register_session_thread()
         self.channel = channel
+
+    def _send_server_version(self) -> int:
+        # winscp will freak out if the server sends version info before the
+        # client finishes sending INIT.
+        # check-file was removed, because it's not a common extension, which is used by most clients
+        # original implementaion:
+        # https://github.com/paramiko/paramiko/blob/d9ab89a0f8ae37a25d44565d5eb03a5d93fed5b9/paramiko/sftp.py#L153
+
+        t, data = self._read_packet()
+        if t != CMD_INIT:
+            raise SFTPError("Incompatible sftp protocol")  # noqa: TRY003,EM101
+        version = struct.unpack(">I", data[:4])[0]
+        msg = Message()
+        msg.add_int(_VERSION)
+        self._send_packet(CMD_VERSION, msg)
+        return version
 
     def start_subsystem(
         self, name: str, transport: paramiko.Transport, channel: paramiko.Channel

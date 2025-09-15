@@ -16,7 +16,7 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
             "--store-sftp-files",
             dest="store_sftp_files",
             action="store_true",
-            help="store files from sftp",
+            help="Enables the storage of files transferred via SFTP (SSH File Transfer Protocol).",
         )
 
     def __init__(self, sftp: SFTPBaseHandle, filename: str) -> None:

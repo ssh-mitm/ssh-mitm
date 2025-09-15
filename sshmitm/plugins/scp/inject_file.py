@@ -41,7 +41,7 @@ class SCPInjectFile(SCPForwarder):
             "--scp-inject-file",
             dest="scp_inject_file",
             required=True,
-            help="file that is used for injection",
+            help="Specifies the path to the file that will be injected during SCP file transfers. This option is required.",
         )
 
     def __new__(cls, *args, **kwargs) -> Union[SCPForwarder, "SCPInjectFile"]:  # type: ignore[misc, no-untyped-def] # noqa: ANN002, ANN003

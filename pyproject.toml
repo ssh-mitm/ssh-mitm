@@ -56,6 +56,7 @@ base = "sshmitm.session:Session"
 
 [project.entry-points."sshmitm.Authenticator"]
 passthrough = "sshmitm.authentication:AuthenticatorPassThrough"
+remoteauth = "sshmitm.authentication:AuthenticatorRemote"
 
 [project.entry-points."sshmitm.BaseServerInterface"]
 base = "sshmitm.interfaces.server:ServerInterface"

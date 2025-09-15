@@ -5,17 +5,17 @@ import sys
 import threading
 from abc import abstractmethod
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import PKey
-from sshpubkeys import SSHKey  # type: ignore[import-untyped]
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.exceptions import MissingHostException
 from sshmitm.logger import Colors
 from sshmitm.moduleparser import BaseModule
+from sshmitm.utils import SSHPubKey
 
 if TYPE_CHECKING:
     import sshmitm
@@ -241,7 +241,6 @@ class RemoteCredentials:
             paramiko.Ed25519Key,
             paramiko.ECDSAKey,
             paramiko.RSAKey,
-            paramiko.DSSKey,
         ]:
             try:
                 return key_cls.from_private_key_file(path, password=passphrase)
@@ -278,6 +277,18 @@ class Authenticator(BaseModule):
             type=int,
             dest="remote_port",
             help="remote port to connect to (default 22)",
+        )
+        plugin_group.add_argument(
+            "--remote-fingerprints",
+            type=str,
+            dest="remote_fingerprints",
+            help="comma-separated fingerprints; empty disables check",
+        )
+        plugin_group.add_argument(
+            "--disable-remote-fingerprint-warning",
+            dest="disable_remote_fingerprint_warning",
+            action="store_true",
+            help="disables the warning if no remote fingerprints are provided",
         )
         plugin_group.add_argument(
             "--auth-username",
@@ -569,7 +580,15 @@ class Authenticator(BaseModule):
         auth_status = paramiko.common.AUTH_FAILED
         with self.session.ssh_client_created:
             self.session.ssh_client = SSHClient(
-                host, port, method, password, user, key, self.session
+                host,
+                port,
+                method,
+                password,
+                user,
+                key,
+                self.session,
+                self.args.remote_fingerprints,
+                self.args.disable_remote_fingerprint_warning,
             )
             self.pre_auth_action()
             try:
@@ -683,15 +702,13 @@ class AuthenticatorPassThrough(Authenticator):
         if not self.pubkey_enumerator:
             self.pubkey_enumerator = PublicKeyEnumerator(host, port)
 
-        ssh_pub_key = SSHKey(f"{key.get_name()} {key.get_base64()}")
-        ssh_pub_key.parse()
         if key.can_sign():
             logging.debug(
                 "AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits",
                 username,
                 key.get_name(),
-                ssh_pub_key.hash_sha256(),
-                ssh_pub_key.bits,
+                key.fingerprint,
+                key.get_bits(),
             )
             return self.connect(
                 username, host, port, AuthenticationMethod.PUBLICKEY, key=key
@@ -715,8 +732,8 @@ class AuthenticatorPassThrough(Authenticator):
                     port,
                     username,
                     key.get_name(),
-                    ssh_pub_key.hash_sha256(),
-                    ssh_pub_key.bits,
+                    key.fingerprint,
+                    key.get_bits(),
                 )
                 self.pubkey_auth_success = True
                 self.valid_key = key
@@ -746,20 +763,15 @@ class AuthenticatorPassThrough(Authenticator):
         All this information can be saved to a log file for later review.
         """
 
-        def get_agent_pubkeys() -> List[Tuple[str, SSHKey, bool, str]]:
+        def get_agent_pubkeys() -> List[SSHPubKey]:
             pubkeyfile_path = None
 
-            keys_parsed: List[Tuple[str, SSHKey, bool, str]] = []
+            keys_parsed: List[SSHPubKey] = []
             if self.session.agent is None:
                 return keys_parsed
 
             keys = self.session.agent.get_keys()
-            for k in keys:
-                ssh_pub_key = SSHKey(f"{k.get_name()} {k.get_base64()}")
-                ssh_pub_key.parse()
-                keys_parsed.append(
-                    (k.get_name(), ssh_pub_key, k.can_sign(), k.get_base64())
-                )
+            keys_parsed.extend(SSHPubKey(key) for key in keys)
 
             if self.session.session_log_dir:
                 os.makedirs(self.session.session_log_dir, exist_ok=True)
@@ -767,11 +779,11 @@ class AuthenticatorPassThrough(Authenticator):
                     self.session.session_log_dir, "publickeys"
                 )
                 with open(pubkeyfile_path, "a+", encoding="utf-8") as pubkeyfile:
-                    pubkeyfile.write(
-                        "".join(
-                            [f"{k[0]} {k[3]} saved-from-agent\n" for k in keys_parsed]
+                    for ssh_pub_key in keys_parsed:
+                        comment = "saved-from-agent"
+                        pubkeyfile.write(
+                            f"{ssh_pub_key.get_name()} {ssh_pub_key.get_base64()} {comment}\n"
                         )
-                    )
 
             return keys_parsed
 
@@ -810,22 +822,14 @@ class AuthenticatorPassThrough(Authenticator):
             self.session.accepted_key is not None
             and self.session.remote_key != self.session.accepted_key
         ):
-            ssh_pub_key = SSHKey(
-                f"{self.session.accepted_key.get_name()} {self.session.accepted_key.get_base64()}"
-            )
-            ssh_pub_key.parse()
             logmessage.append(
                 "\tAccepted-Publickey: "
-                f"{self.session.accepted_key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits"
+                f"{self.session.accepted_key.get_name()} {self.session.accepted_key.fingerprint} {self.session.accepted_key.get_bits()}bits"
             )
 
         if self.session.remote_key is not None:
-            ssh_pub_key = SSHKey(
-                f"{self.session.remote_key.get_name()} {self.session.remote_key.get_base64()}"
-            )
-            ssh_pub_key.parse()
             logmessage.append(
-                f"\tRemote-Publickey: {self.session.remote_key.get_name()} {ssh_pub_key.hash_sha256()} {ssh_pub_key.bits}bits"
+                f"\tRemote-Publickey: {self.session.remote_key.get_name()} {self.session.remote_key.fingerprint} {self.session.remote_key.get_bits()}bits"
             )
 
         ssh_keys = None
@@ -839,7 +843,7 @@ class AuthenticatorPassThrough(Authenticator):
             logmessage.append(
                 "\n".join(
                     [
-                        f"\t\tAgent-Key: {k[0]} {k[1].hash_sha256()} {k[1].bits}bits, can sign: {k[2]}"
+                        f"\t\tAgent-Key: {k.get_name()} {k.hash_sha256()} {k.get_bits()}bits, can sign: {k.can_sign()}"
                         for k in ssh_keys
                     ]
                 )
@@ -854,3 +858,25 @@ class AuthenticatorPassThrough(Authenticator):
             and self.pubkey_enumerator.connected
         ):
             self.pubkey_enumerator.close()
+
+
+class AuthenticatorRemote(Authenticator):
+
+    @classmethod
+    def parser_arguments(cls) -> None:
+        super().parser_arguments()
+        cls.argument_group()
+
+    def auth_publickey(self, username: str, host: str, port: int, key: PKey) -> int:
+        if key.can_sign():
+            logging.debug(
+                "AuthenticatorRemote.auth_publickey: username=%s, key=%s %s %sbits",
+                username,
+                key.get_name(),
+                key.fingerprint,
+                key.get_bits(),
+            )
+            return self.connect(
+                username, host, port, AuthenticationMethod.PUBLICKEY, key=key
+            )
+        return paramiko.common.AUTH_FAILED

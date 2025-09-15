@@ -73,25 +73,25 @@ def main() -> None:
         "--debug",
         dest="debug",
         action="store_true",
-        help="More verbose output of status information",
+        help="Enables SSH-MITM's debug mode, providing more verbose output of status information and internal processes.",
     )
     parser_group.add_argument(
         "--paramiko-log-level",
         dest="paramiko_log_level",
         choices=["warning", "info", "debug"],
-        help="set paramikos log level",
+        help="Sets the log level for Paramiko, the underlying SSH library. Controls the verbosity of Paramiko's logging output.",
     )
     parser_group.add_argument(
         "--disable-workarounds",
         dest="disable_workarounds",
         action="store_true",
-        help="disable paramiko workarounds",
+        help="Disables workarounds for compatibility issues with certain SSH clients. Some clients may require these workarounds to function correctly.",
     )
     parser.add_argument(
         "--log-format",
         dest="log_format",
         choices=["text", "json"],
-        help="defines the log output format (json will suppress stdout)",
+        help="Defines the format of the log output. Using `json` suppresses standard output and formats logs as JSON.",
     )
     parser.load_subcommands()
     args = parser.parse_args()

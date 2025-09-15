@@ -11,12 +11,24 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - added example check_file plugin - will be improved to send files to ClamAV
 - added option to use ssh private keys for remote authentication
+- added option to provide remote ssh server fingerprints
+- added new authentication plugin "AuthenticatorRemote" which allows to provide remote credentials without passthrough
 
 ### Fixed
 
 - Resolved issue with EOF handling during remote command execution.
 - Ensured subsystems are started only after SSH client is fully initialized and authenticated.
 - Fixed issues with SFTP file transfers
+- Fixed stat and lstat command in sftp interface by returning SFTP_NO_SUCH_FILE if remote file does not exist
+- fix #187 - forward pty change requests to the remote server
+
+### Changed
+
+- Removed SSH extension "check-file", which was announced by Paramiko – [draft-ietf-secsh-filexfer-extensions-00 §3](https://datatracker.ietf.org/doc/html/draft-ietf-secsh-filexfer-extensions-00#section-3)
+- update paramiko requirements to 4.0
+- removed support for DSS keys
+- replaced sshpubkeys module with paramiko based utility class to handle ssh public keys
+- updated documentation for the next relese of SSH-MITM
 
 
 ## [5.0.1] - 2025-01-22

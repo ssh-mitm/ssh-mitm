@@ -34,101 +34,108 @@ class SSHServerModules(SubCommand):
         self.parser.add_module(
             "--ssh-interface",
             dest="ssh_interface",
-            help="interface to handle terminal sessions",
+            help="Specifies the interface responsible for managing SSH terminal sessions, including shell interaction and command execution.",
             baseclass=SSHBaseForwarder,
         )
         self.parser.add_module(
             "--scp-interface",
             dest="scp_interface",
-            help="interface to handle scp file transfers",
+            help="Defines the interface used for handling SCP (Secure Copy Protocol) file transfers, including uploads and downloads.",
             baseclass=SCPBaseForwarder,
         )
         self.parser.add_module(
             "--sftp-interface",
             dest="sftp_interface",
-            help="SFTP Handler to handle sftp file transfers",
+            help="Sets the base interface for SFTP (SSH File Transfer Protocol) operations, such as file listing, uploads, and downloads.",
             baseclass=BaseSFTPServerInterface,
         )
         self.parser.add_module(
             "--sftp-handler",
             dest="sftp_handler",
-            help="SFTP Handler to handle sftp file transfers",
+            help="Specifies the handler for SFTP operations, responsible for processing file transfer requests and managing file system interactions.",
             baseclass=SFTPHandlerBasePlugin,
         )
         self.parser.add_module(
             "--remote-port-forwarder",
             dest="server_tunnel_interface",
-            help="interface to handle tunnels from the server",
+            help="Configures the interface for managing server-side tunnel operations, such as remote port forwarding.",
             baseclass=RemotePortForwardingBaseForwarder,
         )
         self.parser.add_module(
             "--local-port-forwarder",
             dest="client_tunnel_interface",
-            help="interface to handle tunnels from the client",
+            help="Sets the interface for handling client-side tunnel operations, such as local port forwarding.",
             baseclass=LocalPortForwardingBaseForwarder,
         )
         self.parser.add_module(
             "--auth-interface",
             dest="auth_interface",
+            help="Defines the interface responsible for authentication processes, including credential validation and session initialization.",
             baseclass=BaseServerInterface,
-            help="interface for authentication",
         )
         self.parser.add_module(
             "--authenticator",
             dest="authenticator",
+            help="Specifies the authenticator module used for validating user credentials and managing authentication workflows.",
             baseclass=Authenticator,
-            help="module for user authentication",
         )
         self.parser.add_module(
             "--session-class",
             dest="session_class",
+            help="Sets the custom session class for SSH-MITM, controlling session behavior, logging, and interaction handling.",
             baseclass=BaseSession,
-            help="custom session class for SSH-MITM",
         )
 
         parser_group = self.parser.add_argument_group(
             "SSH-Server-Options",
-            "options for the integrated ssh server",
+            "Options for the integrated SSH server",
             config_section="SSH-Server-Options",
         )
         parser_group.add_argument(
             "--listen-address",
             dest="listen_address",
-            help="listen addresses (default all interfaces)",
+            help="Specifies the listen address for incoming connections (default: all interfaces).",
         )
         parser_group.add_argument(
-            "--listen-port", dest="listen_port", type=int, help="listen port"
+            "--listen-port",
+            dest="listen_port",
+            type=int,
+            help="Specifies the port on which SSH-MITM listens for incoming SSH connections. Ports ≤ 1024 require root privileges.",
         )
         parser_group.add_argument(
             "--transparent",
             dest="transparent",
             action="store_true",
-            help="enables transparent mode (requires root)",
+            help="Enables transparent mode, which uses Linux TProxy for intercepting incoming connections. Requires root privileges.",
         )
-        parser_group.add_argument("--host-key", dest="host_key", help="host key file")
+        parser_group.add_argument(
+            "--host-key",
+            dest="host_key",
+            help="Specifies the path to a custom private SSH key used as the host key. If not provided, a random host key is generated.",
+        )
         parser_group.add_argument(
             "--host-key-algorithm",
             dest="host_key_algorithm",
             choices=["dss", "rsa", "ecdsa", "ed25519"],
-            help="host key algorithm (default rsa)",
+            help="Defines the algorithm used to generate the random host key (default: `rsa`).",
         )
         parser_group.add_argument(
             "--host-key-length",
             dest="host_key_length",
             type=int,
-            help="host key length for dss and rsa (default 2048)",
+            help="Sets the key length for the generated host key (applies to `dss` and `rsa` algorithms, default: `2048`).",
         )
         parser_group.add_argument(
             "--request-agent-breakin",
             dest="request_agent_breakin",
             action="store_true",
-            help="enables agent forwarding and tryies to break in to the agent, if not forwarded",
+            help="Enables SSH-MITM to request the SSH agent from the client, even if the client does not forward the agent. Can be used to attempt unauthorized access.",
         )
         parser_group.add_argument(
             "--banner-name",
             dest="banner_name",
             default=f"SSHMITM_{ssh_mitm_version}",
-            help="set a custom string as server banner",
+            help="Sets a custom SSH server banner presented to clients during the initial connection. Default: ``SSH-2.0-SSHMITM_<version>``.",
         )
 
     def execute(self, args: argparse.Namespace) -> None:
