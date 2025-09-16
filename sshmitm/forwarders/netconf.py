@@ -1,16 +1,14 @@
 import logging
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import Optional
 
 import paramiko
 
 from sshmitm.forwarders.scp import SCPBaseForwarder
 
-if TYPE_CHECKING:
-    import sshmitm
-
 
 class NetconfBaseForwarder(SCPBaseForwarder):
+    __netconf_terminator = b"]]>]]>"
 
     @property
     def client_channel(self) -> Optional[paramiko.Channel]:
@@ -21,14 +19,14 @@ class NetconfBaseForwarder(SCPBaseForwarder):
         Netconf messages mus tbe read until a special terminator is seen.
         A netconf message can be larger than the supported buffer length.
         """
-        TERMINATOR = b"]]>]]>"
+
 
         response_buf = b""
         while responses:
             time.sleep(0.05)
             response = chan.recv(self.BUF_LEN)
             response_buf += response
-            responses -= response.count(TERMINATOR)
+            responses -= response.count(self.__netconf_terminator)
 
         return response_buf
 

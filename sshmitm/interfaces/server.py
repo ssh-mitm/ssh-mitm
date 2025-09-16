@@ -549,7 +549,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
 
 
 class ProxyNetconfServer(paramiko.SubsystemHandler):
-    def __init__(  # pylint: disable=too-many-arguments
+    def __init__(  # pylint: disable=too-many-arguments,unused-argument
         self,
         channel: paramiko.Channel,
         name: str,
