@@ -20,7 +20,6 @@ class NetconfBaseForwarder(SCPBaseForwarder):
         A netconf message can be larger than the supported buffer length.
         """
 
-
         response_buf = b""
         while responses:
             time.sleep(0.05)
