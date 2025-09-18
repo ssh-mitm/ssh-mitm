@@ -14,7 +14,7 @@ class NetconfBaseForwarder(SCPBaseForwarder):
     def client_channel(self) -> Optional[paramiko.Channel]:
         return self.session.netconf_channel
 
-    def read_netconf_data(self, chan, responses=1):
+    def read_netconf_data(self, chan: paramiko.Channel, responses: int = 1) -> bytes:
         """
         Netconf messages mus tbe read until a special terminator is seen.
         A netconf message can be larger than the supported buffer length.

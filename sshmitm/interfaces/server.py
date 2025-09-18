@@ -549,7 +549,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
 
 
 class ProxyNetconfServer(paramiko.SubsystemHandler):
-    def __init__(  # pylint: disable=too-many-arguments,unused-argument
+    def __init__(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.Channel,
         name: str,
@@ -559,9 +559,16 @@ class ProxyNetconfServer(paramiko.SubsystemHandler):
         *largs: Any,
         **kwargs: Any,
     ) -> None:
+        """
+        Initializes the subsystem handler class ProxyNetconfServer.
+        """
         super().__init__(channel, name, server)
         self.session = session
         self.session.register_session_thread()
+
+        # Due to compatibility reasons in the dynamic function call that must support other subsystem handlers, the arguments netconf_forwarder, *largs, **kwargs are mandatory.
+        #         To prevent the linter (pyling, ruff) from failing, they are combined to an anonymous tuple.
+        _ = (netconf_forwarder, largs, kwargs)
 
     def start_subsystem(
         self, name: str, transport: paramiko.Transport, channel: paramiko.Channel
