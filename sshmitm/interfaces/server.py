@@ -164,10 +164,13 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
         logging.debug("check_channel_shell_request: channel=%s", channel)
+        logging.debug("DEBUG: Shell request received, disable_ssh=%s", self.args.disable_ssh)
         if not self.args.disable_ssh:
             self.session.ssh_requested = True
             self.session.ssh_channel = channel
+            logging.debug("DEBUG: SSH shell request accepted, ssh_requested set to True")
             return True
+        logging.debug("DEBUG: SSH shell request denied due to disable_ssh flag")
         return False
 
     def check_channel_pty_request(  # pylint: disable=too-many-arguments
@@ -190,6 +193,7 @@ class ServerInterface(BaseServerInterface):
             pixelheight,
             modes,
         )
+        logging.debug("DEBUG: PTY request received, disable_ssh=%s", self.args.disable_ssh)
         if not self.args.disable_ssh:
             self.session.ssh_requested = True
             self.session.ssh_pty_kwargs = {
@@ -199,7 +203,9 @@ class ServerInterface(BaseServerInterface):
                 "width_pixels": pixelwidth,
                 "height_pixels": pixelheight,
             }
+            logging.debug("DEBUG: PTY request accepted, ssh_requested set to True")
             return True
+        logging.debug("DEBUG: PTY request denied due to disable_ssh flag")
         return False
 
     def get_allowed_auths(self, username: str) -> str:
@@ -358,13 +364,25 @@ class ServerInterface(BaseServerInterface):
         logging.debug(
             "check_channel_subsystem_request: channel=%s, name=%s", channel, name
         )
+        logging.debug("DEBUG: Subsystem request received for: %s", name)
         if name.lower() == "sftp":
             self.session.sftp_requested = True
             self.session.sftp_channel = channel
+            logging.debug("DEBUG: SFTP subsystem request accepted, sftp_requested set to True")
         elif name.lower() == "netconf":
             self.session.netconf_requested = True
             self.session.netconf_channel = channel
-        return super().check_channel_subsystem_request(channel, name)
+            logging.debug("DEBUG: NETCONF subsystem request accepted, netconf_requested set to True")
+        else:
+            logging.debug("DEBUG: Unknown subsystem request: %s", name)
+        # Override the base implementation which likely returns False for unknown subsystems
+        if name.lower() in ["sftp", "netconf"]:
+            logging.debug("DEBUG: Accepting known subsystem: %s", name)
+            return True
+        else:
+            result = super().check_channel_subsystem_request(channel, name)
+            logging.debug("DEBUG: Subsystem request result for %s: %s", name, result)
+            return result
 
     def check_port_forward_request(self, address: str, port: int) -> int:
         """

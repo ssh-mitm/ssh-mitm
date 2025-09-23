@@ -84,34 +84,47 @@ class SSHMirrorForwarder(SSHForwarder):
         )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
-        super().__init__(session)
-        if self.args.ssh_mirrorshell_key:
-            self.args.ssh_mirrorshell_key = os.path.expanduser(
-                self.args.ssh_mirrorshell_key
-            )
-
-        self.sessionlog: Optional[TerminalLogFormat] = None
-        if self.args.store_ssh_session and self.session.session_log_dir:
-            try:
-                self.sessionlog = ScriptLogFormat(
-                    os.path.join(self.session.session_log_dir, "terminal_sessions")
+        logging.debug("DEBUG: SSHMirrorForwarder.__init__() starting")
+        try:
+            super().__init__(session)
+            logging.debug("DEBUG: SSHMirrorForwarder super().__init__() completed")
+            
+            if self.args.ssh_mirrorshell_key:
+                self.args.ssh_mirrorshell_key = os.path.expanduser(
+                    self.args.ssh_mirrorshell_key
                 )
-            except Exception:  # pylint: disable=broad-exception-caught
-                logging.exception(
-                    "Error creating session log dir. terminal logging disabled"
-                )
-                self.sessionlog = None
+                logging.debug("DEBUG: SSH mirrorshell key expanded: %s", self.args.ssh_mirrorshell_key)
 
-        self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-        self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-        self.injector_sock.bind((self.args.ssh_mirrorshell_net, 0))
-        self.injector_sock.listen(5)
-        self.inject_server: Optional[InjectServer] = None
+            self.sessionlog: Optional[TerminalLogFormat] = None
+            if self.args.store_ssh_session and self.session.session_log_dir:
+                try:
+                    self.sessionlog = ScriptLogFormat(
+                        os.path.join(self.session.session_log_dir, "terminal_sessions")
+                    )
+                    logging.debug("DEBUG: Session logging enabled")
+                except Exception:  # pylint: disable=broad-exception-caught
+                    logging.exception(
+                        "Error creating session log dir. terminal logging disabled"
+                    )
+                    self.sessionlog = None
 
-        self.injector_client_sock: Optional[socket.socket] = None
+            logging.debug("DEBUG: Creating injector socket, ssh_mirrorshell_net=%s", self.args.ssh_mirrorshell_net)
+            self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+            self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+            self.injector_sock.bind((self.args.ssh_mirrorshell_net, 0))
+            self.injector_sock.listen(5)
+            logging.debug("DEBUG: Injector socket created and listening")
+            
+            self.inject_server: Optional[InjectServer] = None
+            self.injector_client_sock: Optional[socket.socket] = None
 
-        self.conn_thread = threading.Thread(target=self.injector_connect)
-        self.conn_thread.start()
+            logging.debug("DEBUG: Starting injector connection thread")
+            self.conn_thread = threading.Thread(target=self.injector_connect)
+            self.conn_thread.start()
+            logging.debug("DEBUG: SSHMirrorForwarder.__init__() completed successfully")
+        except Exception as e:
+            logging.error("DEBUG: SSHMirrorForwarder.__init__() failed: %s", e)
+            raise
 
     def injector_connect(self) -> None:
         inject_host, inject_port = self.injector_sock.getsockname()

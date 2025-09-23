@@ -143,6 +143,7 @@ class Session(BaseSession):
         self.netconf_channel: Optional[paramiko.Channel] = None
         self.netconf_client: Optional[sshmitm.clients.netconf.NetconfClient] = None
         self.netconf_client_ready = threading.Event()
+        self.netconf_command: bytes = b""
 
         self.sftp_requested: bool = False
         self.sftp_channel: Optional[paramiko.Channel] = None
@@ -190,6 +191,9 @@ class Session(BaseSession):
 
         if self.channel is not None:
             session_channel_open = not self.channel.closed
+            if self.netconf_requested or self.netconf_channel is not None:
+                logging.debug("DEBUG: Main session channel state - closed=%s, eof_received=%s, eof_sent=%s", 
+                             self.channel.closed, self.channel.eof_received, self.channel.eof_sent)
         if self.ssh_channel is not None:
             ssh_channel_open = not self.ssh_channel.closed
         if self.scp_channel is not None:
@@ -200,6 +204,9 @@ class Session(BaseSession):
             netconf_channel_open = (
                 not self.netconf_channel.closed if self.netconf_channel else False
             )
+            if self.netconf_requested or self.netconf_channel is not None:
+                logging.debug("DEBUG: NETCONF channel state - closed=%s, eof_received=%s, eof_sent=%s", 
+                             self.netconf_channel.closed, self.netconf_channel.eof_received, self.netconf_channel.eof_sent)
         open_channel_exists = (
             session_channel_open
             or ssh_channel_open
@@ -207,7 +214,16 @@ class Session(BaseSession):
             or netconf_channel_open
         )
 
-        return self.proxyserver.running and open_channel_exists and not self.closed
+        is_running = self.proxyserver.running and open_channel_exists and not self.closed
+        
+        # Debug logging for NETCONF troubleshooting
+        if self.netconf_requested or self.netconf_channel is not None:
+            logging.debug("DEBUG: Session.running check - session_channel_open=%s, ssh_channel_open=%s, scp_channel_open=%s, netconf_channel_open=%s", 
+                         session_channel_open, ssh_channel_open, scp_channel_open, netconf_channel_open)
+            logging.debug("DEBUG: Session.running check - proxyserver.running=%s, open_channel_exists=%s, closed=%s, result=%s", 
+                         self.proxyserver.running, open_channel_exists, self.closed, is_running)
+        
+        return is_running
 
     @property
     def transport(self) -> paramiko.Transport:
@@ -267,49 +283,64 @@ class Session(BaseSession):
         return self.agent is not None
 
     def _start_channels(self) -> bool:
+        logging.debug("DEBUG: _start_channels() called")
+        logging.debug("DEBUG: Session state - scp_requested=%s, ssh_requested=%s, sftp_requested=%s, netconf_requested=%s", 
+                     self.scp_requested, self.ssh_requested, self.sftp_requested, self.netconf_requested)
+        
         self._request_agent()
+        logging.debug("DEBUG: After _request_agent(), agent=%s", self.agent)
 
         # create client or master channel
         if self.ssh_client:
+            logging.debug("DEBUG: ssh_client exists, setting ready flags and returning True")
             self.sftp_client_ready.set()
             self.netconf_client_ready.set()
             return True
 
         # Connect method start
         if not self.agent:
+            logging.debug("DEBUG: No agent available, checking username_provided=%s", self.username_provided)
             if self.username_provided is None:
                 logging.error("No username provided during login!")
                 return False
-            return (
-                self.authenticator.auth_fallback(self.username_provided)
-                == paramiko.common.AUTH_SUCCESSFUL
-            )
+            auth_result = self.authenticator.auth_fallback(self.username_provided)
+            logging.debug("DEBUG: auth_fallback result=%s", auth_result)
+            return auth_result == paramiko.common.AUTH_SUCCESSFUL
 
-        if (
-            self.authenticator.authenticate(store_credentials=False)
-            != paramiko.common.AUTH_SUCCESSFUL
-        ):
+        logging.debug("DEBUG: Agent available, attempting authentication")
+        auth_result = self.authenticator.authenticate(store_credentials=False)
+        logging.debug("DEBUG: authenticate result=%s", auth_result)
+        
+        if auth_result != paramiko.common.AUTH_SUCCESSFUL:
+            logging.debug("DEBUG: Authentication failed, trying auth_fallback")
             if self.username_provided is None:
                 logging.error("No username provided during login!")
                 return False
-            if (
-                self.authenticator.auth_fallback(self.username_provided)
-                == paramiko.common.AUTH_SUCCESSFUL
-            ):
+            fallback_result = self.authenticator.auth_fallback(self.username_provided)
+            logging.debug("DEBUG: auth_fallback result=%s", fallback_result)
+            if fallback_result == paramiko.common.AUTH_SUCCESSFUL:
                 return True
+            logging.debug("DEBUG: All authentication failed, closing transport")
             self.transport.close()
             return False
 
         # Connect method end
+        logging.debug("DEBUG: Authentication successful, checking channel requests")
+        logging.debug("DEBUG: Channel request states - scp_requested=%s, ssh_requested=%s, sftp_requested=%s, netconf_requested=%s", 
+                     self.scp_requested, self.ssh_requested, self.sftp_requested, self.netconf_requested)
+        logging.debug("DEBUG: Transport active=%s", self.transport.is_active())
+        
         if (
             not self.scp_requested
             and not self.ssh_requested
             and not self.sftp_requested
             and not self.netconf_requested
         ) and self.transport.is_active():
+            logging.warning("DEBUG: No channel requests received, closing transport - this may be the issue!")
             self.transport.close()
             return False
 
+        logging.debug("DEBUG: _start_channels() completing successfully")
         self.sftp_client_ready.set()
         self.netconf_client_ready.set()
         return True
@@ -344,9 +375,13 @@ class Session(BaseSession):
         if not self.transport.is_active():
             return False
 
+        logging.debug("DEBUG: About to setup client tunnel interface")
         self.proxyserver.client_tunnel_interface.setup(self)
+        logging.debug("DEBUG: Client tunnel interface setup complete")
 
+        logging.debug("DEBUG: About to call _start_channels()")
         if not self._start_channels():
+            logging.warning("DEBUG: _start_channels() returned False - session will not start!")
             return False
 
         logging.info(
@@ -354,6 +389,7 @@ class Session(BaseSession):
             Colors.emoji("information"),
             Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
         )
+        logging.debug("DEBUG: Session start completed successfully")
         return True
 
     def close(self) -> None:

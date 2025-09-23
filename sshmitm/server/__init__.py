@@ -345,21 +345,65 @@ class SSHProxyServer:
                     "incoming connection from %s to %s", str(addr), remoteaddr
                 )
                 if session.start():
+                    logging.debug("DEBUG: Session started successfully, entering main loop")
+                    loop_start_time = time.time()
+                    first_iteration = True
                     while session.running:
-                        time.sleep(0.1)
+                        # Reduce delay on first iteration for servers with quick timeouts (like ConfD)
+                        # No delay at all for NETCONF to prevent connection drops
+                        if first_iteration:
+                            if session.netconf_requested:
+                                time.sleep(0.001)  # Almost no delay for NETCONF
+                            else:
+                                time.sleep(0.01)  # Short delay for SSH
+                            first_iteration = False
+                        else:
+                            time.sleep(0.1)
+                        elapsed = time.time() - loop_start_time
+                        logging.debug("DEBUG: Main loop (elapsed=%.2fs) - ssh_requested=%s, scp_requested=%s, sftp_requested=%s, netconf_requested=%s", 
+                                     elapsed, session.ssh_requested, session.scp_requested, session.sftp_requested, session.netconf_requested)
                         if session.ssh_requested and self.ssh_interface:
+                            logging.debug("DEBUG: SSH requested - starting ssh_interface: %s", self.ssh_interface)
                             session.ssh_requested = False
-                            self.ssh_interface(session).forward()
+                            try:
+                                logging.debug("DEBUG: Pre-forwarder session state - ssh_client=%s", session.ssh_client)
+                                if session.ssh_client:
+                                    logging.debug("DEBUG: ssh_client.transport=%s", session.ssh_client.transport)
+                                    if session.ssh_client.transport:
+                                        logging.debug("DEBUG: transport.is_active()=%s", session.ssh_client.transport.is_active())
+                                logging.debug("DEBUG: Creating ssh_interface instance")
+                                ssh_forwarder = self.ssh_interface(session)
+                                logging.debug("DEBUG: ssh_interface instance created: %s", ssh_forwarder)
+                                logging.debug("DEBUG: Calling forward() method")
+                                ssh_forwarder.forward()
+                                logging.debug("DEBUG: forward() method completed")
+                            except Exception as e:
+                                logging.error("DEBUG: Error in ssh_interface: %s", e)
+                                logging.exception("DEBUG: Full traceback:")
                         elif session.scp_requested and self.scp_interface:
                             session.scp_requested = False
                             scp_interface = self.scp_interface(session)
                             thread = threading.Thread(target=scp_interface.forward)
                             thread.start()
                         elif session.netconf_requested and self.netconf_interface:
+                            logging.debug("DEBUG: NETCONF requested - starting netconf_interface: %s", self.netconf_interface)
                             session.netconf_requested = False
-                            netconf_interface = self.netconf_interface(session)
-                            thread = threading.Thread(target=netconf_interface.forward)
-                            thread.start()
+                            try:
+                                logging.debug("DEBUG: Pre-netconf forwarder session state - ssh_client=%s", session.ssh_client)
+                                if session.ssh_client:
+                                    logging.debug("DEBUG: ssh_client.transport=%s", session.ssh_client.transport)
+                                    if session.ssh_client.transport:
+                                        logging.debug("DEBUG: transport.is_active()=%s", session.ssh_client.transport.is_active())
+                                logging.debug("DEBUG: Creating netconf_interface instance")
+                                netconf_interface = self.netconf_interface(session)
+                                logging.debug("DEBUG: netconf_interface instance created: %s", netconf_interface)
+                                logging.debug("DEBUG: Starting netconf thread")
+                                thread = threading.Thread(target=netconf_interface.forward)
+                                thread.start()
+                                logging.debug("DEBUG: NETCONF thread started")
+                            except Exception as e:
+                                logging.error("DEBUG: Error in netconf_interface: %s", e)
+                                logging.exception("DEBUG: Full netconf traceback:")
 
                 else:
                     logging.warning("(%s) session not started", session)
