@@ -145,13 +145,37 @@ class SCPBaseForwarder(BaseForwarder):
             return 0
         if channel.exit_status_ready():
             return 0
+        
         sent = 0
-        newsent = 0
-        while sent != len(data):
-            newsent = sendfunc(data[sent:])
-            if newsent == 0:
-                return 0
-            sent += newsent
+        chunk_size = 32768  # Send in 32KB chunks to avoid overwhelming the channel
+        total_len = len(data)
+        
+        while sent < total_len:
+            # Check if channel is still active before each chunk
+            if channel.closed or not channel.active:
+                logging.warning("Channel closed during sendall, sent %d/%d bytes", sent, total_len)
+                return sent
+                
+            # Calculate chunk size for this iteration
+            remaining = total_len - sent
+            current_chunk_size = min(chunk_size, remaining)
+            chunk = data[sent:sent + current_chunk_size]
+            
+            try:
+                newsent = sendfunc(chunk)
+                if newsent == 0:
+                    logging.warning("sendfunc returned 0, stopping transmission at %d/%d bytes", sent, total_len)
+                    return sent
+                sent += newsent
+                
+                # Small delay for large messages to prevent overwhelming the channel
+                if total_len > 1024 * 1024:  # 1MB threshold
+                    time.sleep(0.001)  # 1ms delay
+                    
+            except (EOFError, OSError) as e:
+                logging.error("Error during sendall at %d/%d bytes: %s", sent, total_len, e)
+                return sent
+                
         return sent
 
     def close_session(self, channel: paramiko.Channel) -> None:
