@@ -67,6 +67,9 @@ class SSHForwarder(SSHBaseForwarder):
             buf: bytes = self.client_channel.recv(self.BUF_LEN)
             buf = self.stdin(buf)
             self.server_channel.sendall(buf)
+            self.session.log_forwarder.forward_client_msg(
+                client_msg=buf.decode("utf-8"),
+            )
 
     def forward_stdout(self) -> None:
         if self.server_channel.recv_ready():
@@ -74,6 +77,10 @@ class SSHForwarder(SSHBaseForwarder):
             buf = self.stdout(buf)
             if self.client_channel is not None:
                 self.client_channel.sendall(buf)
+                self.session.log_forwarder.forward_server_msg(
+                    client_msg=None,
+                    server_msg=buf.decode("utf-8"),
+                )
 
     def forward_extra(self) -> None:
         pass
@@ -84,6 +91,10 @@ class SSHForwarder(SSHBaseForwarder):
             buf = self.stderr(buf)
             if self.client_channel is not None:
                 self.client_channel.sendall_stderr(buf)
+                self.session.log_forwarder.forward_server_error_message(
+                    client_msg=None,
+                    server_msg_err=buf.decode("utf-8"),
+                )
 
     def stdin(self, text: bytes) -> bytes:
         return text

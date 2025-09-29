@@ -2,9 +2,7 @@ import argparse
 from typing import Optional
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.authentication import (
-    Authenticator,
-)
+from sshmitm.authentication import Authenticator
 from sshmitm.forwarders.scp import SCPBaseForwarder
 from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin
 from sshmitm.forwarders.ssh import SSHBaseForwarder
@@ -12,12 +10,8 @@ from sshmitm.forwarders.tunnel import (
     LocalPortForwardingBaseForwarder,
     RemotePortForwardingBaseForwarder,
 )
-from sshmitm.interfaces.server import (
-    BaseServerInterface,
-)
-from sshmitm.interfaces.sftp import (
-    BaseSFTPServerInterface,
-)
+from sshmitm.interfaces.server import BaseServerInterface
+from sshmitm.interfaces.sftp import BaseSFTPServerInterface
 from sshmitm.moduleparser import SubCommand
 from sshmitm.server import SSHProxyServer
 from sshmitm.session import BaseSession
@@ -137,6 +131,11 @@ class SSHServerModules(SubCommand):
             default=f"SSHMITM_{ssh_mitm_version}",
             help="Sets a custom SSH server banner presented to clients during the initial connection. Default: ``SSH-2.0-SSHMITM_<version>``.",
         )
+        parser_group.add_argument(
+            "--log-webhook-dest",
+            dest="log_webhook_dest",
+            help="Transmits SSH commands and responses to a remote HTTP server for log collection and analyzation",
+        )
 
     def execute(self, args: argparse.Namespace) -> None:
         if args.request_agent_breakin:
@@ -159,6 +158,7 @@ class SSHServerModules(SubCommand):
             transparent=args.transparent,
             banner_name=args.banner_name,
             debug=args.debug,
+            log_webhook_dest=args.log_webhook_dest,
         )
         proxy.print_serverinfo(args.log_format == "json")
         proxy.start()

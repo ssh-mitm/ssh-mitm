@@ -102,6 +102,7 @@
 
       [sshmitm.session:Session]
       session-log-dir =
+      log-transmit_dst =
 
    :option string session-log-dir: |br|
       Specifies the directory where session logs will be stored.
