@@ -1,4 +1,5 @@
 import logging
+import os
 import uuid
 import zipfile
 from typing import Optional, Type, Union
@@ -30,7 +31,12 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
         def open(
             self, path: str, flags: int, attr: SFTPAttributes
         ) -> Union[SFTPHandle, int]:
-            logging.info("open from check_file")
+            logging.info(
+                "open from check_file with: path=%s flags=%s attr=%s", path, flags, attr
+            )
+            if not flags & (os.O_WRONLY | os.O_RDWR):
+                logging.warning("sftp get not implemented. path=%s", path)
+                return paramiko.sftp.SFTP_PERMISSION_DENIED
             try:
                 self.session.sftp_client_ready.wait()
                 if self.session.sftp_client is None:

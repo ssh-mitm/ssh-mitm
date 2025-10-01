@@ -15,6 +15,7 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 import datetime
+
 from sphinx.util.docfields import TypedField
 
 # -- Project information -----------------------------------------------------
@@ -95,7 +96,7 @@ notfound_no_urls_prefix = True
 
 
 always_document_param_types = True
-typehints_defaults = 'comma'
+typehints_defaults = "comma"
 typehints_use_signature = False
 typehints_use_signature_return = False
 
