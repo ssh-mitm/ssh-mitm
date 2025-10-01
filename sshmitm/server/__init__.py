@@ -61,6 +61,7 @@ class SSHProxyServer:
         session_class: Type[Session] = Session,
         banner_name: Optional[str] = None,
         debug: bool = False,
+        log_webhook_dest: Optional[str] = None,
     ) -> None:
         self._threads: List[threading.Thread] = []
         self._hostkey: Optional[PKey] = None
@@ -96,6 +97,7 @@ class SSHProxyServer:
         self.session_class: Type[Session] = session_class
         self.banner_name: Optional[str] = banner_name
         self.debug: bool = debug
+        self.log_webhook_dest: Optional[str] = log_webhook_dest
 
         try:
             self.generate_host_key()
@@ -339,7 +341,13 @@ class SSHProxyServer:
     ) -> None:
         try:
             with self.session_class(
-                self, client, addr, self.authenticator, remoteaddr, self.banner_name
+                self,
+                client,
+                addr,
+                self.authenticator,
+                remoteaddr,
+                self.banner_name,
+                self.log_webhook_dest,
             ) as session:
                 logging.debug(
                     "incoming connection from %s to %s", str(addr), remoteaddr

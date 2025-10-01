@@ -33,6 +33,9 @@ class SCPBaseForwarder(BaseForwarder):
 
     def rewrite_scp_command(self, command: str) -> str:
         logging.info("got remote command: %s", command)
+        self.session.log_forwarder.forward_client_msg(
+            client_msg=command,
+        )
         return command
 
     def forward(self) -> None:  # noqa: C901,PLR0915
@@ -82,11 +85,19 @@ class SCPBaseForwarder(BaseForwarder):
                     buf = self.server_channel.recv(self.BUF_LEN)
                     buf = self.handle_traffic(buf, isclient=False)
                     self.sendall(self.client_channel, buf, self.client_channel.send)
+                    self.session.log_forwarder.forward_server_msg(
+                        client_msg=self.session.scp_command.decode("utf-8"),
+                        server_msg=buf.decode("utf-8"),
+                    )
                 if self.client_channel.recv_stderr_ready():
                     buf = self.client_channel.recv_stderr(self.BUF_LEN)
                     buf = self.handle_error(buf)
                     self.sendall(
                         self.server_channel, buf, self.server_channel.send_stderr
+                    )
+                    self.session.log_forwarder.forward_client_error_message(
+                        client_msg_err=self.session.scp_command.decode("utf-8"),
+                        server_msg=buf.decode("utf-8"),
                     )
                 if self.server_channel.recv_stderr_ready():
                     buf = self.server_channel.recv_stderr(self.BUF_LEN)
@@ -95,6 +106,10 @@ class SCPBaseForwarder(BaseForwarder):
                         self.client_channel,
                         buf,
                         self.client_channel.send_stderr,
+                    )
+                    self.session.log_forwarder.forward_server_error_message(
+                        client_msg=self.session.scp_command.decode("utf-8"),
+                        server_msg_err=buf.decode("utf-8"),
                     )
 
                 if self.server_channel.exit_status_ready():
