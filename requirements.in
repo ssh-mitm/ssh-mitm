@@ -10,3 +10,4 @@ pytz
 pyyaml
 rich
 wrapt
+requests
