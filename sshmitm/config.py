@@ -1,7 +1,7 @@
 import os
 from configparser import ConfigParser
 
-from sshmitm.utils import resources
+from sshmitm.core.compat import resources
 
 CONFIGFILE = ConfigParser()
 
