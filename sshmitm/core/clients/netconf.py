@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 from paramiko.pkey import PKey
 
-from sshmitm.clients.ssh import SSHClient
+from sshmitm.core.clients.ssh import SSHClient
 
 if TYPE_CHECKING:
     import sshmitm

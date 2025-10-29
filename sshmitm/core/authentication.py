@@ -11,7 +11,7 @@ import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import PKey
 
-from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
+from sshmitm.core.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.core.exceptions import MissingHostException
 from sshmitm.core.logger import Colors
 from sshmitm.core.sshkeys import SSHPubKey

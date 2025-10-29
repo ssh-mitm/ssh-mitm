@@ -131,7 +131,7 @@ class Session(BaseSession):
 
         self.ssh_requested: bool = False
         self.ssh_channel: Optional[paramiko.Channel] = None
-        self.ssh_client: Optional[sshmitm.clients.ssh.SSHClient] = None
+        self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
         self.ssh_client_auth_finished: bool = False
         self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
@@ -143,12 +143,12 @@ class Session(BaseSession):
 
         self.netconf_requested: bool = False
         self.netconf_channel: Optional[paramiko.Channel] = None
-        self.netconf_client: Optional[sshmitm.clients.netconf.NetconfClient] = None
+        self.netconf_client: Optional[sshmitm.core.clients.netconf.NetconfClient] = None
         self.netconf_client_ready = threading.Event()
 
         self.sftp_requested: bool = False
         self.sftp_channel: Optional[paramiko.Channel] = None
-        self.sftp_client: Optional[sshmitm.clients.sftp.SFTPClient] = None
+        self.sftp_client: Optional[sshmitm.core.clients.sftp.SFTPClient] = None
         self.sftp_client_ready = threading.Event()
 
         self.username: str = ""

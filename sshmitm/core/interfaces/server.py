@@ -8,8 +8,8 @@ from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.sftp import _VERSION, CMD_INIT, CMD_VERSION, SFTPError
 
-from sshmitm.clients.netconf import NetconfClient
-from sshmitm.clients.sftp import SFTPClient
+from sshmitm.core.clients.netconf import NetconfClient
+from sshmitm.core.clients.sftp import SFTPClient
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
