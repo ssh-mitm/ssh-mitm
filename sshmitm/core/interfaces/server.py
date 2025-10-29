@@ -14,7 +14,7 @@ from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.authentication import RemoteCredentials
+    from sshmitm.core.authentication import RemoteCredentials
     from sshmitm.core.forwarders.tunnel import (
         LocalPortForwardingForwarder,
         RemotePortForwardingForwarder,

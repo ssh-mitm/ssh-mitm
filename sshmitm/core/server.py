@@ -15,7 +15,7 @@ from rich import print as rich_print
 from rich.console import Console
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
+from sshmitm.core.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.core.exceptions import KeyGenerationError
 from sshmitm.core.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
 from sshmitm.core.forwarders.scp import SCPBaseForwarder, SCPForwarder

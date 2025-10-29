@@ -2,7 +2,7 @@ import argparse
 from typing import Optional
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.authentication import Authenticator
+from sshmitm.core.authentication import Authenticator
 from sshmitm.core.forwarders.scp import SCPBaseForwarder
 from sshmitm.core.forwarders.sftp import SFTPHandlerBasePlugin
 from sshmitm.core.forwarders.ssh import SSHBaseForwarder

@@ -56,8 +56,8 @@ check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
 base = "sshmitm.core.session:Session"
 
 [project.entry-points."sshmitm.Authenticator"]
-passthrough = "sshmitm.authentication:AuthenticatorPassThrough"
-remoteauth = "sshmitm.authentication:AuthenticatorRemote"
+passthrough = "sshmitm.core.authentication:AuthenticatorPassThrough"
+remoteauth = "sshmitm.core.authentication:AuthenticatorRemote"
 
 [project.entry-points."sshmitm.BaseServerInterface"]
 base = "sshmitm.core.interfaces.server:ServerInterface"

@@ -96,7 +96,7 @@ class Session(BaseSession):
         proxyserver: "sshmitm.core.server.SSHProxyServer",
         client_socket: socket.socket,
         client_address: Union[Tuple[str, int], Tuple[str, int, int, int]],
-        authenticator: Type["sshmitm.authentication.Authenticator"],
+        authenticator: Type["sshmitm.core.authentication.Authenticator"],
         remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]],
         banner_name: Optional[str] = None,
         log_webhook_dest: Optional[str] = None,
@@ -161,7 +161,7 @@ class Session(BaseSession):
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
         self.agent: Optional[AgentProxy] = None
-        self.authenticator: "sshmitm.authentication.Authenticator" = authenticator(self)
+        self.authenticator: "sshmitm.core.authentication.Authenticator" = authenticator(self)
 
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
