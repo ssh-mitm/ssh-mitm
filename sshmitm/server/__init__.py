@@ -26,10 +26,13 @@ from sshmitm.core.forwarders.tunnel import (
     RemotePortForwardingForwarder,
 )
 from sshmitm.core.interfaces.server import BaseServerInterface, ServerInterface
-from sshmitm.core.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
-from sshmitm.logger import Colors
+from sshmitm.core.interfaces.sftp import (
+    BaseSFTPServerInterface,
+    SFTPProxyServerInterface,
+)
 from sshmitm.core.multisocket import create_server_sock
 from sshmitm.core.session import Session
+from sshmitm.logger import Colors
 from sshmitm.utils import SSHPubKey
 
 

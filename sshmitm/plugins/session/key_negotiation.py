@@ -19,7 +19,9 @@ if TYPE_CHECKING:
 
 
 class KeyNegotiationData:
-    def __init__(self, session: "sshmitm.core.session.Session", message: Message) -> None:
+    def __init__(
+        self, session: "sshmitm.core.session.Session", message: Message
+    ) -> None:
         self.session = session
         self.session.register_session_thread()
         self.client_version = session.transport.remote_version

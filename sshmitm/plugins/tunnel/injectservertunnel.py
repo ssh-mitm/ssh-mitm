@@ -5,7 +5,10 @@ from typing import TYPE_CHECKING, Optional, Tuple, Union
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
-from sshmitm.core.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
+from sshmitm.core.forwarders.tunnel import (
+    RemotePortForwardingForwarder,
+    TunnelForwarder,
+)
 from sshmitm.logger import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
