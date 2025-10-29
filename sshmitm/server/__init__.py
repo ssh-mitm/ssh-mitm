@@ -12,10 +12,10 @@ from colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey
 from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
+from rich.console import Console
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
-from sshmitm.console import sshconsole
 from sshmitm.core.exceptions import KeyGenerationError
 from sshmitm.core.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
 from sshmitm.core.forwarders.scp import SCPBaseForwarder, SCPForwarder
@@ -105,6 +105,7 @@ class SSHProxyServer:
             sys.exit(1)
 
     def print_serverinfo(self, json_log: bool = False) -> None:
+        sshconsole: Console = Console(emoji=False, highlight=False)
         if self.key_algorithm_class is None or self._hostkey is None:
             return
         ssh_host_key_pub = SSHPubKey(self._hostkey)
