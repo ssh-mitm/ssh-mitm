@@ -15,10 +15,10 @@ from typing import (
     cast,
 )
 
+from sshmitm.core.compat import metadata
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import InvalidModuleArguments, ModuleError
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
-from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser import ModuleParser

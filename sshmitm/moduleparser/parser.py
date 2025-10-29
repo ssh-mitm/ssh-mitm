@@ -39,12 +39,12 @@ from typing import (
 
 import argcomplete
 
+from sshmitm.core.compat import metadata
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import ModuleError
 from sshmitm.moduleparser.formatter import ModuleFormatter
 from sshmitm.moduleparser.modules import BaseModule, SubCommand
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
-from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
     from configparser import ConfigParser

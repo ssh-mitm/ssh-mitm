@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Optional
 
 from paramiko.pkey import PKey
 
-from sshmitm.clients.ssh import SSHClient
+from sshmitm.core.clients.ssh import SSHClient
 
 if TYPE_CHECKING:
     import sshmitm
@@ -42,7 +42,7 @@ class NetconfClient(SSHClient):
         password: Optional[str],
         user: str,
         key: Optional[PKey],
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
     ) -> None:
         super().__init__(host, port, method, password, user, key, session)
         self.subsystem_count = 0

@@ -37,19 +37,19 @@ from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
-from sshmitm.forwarders.agent import AgentProxy
-from sshmitm.interfaces.server import ProxyNetconfServer, ProxySFTPServer
-from sshmitm.logger import THREAD_DATA, Colors
+from sshmitm.contrib.tools.log_collection import LogForwarder
+from sshmitm.core.forwarders.agent import AgentProxy
+from sshmitm.core.interfaces.server import ProxyNetconfServer, ProxySFTPServer
+from sshmitm.core.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
-from sshmitm.tools.log_collection import LogForwarder
 
 if TYPE_CHECKING:
     from paramiko.pkey import PKey
 
     import sshmitm
-    from sshmitm.interfaces.server import BaseServerInterface
-    from sshmitm.server import SSHProxyServer  # noqa: F401
+    from sshmitm.core.interfaces.server import BaseServerInterface
+    from sshmitm.core.server import SSHProxyServer  # noqa: F401
 
 
 class BaseSession(BaseModule):
@@ -70,7 +70,7 @@ class BaseSession(BaseModule):
 class Session(BaseSession):
     """Session Handler to store and manage active SSH sessions.
 
-    :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
+    :param proxyserver: Instance of 'sshmitm.core.server.SSHProxyServer' class
     :param client_socket: A socket instance representing the connection from the client
     :param client_address: Address information of the client
     :param authenticator: Type of the authentication class to be used
@@ -93,10 +93,10 @@ class Session(BaseSession):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        proxyserver: "sshmitm.server.SSHProxyServer",
+        proxyserver: "sshmitm.core.server.SSHProxyServer",
         client_socket: socket.socket,
         client_address: Union[Tuple[str, int], Tuple[str, int, int, int]],
-        authenticator: Type["sshmitm.authentication.Authenticator"],
+        authenticator: Type["sshmitm.core.authentication.Authenticator"],
         remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]],
         banner_name: Optional[str] = None,
         log_webhook_dest: Optional[str] = None,
@@ -104,7 +104,7 @@ class Session(BaseSession):
         """
         Initialize the class instance.
 
-        :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
+        :param proxyserver: Instance of 'sshmitm.core.server.SSHProxyServer' class
         :param client_socket: A socket instance representing the connection from the client
         :param client_address: Address information of the client
         :param authenticator: Type of the authentication class to be used
@@ -121,7 +121,7 @@ class Session(BaseSession):
 
         self.channel: Optional[paramiko.Channel] = None
 
-        self.proxyserver: "sshmitm.server.SSHProxyServer" = proxyserver
+        self.proxyserver: "sshmitm.core.server.SSHProxyServer" = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
         self.name = f"{client_address}->{remoteaddr}"
@@ -131,7 +131,7 @@ class Session(BaseSession):
 
         self.ssh_requested: bool = False
         self.ssh_channel: Optional[paramiko.Channel] = None
-        self.ssh_client: Optional[sshmitm.clients.ssh.SSHClient] = None
+        self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
         self.ssh_client_auth_finished: bool = False
         self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
@@ -143,12 +143,12 @@ class Session(BaseSession):
 
         self.netconf_requested: bool = False
         self.netconf_channel: Optional[paramiko.Channel] = None
-        self.netconf_client: Optional[sshmitm.clients.netconf.NetconfClient] = None
+        self.netconf_client: Optional[sshmitm.core.clients.netconf.NetconfClient] = None
         self.netconf_client_ready = threading.Event()
 
         self.sftp_requested: bool = False
         self.sftp_channel: Optional[paramiko.Channel] = None
-        self.sftp_client: Optional[sshmitm.clients.sftp.SFTPClient] = None
+        self.sftp_client: Optional[sshmitm.core.clients.sftp.SFTPClient] = None
         self.sftp_client_ready = threading.Event()
 
         self.username: str = ""
@@ -161,7 +161,9 @@ class Session(BaseSession):
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
         self.agent: Optional[AgentProxy] = None
-        self.authenticator: "sshmitm.authentication.Authenticator" = authenticator(self)
+        self.authenticator: "sshmitm.core.authentication.Authenticator" = authenticator(
+            self
+        )
 
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()

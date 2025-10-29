@@ -4,7 +4,7 @@ from typing import Optional
 
 import paramiko
 
-from sshmitm.forwarders.scp import SCPBaseForwarder
+from sshmitm.core.forwarders.scp import SCPBaseForwarder
 
 
 class NetconfBaseForwarder(SCPBaseForwarder):

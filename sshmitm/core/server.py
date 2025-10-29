@@ -12,25 +12,28 @@ from colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey
 from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
+from rich.console import Console
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
-from sshmitm.console import sshconsole
-from sshmitm.exceptions import KeyGenerationError
-from sshmitm.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
-from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
-from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
-from sshmitm.forwarders.ssh import SSHBaseForwarder, SSHForwarder
-from sshmitm.forwarders.tunnel import (
+from sshmitm.core.authentication import Authenticator, AuthenticatorPassThrough
+from sshmitm.core.exceptions import KeyGenerationError
+from sshmitm.core.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
+from sshmitm.core.forwarders.scp import SCPBaseForwarder, SCPForwarder
+from sshmitm.core.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
+from sshmitm.core.forwarders.ssh import SSHBaseForwarder, SSHForwarder
+from sshmitm.core.forwarders.tunnel import (
     LocalPortForwardingForwarder,
     RemotePortForwardingForwarder,
 )
-from sshmitm.interfaces.server import BaseServerInterface, ServerInterface
-from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
-from sshmitm.logger import Colors
-from sshmitm.multisocket import create_server_sock
-from sshmitm.session import Session
-from sshmitm.utils import SSHPubKey
+from sshmitm.core.interfaces.server import BaseServerInterface, ServerInterface
+from sshmitm.core.interfaces.sftp import (
+    BaseSFTPServerInterface,
+    SFTPProxyServerInterface,
+)
+from sshmitm.core.logger import Colors
+from sshmitm.core.multisocket import create_server_sock
+from sshmitm.core.session import Session
+from sshmitm.core.sshkeys import SSHPubKey
 
 
 class SSHProxyServer:
@@ -105,6 +108,7 @@ class SSHProxyServer:
             sys.exit(1)
 
     def print_serverinfo(self, json_log: bool = False) -> None:
+        sshconsole: Console = Console(emoji=False, highlight=False)
         if self.key_algorithm_class is None or self._hostkey is None:
             return
         ssh_host_key_pub = SSHPubKey(self._hostkey)

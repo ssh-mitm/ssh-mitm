@@ -5,8 +5,11 @@ from typing import TYPE_CHECKING, Optional, Tuple, Union
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
-from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
-from sshmitm.logger import Colors
+from sshmitm.core.forwarders.tunnel import (
+    RemotePortForwardingForwarder,
+    TunnelForwarder,
+)
+from sshmitm.core.logger import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 if TYPE_CHECKING:
@@ -31,8 +34,8 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
 
     def __init__(
         self,
-        session: "sshmitm.session.Session",
-        server_interface: "sshmitm.interfaces.server.ServerInterface",
+        session: "sshmitm.core.session.Session",
+        server_interface: "sshmitm.core.interfaces.server.ServerInterface",
         destination: Optional[Tuple[str, int]],
     ) -> None:
         super().__init__(session, server_interface, destination)

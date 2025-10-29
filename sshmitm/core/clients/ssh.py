@@ -26,13 +26,13 @@ import paramiko
 import paramiko.hostkeys
 from paramiko.pkey import PKey
 
-from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
+from sshmitm.core.exceptions import InvalidHostKey, NoAgentKeys
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.forwarders.agent import AgentProxy
-    from sshmitm.session import Session  # noqa: F401
+    from sshmitm.core.forwarders.agent import AgentProxy
+    from sshmitm.core.session import Session  # noqa: F401
 
 
 class AuthenticationMethod(Enum):
@@ -75,12 +75,12 @@ class SSHClient(BaseSSHClient):
         password: Optional[str],
         user: str,
         key: Optional[PKey],
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         fingerprints: Optional[str] = None,
         disable_fingerprint_warning: bool = False,
     ) -> None:
         super().__init__()
-        self.session: "sshmitm.session.Session" = session
+        self.session: "sshmitm.core.session.Session" = session
         self.session.register_session_thread()
         self.host: str = host
         self.port: int = port

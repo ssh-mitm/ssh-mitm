@@ -36,14 +36,41 @@ are defined by the parser_func properties of the corresponding SubCommand instan
 import logging
 import os
 import sys
+from configparser import ConfigParser
 
 from paramiko import Transport
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.config import CONFIGFILE
-from sshmitm.logger import Colors, FailSaveLogStream, PlainJsonFormatter
+from sshmitm.core.compat import resources
+from sshmitm.core.logger import Colors, FailSaveLogStream, PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import monkeypatch, transport
+
+
+def get_config() -> ConfigParser:
+    configfile = ConfigParser()
+
+    # read default config
+    conf = resources.files("sshmitm") / "data/default.ini"
+    configfile.read_string(conf.read_text())
+
+    configfile_path_list = [
+        "/etc/ssh-mitm.ini",
+        "/etc/sshmitm.ini",
+        os.path.expanduser("~/ssh-mitm.ini"),
+        os.path.expanduser("~/sshmitm.ini"),
+    ]
+
+    # check if a production or user config exists and read it
+    for configpath in configfile_path_list:
+        if os.path.isfile(configpath):
+            configfile.read(configpath)
+            break
+
+    sshmitm_config_env = os.environ.get("SSHMITM_CONFIG")
+    if sshmitm_config_env and os.path.isfile(sshmitm_config_env):
+        configfile.read(sshmitm_config_env)
+    return configfile
 
 
 def main() -> None:
@@ -56,7 +83,7 @@ def main() -> None:
         prog_name = "at.ssh_mitm.server"
 
     parser = ModuleParser(
-        config=CONFIGFILE,
+        config=get_config(),
         prog=prog_name,
         description="SSH-MITM Tools",
         allow_abbrev=False,

@@ -8,8 +8,8 @@ that takes a bytes object and an optional int parameter
 hexwidth and prints the data as a hexdump.
 """
 
-from sshmitm.forwarders.scp import SCPForwarder
-from sshmitm.utils import format_hex
+from sshmitm.core.forwarders.scp import SCPForwarder
+from sshmitm.core.utils import format_hex
 
 
 class SCPDebugForwarder(SCPForwarder):

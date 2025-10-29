@@ -96,11 +96,11 @@
       Sets a custom SSH server banner presented to clients during the initial connection. |br|
       If not specified, the default banner is ``SSH-2.0-SSHMITM_<version>``.
 
-.. confval:: [sshmitm.session:Session]
+.. confval:: [sshmitm.core.session:Session]
 
    .. code-block:: ini
 
-      [sshmitm.session:Session]
+      [sshmitm.core.session:Session]
       session-log-dir =
       log-webhook-dest =
 
@@ -110,11 +110,11 @@
 Authentication-Plugins
 ----------------------
 
-.. confval:: [sshmitm.authentication:AuthenticatorPassThrough]
+.. confval:: [sshmitm.core.authentication:AuthenticatorPassThrough]
 
    .. code-block:: ini
 
-      [sshmitm.authentication:AuthenticatorPassThrough]
+      [sshmitm.core.authentication:AuthenticatorPassThrough]
       close-pubkey-enumerator-with-session = False
       remote-host =
       remote-port =
@@ -156,11 +156,11 @@ Authentication-Plugins
    :option string fallback-password: |br|
       Specifies the password for the honeypot fallback. Required if ``enable-auth-fallback`` is set to ``True``.
 
-.. confval:: [sshmitm.interfaces.server:ServerInterface]
+.. confval:: [sshmitm.core.interfaces.server:ServerInterface]
 
    .. code-block:: ini
 
-      [sshmitm.interfaces.server:ServerInterface]
+      [sshmitm.core.interfaces.server:ServerInterface]
       disable-ssh = False
       disable-scp = False
       disable-password-auth = False

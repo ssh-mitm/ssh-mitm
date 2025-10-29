@@ -6,9 +6,9 @@ from typing import Dict, List, Optional
 
 from rich import print as rich_print
 
-from sshmitm.authentication import PublicKeyEnumerator
+from sshmitm.core.authentication import PublicKeyEnumerator
+from sshmitm.core.sshkeys import SSHPubKey
 from sshmitm.moduleparser import SubCommand
-from sshmitm.utils import SSHPubKey
 
 
 class CheckPublickey(SubCommand):

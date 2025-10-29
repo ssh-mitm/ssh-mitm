@@ -15,7 +15,7 @@ from paramiko.pkey import PKey
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_file import SFTPFile
 
-from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
+from sshmitm.core.clients.ssh import AuthenticationMethod, SSHClient
 
 if TYPE_CHECKING:
     import sshmitm
@@ -41,7 +41,7 @@ class SFTPClient(SSHClient):
         password: Optional[str],
         user: str,
         key: Optional[PKey],
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
     ) -> None:
         super().__init__(host, port, method, password, user, key, session)
         self._sftp: Optional[paramiko.SFTPClient] = None

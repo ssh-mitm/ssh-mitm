@@ -9,8 +9,8 @@ from typing import TYPE_CHECKING, Optional
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
-from sshmitm.forwarders.ssh import SSHForwarder
-from sshmitm.logger import Colors
+from sshmitm.core.forwarders.ssh import SSHForwarder
+from sshmitm.core.logger import Colors
 from sshmitm.plugins.ssh.terminallogs import ScriptLogFormat, TerminalLogFormat
 
 if TYPE_CHECKING:
@@ -83,7 +83,7 @@ class SSHMirrorForwarder(SSHForwarder):
             help="terminal log format for captured ssh session",
         )
 
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__(session)
         if self.args.ssh_mirrorshell_key:
             self.args.ssh_mirrorshell_key = os.path.expanduser(

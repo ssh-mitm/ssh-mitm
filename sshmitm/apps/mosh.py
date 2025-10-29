@@ -7,9 +7,9 @@ from typing import List, Tuple, cast
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
-from sshmitm.logger import Colors
-from sshmitm.session import Session
-from sshmitm.utils import format_hex
+from sshmitm.core.logger import Colors
+from sshmitm.core.session import Session
+from sshmitm.core.utils import format_hex
 
 
 class UdpProxy:

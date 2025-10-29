@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional, Type, Union, cast
 import paramiko
 from paramiko.sftp_attr import SFTPAttributes
 
-from sshmitm.interfaces.sftp import BaseSFTPServerInterface
+from sshmitm.core.interfaces.sftp import BaseSFTPServerInterface
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
@@ -47,7 +47,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
     def __init__(  # pylint: disable=too-many-arguments
         self,
         server_interface: BaseSFTPServerInterface,
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         plugin: Type[SFTPHandlerBasePlugin],
         filename: str,
         open_flags: int,

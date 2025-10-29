@@ -6,12 +6,12 @@ from typing import TYPE_CHECKING, ClassVar, List, Optional, Tuple, Union
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
-from sshmitm.forwarders.tunnel import (
+from sshmitm.core.forwarders.tunnel import (
     BaseClientTunnelHandler,
     LocalPortForwardingForwarder,
     TunnelForwarder,
 )
-from sshmitm.logger import Colors
+from sshmitm.core.logger import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 from sshmitm.plugins.tunnel.socks4 import Socks4Error, Socks4Server
 from sshmitm.plugins.tunnel.socks5 import Socks5Error, Socks5Server
@@ -27,7 +27,7 @@ class ClientTunnelHandler(BaseClientTunnelHandler):
 
     def __init__(
         self,
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         username: Optional[str] = None,
         password: Optional[str] = None,
     ) -> None:
@@ -105,7 +105,7 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
     # Setup should occur after master channel establishment
 
     @classmethod
-    def setup(cls, session: "sshmitm.session.Session") -> None:
+    def setup(cls, session: "sshmitm.core.session.Session") -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
 

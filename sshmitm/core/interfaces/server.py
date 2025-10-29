@@ -8,14 +8,14 @@ from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.sftp import _VERSION, CMD_INIT, CMD_VERSION, SFTPError
 
-from sshmitm.clients.netconf import NetconfClient
-from sshmitm.clients.sftp import SFTPClient
+from sshmitm.core.clients.netconf import NetconfClient
+from sshmitm.core.clients.sftp import SFTPClient
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.authentication import RemoteCredentials
-    from sshmitm.forwarders.tunnel import (
+    from sshmitm.core.authentication import RemoteCredentials
+    from sshmitm.core.forwarders.tunnel import (
         LocalPortForwardingForwarder,
         RemotePortForwardingForwarder,
         TunnelForwarder,
@@ -23,9 +23,9 @@ if TYPE_CHECKING:
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__()
-        self.session: "sshmitm.session.Session" = session
+        self.session: "sshmitm.core.session.Session" = session
         self.session.register_session_thread()
         self.forwarders: List[
             Union[
@@ -494,7 +494,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
         name: str,
         server: ServerInterface,
         sftp_si: Type[paramiko.SFTPServerInterface],
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         *largs: Any,
         **kwargs: Any,
     ) -> None:
@@ -555,7 +555,7 @@ class ProxyNetconfServer(paramiko.SubsystemHandler):
         name: str,
         server: ServerInterface,
         netconf_forwarder: Any,
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         *largs: Any,
         **kwargs: Any,
     ) -> None:

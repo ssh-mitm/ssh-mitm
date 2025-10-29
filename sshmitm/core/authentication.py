@@ -11,11 +11,11 @@ import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import PKey
 
-from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
-from sshmitm.exceptions import MissingHostException
-from sshmitm.logger import Colors
+from sshmitm.core.clients.ssh import AuthenticationMethod, SSHClient
+from sshmitm.core.exceptions import MissingHostException
+from sshmitm.core.logger import Colors
+from sshmitm.core.sshkeys import SSHPubKey
 from sshmitm.moduleparser import BaseModule
-from sshmitm.utils import SSHPubKey
 
 if TYPE_CHECKING:
     import sshmitm
@@ -347,13 +347,13 @@ class Authenticator(BaseModule):
             help="password for the honeypot",
         )
 
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         """
         Initializes Authenticator instance.
 
         This class pass the authentication from the client to the server.
 
-        :param session: an object of sshmitm.session.Session class to store session information.
+        :param session: an object of sshmitm.core.session.Session class to store session information.
         """
         super().__init__()
         self.session = session
@@ -645,7 +645,7 @@ class AuthenticatorPassThrough(Authenticator):
             help="closes the pubkey enumerator when the session is close. This can be used to hide tracks.",
         )
 
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__(session=session)
 
         self.pubkey_enumerator: Optional[PublicKeyEnumerator] = None

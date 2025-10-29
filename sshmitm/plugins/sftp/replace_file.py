@@ -4,9 +4,12 @@ from typing import Optional, Type, Union
 
 from paramiko import SFTPAttributes
 
-from sshmitm.exceptions import MissingClient
-from sshmitm.forwarders.sftp import SFTPBaseHandle, SFTPHandlerPlugin
-from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
+from sshmitm.core.exceptions import MissingClient
+from sshmitm.core.forwarders.sftp import SFTPBaseHandle, SFTPHandlerPlugin
+from sshmitm.core.interfaces.sftp import (
+    BaseSFTPServerInterface,
+    SFTPProxyServerInterface,
+)
 
 
 class SFTPProxyReplaceHandler(SFTPHandlerPlugin):

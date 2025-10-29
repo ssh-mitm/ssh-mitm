@@ -8,14 +8,14 @@ from paramiko.common import cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_REQUEST
 from paramiko.message import Message
 
 from sshmitm.apps.mosh import handle_mosh
-from sshmitm.forwarders.base import BaseForwarder
+from sshmitm.core.forwarders.base import BaseForwarder
 
 if TYPE_CHECKING:
     import sshmitm
 
 
 class SCPBaseForwarder(BaseForwarder):
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__(session)
         self.client_exit_code_received = False
         self.server_exit_code_received = False
@@ -205,7 +205,7 @@ class SCPBaseForwarder(BaseForwarder):
 class SCPForwarder(SCPBaseForwarder):
     """forwards a file from or to the remote server"""
 
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__(session)
 
         self.await_response = False

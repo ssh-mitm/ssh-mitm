@@ -9,17 +9,19 @@ from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
 from rich.markup import escape
 
-from sshmitm.logger import Colors
+from sshmitm.core.compat import resources
+from sshmitm.core.logger import Colors
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
-from sshmitm.utils import resources
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.session import Session  # noqa: F401
+    from sshmitm.core.session import Session  # noqa: F401
 
 
 class KeyNegotiationData:
-    def __init__(self, session: "sshmitm.session.Session", message: Message) -> None:
+    def __init__(
+        self, session: "sshmitm.core.session.Session", message: Message
+    ) -> None:
         self.session = session
         self.session.register_session_thread()
         self.client_version = session.transport.remote_version
@@ -98,7 +100,7 @@ class KeyNegotiationData:
         client.run_audit()
 
 
-def handle_key_negotiation(session: "sshmitm.session.Session") -> None:
+def handle_key_negotiation(session: "sshmitm.core.session.Session") -> None:
     # When really trying to implement connection accepting/forwarding based on CVE-14145
     # one should consider that clients who already accepted the fingerprint of the ssh-mitm server
     # will be connected through on their second connect and will get a changed keys error

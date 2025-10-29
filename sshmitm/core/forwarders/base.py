@@ -3,12 +3,12 @@ from typing import TYPE_CHECKING, Optional
 
 import paramiko
 
-from sshmitm.exceptions import MissingClient
+from sshmitm.core.exceptions import MissingClient
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.session import Session
+    from sshmitm.core.session import Session
 
 
 class BaseForwarder(BaseModule):
@@ -19,7 +19,7 @@ class BaseForwarder(BaseModule):
     # Slow file transmission
     BUF_LEN = 65536 * 100
 
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__()
         if session.ssh_client is None or session.ssh_client.transport is None:
             msg = "session.ssh_client is None"

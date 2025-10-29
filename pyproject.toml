@@ -45,22 +45,22 @@ Tracker = "https://github.com/ssh-mitm/ssh-mitm/issues"
 
 [project.scripts]
 ssh-mitm = "sshmitm.cli:main"
-ssh-mitm-askpass = "sshmitm.tools.askpass:main"
+ssh-mitm-askpass = "sshmitm.contrib.tools.askpass:main"
 
 [project.entry-points."sshmitm.SubCommand"]
-server = "sshmitm.server.cli:SSHServerModules"
-audit = "sshmitm.audit.cli:Audit"
+server = "sshmitm.commands.server:SSHServerModules"
+audit = "sshmitm.commands.audit:Audit"
 check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
 
 [project.entry-points."sshmitm.BaseSession"]
-base = "sshmitm.session:Session"
+base = "sshmitm.core.session:Session"
 
 [project.entry-points."sshmitm.Authenticator"]
-passthrough = "sshmitm.authentication:AuthenticatorPassThrough"
-remoteauth = "sshmitm.authentication:AuthenticatorRemote"
+passthrough = "sshmitm.core.authentication:AuthenticatorPassThrough"
+remoteauth = "sshmitm.core.authentication:AuthenticatorRemote"
 
 [project.entry-points."sshmitm.BaseServerInterface"]
-base = "sshmitm.interfaces.server:ServerInterface"
+base = "sshmitm.core.interfaces.server:ServerInterface"
 
 [project.entry-points."sshmitm.SSHBaseForwarder"]
 mirrorshell = "sshmitm.plugins.ssh.mirrorshell:SSHMirrorForwarder"
@@ -74,7 +74,7 @@ replace-command = "sshmitm.plugins.scp.rewrite_command:SCPRewriteCommand"
 CVE-2022-29154 = "sshmitm.plugins.scp.cve202229154:CVE202229154"
 
 [project.entry-points."sshmitm.BaseSFTPServerInterface"]
-base = "sshmitm.interfaces.sftp:SFTPProxyServerInterface"
+base = "sshmitm.core.interfaces.sftp:SFTPProxyServerInterface"
 
 [project.entry-points."sshmitm.SFTPHandlerBasePlugin"]
 replace_file = "sshmitm.plugins.sftp.replace_file:SFTPProxyReplaceHandler"
