@@ -45,7 +45,7 @@ Tracker = "https://github.com/ssh-mitm/ssh-mitm/issues"
 
 [project.scripts]
 ssh-mitm = "sshmitm.cli:main"
-ssh-mitm-askpass = "sshmitm.tools.askpass:main"
+ssh-mitm-askpass = "sshmitm.contrib.tools.askpass:main"
 
 [project.entry-points."sshmitm.SubCommand"]
 server = "sshmitm.commands.server:SSHServerModules"

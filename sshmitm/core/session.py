@@ -37,12 +37,12 @@ from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
+from sshmitm.contrib.tools.log_collection import LogForwarder
 from sshmitm.core.forwarders.agent import AgentProxy
 from sshmitm.core.interfaces.server import ProxyNetconfServer, ProxySFTPServer
 from sshmitm.core.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
-from sshmitm.tools.log_collection import LogForwarder
 
 if TYPE_CHECKING:
     from paramiko.pkey import PKey
@@ -161,7 +161,9 @@ class Session(BaseSession):
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
         self.agent: Optional[AgentProxy] = None
-        self.authenticator: "sshmitm.core.authentication.Authenticator" = authenticator(self)
+        self.authenticator: "sshmitm.core.authentication.Authenticator" = authenticator(
+            self
+        )
 
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
