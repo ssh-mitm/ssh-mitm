@@ -13,8 +13,8 @@ from paramiko import PKey
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.core.exceptions import MissingHostException
+from sshmitm.core.logger import Colors
 from sshmitm.core.sshkeys import SSHPubKey
-from sshmitm.logger import Colors
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:

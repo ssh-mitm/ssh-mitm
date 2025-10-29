@@ -9,7 +9,7 @@ from sshmitm.core.forwarders.tunnel import (
     RemotePortForwardingForwarder,
     TunnelForwarder,
 )
-from sshmitm.logger import Colors
+from sshmitm.core.logger import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 if TYPE_CHECKING:

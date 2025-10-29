@@ -41,7 +41,7 @@ from paramiko import Transport
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.config import CONFIGFILE
-from sshmitm.logger import Colors, FailSaveLogStream, PlainJsonFormatter
+from sshmitm.core.logger import Colors, FailSaveLogStream, PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import monkeypatch, transport
 

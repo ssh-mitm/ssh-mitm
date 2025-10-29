@@ -5,7 +5,7 @@ from typing import Any, List, Optional
 
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
-from sshmitm.logger import Colors
+from sshmitm.core.logger import Colors
 
 
 class ModuleFormatter(argparse.HelpFormatter):
