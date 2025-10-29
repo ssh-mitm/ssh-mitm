@@ -26,7 +26,7 @@ if [ ! -f build/python.tar.zst ]; then
 fi
 tar --use-compress-program=unzstd -xvf build/python.tar.zst -C build/appimage/AppDir --transform 's/python\/install/python/' python/install
 
-build/appimage/AppDir/python/bin/python3 -m pip install -r requirements-dev.txt .
+build/appimage/AppDir/python/bin/python3 -m pip install -r .[production]
 
 # install files in AppDir
 cp appimage/AppRun build/appimage/AppDir/
