@@ -26,10 +26,16 @@ Installation
 This part of the documentation covers the installation of SSH-MITM.
 The first step to using any software package is getting it properly installed.
 
+For more details, see the :doc:`installation guide </get_started/installation>`.
+
 To install SSH-MITM, simply run one of those commands in your terminal of choice:
 
 :fas:`cog` AppImage
 -------------------
+
+.. note::
+
+    AppImage is the recommended option for most users.
 
 If you use the ``AppImage``, you can install it as:
 
@@ -66,14 +72,17 @@ If you use ``snap``, you can install it with:
 :fab:`python` pip
 ------------------
 
-If you use ``pip``, you can install it with:
+To install **SSH-MITM** with tested and stable dependencies (recommended):
+
+.. code-block:: none
+
+    $ python3 -m pip install "ssh-mitm[production]"
+
+For a development installation (without fixed dependency versions):
 
 .. code-block:: none
 
     $ python3 -m pip install ssh-mitm
-
-
-For more installation methods, refer to the  :doc:`installation guide </get_started/installation>`.
 
 
 Start SSH-MITM

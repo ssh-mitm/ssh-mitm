@@ -9,7 +9,7 @@ This guide will provide you with the information and resources you need to get S
 running on your system.
 
 SSH-MITM offers flexible and convenient installation options, including pre-built packages
-and package managers such as ``Flatpak``, ``snap``, ``pip``, ``pipenv``, ``AppImage`` or ``Nixpkgs``.
+and package managers such as ``AppImage``, ``Flatpak``, ``snap``, ``pip``, ``pipenv`` or ``Nixpkgs``.
 
 These options provide a simple and efficient way for users to get SSH-MITM installed
 and ready to use for various purposes such as malware analysis, forensics, security audits, and more.
@@ -20,6 +20,20 @@ Official distributions
 Official distributions of SSH-MITM represent the most recent and up-to-date versions of the software,
 directly maintained and approved by the SSH-MITM developers. These are the releases that see regular updates,
 ensuring users have access to the latest features, security patches, and improvements.
+
+:fas:`cog` AppImage
+-------------------
+
+.. note::
+
+    AppImage is the recommended option for most users.
+
+If you use the ``AppImage``, you can install it as:
+
+.. code:: none
+
+    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    $ chmod +x ssh-mitm*.AppImage
 
 :fab:`linux` Flatpak
 --------------------
@@ -44,21 +58,16 @@ If you use ``snap``, you can install it with:
     $ sudo snap install ssh-mitm
 
 
-:fas:`cog` AppImage
--------------------
-
-If you use the ``AppImage``, you can install it as:
-
-.. code:: none
-
-    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-    $ chmod +x ssh-mitm*.AppImage
-
-
 :fab:`python` pip
 ------------------
 
-If you use ``pip``, you can install it with:
+If you use ``pip``, you can install **SSH-MITM** with tested and stable dependencies (recommended):
+
+.. code-block:: none
+
+    $ python3 -m pip install "ssh-mitm[production]"
+
+For a development installation (without fixed dependency versions):
 
 .. code-block:: none
 
@@ -76,11 +85,11 @@ you can do this by running ``export PATH="$HOME/.local/bin:$PATH"``.
 :fab:`python` pipenv
 --------------------
 
-If you use ``pipenv``, you can install it as:
+If you use ``pipenv``, you can install it with tested and stable dependencies:
 
 .. code-block:: none
 
-    $ pipenv install ssh-mitm
+    $ pipenv install "ssh-mitm[production]"
     $ pipenv shell
 
 When using ``pipenv``, in order to launch ``ssh-mitm``,
