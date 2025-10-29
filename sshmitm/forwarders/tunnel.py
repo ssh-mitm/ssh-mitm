@@ -11,11 +11,11 @@ from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.session import Session  # noqa: F401
+    from sshmitm.core.session import Session  # noqa: F401
 
 
 class BaseClientTunnelHandler:
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         self.session = session
         self.session.register_session_thread()
 
@@ -109,7 +109,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
 
     def __init__(
         self,
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         chanid: int,
         origin: Optional[Tuple[str, int]],
         destination: Optional[Tuple[str, int]],
@@ -150,7 +150,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         super().run()
 
     @classmethod
-    def setup(cls, session: "sshmitm.session.Session") -> None:
+    def setup(cls, session: "sshmitm.core.session.Session") -> None:
         pass
 
 
@@ -167,7 +167,7 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
 
     def __init__(
         self,
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         server_interface: "sshmitm.interfaces.server.ServerInterface",
         destination: Optional[Tuple[str, int]],
     ) -> None:

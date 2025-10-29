@@ -18,7 +18,7 @@ got_c_command (bool): Flag to keep track of if the 'C' command has been received
 
 Methods:
 parser_arguments(): Adds a required argument --scp-replace to the argument parser.
-init(session: sshmitm.session.Session): Initializes the SCPReplaceFile instance.
+init(session: sshmitm.core.session.Session): Initializes the SCPReplaceFile instance.
 handle_command(traffic: bytes) -> bytes: Handles the incoming SCP command and returns the modified SCP command.
 process_data(traffic: bytes) -> bytes: Processes the SCP data and returns the modified SCP data
 (i.e.the replacement file).
@@ -46,7 +46,7 @@ class SCPReplaceFile(SCPForwarder):
             help="Specifies the path to the file that will be used for replacement during SCP file transfers. This option is required.",
         )
 
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__(session)
         self.args.scp_replace_file = os.path.expanduser(self.args.scp_replace_file)
 

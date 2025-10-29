@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class SCPBaseForwarder(BaseForwarder):
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__(session)
         self.client_exit_code_received = False
         self.server_exit_code_received = False
@@ -205,7 +205,7 @@ class SCPBaseForwarder(BaseForwarder):
 class SCPForwarder(SCPBaseForwarder):
     """forwards a file from or to the remote server"""
 
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__(session)
 
         self.await_response = False

@@ -31,7 +31,7 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
 
     def __init__(
         self,
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         server_interface: "sshmitm.interfaces.server.ServerInterface",
         destination: Optional[Tuple[str, int]],
     ) -> None:

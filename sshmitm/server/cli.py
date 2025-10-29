@@ -14,7 +14,7 @@ from sshmitm.interfaces.server import BaseServerInterface
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
 from sshmitm.moduleparser import SubCommand
 from sshmitm.server import SSHProxyServer
-from sshmitm.session import BaseSession
+from sshmitm.core.session import BaseSession
 
 
 class SSHServerModules(SubCommand):

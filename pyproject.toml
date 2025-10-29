@@ -53,7 +53,7 @@ audit = "sshmitm.audit.cli:Audit"
 check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
 
 [project.entry-points."sshmitm.BaseSession"]
-base = "sshmitm.session:Session"
+base = "sshmitm.core.session:Session"
 
 [project.entry-points."sshmitm.Authenticator"]
 passthrough = "sshmitm.authentication:AuthenticatorPassThrough"

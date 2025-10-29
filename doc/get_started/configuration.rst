@@ -96,11 +96,11 @@
       Sets a custom SSH server banner presented to clients during the initial connection. |br|
       If not specified, the default banner is ``SSH-2.0-SSHMITM_<version>``.
 
-.. confval:: [sshmitm.session:Session]
+.. confval:: [sshmitm.core.session:Session]
 
    .. code-block:: ini
 
-      [sshmitm.session:Session]
+      [sshmitm.core.session:Session]
       session-log-dir =
       log-webhook-dest =
 

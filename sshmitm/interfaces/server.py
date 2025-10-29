@@ -23,9 +23,9 @@ if TYPE_CHECKING:
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__()
-        self.session: "sshmitm.session.Session" = session
+        self.session: "sshmitm.core.session.Session" = session
         self.session.register_session_thread()
         self.forwarders: List[
             Union[
@@ -494,7 +494,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
         name: str,
         server: ServerInterface,
         sftp_si: Type[paramiko.SFTPServerInterface],
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         *largs: Any,
         **kwargs: Any,
     ) -> None:
@@ -555,7 +555,7 @@ class ProxyNetconfServer(paramiko.SubsystemHandler):
         name: str,
         server: ServerInterface,
         netconf_forwarder: Any,
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         *largs: Any,
         **kwargs: Any,
     ) -> None:

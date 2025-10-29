@@ -47,7 +47,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
     def __init__(  # pylint: disable=too-many-arguments
         self,
         server_interface: BaseSFTPServerInterface,
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         plugin: Type[SFTPHandlerBasePlugin],
         filename: str,
         open_flags: int,

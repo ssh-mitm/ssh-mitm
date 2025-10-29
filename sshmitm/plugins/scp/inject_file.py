@@ -53,7 +53,7 @@ class SCPInjectFile(SCPForwarder):
         )
         return SCPForwarder(args[0])
 
-    def __init__(self, session: "sshmitm.session.Session") -> None:
+    def __init__(self, session: "sshmitm.core.session.Session") -> None:
         super().__init__(session)
         self.args.scp_inject_file = os.path.expanduser(self.args.scp_inject_file)
 

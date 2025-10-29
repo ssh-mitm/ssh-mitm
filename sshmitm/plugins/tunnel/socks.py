@@ -27,7 +27,7 @@ class ClientTunnelHandler(BaseClientTunnelHandler):
 
     def __init__(
         self,
-        session: "sshmitm.session.Session",
+        session: "sshmitm.core.session.Session",
         username: Optional[str] = None,
         password: Optional[str] = None,
     ) -> None:
@@ -105,7 +105,7 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
     # Setup should occur after master channel establishment
 
     @classmethod
-    def setup(cls, session: "sshmitm.session.Session") -> None:
+    def setup(cls, session: "sshmitm.core.session.Session") -> None:
         parser_retval = cls.parser().parse_known_args(None, None)
         args, _ = parser_retval
 
