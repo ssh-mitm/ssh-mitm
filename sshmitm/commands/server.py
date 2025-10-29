@@ -12,9 +12,9 @@ from sshmitm.core.forwarders.tunnel import (
 )
 from sshmitm.core.interfaces.server import BaseServerInterface
 from sshmitm.core.interfaces.sftp import BaseSFTPServerInterface
+from sshmitm.core.server import SSHProxyServer
 from sshmitm.core.session import BaseSession
 from sshmitm.moduleparser import SubCommand
-from sshmitm.core.server import SSHProxyServer
 
 
 class SSHServerModules(SubCommand):

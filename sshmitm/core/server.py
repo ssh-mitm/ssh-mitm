@@ -32,8 +32,8 @@ from sshmitm.core.interfaces.sftp import (
 )
 from sshmitm.core.multisocket import create_server_sock
 from sshmitm.core.session import Session
+from sshmitm.core.sshkeys import SSHPubKey
 from sshmitm.logger import Colors
-from sshmitm.utils import SSHPubKey
 
 
 class SSHProxyServer:
