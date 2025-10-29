@@ -21,8 +21,8 @@ if TYPE_CHECKING:
     import sshmitm
 
 PATCH_LOCK = threading.Lock()
-ORIGINAL_parse_service_accept = paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore[attr-defined] # pylint:disable=protected-access
-ORIGINAL_parse_userauth_info_request = paramiko.auth_handler.AuthHandler._parse_userauth_info_request  # type: ignore[attr-defined] # pylint:disable=protected-access
+ORIGINAL_PARSE_SERVICE_ACCEPT = paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore[attr-defined] # pylint:disable=protected-access
+ORIGINAL_PARSE_USERAUTH_INFO_REQUEST = paramiko.auth_handler.AuthHandler._parse_userauth_info_request  # type: ignore[attr-defined] # pylint:disable=protected-access
 
 
 def patched_parse_service_accept(
@@ -30,7 +30,7 @@ def patched_parse_service_accept(
 ) -> None:
     logging.debug("wait for lock to execute original _parse_service_accept")
     with PATCH_LOCK:
-        ORIGINAL_parse_service_accept(self, msg)
+        ORIGINAL_PARSE_SERVICE_ACCEPT(self, msg)
 
 
 def patched_parse_userauth_info_request(
@@ -38,7 +38,7 @@ def patched_parse_userauth_info_request(
 ) -> None:
     logging.debug("wait for lock to execute original _parse_userauth_info_request")
     with PATCH_LOCK:
-        ORIGINAL_parse_userauth_info_request(self, msg)
+        ORIGINAL_PARSE_USERAUTH_INFO_REQUEST(self, msg)
 
 
 paramiko.auth_handler.AuthHandler._parse_service_accept = patched_parse_service_accept  # type: ignore[attr-defined] # pylint:disable=protected-access
@@ -171,8 +171,8 @@ class PublicKeyEnumerator:
             except (ValueError, paramiko.ssh_exception.AuthenticationException):
                 valid_key = False
             finally:
-                paramiko.auth_handler.AuthHandler._parse_service_accept = ORIGINAL_parse_service_accept  # type: ignore[attr-defined]
-                paramiko.auth_handler.AuthHandler._parse_userauth_info_request = ORIGINAL_parse_userauth_info_request  # type: ignore[attr-defined]
+                paramiko.auth_handler.AuthHandler._parse_service_accept = ORIGINAL_PARSE_SERVICE_ACCEPT  # type: ignore[attr-defined]
+                paramiko.auth_handler.AuthHandler._parse_userauth_info_request = ORIGINAL_PARSE_USERAUTH_INFO_REQUEST  # type: ignore[attr-defined]
         return valid_key
 
 

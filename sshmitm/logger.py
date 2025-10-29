@@ -71,24 +71,24 @@ class FailSaveLogStream:
 
 
 class PlainJsonFormatter(jsonlogger.JsonFormatter):
-    def process_log_record(self, log_record: Dict[str, Any]) -> Dict[str, Any]:
-        log_record["message"] = log_record["message"].strip()
-        return log_record
+    def process_log_record(self, log_data: Dict[str, Any]) -> Dict[str, Any]:
+        log_data["message"] = log_data["message"].strip()
+        return log_data
 
     def add_fields(
         self,
-        log_record: Dict[str, Any],
+        log_data: Dict[str, Any],
         record: logging.LogRecord,
         message_dict: Dict[str, Any],
     ) -> None:
-        super().add_fields(log_record, record, message_dict)
-        log_record["tid"] = threading.get_native_id()
-        log_record["module"] = record.module
+        super().add_fields(log_data, record, message_dict)
+        log_data["tid"] = threading.get_native_id()
+        log_data["module"] = record.module
 
         session = getattr(THREAD_DATA, "session", None)
-        log_record["sessionid"] = session.sessionid if session is not None else None
+        log_data["sessionid"] = session.sessionid if session is not None else None
 
-        log_record["timestamp"] = datetime.now(timezone.utc).strftime(
+        log_data["timestamp"] = datetime.now(timezone.utc).strftime(
             "%Y-%m-%dT%H:%M:%S.%fZ"
         )
-        log_record["level"] = record.levelname
+        log_data["level"] = record.levelname
