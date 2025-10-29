@@ -49,7 +49,7 @@ if TYPE_CHECKING:
 
     import sshmitm
     from sshmitm.core.interfaces.server import BaseServerInterface
-    from sshmitm.server import SSHProxyServer  # noqa: F401
+    from sshmitm.core.server import SSHProxyServer  # noqa: F401
 
 
 class BaseSession(BaseModule):
@@ -70,7 +70,7 @@ class BaseSession(BaseModule):
 class Session(BaseSession):
     """Session Handler to store and manage active SSH sessions.
 
-    :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
+    :param proxyserver: Instance of 'sshmitm.core.server.SSHProxyServer' class
     :param client_socket: A socket instance representing the connection from the client
     :param client_address: Address information of the client
     :param authenticator: Type of the authentication class to be used
@@ -93,7 +93,7 @@ class Session(BaseSession):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        proxyserver: "sshmitm.server.SSHProxyServer",
+        proxyserver: "sshmitm.core.server.SSHProxyServer",
         client_socket: socket.socket,
         client_address: Union[Tuple[str, int], Tuple[str, int, int, int]],
         authenticator: Type["sshmitm.authentication.Authenticator"],
@@ -104,7 +104,7 @@ class Session(BaseSession):
         """
         Initialize the class instance.
 
-        :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
+        :param proxyserver: Instance of 'sshmitm.core.server.SSHProxyServer' class
         :param client_socket: A socket instance representing the connection from the client
         :param client_address: Address information of the client
         :param authenticator: Type of the authentication class to be used
@@ -121,7 +121,7 @@ class Session(BaseSession):
 
         self.channel: Optional[paramiko.Channel] = None
 
-        self.proxyserver: "sshmitm.server.SSHProxyServer" = proxyserver
+        self.proxyserver: "sshmitm.core.server.SSHProxyServer" = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
         self.name = f"{client_address}->{remoteaddr}"
