@@ -11,7 +11,7 @@ options, respectively.
 
 import logging
 
-from sshmitm.forwarders.scp import SCPForwarder
+from sshmitm.core.forwarders.scp import SCPForwarder
 
 
 class SCPRewriteCommand(SCPForwarder):

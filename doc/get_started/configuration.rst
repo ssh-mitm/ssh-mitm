@@ -156,11 +156,11 @@ Authentication-Plugins
    :option string fallback-password: |br|
       Specifies the password for the honeypot fallback. Required if ``enable-auth-fallback`` is set to ``True``.
 
-.. confval:: [sshmitm.interfaces.server:ServerInterface]
+.. confval:: [sshmitm.core.interfaces.server:ServerInterface]
 
    .. code-block:: ini
 
-      [sshmitm.interfaces.server:ServerInterface]
+      [sshmitm.core.interfaces.server:ServerInterface]
       disable-ssh = False
       disable-scp = False
       disable-password-auth = False

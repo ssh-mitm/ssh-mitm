@@ -60,7 +60,7 @@ passthrough = "sshmitm.authentication:AuthenticatorPassThrough"
 remoteauth = "sshmitm.authentication:AuthenticatorRemote"
 
 [project.entry-points."sshmitm.BaseServerInterface"]
-base = "sshmitm.interfaces.server:ServerInterface"
+base = "sshmitm.core.interfaces.server:ServerInterface"
 
 [project.entry-points."sshmitm.SSHBaseForwarder"]
 mirrorshell = "sshmitm.plugins.ssh.mirrorshell:SSHMirrorForwarder"
@@ -74,7 +74,7 @@ replace-command = "sshmitm.plugins.scp.rewrite_command:SCPRewriteCommand"
 CVE-2022-29154 = "sshmitm.plugins.scp.cve202229154:CVE202229154"
 
 [project.entry-points."sshmitm.BaseSFTPServerInterface"]
-base = "sshmitm.interfaces.sftp:SFTPProxyServerInterface"
+base = "sshmitm.core.interfaces.sftp:SFTPProxyServerInterface"
 
 [project.entry-points."sshmitm.SFTPHandlerBasePlugin"]
 replace_file = "sshmitm.plugins.sftp.replace_file:SFTPProxyReplaceHandler"

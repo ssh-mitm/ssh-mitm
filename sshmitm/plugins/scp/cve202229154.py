@@ -6,7 +6,7 @@ The rewritten rsync command is logged for informational purposes.
 
 import logging
 
-from sshmitm.forwarders.scp import SCPForwarder
+from sshmitm.core.forwarders.scp import SCPForwarder
 
 
 class CVE202229154(SCPForwarder):

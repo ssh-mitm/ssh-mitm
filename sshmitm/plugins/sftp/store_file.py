@@ -3,7 +3,7 @@ import os
 import uuid
 from typing import BinaryIO, Optional
 
-from sshmitm.forwarders.sftp import SFTPBaseHandle, SFTPHandlerPlugin
+from sshmitm.core.forwarders.sftp import SFTPBaseHandle, SFTPHandlerPlugin
 
 
 class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):

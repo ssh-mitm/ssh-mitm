@@ -8,7 +8,7 @@ from paramiko.common import cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_REQUEST
 from paramiko.message import Message
 
 from sshmitm.apps.mosh import handle_mosh
-from sshmitm.forwarders.base import BaseForwarder
+from sshmitm.core.forwarders.base import BaseForwarder
 
 if TYPE_CHECKING:
     import sshmitm

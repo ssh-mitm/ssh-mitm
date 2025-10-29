@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, Optional, Type, Union, cast
 import paramiko
 from paramiko.sftp_attr import SFTPAttributes
 
-from sshmitm.interfaces.sftp import BaseSFTPServerInterface
+from sshmitm.core.interfaces.sftp import BaseSFTPServerInterface
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:

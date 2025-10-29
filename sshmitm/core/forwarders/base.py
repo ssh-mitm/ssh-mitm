@@ -3,7 +3,7 @@ from typing import TYPE_CHECKING, Optional
 
 import paramiko
 
-from sshmitm.exceptions import MissingClient
+from sshmitm.core.exceptions import MissingClient
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:

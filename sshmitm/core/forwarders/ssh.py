@@ -4,7 +4,7 @@ from typing import Optional
 
 import paramiko
 
-from sshmitm.forwarders.base import BaseForwarder
+from sshmitm.core.forwarders.base import BaseForwarder
 
 
 class SSHBaseForwarder(BaseForwarder):  # pylint: disable=abstract-method

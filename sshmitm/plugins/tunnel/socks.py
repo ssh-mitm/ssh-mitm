@@ -6,7 +6,7 @@ from typing import TYPE_CHECKING, ClassVar, List, Optional, Tuple, Union
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
-from sshmitm.forwarders.tunnel import (
+from sshmitm.core.forwarders.tunnel import (
     BaseClientTunnelHandler,
     LocalPortForwardingForwarder,
     TunnelForwarder,

@@ -37,8 +37,8 @@ from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
-from sshmitm.forwarders.agent import AgentProxy
-from sshmitm.interfaces.server import ProxyNetconfServer, ProxySFTPServer
+from sshmitm.core.forwarders.agent import AgentProxy
+from sshmitm.core.interfaces.server import ProxyNetconfServer, ProxySFTPServer
 from sshmitm.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
@@ -48,7 +48,7 @@ if TYPE_CHECKING:
     from paramiko.pkey import PKey
 
     import sshmitm
-    from sshmitm.interfaces.server import BaseServerInterface
+    from sshmitm.core.interfaces.server import BaseServerInterface
     from sshmitm.server import SSHProxyServer  # noqa: F401
 
 

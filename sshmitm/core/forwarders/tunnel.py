@@ -168,7 +168,7 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     def __init__(
         self,
         session: "sshmitm.core.session.Session",
-        server_interface: "sshmitm.interfaces.server.ServerInterface",
+        server_interface: "sshmitm.core.interfaces.server.ServerInterface",
         destination: Optional[Tuple[str, int]],
     ) -> None:
         super(RemotePortForwardingBaseForwarder, self).__init__()

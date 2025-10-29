@@ -26,12 +26,12 @@ import paramiko
 import paramiko.hostkeys
 from paramiko.pkey import PKey
 
-from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
+from sshmitm.core.exceptions import InvalidHostKey, NoAgentKeys
 from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.forwarders.agent import AgentProxy
+    from sshmitm.core.forwarders.agent import AgentProxy
     from sshmitm.core.session import Session  # noqa: F401
 
 

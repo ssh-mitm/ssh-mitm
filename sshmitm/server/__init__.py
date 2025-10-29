@@ -16,17 +16,17 @@ from rich import print as rich_print
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.console import sshconsole
-from sshmitm.exceptions import KeyGenerationError
-from sshmitm.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
-from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
-from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
-from sshmitm.forwarders.ssh import SSHBaseForwarder, SSHForwarder
-from sshmitm.forwarders.tunnel import (
+from sshmitm.core.exceptions import KeyGenerationError
+from sshmitm.core.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
+from sshmitm.core.forwarders.scp import SCPBaseForwarder, SCPForwarder
+from sshmitm.core.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
+from sshmitm.core.forwarders.ssh import SSHBaseForwarder, SSHForwarder
+from sshmitm.core.forwarders.tunnel import (
     LocalPortForwardingForwarder,
     RemotePortForwardingForwarder,
 )
-from sshmitm.interfaces.server import BaseServerInterface, ServerInterface
-from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
+from sshmitm.core.interfaces.server import BaseServerInterface, ServerInterface
+from sshmitm.core.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
 from sshmitm.logger import Colors
 from sshmitm.core.multisocket import create_server_sock
 from sshmitm.core.session import Session

@@ -14,7 +14,7 @@ import logging
 import os
 from typing import TYPE_CHECKING, Union
 
-from sshmitm.forwarders.scp import SCPForwarder
+from sshmitm.core.forwarders.scp import SCPForwarder
 
 if TYPE_CHECKING:
     import sshmitm
