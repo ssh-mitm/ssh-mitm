@@ -6,8 +6,8 @@ from typing import Dict, List, Optional
 
 from rich import print as rich_print
 
-from sshmitm.core.authentication import PublicKeyEnumerator
 from sshmitm.core.sshkeys import SSHPubKey
+from sshmitm.core.userenumeration import PublicKeyEnumerator
 from sshmitm.moduleparser import SubCommand
 
 
