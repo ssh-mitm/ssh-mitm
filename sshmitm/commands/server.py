@@ -2,6 +2,7 @@ import argparse
 from typing import Optional
 
 from sshmitm import __version__ as ssh_mitm_version
+from sshmitm import project_metadata
 from sshmitm.core.authentication import Authenticator
 from sshmitm.core.forwarders.scp import SCPBaseForwarder
 from sshmitm.core.forwarders.sftp import SFTPHandlerBasePlugin
@@ -76,7 +77,7 @@ class SSHServerModules(SubCommand):
         self.parser.add_module(
             "--session-class",
             dest="session_class",
-            help="Sets the custom session class for SSH-MITM, controlling session behavior, logging, and interaction handling.",
+            help=f"Sets the custom session class for {project_metadata.PROJECT_NAME}, controlling session behavior, logging, and interaction handling.",
             baseclass=BaseSession,
         )
 
@@ -94,7 +95,7 @@ class SSHServerModules(SubCommand):
             "--listen-port",
             dest="listen_port",
             type=int,
-            help="Specifies the port on which SSH-MITM listens for incoming SSH connections. Ports ≤ 1024 require root privileges.",
+            help=f"Specifies the port on which {project_metadata.PROJECT_NAME} listens for incoming SSH connections. Ports ≤ 1024 require root privileges.",
         )
         parser_group.add_argument(
             "--transparent",
@@ -123,7 +124,7 @@ class SSHServerModules(SubCommand):
             "--request-agent-breakin",
             dest="request_agent_breakin",
             action="store_true",
-            help="Enables SSH-MITM to request the SSH agent from the client, even if the client does not forward the agent. Can be used to attempt unauthorized access.",
+            help=f"Enables {project_metadata.PROJECT_NAME} to request the SSH agent from the client, even if the client does not forward the agent. Can be used to attempt unauthorized access.",
         )
         parser_group.add_argument(
             "--banner-name",

@@ -9,6 +9,7 @@ from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
 from rich.markup import escape
 
+from sshmitm import project_metadata
 from sshmitm.core.compat import resources
 from sshmitm.core.logger import Colors
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
@@ -79,7 +80,9 @@ class KeyNegotiationData:
         vulnerability_list = None
         client_version = self.client_version.lower()
         try:
-            vulndb = resources.files("sshmitm") / "data/client_info.yml"
+            vulndb = (
+                resources.files(project_metadata.MODULE_NAME) / project_metadata.MODULE_VULNDB_PATH
+            )
             vulnerability_list = yaml.safe_load(vulndb.read_text(encoding="utf-8"))
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error loading vulnerability database")

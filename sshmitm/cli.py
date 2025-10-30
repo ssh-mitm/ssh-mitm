@@ -41,6 +41,7 @@ from configparser import ConfigParser
 from paramiko import Transport
 
 from sshmitm import __version__ as ssh_mitm_version
+from sshmitm import project_metadata
 from sshmitm.core.compat import resources
 from sshmitm.core.logger import Colors, FailSaveLogStream, PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
@@ -51,23 +52,19 @@ def get_config() -> ConfigParser:
     configfile = ConfigParser()
 
     # read default config
-    conf = resources.files("sshmitm") / "data/default.ini"
+    conf = (
+        resources.files(project_metadata.MODULE_NAME)
+        / project_metadata.MODULE_CONFIG_PATH
+    )
     configfile.read_string(conf.read_text())
 
-    configfile_path_list = [
-        "/etc/ssh-mitm.ini",
-        "/etc/sshmitm.ini",
-        os.path.expanduser("~/ssh-mitm.ini"),
-        os.path.expanduser("~/sshmitm.ini"),
-    ]
-
     # check if a production or user config exists and read it
-    for configpath in configfile_path_list:
+    for configpath in project_metadata.CONFIGFILE_PATH_LIST:
         if os.path.isfile(configpath):
             configfile.read(configpath)
             break
 
-    sshmitm_config_env = os.environ.get("SSHMITM_CONFIG")
+    sshmitm_config_env = os.environ.get(project_metadata.CONFIG_ENV_VAR_NAME)
     if sshmitm_config_env and os.path.isfile(sshmitm_config_env):
         configfile.read(sshmitm_config_env)
     return configfile
@@ -78,29 +75,33 @@ def main() -> None:
     Main function of the SSH-MITM tools, it provides a CLI interface to use the `audit` and `server` subcommands.
     """
 
-    prog_name = os.path.basename(os.environ.get("ARGV0", "ssh-mitm"))
+    prog_name = os.path.basename(os.environ.get("ARGV0", project_metadata.COMMAND_NAME))
     if os.environ.get("container"):  # noqa: SIM112
-        prog_name = "at.ssh_mitm.server"
+        prog_name = project_metadata.COMMAND_NAME_FLATPAK
 
     parser = ModuleParser(
         config=get_config(),
         prog=prog_name,
-        description="SSH-MITM Tools",
+        description=f"{project_metadata.PROJECT_NAME} Tools",
         allow_abbrev=False,
-        config_section="SSH-MITM",
+        config_section=project_metadata.PROJECT_NAME,
     )
     parser_group = parser.add_argument_group(
-        "SSH-MITM", description="global options for SSH-MITM"
+        project_metadata.PROJECT_NAME,
+        description=f"global options for {project_metadata.PROJECT_NAME}",
     )
     parser_group.add_argument(
-        "-V", "--version", action="version", version=f"SSH-MITM {ssh_mitm_version}"
+        "-V",
+        "--version",
+        action="version",
+        version=f"{project_metadata.PROJECT_NAME} {ssh_mitm_version}",
     )
     parser_group.add_argument(
         "-d",
         "--debug",
         dest="debug",
         action="store_true",
-        help="Enables SSH-MITM's debug mode, providing more verbose output of status information and internal processes.",
+        help=f"Enables {project_metadata.PROJECT_NAME}'s debug mode, providing more verbose output of status information and internal processes.",
     )
     parser_group.add_argument(
         "--paramiko-log-level",

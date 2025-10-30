@@ -15,6 +15,7 @@ from rich import print as rich_print
 from rich.console import Console
 
 from sshmitm import __version__ as ssh_mitm_version
+from sshmitm import project_metadata
 from sshmitm.core.exceptions import KeyGenerationError
 from sshmitm.core.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
 from sshmitm.core.forwarders.scp import SCPBaseForwarder, SCPForwarder
@@ -136,32 +137,39 @@ class SSHProxyServer:
         if json_log or not sys.stdout.isatty():
             logging.info("ssh-mitm server info", extra={"serverinfo": log_data})
         else:
-            print("\33]0;SSH-MITM - ssh audits made simple\a", end="", flush=True)
+            print(
+                f"\33]0;{project_metadata.PROJECT_NAME} - {project_metadata.PROJECT_SLOGAN}\a",
+                end="",
+                flush=True,
+            )
             sshconsole.rule(
-                "[bold blue]SSH-MITM - ssh audits made simple", style="blue"
+                f"[bold blue]{project_metadata.PROJECT_NAME} - {project_metadata.PROJECT_SLOGAN}",
+                style="blue",
             )
             if self.debug:
                 rich_print(f"[bold]Version:[/bold] {ssh_mitm_version}")
                 rich_print("[bold]License:[/bold] GNU General Public License v3.0")
 
-            rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
             rich_print(
-                "[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues"
+                f"[bold]Documentation:[/bold] {project_metadata.PROJECT_DOCUMENTATION_URL}"
             )
+            rich_print(f"[bold]Issues:[/bold] {project_metadata.PROJECT_ISSUES_URL}")
             sshconsole.rule("[blue]Configuration", style="blue")
 
             if os.environ.get("container"):  # noqa: SIM112
                 rich_print(
-                    "[bold red]:exclamation: You are executing SSH-MITM as Flatpak"
+                    f"[bold red]:exclamation: You are executing {project_metadata.PROJECT_NAME} as Flatpak"
                 )
                 rich_print(
-                    "Without further configuration, SSH-MITM can only access Flatpaks default data directory"
+                    f"Without further configuration, {project_metadata.PROJECT_NAME} can only access Flatpaks default data directory"
                 )
-                app_data = os.path.expanduser("~/.var/app/at.ssh_mitm.server/data/")
+                app_data = os.path.expanduser(
+                    f"~/.var/app/{project_metadata.COMMAND_NAME_FLATPAK}/data/"
+                )
                 folder_link = f"[link=file://{app_data}]{app_data}[/link]"
                 rich_print(f"[bold]Data directory:[/bold] {folder_link}")
                 rich_print(
-                    ":light_bulb: If you need access to other files and directories, you can use [link=https://flathub.org/apps/com.github.tchx84.Flatseal]Flatseal[/link] to reconfigure SSH-MITM."
+                    f":light_bulb: If you need access to other files and directories, you can use [link=https://flathub.org/apps/com.github.tchx84.Flatseal]Flatseal[/link] to reconfigure {project_metadata.PROJECT_NAME}."
                 )
                 sshconsole.rule(characters=".", style="bright_black")
 
@@ -288,13 +296,15 @@ class SSHProxyServer:
         except PermissionError as permerror:
             if self.transparent and permerror.errno == 1:
                 logging.error(
-                    "%s Note: running SSH-MITM in transparent mode requires root privileges",
+                    "%s Note: running %s in transparent mode requires root privileges",
                     Colors.stylize("error creating socket!", fg("red") + attr("bold")),
+                    project_metadata.PROJECT_NAME,
                 )
             elif permerror.errno == 13 and self.listen_port < 1024:
                 logging.error(
-                    "%s Note: running SSH-MITM on a port < 1024 requires root privileges",
+                    "%s Note: running %s on a port < 1024 requires root privileges",
                     Colors.stylize("error creating socket!", fg("red") + attr("bold")),
+                    project_metadata.PROJECT_NAME,
                 )
             else:
                 logging.exception(

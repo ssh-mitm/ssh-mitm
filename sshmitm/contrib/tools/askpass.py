@@ -27,6 +27,8 @@ import logging
 import sys
 from typing import NoReturn, Optional, cast
 
+from sshmitm import project_metadata
+
 try:
     import tkinter as tk
     from tkinter import ttk
@@ -51,7 +53,9 @@ def ask_pass(
     dialog_text = primary_message
     if secondary_message:
         dialog_text = f"{primary_message}\n{secondary_message}"
-    password = askstring("SSH-MITM - Askpass", dialog_text, show="*")
+    password = askstring(
+        f"{project_metadata.PROJECT_NAME} - Askpass", dialog_text, show="*"
+    )
     if password is not None:
         return password
     return None
@@ -68,7 +72,7 @@ def confirm(primary_message: str, secondary_message: Optional[str] = None) -> bo
     dialog_text = primary_message
     if secondary_message:
         dialog_text = f"{primary_message}\n{secondary_message}"
-    answer = tk.messagebox.askquestion("SSH-MITM - Askpass", dialog_text, icon="question")  # type: ignore[attr-defined]
+    answer = tk.messagebox.askquestion(f"{project_metadata.PROJECT_NAME} - Askpass", dialog_text, icon="question")  # type: ignore[attr-defined]
     return cast("str", answer) == "yes"
 
 

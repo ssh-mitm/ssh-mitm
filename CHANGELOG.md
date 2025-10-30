@@ -36,6 +36,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - updated requirements.txt for production deployments
 - moved PublicKeyEnumerator to new userenumeration module
 - Moved authentifation classes to plugins.authentication module
+- created project_metadata.py to store project dependend strings and constants
 
 
 ## [5.0.1] - 2025-01-22
