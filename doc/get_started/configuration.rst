@@ -110,11 +110,11 @@
 Authentication-Plugins
 ----------------------
 
-.. confval:: [sshmitm.core.authentication:AuthenticatorPassThrough]
+.. confval:: [sshmitm.plugins.authentication.passthrough:AuthenticatorPassThrough]
 
    .. code-block:: ini
 
-      [sshmitm.core.authentication:AuthenticatorPassThrough]
+      [sshmitm.plugins.authentication.passthrough:AuthenticatorPassThrough]
       close-pubkey-enumerator-with-session = False
       remote-host =
       remote-port =

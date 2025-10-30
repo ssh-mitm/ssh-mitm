@@ -15,7 +15,6 @@ from rich import print as rich_print
 from rich.console import Console
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.core.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.core.exceptions import KeyGenerationError
 from sshmitm.core.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
 from sshmitm.core.forwarders.scp import SCPBaseForwarder, SCPForwarder
@@ -34,6 +33,10 @@ from sshmitm.core.logger import Colors
 from sshmitm.core.multisocket import create_server_sock
 from sshmitm.core.session import Session
 from sshmitm.core.sshkeys import SSHPubKey
+from sshmitm.plugins.authentication.passthrough import (
+    Authenticator,
+    AuthenticatorPassThrough,
+)
 
 
 class SSHProxyServer:
