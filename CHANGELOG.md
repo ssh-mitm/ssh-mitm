@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - added option to use ssh private keys for remote authentication
 - added option to provide remote ssh server fingerprints
 - added new authentication plugin "AuthenticatorRemote" which allows to provide remote credentials without passthrough
+- added support for Python 3.14
 
 ### Fixed
 
@@ -29,6 +30,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - removed support for DSS keys
 - replaced sshpubkeys module with paramiko based utility class to handle ssh public keys
 - updated documentation for the next relese of SSH-MITM
+- created sshmitm.core module for SSH-MITM core classes
+- migrated bump-my-version config file to pyproject.toml
+- renamed requirements-dev.txt to requirements.txt and added optional extra "production" for pip install
+- updated requirements.txt for production deployments
+- moved PublicKeyEnumerator to new userenumeration module
+- Moved authentifation classes to plugins.authentication module
 
 
 ## [5.0.1] - 2025-01-22
