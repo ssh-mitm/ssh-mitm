@@ -81,7 +81,8 @@ class KeyNegotiationData:
         client_version = self.client_version.lower()
         try:
             vulndb = (
-                resources.files(project_metadata.MODULE_NAME) / project_metadata.MODULE_VULNDB_PATH
+                resources.files(project_metadata.MODULE_NAME)
+                / project_metadata.MODULE_VULNDB_PATH
             )
             vulnerability_list = yaml.safe_load(vulndb.read_text(encoding="utf-8"))
         except Exception:  # pylint: disable=broad-exception-caught
