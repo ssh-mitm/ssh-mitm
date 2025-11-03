@@ -51,6 +51,13 @@ class AuthenticatorPassThrough(Authenticator):
         :param username: username which is used for authentication
         :return: a list of strings representing the available authentication methods.
         """
+        logging.debug(
+            "%s.get_auth_methods: host=%s, port=%s, username=%s",
+            self.__class__.__name__,
+            host,
+            port,
+            username,
+        )
         if not self.pubkey_enumerator:
             self.pubkey_enumerator = PublicKeyEnumerator(host, port)
             self.pubkey_enumerator.connect()
@@ -66,9 +73,24 @@ class AuthenticatorPassThrough(Authenticator):
         return auth_methods
 
     def auth_agent(self, username: str, host: str, port: int) -> int:
+        logging.debug(
+            "%s.auth_agent: username=%s, host=%s, port=%s",
+            self.__class__.__name__,
+            username,
+            host,
+            port,
+        )
         return self.connect(username, host, port, AuthenticationMethod.AGENT)
 
     def auth_password(self, username: str, host: str, port: int, password: str) -> int:
+        logging.debug(
+            "%s.auth_password: username=%s, host=%s, port=%s, password=%s",
+            self.__class__.__name__,
+            username,
+            host,
+            port,
+            password,
+        )
         return self.connect(
             username, host, port, AuthenticationMethod.PASSWORD, password=password
         )
@@ -87,17 +109,23 @@ class AuthenticatorPassThrough(Authenticator):
         If the key is not valid, or if there is any error while checking if the key is valid,
         the user will not be authenticated and will not be able to log in.
         """
+        logging.debug(
+            "%s.auth_publickey: username=%s, host=%s, port=%s, key=%s %s %sbits, key.can_sign=%s",
+            self.__class__.__name__,
+            username,
+            host,
+            port,
+            key.get_name(),
+            key.fingerprint,
+            key.get_bits(),
+            key.can_sign(),
+        )
+
         if not self.pubkey_enumerator:
+            logging.debug("created PublicKeyEnumerator(%s, %s)", host, port)
             self.pubkey_enumerator = PublicKeyEnumerator(host, port)
 
         if key.can_sign():
-            logging.debug(
-                "AuthenticatorPassThrough.auth_publickey: username=%s, key=%s %s %sbits",
-                username,
-                key.get_name(),
-                key.fingerprint,
-                key.get_bits(),
-            )
             return self.connect(
                 username, host, port, AuthenticationMethod.PUBLICKEY, key=key
             )
@@ -109,6 +137,7 @@ class AuthenticatorPassThrough(Authenticator):
             # to avoid a second key lookup, a valid key is stored and later during the
             # real authentication process, the key is compared with the known key.
             if self.pubkey_auth_success and self.valid_key == key:
+                logging.debug("used valid_key from pre authentication")
                 return paramiko.common.AUTH_SUCCESSFUL
 
             # this is only the pubkey lookup, which is done by all clients
@@ -150,6 +179,9 @@ class AuthenticatorPassThrough(Authenticator):
 
         All this information can be saved to a log file for later review.
         """
+        logging.debug(
+            "%s.post_auth_action: success=%s", self.__class__.__name__, success
+        )
 
         def get_agent_pubkeys() -> List[SSHPubKey]:
             pubkeyfile_path = None
@@ -240,6 +272,7 @@ class AuthenticatorPassThrough(Authenticator):
         logging.info("\n".join(logmessage))
 
     def on_session_close(self) -> None:
+        logging.debug("%s.on_session_close", self.__class__.__name__)
         if (
             self.args.close_pubkey_enumerator_with_session
             and self.pubkey_enumerator

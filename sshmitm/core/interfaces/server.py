@@ -204,6 +204,7 @@ class ServerInterface(BaseServerInterface):
         return False
 
     def get_allowed_auths(self, username: str) -> str:
+        logging.debug("get_allowed_auths: username=%s", username)
         if (
             self.possible_auth_methods is None
             and not self.args.disable_auth_method_lookup
@@ -225,7 +226,6 @@ class ServerInterface(BaseServerInterface):
                     self.session.remote_address_reachable = False
                     logging.error(ex)
                     return "publickey"
-        logging.debug("get_allowed_auths: username=%s", username)
         allowed_auths = []
         if self.args.extra_auth_methods:
             allowed_auths.extend(self.args.extra_auth_methods.split(","))
