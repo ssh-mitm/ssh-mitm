@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import struct
@@ -285,13 +286,42 @@ class ServerInterface(BaseServerInterface):
         )
 
     def check_auth_publickey(self, username: str, key: PKey) -> int:
-        logging.debug(
-            "check_auth_publickey: username=%s, key=%s %s %sbits",
+
+        # Attempt to access the internal 'sig_attached' variable from Paramiko's
+        # authentication handler. This variable indicates whether the SSH public key
+        # authentication request includes an attached signature.
+        sig_attached: Optional[bool]
+
+        # Retrieve the current stack frame.
+        current_frame = inspect.currentframe()
+
+        # Access the parent frame (the caller of this function) and try to get the local
+        # variable 'sig_attached' from it.
+        sig_attached = current_frame.f_back.f_locals.get("sig_attached")
+
+        # Log detailed information about the current authentication attempt:
+        # - username: SSH username being authenticated
+        # - key: SSH public key object
+        # - key name, fingerprint, and bit length
+        # - sig_attached: whether a signature is attached to the authentication request
+        logging.info(
+            "check_auth_publickey: username=%s, key=%s %s %sbits, sig_attached=%s",
             username,
             key.get_name(),
             key.fingerprint,
             key.get_bits(),
+            sig_attached,
         )
+
+        # If 'sig_attached' could not be retrieved, the current version of Paramiko
+        # likely does not expose this variable as expected. Raise an exception to
+        # indicate that the installed Paramiko version is not compatible.
+        if sig_attached is None:
+            error_message = (
+                "Unable to get 'sig_attached' variable from Paramiko's "
+                "AuthHandler._parse_userauth_request. Paramiko version not compatible."
+            )
+            raise paramiko.ssh_exception.AuthenticationException(error_message)
 
         if self.session.session_log_dir:
             os.makedirs(self.session.session_log_dir, exist_ok=True)
