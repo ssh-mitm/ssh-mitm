@@ -359,7 +359,6 @@ class Session(BaseSession):
                 tunnel_forwarder.close()
                 tunnel_forwarder.join()
         self.transport.close()
-        self.authenticator.on_session_close()
         logging.info(
             "%s session %s closed",
             Colors.emoji("information"),

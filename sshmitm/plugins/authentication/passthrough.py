@@ -90,6 +90,15 @@ class AuthenticatorPassThrough(Authenticator):
         self.pubkey_auth_success: bool = False
         self.valid_key: Optional[PKey] = None
 
+    def close(self) -> None:
+        super().close()
+        if (
+            self.args.close_pubkey_enumerator_with_session
+            and self.pubkey_enumerator
+            and self.pubkey_enumerator.connected
+        ):
+            self.pubkey_enumerator.close()
+
     def get_auth_methods(
         self, host: str, port: int, username: Optional[str] = None
     ) -> Optional[List[str]]:
@@ -419,12 +428,3 @@ class AuthenticatorPassThrough(Authenticator):
             )
 
         logging.info("\n".join(logmessage))
-
-    def on_session_close(self) -> None:
-        logging.debug("%s.on_session_close", self.__class__.__name__)
-        if (
-            self.args.close_pubkey_enumerator_with_session
-            and self.pubkey_enumerator
-            and self.pubkey_enumerator.connected
-        ):
-            self.pubkey_enumerator.close()

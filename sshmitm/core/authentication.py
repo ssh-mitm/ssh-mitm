@@ -160,8 +160,9 @@ class Authenticator(BaseModule):
         self.session.register_session_thread()
 
     def close(self) -> None:
-        logging.debug("(%s) authenticator agent cleaned up", self)
+        logging.debug("%s.close", self.__class__.__name__)
         if self.has_forwarded_agent:
+            logging.debug("(%s) authenticator agent cleaned up", self)
             logging.debug("closing forwarded agent")
             self.agent.close()
 
@@ -300,7 +301,7 @@ class Authenticator(BaseModule):
         return self.agent is not None
 
     @property
-    def has_forwarded_agent(self):
+    def has_forwarded_agent(self) -> bool:
         return self.agent is not None
 
     def forward_agent_to_remote(self, channel: paramiko.Channel) -> None:
@@ -406,6 +407,3 @@ class Authenticator(BaseModule):
 
         :param success: indicates if the authentication was successful or not
         """
-
-    def on_session_close(self) -> None:
-        """Performs actions when the session is closed."""
