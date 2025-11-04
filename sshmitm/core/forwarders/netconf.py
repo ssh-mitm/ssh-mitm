@@ -4,10 +4,10 @@ from typing import Optional
 
 import paramiko
 
-from sshmitm.core.forwarders.scp import SCPBaseForwarder
+from sshmitm.core.forwarders.scp import AbstractSCPBaseForwarder
 
 
-class NetconfBaseForwarder(SCPBaseForwarder):
+class NetconfBaseForwarder(AbstractSCPBaseForwarder):
     __netconf_terminator = b"]]>]]>"
 
     @property
@@ -33,6 +33,17 @@ class NetconfBaseForwarder(SCPBaseForwarder):
 class NetconfForwarder(NetconfBaseForwarder):
     """forwards a netconf message from or to the remote server"""
 
+    def handle_initial_message(self, message: bytes) -> bytes:
+        return message
+
+    def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
+        del isclient  # unused arguments
+        return traffic
+
+    def handle_error(self, traffic: bytes, *, isclient: bool) -> bytes:
+        del isclient
+        return traffic
+
     def forward(self) -> None:  # noqa: C901,PLR0915
 
         # pylint: disable=protected-access
@@ -50,9 +61,7 @@ class NetconfForwarder(NetconfBaseForwarder):
         self.server_channel.invoke_subsystem("netconf")
 
         # Don't transmit the initial message "xml-mode conf need-trailer". It will break the session.
-        self.session.log_forwarder.forward_client_msg(
-            client_msg=self.session.netconf_command.decode("utf8"),
-        )
+        self.handle_initial_message(self.session.netconf_command)
 
         try:
             while self.session.running:
@@ -63,10 +72,8 @@ class NetconfForwarder(NetconfBaseForwarder):
                 if self.client_channel.recv_ready():
                     buf = self.read_netconf_data(self.client_channel)
                     self.session.netconf_command = buf
+                    buf = self.handle_traffic(buf, isclient=True)
                     self.sendall(self.server_channel, buf, self.server_channel.send)
-                    self.session.log_forwarder.forward_client_msg(
-                        client_msg=buf.decode("utf-8"),
-                    )
                 if self.server_channel.recv_ready():
                     buf = self.read_netconf_data(self.server_channel)
                     logging.info(
@@ -75,32 +82,21 @@ class NetconfForwarder(NetconfBaseForwarder):
                         False,
                         self.session.netconf_command,
                     )
+                    buf = self.handle_traffic(buf, isclient=False)
                     self.sendall(self.client_channel, buf, self.client_channel.send)
-                    self.session.log_forwarder.forward_server_msg(
-                        client_msg=self.session.netconf_command.decode("utf-8"),
-                        server_msg=buf.decode("utf-8"),
-                    )
                 if self.client_channel.recv_stderr_ready():
                     buf = self.client_channel.recv_stderr(self.BUF_LEN)
-                    buf = self.handle_error(buf)
+                    buf = self.handle_error(buf, isclient=True)
                     self.sendall(
                         self.server_channel, buf, self.server_channel.send_stderr
                     )
-                    self.session.log_forwarder.forward_client_error_message(
-                        client_msg_err=self.session.netconf_command.decode("utf-8"),
-                        server_msg=buf.decode("utf-8"),
-                    )
                 if self.server_channel.recv_stderr_ready():
                     buf = self.server_channel.recv_stderr(self.BUF_LEN)
-                    buf = self.handle_error(buf)
+                    buf = self.handle_error(buf, isclient=False)
                     self.sendall(
                         self.client_channel,
                         buf,
                         self.client_channel.send_stderr,
-                    )
-                    self.session.log_forwarder.forward_server_error_message(
-                        client_msg=self.session.netconf_command.decode("utf-8"),
-                        server_msg_err=buf.decode("utf-8"),
                     )
 
                 if self.server_channel.exit_status_ready():

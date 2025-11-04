@@ -36,7 +36,6 @@ import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
 
-from sshmitm.contrib.tools.log_collection import LogForwarder
 from sshmitm.core.interfaces.server import ProxyNetconfServer, ProxySFTPServer
 from sshmitm.core.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
@@ -98,7 +97,6 @@ class Session(BaseSession):
         authenticator: Type["sshmitm.core.authentication.Authenticator"],
         remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]],
         banner_name: Optional[str] = None,
-        log_webhook_dest: Optional[str] = None,
     ) -> None:
         """
         Initialize the class instance.
@@ -167,14 +165,6 @@ class Session(BaseSession):
         self.env_requests: Dict[bytes, bytes] = {}
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
         self.banner_name = banner_name
-
-        self.log_forwarder = LogForwarder(
-            client_ip=self.client_address[0],
-            client_port=self.client_address[1],
-            server_ip=self.socket_remote_address[0],
-            server_port=self.socket_remote_address[1],
-            log_webhook_dest=log_webhook_dest,
-        )
 
     def get_session_log_dir(self) -> Optional[str]:
         """
@@ -248,7 +238,10 @@ class Session(BaseSession):
                 session=self,
             )
             self._transport.set_subsystem_handler(
-                "netconf", ProxyNetconfServer, self.proxyserver.netconf_interface, self
+                name="netconf",
+                handler=ProxyNetconfServer,
+                sftp_si=self.proxyserver.netconf_interface,
+                session=self,
             )
 
         return self._transport
@@ -340,29 +333,6 @@ class Session(BaseSession):
             "%s %s - session started",
             Colors.emoji("information"),
             Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
-        )
-
-        # Username and password become available after authentication
-        self.log_forwarder.set_credentials(self.username, self.password)
-        self.log_forwarder.set_cipher(self.transport.remote_cipher)
-        # Set ssh transport metadata
-        self.log_forwarder.set_server_transport_metadata(
-            server_extensions=self.ssh_client.transport.server_extensions,
-            proto_version=self.ssh_client.transport.remote_version.split("-", 3)[1],
-            software_version=self.ssh_client.transport.remote_version.split("-", 3)[2],
-            preferred_ciphers=self.ssh_client.transport.preferred_ciphers,
-            preferred_kex=self.ssh_client.transport.preferred_kex,
-            preferred_macs=self.ssh_client.transport.preferred_macs,
-            preferred_compression=self.ssh_client.transport.preferred_compression,
-        )
-        self.log_forwarder.set_client_transport_metadata(
-            server_extensions=self.transport.server_extensions,
-            proto_version=self.transport.remote_version.split("-", 3)[1],
-            software_version=self.transport.remote_version.split("-", 3)[2],
-            preferred_ciphers=self.transport.preferred_ciphers,
-            preferred_kex=self.transport.preferred_kex,
-            preferred_macs=self.transport.preferred_macs,
-            preferred_compression=self.transport.preferred_compression,
         )
 
         return True

@@ -4,6 +4,7 @@ from typing import Optional
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm import project_metadata
 from sshmitm.core.authentication import Authenticator
+from sshmitm.core.forwarders.netconf import NetconfBaseForwarder
 from sshmitm.core.forwarders.scp import SCPBaseForwarder
 from sshmitm.core.forwarders.sftp import SFTPHandlerBasePlugin
 from sshmitm.core.forwarders.ssh import SSHBaseForwarder
@@ -49,6 +50,12 @@ class SSHServerModules(SubCommand):
             dest="sftp_handler",
             help="Specifies the handler for SFTP operations, responsible for processing file transfer requests and managing file system interactions.",
             baseclass=SFTPHandlerBasePlugin,
+        )
+        self.parser.add_module(
+            "--netconf-interface",
+            dest="netconf_interface",
+            help="Sets the base interface for Netconf (RFC 6242)",
+            baseclass=NetconfBaseForwarder,
         )
         self.parser.add_module(
             "--remote-port-forwarder",
@@ -126,11 +133,6 @@ class SSHServerModules(SubCommand):
             default=f"SSHMITM_{ssh_mitm_version}",
             help="Sets a custom SSH server banner presented to clients during the initial connection. Default: ``SSH-2.0-SSHMITM_<version>``.",
         )
-        parser_group.add_argument(
-            "--log-webhook-dest",
-            dest="log_webhook_dest",
-            help="Transmits SSH commands and responses to a remote HTTP server for log collection and analyzation",
-        )
 
     def execute(self, args: argparse.Namespace) -> None:
         proxy = SSHProxyServer(
@@ -141,6 +143,7 @@ class SSHServerModules(SubCommand):
             key_length=args.host_key_length,
             ssh_interface=args.ssh_interface,
             scp_interface=args.scp_interface,
+            netconf_interface=args.netconf_interface,
             sftp_interface=args.sftp_interface,
             sftp_handler=args.sftp_handler,
             server_tunnel_interface=args.server_tunnel_interface,
@@ -150,7 +153,6 @@ class SSHServerModules(SubCommand):
             transparent=args.transparent,
             banner_name=args.banner_name,
             debug=args.debug,
-            log_webhook_dest=args.log_webhook_dest,
         )
         proxy.print_serverinfo(args.log_format == "json")
         proxy.start()

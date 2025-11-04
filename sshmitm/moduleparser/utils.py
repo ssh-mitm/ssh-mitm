@@ -67,7 +67,7 @@ def set_module_kwargs(
         descriptions.append(entry_point_description)
 
     kwargs["choices"] = sorted(choices)
-    if len(choices) > 1:
+    if len(choices) > 0:
         kwargs["help"] = kwargs.get("help") or ""
         if default_name:
             kwargs[
