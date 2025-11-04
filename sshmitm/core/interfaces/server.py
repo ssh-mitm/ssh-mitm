@@ -160,7 +160,7 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_forward_agent_request(self, channel: paramiko.Channel) -> bool:
         logging.debug("check_channel_forward_agent_request: channel=%s", channel)
-        self.session.agent_requested.set()
+        self.session.authenticator.agent_requested.set()
         return True
 
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:

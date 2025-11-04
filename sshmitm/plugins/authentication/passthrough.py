@@ -124,12 +124,9 @@ class AuthenticatorPassThrough(Authenticator):
 
     def request_agent(self) -> bool:
         requested_agent = None
-        if self.session.agent is None or self.args.request_agent_breakin:
+        if self.agent is None or self.args.request_agent_breakin:
             try:
-                if (
-                    self.session.agent_requested.wait(1)
-                    or self.args.request_agent_breakin
-                ):
+                if self.agent_requested.wait(1) or self.args.request_agent_breakin:
                     requested_agent = AgentProxy(self.session.transport)
                     logging.info(
                         "%s %s - successfully requested ssh-agent",
@@ -147,8 +144,8 @@ class AuthenticatorPassThrough(Authenticator):
                     ),
                 )
                 return False
-        self.session.agent = requested_agent or self.session.agent
-        return self.session.agent is not None
+        self.agent = requested_agent or self.agent
+        return self.agent is not None
 
     def auth_agent(self, username: str, host: str, port: int) -> int:
         logging.debug(
@@ -252,7 +249,7 @@ class AuthenticatorPassThrough(Authenticator):
         If authentication against the honeypot fails, it logs an error message.
         """
         if not self.args.fallback_host:
-            if self.session.agent:
+            if self.agent:
                 logging.error(
                     "\n".join(
                         [
@@ -339,10 +336,10 @@ class AuthenticatorPassThrough(Authenticator):
             pubkeyfile_path = None
 
             keys_parsed: List[SSHPubKey] = []
-            if self.session.agent is None:
+            if self.agent is None:
                 return keys_parsed
 
-            keys = self.session.agent.get_keys()
+            keys = self.agent.get_keys()
             keys_parsed.extend(SSHPubKey(key) for key in keys)
 
             if self.session.session_log_dir:
@@ -405,7 +402,7 @@ class AuthenticatorPassThrough(Authenticator):
             )
 
         ssh_keys = None
-        if self.session.agent:
+        if self.agent:
             ssh_keys = get_agent_pubkeys()
 
         logmessage.append(

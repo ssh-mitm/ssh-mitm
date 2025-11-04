@@ -45,7 +45,6 @@ if TYPE_CHECKING:
     from paramiko.pkey import PKey
 
     import sshmitm
-    from sshmitm.core.forwarders.agent import AgentProxy
     from sshmitm.core.interfaces.server import BaseServerInterface
     from sshmitm.core.server import SSHProxyServer  # noqa: F401
 
@@ -124,8 +123,6 @@ class Session(BaseSession):
         self.name = f"{client_address}->{remoteaddr}"
         self.closed = False
 
-        self.agent_requested: threading.Event = threading.Event()
-
         self.ssh_requested: bool = False
         self.ssh_channel: Optional[paramiko.Channel] = None
         self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
@@ -158,7 +155,6 @@ class Session(BaseSession):
         self.remote_address_reachable: bool = True
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
-        self.agent: "Optional[AgentProxy]" = None
         self.authenticator: "sshmitm.core.authentication.Authenticator" = authenticator(
             self
         )
@@ -257,7 +253,7 @@ class Session(BaseSession):
             return True
 
         # Connect method start
-        if not self.agent:
+        if not self.authenticator.agent:
             if self.username_provided is None:
                 logging.error("No username provided during login!")
                 return False
@@ -342,8 +338,8 @@ class Session(BaseSession):
         """
         Close the session and release the underlying resources.
         """
-        if self.agent:
-            self.agent.close()
+        if self.authenticator.agent:
+            self.authenticator.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
         if self.ssh_client:
             logging.debug("(%s) closing ssh client to remote", self)

@@ -1,4 +1,5 @@
 import logging
+import threading
 from abc import abstractmethod
 from typing import TYPE_CHECKING, List, Optional
 
@@ -151,6 +152,10 @@ class Authenticator(BaseModule):
         :param session: an object of sshmitm.core.session.Session class to store session information.
         """
         super().__init__()
+
+        self.agent: Optional[AgentProxy] = None
+        self.agent_requested: threading.Event = threading.Event()
+
         self.session = session
         self.session.register_session_thread()
 
@@ -237,7 +242,7 @@ class Authenticator(BaseModule):
             return paramiko.common.AUTH_FAILED
 
         try:
-            if self.session.agent:
+            if self.agent:
                 return self.auth_agent(
                     self.session.username,
                     self.session.remote_address[0],
@@ -265,9 +270,9 @@ class Authenticator(BaseModule):
 
     def request_agent(self) -> bool:
         requested_agent = None
-        if self.session.agent is None:
+        if self.agent is None:
             try:
-                if self.session.agent_requested.wait(1):
+                if self.agent_requested.wait(1):
                     requested_agent = AgentProxy(self.session.transport)
                     logging.info(
                         "%s %s - successfully requested ssh-agent",
@@ -285,8 +290,8 @@ class Authenticator(BaseModule):
                     ),
                 )
                 return False
-        self.session.agent = requested_agent or self.session.agent
-        return self.session.agent is not None
+        self.agent = requested_agent or self.agent
+        return self.agent is not None
 
     @abstractmethod
     def auth_agent(self, username: str, host: str, port: int) -> int:

@@ -27,8 +27,8 @@ class BaseForwarder(BaseModule):
         self.server_channel: paramiko.Channel = (
             session.ssh_client.transport.open_session()
         )
-        if session.agent is not None:
-            session.agent.forward_agent(self.server_channel)
+        if session.authenticator.agent is not None:
+            session.authenticator.agent.forward_agent(self.server_channel)
         self.session: "Session" = session
         self.session.register_session_thread()
 

@@ -31,7 +31,6 @@ from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.core.forwarders.agent import AgentProxy
     from sshmitm.core.session import Session  # noqa: F401
 
 
@@ -87,7 +86,6 @@ class SSHClient(BaseSSHClient):
         self.method: AuthenticationMethod = method
         self.user: str = user
         self.password: Optional[str] = password
-        self.agent: Optional[AgentProxy] = self.session.agent
         self.key: Optional[PKey] = key
         self.transport: Optional[paramiko.Transport] = None
         self.connected: bool = False
@@ -119,8 +117,8 @@ class SSHClient(BaseSSHClient):
                     username=self.user, password=self.password, pkey=self.key
                 )
             elif self.method is AuthenticationMethod.AGENT:
-                if self.agent is not None:
-                    keys = self.agent.get_keys()
+                if self.session.authenticator.agent is not None:
+                    keys = self.session.authenticator.agent.get_keys()
                     if not keys:
                         raise NoAgentKeys
                     for k in keys:

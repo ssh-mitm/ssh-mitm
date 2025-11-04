@@ -57,7 +57,7 @@ class AbstractSCPBaseForwarder(BaseForwarder):
                         "[chan %d] Initiating SCP remote to remote",
                         self.client_channel.get_id(),
                     )
-                    if self.session.agent is None:
+                    if self.session.authenticator.agent is None:
                         logging.warning(
                             "[chan %d] SCP remote to remote needs a forwarded agent",
                             self.client_channel.get_id(),
