@@ -1,5 +1,4 @@
 import logging
-import sys
 from abc import abstractmethod
 from typing import TYPE_CHECKING, List, Optional
 
@@ -141,47 +140,6 @@ class Authenticator(BaseModule):
             "--auth-key",
             dest="auth_key",
             help="ssh private key for remote authentication",
-        )
-
-        plugin_group.add_argument(
-            "--hide-credentials",
-            dest="auth_hide_credentials",
-            action="store_true",
-            help="do not log credentials (usefull for presentations)",
-        )
-
-        honeypot_group = cls.argument_group(
-            "AuthenticationFallback",
-            description=("Options for the authentication fallback to a honey pot"),
-        )
-        honeypot_group.add_argument(
-            "--enable-auth-fallback",
-            action="store_true",
-            help="enabled the fallback to a hoenypot when authentication not possible",
-        )
-        honeypot_group.add_argument(
-            "--fallback-host",
-            dest="fallback_host",
-            required="--enable-auth-fallback" in sys.argv,
-            help="fallback host for the honeypot",
-        )
-        honeypot_group.add_argument(
-            "--fallback-port",
-            dest="fallback_port",
-            type=int,
-            help="fallback port for the honeypot",
-        )
-        honeypot_group.add_argument(
-            "--fallback-username",
-            dest="fallback_username",
-            required="--enable-auth-fallback" in sys.argv,
-            help="username for the honeypot",
-        )
-        honeypot_group.add_argument(
-            "--fallback-password",
-            dest="fallback_password",
-            required="--enable-auth-fallback" in sys.argv,
-            help="password for the honeypot",
         )
 
     def __init__(self, session: "sshmitm.core.session.Session") -> None:
@@ -350,77 +308,21 @@ class Authenticator(BaseModule):
 
     def auth_fallback(self, username: str) -> int:
         """
-        This method is executed when the intercepted client would be allowed to log in to the server,
-        but due to the interception, the login is not possible.
+        Handle authentication fallback when SSH-MITM cannot authenticate to the remote host.
 
-        The method checks if a fallback host (a honeypot) has been provided and if not,
-        it closes the session, and logs that authentication is not possible.
-        If the fallback host has been provided, it attempts to log in to the honeypot using
-        the username and password provided, and reports success or failure accordingly.
-        If authentication against the honeypot fails, it logs an error message.
+        This method is triggered if the intercepted client is allowed to log in to the server,
+        but authentication fails due to missing credentials (e.g., SSH agent not forwarded).
+        By default, authentication is denied, but derived classes can override this method
+        to implement custom fallback logic (e.g., providing alternative credentials).
+
+        :param username: The username for which authentication is attempted.
+        :type username: str
+        :return: Authentication result (e.g., ``paramiko.common.AUTH_FAILED`` by default).
+                Override to return ``paramiko.common.AUTH_SUCCESSFUL`` if authentication succeeds.
+        :rtype: int
         """
-        if not self.args.fallback_host:
-            if self.session.agent:
-                logging.error(
-                    "\n".join(
-                        [
-                            Colors.stylize(
-                                Colors.emoji("exclamation")
-                                + " ssh agent keys are not allowed for signing. Remote authentication not possible.",
-                                fg("red") + attr("bold"),
-                            ),
-                            Colors.stylize(
-                                Colors.emoji("information")
-                                + " To intercept clients, you can provide credentials for a honeypot.",
-                                fg("yellow") + attr("bold"),
-                            ),
-                        ]
-                    )
-                )
-            else:
-                logging.error(
-                    "\n".join(
-                        [
-                            Colors.stylize(
-                                Colors.emoji("exclamation")
-                                + " ssh agent not forwarded. Login to remote host not possible with publickey authentication.",
-                                fg("red") + attr("bold"),
-                            ),
-                            Colors.stylize(
-                                Colors.emoji("information")
-                                + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.",
-                                fg("yellow") + attr("bold"),
-                            ),
-                        ]
-                    )
-                )
-            return paramiko.common.AUTH_FAILED
-
-        auth_status = self.connect(
-            user=self.args.fallback_username or username,
-            password=self.args.fallback_password,
-            host=self.args.fallback_host,
-            port=self.args.fallback_port,
-            method=AuthenticationMethod.PASSWORD,
-            run_post_auth=False,
-        )
-        if auth_status == paramiko.common.AUTH_SUCCESSFUL:
-            logging.warning(
-                Colors.stylize(
-                    Colors.emoji("warning")
-                    + " publickey authentication failed - no agent forwarded - connecting to honeypot!",
-                    fg("yellow") + attr("bold"),
-                ),
-            )
-        else:
-            logging.error(
-                Colors.stylize(
-                    Colors.emoji("exclamation")
-                    + " Authentication against honeypot failed!",
-                    fg("red") + attr("bold"),
-                ),
-            )
-        return auth_status
+        del username
+        return paramiko.common.AUTH_FAILED
 
     def connect(  # pylint: disable=too-many-arguments
         self,
