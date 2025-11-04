@@ -8,7 +8,6 @@ from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import PKey
 from paramiko.ssh_exception import ChannelException
 
-from sshmitm import project_metadata
 from sshmitm.core.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.core.exceptions import MissingHostException
 from sshmitm.core.forwarders.agent import AgentProxy
@@ -142,12 +141,6 @@ class Authenticator(BaseModule):
             "--auth-key",
             dest="auth_key",
             help="ssh private key for remote authentication",
-        )
-        plugin_group.add_argument(
-            "--request-agent-breakin",
-            dest="request_agent_breakin",
-            action="store_true",
-            help=f"Enables {project_metadata.PROJECT_NAME} to request the SSH agent from the client, even if the client does not forward the agent. Can be used to attempt unauthorized access.",
         )
 
         plugin_group.add_argument(
@@ -314,12 +307,9 @@ class Authenticator(BaseModule):
 
     def request_agent(self) -> bool:
         requested_agent = None
-        if self.session.agent is None or self.args.request_agent_breakin:
+        if self.session.agent is None:
             try:
-                if (
-                    self.session.agent_requested.wait(1)
-                    or self.args.request_agent_breakin
-                ):
+                if self.session.agent_requested.wait(1):
                     requested_agent = AgentProxy(self.session.transport)
                     logging.info(
                         "%s %s - successfully requested ssh-agent",
@@ -329,8 +319,8 @@ class Authenticator(BaseModule):
                         ),
                     )
             except ChannelException:
-                logging.info(
-                    "%s %s - ssh-agent breakin not successfull!",
+                logging.error(
+                    "%s %s - failed to request ssh-agent!",
                     Colors.emoji("warning"),
                     Colors.stylize(
                         self.session.sessionid, fg("light_blue") + attr("bold")
