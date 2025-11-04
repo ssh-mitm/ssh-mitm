@@ -139,6 +139,7 @@ class Session(BaseSession):
         self.scp_command: bytes = b""
 
         self.netconf_requested: bool = False
+        self.netconf_command: bytes = b""
         self.netconf_channel: Optional[paramiko.Channel] = None
         self.netconf_client: Optional[sshmitm.core.clients.netconf.NetconfClient] = None
         self.netconf_client_ready = threading.Event()
