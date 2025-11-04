@@ -6,9 +6,12 @@ from typing import TYPE_CHECKING, List, Optional
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import PKey
+from paramiko.ssh_exception import ChannelException
 
+from sshmitm import project_metadata
 from sshmitm.core.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.core.exceptions import MissingHostException
+from sshmitm.core.forwarders.agent import AgentProxy
 from sshmitm.core.logger import Colors
 from sshmitm.moduleparser import BaseModule
 
@@ -96,11 +99,6 @@ class RemoteCredentials:
 class Authenticator(BaseModule):
     """Options for remote authentication."""
 
-    REQUEST_AGENT_BREAKIN = False
-    """
-    This flag indicates if SSH-MITM should do a breakin to the client's ssh agent, even in cases where the agent is not forwarded.
-    """
-
     @classmethod
     def parser_arguments(cls) -> None:
         """
@@ -144,6 +142,12 @@ class Authenticator(BaseModule):
             "--auth-key",
             dest="auth_key",
             help="ssh private key for remote authentication",
+        )
+        plugin_group.add_argument(
+            "--request-agent-breakin",
+            dest="request_agent_breakin",
+            action="store_true",
+            help=f"Enables {project_metadata.PROJECT_NAME} to request the SSH agent from the client, even if the client does not forward the agent. Can be used to attempt unauthorized access.",
         )
 
         plugin_group.add_argument(
@@ -307,6 +311,34 @@ class Authenticator(BaseModule):
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("internal error, abort authentication!")
         return paramiko.common.AUTH_FAILED
+
+    def request_agent(self) -> bool:
+        requested_agent = None
+        if self.session.agent is None or self.args.request_agent_breakin:
+            try:
+                if (
+                    self.session.agent_requested.wait(1)
+                    or self.args.request_agent_breakin
+                ):
+                    requested_agent = AgentProxy(self.session.transport)
+                    logging.info(
+                        "%s %s - successfully requested ssh-agent",
+                        Colors.emoji("information"),
+                        Colors.stylize(
+                            self.session.sessionid, fg("light_blue") + attr("bold")
+                        ),
+                    )
+            except ChannelException:
+                logging.info(
+                    "%s %s - ssh-agent breakin not successfull!",
+                    Colors.emoji("warning"),
+                    Colors.stylize(
+                        self.session.sessionid, fg("light_blue") + attr("bold")
+                    ),
+                )
+                return False
+        self.session.agent = requested_agent or self.session.agent
+        return self.session.agent is not None
 
     @abstractmethod
     def auth_agent(self, username: str, host: str, port: int) -> int:

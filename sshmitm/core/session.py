@@ -35,10 +35,8 @@ from uuid import uuid4
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
-from paramiko.ssh_exception import ChannelException
 
 from sshmitm.contrib.tools.log_collection import LogForwarder
-from sshmitm.core.forwarders.agent import AgentProxy
 from sshmitm.core.interfaces.server import ProxyNetconfServer, ProxySFTPServer
 from sshmitm.core.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
@@ -48,6 +46,7 @@ if TYPE_CHECKING:
     from paramiko.pkey import PKey
 
     import sshmitm
+    from sshmitm.core.forwarders.agent import AgentProxy
     from sshmitm.core.interfaces.server import BaseServerInterface
     from sshmitm.core.server import SSHProxyServer  # noqa: F401
 
@@ -160,7 +159,7 @@ class Session(BaseSession):
         self.remote_address_reachable: bool = True
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
-        self.agent: Optional[AgentProxy] = None
+        self.agent: "Optional[AgentProxy]" = None
         self.authenticator: "sshmitm.core.authentication.Authenticator" = authenticator(
             self
         )
@@ -254,32 +253,8 @@ class Session(BaseSession):
 
         return self._transport
 
-    def _request_agent(self) -> bool:
-        requested_agent = None
-        if self.agent is None or self.authenticator.REQUEST_AGENT_BREAKIN:
-            try:
-                if (
-                    self.agent_requested.wait(1)
-                    or self.authenticator.REQUEST_AGENT_BREAKIN
-                ):
-                    requested_agent = AgentProxy(self.transport)
-                    logging.info(
-                        "%s %s - successfully requested ssh-agent",
-                        Colors.emoji("information"),
-                        Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
-                    )
-            except ChannelException:
-                logging.info(
-                    "%s %s - ssh-agent breakin not successfull!",
-                    Colors.emoji("warning"),
-                    Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
-                )
-                return False
-        self.agent = requested_agent or self.agent
-        return self.agent is not None
-
     def _start_channels(self) -> bool:
-        self._request_agent()
+        self.authenticator.request_agent()
 
         # create client or master channel
         if self.ssh_client:

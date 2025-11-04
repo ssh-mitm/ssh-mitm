@@ -121,12 +121,6 @@ class SSHServerModules(SubCommand):
             help="Sets the key length for the generated host key (applies to `dss` and `rsa` algorithms, default: `2048`).",
         )
         parser_group.add_argument(
-            "--request-agent-breakin",
-            dest="request_agent_breakin",
-            action="store_true",
-            help=f"Enables {project_metadata.PROJECT_NAME} to request the SSH agent from the client, even if the client does not forward the agent. Can be used to attempt unauthorized access.",
-        )
-        parser_group.add_argument(
             "--banner-name",
             dest="banner_name",
             default=f"SSHMITM_{ssh_mitm_version}",
@@ -139,9 +133,6 @@ class SSHServerModules(SubCommand):
         )
 
     def execute(self, args: argparse.Namespace) -> None:
-        if args.request_agent_breakin:
-            args.authenticator.REQUEST_AGENT_BREAKIN = True
-
         proxy = SSHProxyServer(
             args.listen_address,
             args.listen_port,
