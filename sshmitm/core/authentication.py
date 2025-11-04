@@ -159,6 +159,12 @@ class Authenticator(BaseModule):
         self.session = session
         self.session.register_session_thread()
 
+    def close(self) -> None:
+        logging.debug("(%s) authenticator agent cleaned up", self)
+        if self.has_forwarded_agent:
+            logging.debug("closing forwarded agent")
+            self.agent.close()
+
     def get_remote_host_credentials(
         self, username: str, password: Optional[str] = None, key: Optional[PKey] = None
     ) -> RemoteCredentials:
@@ -292,6 +298,14 @@ class Authenticator(BaseModule):
                 return False
         self.agent = requested_agent or self.agent
         return self.agent is not None
+
+    @property
+    def has_forwarded_agent(self):
+        return self.agent is not None
+
+    def forward_agent_to_remote(self, channel: paramiko.Channel) -> None:
+        if self.has_forwarded_agent:
+            self.agent.forward_agent(channel)
 
     @abstractmethod
     def auth_agent(self, username: str, host: str, port: int) -> int:

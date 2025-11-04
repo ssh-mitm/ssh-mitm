@@ -253,7 +253,7 @@ class Session(BaseSession):
             return True
 
         # Connect method start
-        if not self.authenticator.agent:
+        if not self.authenticator.has_forwarded_agent:
             if self.username_provided is None:
                 logging.error("No username provided during login!")
                 return False
@@ -338,9 +338,7 @@ class Session(BaseSession):
         """
         Close the session and release the underlying resources.
         """
-        if self.authenticator.agent:
-            self.authenticator.agent.close()
-            logging.debug("(%s) session agent cleaned up", self)
+        self.authenticator.close()
         if self.ssh_client:
             logging.debug("(%s) closing ssh client to remote", self)
             if self.ssh_client.transport:

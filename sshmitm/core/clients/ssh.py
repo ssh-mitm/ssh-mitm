@@ -117,7 +117,7 @@ class SSHClient(BaseSSHClient):
                     username=self.user, password=self.password, pkey=self.key
                 )
             elif self.method is AuthenticationMethod.AGENT:
-                if self.session.authenticator.agent is not None:
+                if self.session.authenticator.has_forwarded_agent:
                     keys = self.session.authenticator.agent.get_keys()
                     if not keys:
                         raise NoAgentKeys
