@@ -131,7 +131,6 @@ class Session(BaseSession):
         self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
 
-        self.scp_requested: bool = False
         self.scp_command: bytes = b""
 
         self.netconf_requested: bool = False
@@ -280,7 +279,7 @@ class Session(BaseSession):
 
         # Connect method end
         if (
-            not self.scp_requested
+            not self.scp_interface_session
             and not self.ssh_interface_session
             and not self.sftp_requested
             and not self.netconf_requested

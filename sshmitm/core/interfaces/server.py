@@ -129,7 +129,6 @@ class ServerInterface(BaseServerInterface):
             return False
         if command.decode("utf8").startswith("scp"):
             logging.debug("got scp command: %s", command.decode("utf8"))
-            self.session.scp_requested = True
             self.session.scp_command = command
             self.session.scp_interface_session = self.session.proxyserver.scp_interface(
                 self.session, client_channel=channel
@@ -152,7 +151,6 @@ class ServerInterface(BaseServerInterface):
             if command.startswith(b"mosh-server"):
                 self.session.ssh_pty_kwargs = None
 
-            self.session.scp_requested = True
             self.session.scp_command = command
             self.session.scp_interface_session = self.session.proxyserver.scp_interface(
                 self.session, client_channel=channel

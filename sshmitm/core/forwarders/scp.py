@@ -21,6 +21,7 @@ class AbstractSCPBaseForwarder(BaseForwarder):
         super().__init__(session, client_channel=client_channel)
         self.client_exit_code_received = False
         self.server_exit_code_received = False
+        self.forwarding_started: bool = False
 
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         del isclient  # unused arguments
@@ -36,6 +37,7 @@ class AbstractSCPBaseForwarder(BaseForwarder):
 
     def forward(self) -> None:  # noqa: C901,PLR0915
         # pylint: disable=protected-access
+        self.forwarding_started = True
         super().forward()
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
