@@ -374,17 +374,19 @@ class SSHProxyServer:
                                 session.ssh_interface_session.forward()
                             elif session.scp_requested and self.scp_interface:
                                 session.scp_requested = False
-                                thread = threading.Thread(target=session.scp_interface_session.forward)
+                                thread = threading.Thread(
+                                    target=session.scp_interface_session.forward
+                                )
                                 thread.start()
                             elif session.netconf_requested and self.netconf_interface:
                                 session.netconf_requested = False
                                 netconf_interface = self.netconf_interface(session)
-                                thread = threading.Thread(target=netconf_interface.forward)
+                                thread = threading.Thread(
+                                    target=netconf_interface.forward
+                                )
                                 thread.start()
-                        except Exception:
+                        except Exception:  # pylint: disable=broad-exception-caught
                             logging.exception("Error!!!")
-                            import sys
-                            sys.exit(1)
 
                 else:
                     logging.warning("(%s) session not started", session)

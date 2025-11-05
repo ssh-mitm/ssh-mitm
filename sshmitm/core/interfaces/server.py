@@ -131,7 +131,9 @@ class ServerInterface(BaseServerInterface):
             logging.debug("got scp command: %s", command.decode("utf8"))
             self.session.scp_requested = True
             self.session.scp_command = command
-            self.session.scp_interface_session = self.session.proxyserver.scp_interface(self.session, client_channel=channel)
+            self.session.scp_interface_session = self.session.proxyserver.scp_interface(
+                self.session, client_channel=channel
+            )
             return True
         if self.session.netconf_requested:
             logging.debug("got netconf command: %s", command.decode("utf8"))
@@ -152,7 +154,9 @@ class ServerInterface(BaseServerInterface):
 
             self.session.scp_requested = True
             self.session.scp_command = command
-            self.session.scp_interface_session = self.session.proxyserver.scp_interface(self.session, client_channel=channel)
+            self.session.scp_interface_session = self.session.proxyserver.scp_interface(
+                self.session, client_channel=channel
+            )
             return True
         logging.warning("ssh command not allowed!")
         return False

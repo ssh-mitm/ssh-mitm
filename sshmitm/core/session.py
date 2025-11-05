@@ -126,7 +126,6 @@ class Session(BaseSession):
         self.ssh_interface_session = None
         self.scp_interface_session = None
 
-
         self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
         self.ssh_client_auth_finished: bool = False
         self.ssh_client_created: Condition = Condition()
@@ -192,7 +191,9 @@ class Session(BaseSession):
             ssh_channel_open = not self.ssh_interface_session.client_channel.closed
         if self.scp_interface_session:
             scp_channel_open = (
-                not self.scp_interface_session.client_channel.closed if self.scp_interface_session else False
+                not self.scp_interface_session.client_channel.closed
+                if self.scp_interface_session
+                else False
             )
         if self.netconf_channel is not None:
             netconf_channel_open = (
