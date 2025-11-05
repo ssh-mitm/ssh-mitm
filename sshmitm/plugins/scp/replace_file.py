@@ -46,8 +46,8 @@ class SCPReplaceFile(SCPForwarder):
             help="Specifies the path to the file that will be used for replacement during SCP file transfers. This option is required.",
         )
 
-    def __init__(self, session: "sshmitm.core.session.Session") -> None:
-        super().__init__(session)
+    def __init__(self, session: "sshmitm.core.session.Session", *, client_channel=None) -> None:
+        super().__init__(session, client_channel=client_channel)
         self.args.scp_replace_file = os.path.expanduser(self.args.scp_replace_file)
 
         self.data_sent = False

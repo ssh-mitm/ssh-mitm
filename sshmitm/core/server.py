@@ -368,19 +368,24 @@ class SSHProxyServer:
                 )
                 if session.start():
                     while session.running:
-                        time.sleep(0.1)
-                        if session.ssh_interface_session:
-                            session.ssh_interface_session.forward()
-                        elif session.scp_requested and self.scp_interface:
-                            session.scp_requested = False
-                            scp_interface = self.scp_interface(session)
-                            thread = threading.Thread(target=scp_interface.forward)
-                            thread.start()
-                        elif session.netconf_requested and self.netconf_interface:
-                            session.netconf_requested = False
-                            netconf_interface = self.netconf_interface(session)
-                            thread = threading.Thread(target=netconf_interface.forward)
-                            thread.start()
+                        try:
+                            time.sleep(0.1)
+                            if session.ssh_interface_session:
+                                session.ssh_interface_session.forward()
+                            elif session.scp_requested and self.scp_interface:
+                                session.scp_requested = False
+                                scp_interface = self.scp_interface(session)
+                                thread = threading.Thread(target=scp_interface.forward)
+                                thread.start()
+                            elif session.netconf_requested and self.netconf_interface:
+                                session.netconf_requested = False
+                                netconf_interface = self.netconf_interface(session)
+                                thread = threading.Thread(target=netconf_interface.forward)
+                                thread.start()
+                        except Exception:
+                            logging.exception("Error!!!")
+                            import sys
+                            sys.exit(1)
 
                 else:
                     logging.warning("(%s) session not started", session)

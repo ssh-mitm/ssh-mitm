@@ -44,8 +44,8 @@ class SCPStorageForwarder(SCPForwarder):
             help="Enables the storage of data from non-interactive SSH commands.",
         )
 
-    def __init__(self, session: "sshmitm.core.session.Session") -> None:
-        super().__init__(session)
+    def __init__(self, session: "sshmitm.core.session.Session", *, client_channel=None) -> None:
+        super().__init__(session, client_channel=client_channel)
         self.file_id: Optional[str] = None
         self.scp_storage_dir = None
         if self.session.session_log_dir:

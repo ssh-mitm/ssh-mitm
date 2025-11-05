@@ -83,8 +83,8 @@ class SSHMirrorForwarder(SSHForwarder):
             help="terminal log format for captured ssh session",
         )
 
-    def __init__(self, session: "sshmitm.core.session.Session") -> None:
-        super().__init__(session)
+    def __init__(self, session: "sshmitm.core.session.Session", *, client_channel=None) -> None:
+        super().__init__(session, client_channel=client_channel)
         if self.args.ssh_mirrorshell_key:
             self.args.ssh_mirrorshell_key = os.path.expanduser(
                 self.args.ssh_mirrorshell_key

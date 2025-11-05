@@ -1,4 +1,5 @@
 from abc import abstractmethod
+import logging
 from typing import TYPE_CHECKING, Optional
 
 import paramiko
@@ -19,11 +20,16 @@ class BaseForwarder(BaseModule):
     # Slow file transmission
     BUF_LEN = 65536 * 100
 
-    def __init__(self, session: "sshmitm.core.session.Session") -> None:
+    def __init__(
+        self,
+        session: "sshmitm.core.session.Session",
+        *,
+        client_channel: Optional[paramiko.Channel] = None,
+    ) -> None:
         super().__init__()
 
         self.session: "Session" = session
-        self._client_channel: Optional[paramiko.Channel] = None
+        self._client_channel: Optional[paramiko.Channel] = client_channel
         self._server_channel: Optional[paramiko.Channel] = None
         self.session.register_session_thread()
 
@@ -32,10 +38,6 @@ class BaseForwarder(BaseModule):
         """Returns the client channel for the current plugin type"""
         return self._client_channel
 
-    @client_channel.setter
-    def client_channel(self, channel: paramiko.Channel) -> None:
-        self._client_channel = channel
-
     @property
     def server_channel(self) -> Optional[paramiko.Channel]:
         return self._server_channel
@@ -43,6 +45,7 @@ class BaseForwarder(BaseModule):
     @abstractmethod
     def forward(self) -> None:
         """Forwards data between the client and the server"""
+        logging.debug("BaseForwarder.forward called")
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             msg = "session.ssh_client is None"
             raise MissingClient(msg)

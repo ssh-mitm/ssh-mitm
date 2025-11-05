@@ -163,10 +163,12 @@ class ServerInterface(BaseServerInterface):
         return True
 
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
-        logging.error("check_channel_shell_request: channel=%s", channel)
+        logging.debug("check_channel_shell_request: channel=%s", channel)
         if not self.args.disable_ssh:
-            self.session.ssh_interface_session = self.session.proxyserver.ssh_interface(self.session)
-            self.session.ssh_interface_session.client_channel = channel
+            self.session.ssh_interface_session = self.session.proxyserver.ssh_interface(
+                self.session,
+                client_channel=channel,
+            )
             return True
         return False
 
@@ -180,7 +182,7 @@ class ServerInterface(BaseServerInterface):
         pixelheight: int,
         modes: bytes,
     ) -> bool:
-        logging.error(
+        logging.debug(
             "check_channel_pty_request: channel=%s, term=%s, width=%s, height=%s, pixelwidth=%s, pixelheight=%s, modes=%s",
             channel,
             term,
