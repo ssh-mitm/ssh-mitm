@@ -3,6 +3,7 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Union
 
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
+from sshmitm.project_metadata import MODULE_NAME
 from sshmitm.core.compat import metadata
 from sshmitm.core.logger import Colors
 
@@ -50,7 +51,7 @@ def load_module(entry_point_class: Type["BaseModule"]) -> Type["argparse.Action"
             if values:
                 # Search for the module in the entry points
                 for entry_point in metadata.entry_points(
-                    group=f"sshmitm.{entry_point_class.__name__}"
+                    group=f"{MODULE_NAME}.{entry_point_class.__name__}"
                 ):
                     if values in (entry_point.name, entry_point.module):
                         values = [entry_point.load()]
@@ -76,7 +77,7 @@ def set_module_kwargs(
     """
     # Retrieve and sort entry points for the module
     entry_points = sorted(
-        metadata.entry_points(group=f"sshmitm.{entry_point_class.__name__}"),
+        metadata.entry_points(group=f"{MODULE_NAME}.{entry_point_class.__name__}"),
         key=lambda x: x.name,
     )
 

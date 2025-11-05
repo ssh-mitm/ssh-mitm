@@ -32,6 +32,7 @@ from typing import (
 
 import argcomplete
 
+from sshmitm.project_metadata import MODULE_NAME
 from sshmitm.core.compat import metadata
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import ModuleError
@@ -133,7 +134,7 @@ class ModuleParser(BaseModuleArgumentParser):
 
         # Iterate over all entry points in the ``sshmitm.SubCommand`` group
         for entry_point in metadata.entry_points(
-            group=f"sshmitm.{SubCommand.__name__}"
+            group=f"{MODULE_NAME}.{SubCommand.__name__}"
         ):
             # Skip if the subcommand is already registered
             if entry_point.name in self._registered_subcommands:

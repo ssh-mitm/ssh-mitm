@@ -15,6 +15,7 @@ from typing import (
     cast,
 )
 
+from sshmitm.project_metadata import MODULE_NAME
 from sshmitm.core.compat import metadata
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import InvalidModuleArguments, ModuleError
@@ -199,7 +200,7 @@ class BaseModule(ABC):  # noqa: B024
         :return: The loaded module class, or ``None`` if not found.
         """
         for entry_point in metadata.entry_points(
-            group=f"sshmitm.{entry_point_class.__name__}"
+            group=f"{MODULE_NAME}.{entry_point_class.__name__}"
         ):
             if name in (entry_point.name, entry_point.module):
                 return cast("Type[BaseModule]", entry_point.load())
