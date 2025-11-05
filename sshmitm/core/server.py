@@ -369,9 +369,8 @@ class SSHProxyServer:
                 if session.start():
                     while session.running:
                         time.sleep(0.1)
-                        if session.ssh_requested and self.ssh_interface:
-                            session.ssh_requested = False
-                            self.ssh_interface(session).forward()
+                        if session.ssh_interface_session:
+                            session.ssh_interface_session.forward()
                         elif session.scp_requested and self.scp_interface:
                             session.scp_requested = False
                             scp_interface = self.scp_interface(session)

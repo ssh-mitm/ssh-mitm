@@ -8,9 +8,6 @@ from sshmitm.core.forwarders.base import BaseForwarder
 
 
 class SSHBaseForwarder(BaseForwarder):  # pylint: disable=abstract-method
-    @property
-    def client_channel(self) -> Optional[paramiko.Channel]:
-        return self.session.ssh_channel
 
     def check_if_channels_are_closed(self) -> bool:
         if self.client_channel is not None and self._closed(self.client_channel):
@@ -37,10 +34,8 @@ class SSHForwarder(SSHBaseForwarder):
     """forwards the terminal session to the remote server without modification"""
 
     def forward(self) -> None:
+        super().forward()
         time.sleep(0.1)
-
-        # store the remote channel to the ssh server in the current session
-        self.session.ssh_remote_channel = self.server_channel
 
         if self.session.ssh_pty_kwargs:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)

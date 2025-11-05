@@ -148,7 +148,6 @@ class ServerInterface(BaseServerInterface):
             # disable the requested shell and the pty to prevent
             # intercepting the wrong shell
             if command.startswith(b"mosh-server"):
-                self.session.ssh_requested = False
                 self.session.ssh_pty_kwargs = None
 
             self.session.scp_requested = True
@@ -164,10 +163,10 @@ class ServerInterface(BaseServerInterface):
         return True
 
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
-        logging.debug("check_channel_shell_request: channel=%s", channel)
+        logging.error("check_channel_shell_request: channel=%s", channel)
         if not self.args.disable_ssh:
-            self.session.ssh_requested = True
-            self.session.ssh_channel = channel
+            self.session.ssh_interface_session = self.session.proxyserver.ssh_interface(self.session)
+            self.session.ssh_interface_session.client_channel = channel
             return True
         return False
 
@@ -181,7 +180,7 @@ class ServerInterface(BaseServerInterface):
         pixelheight: int,
         modes: bytes,
     ) -> bool:
-        logging.debug(
+        logging.error(
             "check_channel_pty_request: channel=%s, term=%s, width=%s, height=%s, pixelwidth=%s, pixelheight=%s, modes=%s",
             channel,
             term,
@@ -192,7 +191,6 @@ class ServerInterface(BaseServerInterface):
             modes,
         )
         if not self.args.disable_ssh:
-            self.session.ssh_requested = True
             self.session.ssh_pty_kwargs = {
                 "term": term,
                 "width": width,
@@ -484,10 +482,10 @@ class ServerInterface(BaseServerInterface):
             pixelwidth,
             pixelheight,
         )
-        if not self.session.ssh_remote_channel:
-            logging.error("session.ssh_remote_channel not initialized!")
+        if not self.session.ssh_interface_session:
+            logging.error("session.ssh_interface_session not initialized!")
             return False
-        self.session.ssh_remote_channel.resize_pty(
+        self.session.ssh_interface_session.server_channel.resize_pty(
             width, height, pixelwidth, pixelheight
         )
         return True

@@ -123,13 +123,13 @@ class Session(BaseSession):
         self.name = f"{client_address}->{remoteaddr}"
         self.closed = False
 
-        self.ssh_requested: bool = False
-        self.ssh_channel: Optional[paramiko.Channel] = None
+        self.ssh_interface_session = None
+
+
         self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
         self.ssh_client_auth_finished: bool = False
         self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
-        self.ssh_remote_channel: Optional[paramiko.Channel] = None
 
         self.scp_requested: bool = False
         self.scp_channel: Optional[paramiko.Channel] = None
@@ -188,8 +188,8 @@ class Session(BaseSession):
 
         if self.channel is not None:
             session_channel_open = not self.channel.closed
-        if self.ssh_channel is not None:
-            ssh_channel_open = not self.ssh_channel.closed
+        if self.ssh_interface_session:
+            ssh_channel_open = not self.ssh_interface_session.client_channel.closed
         if self.scp_channel is not None:
             scp_channel_open = (
                 not self.scp_channel.closed if self.scp_channel else False
@@ -280,7 +280,7 @@ class Session(BaseSession):
         # Connect method end
         if (
             not self.scp_requested
-            and not self.ssh_requested
+            and not self.ssh_interface_session
             and not self.sftp_requested
             and not self.netconf_requested
         ) and self.transport.is_active():

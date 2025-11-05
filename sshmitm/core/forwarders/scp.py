@@ -38,6 +38,7 @@ class AbstractSCPBaseForwarder(BaseForwarder):
 
     def forward(self) -> None:  # noqa: C901,PLR0915
         # pylint: disable=protected-access
+        super().forward()
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
