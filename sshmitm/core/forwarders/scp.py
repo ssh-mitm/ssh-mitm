@@ -20,10 +20,6 @@ class AbstractSCPBaseForwarder(BaseForwarder):
         self.client_exit_code_received = False
         self.server_exit_code_received = False
 
-    @property
-    def client_channel(self) -> Optional[paramiko.Channel]:
-        return self.session.scp_channel
-
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         del isclient  # unused arguments
         return traffic

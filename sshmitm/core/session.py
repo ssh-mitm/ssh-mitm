@@ -124,6 +124,7 @@ class Session(BaseSession):
         self.closed = False
 
         self.ssh_interface_session = None
+        self.scp_interface_session = None
 
 
         self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
@@ -132,7 +133,6 @@ class Session(BaseSession):
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
 
         self.scp_requested: bool = False
-        self.scp_channel: Optional[paramiko.Channel] = None
         self.scp_command: bytes = b""
 
         self.netconf_requested: bool = False
@@ -190,9 +190,9 @@ class Session(BaseSession):
             session_channel_open = not self.channel.closed
         if self.ssh_interface_session:
             ssh_channel_open = not self.ssh_interface_session.client_channel.closed
-        if self.scp_channel is not None:
+        if self.scp_interface_session:
             scp_channel_open = (
-                not self.scp_channel.closed if self.scp_channel else False
+                not self.scp_interface_session.client_channel.closed if self.scp_interface_session else False
             )
         if self.netconf_channel is not None:
             netconf_channel_open = (

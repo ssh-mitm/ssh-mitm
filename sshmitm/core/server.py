@@ -374,8 +374,7 @@ class SSHProxyServer:
                                 session.ssh_interface_session.forward()
                             elif session.scp_requested and self.scp_interface:
                                 session.scp_requested = False
-                                scp_interface = self.scp_interface(session)
-                                thread = threading.Thread(target=scp_interface.forward)
+                                thread = threading.Thread(target=session.scp_interface_session.forward)
                                 thread.start()
                             elif session.netconf_requested and self.netconf_interface:
                                 session.netconf_requested = False
