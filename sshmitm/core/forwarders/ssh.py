@@ -40,32 +40,40 @@ class SSHForwarder(SSHBaseForwarder):
 
         try:
             while self.session.running:
+                active = False
                 # forward stdout <-> stdin und stderr <-> stderr
-                self.forward_stdin()
-                self.forward_stdout()
-                self.forward_extra()
+                if self.forward_stdin():
+                    active = True
+                if self.forward_stdout():
+                    active = True
+                if self.forward_extra():
+                    active = True
                 self.forward_stderr()
 
                 if self.check_if_channels_are_closed():
                     break
-
-                time.sleep(0.01)
+                if not active:
+                    time.sleep(0.01)
         except Exception:
             logging.exception("error processing ssh session!")
             raise
 
-    def forward_stdin(self) -> None:
+    def forward_stdin(self) -> bool:
         if self.client_channel is not None and self.client_channel.recv_ready():
             buf: bytes = self.client_channel.recv(self.BUF_LEN)
             buf = self.stdin(buf)
             self.server_channel.sendall(buf)
+            return True
+        return False
 
-    def forward_stdout(self) -> None:
+    def forward_stdout(self) -> bool:
         if self.server_channel.recv_ready():
             buf: bytes = self.server_channel.recv(self.BUF_LEN)
             buf = self.stdout(buf)
             if self.client_channel is not None:
                 self.client_channel.sendall(buf)
+                return True
+        return False
 
     def forward_extra(self) -> None:
         pass
@@ -76,6 +84,8 @@ class SSHForwarder(SSHBaseForwarder):
             buf = self.stderr(buf)
             if self.client_channel is not None:
                 self.client_channel.sendall_stderr(buf)
+                return True
+        return False
 
     def stdin(self, text: bytes) -> bytes:
         return text

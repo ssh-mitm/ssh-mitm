@@ -199,17 +199,16 @@ class Session(BaseSession):
         :return: A boolean indicating whether the session is running or not
         """
         session_channel_open: bool = True
-        ssh_channel_open: bool = False
-        scp_channel_open: bool = False
 
         if self.channel is not None:
             session_channel_open = not self.channel.closed
-        if "ssh" in self._registered_forwarders:
-            ssh_channel_open = self._registered_forwarders["ssh"].is_active
-        if "scp" in self._registered_forwarders:
-            scp_channel_open = self._registered_forwarders["scp"].is_active
+
+        has_active_forwarder = any(
+            forwarder.is_active
+            for forwarder in self._registered_forwarders.values()
+        )
         open_channel_exists = (
-            session_channel_open or ssh_channel_open or scp_channel_open
+            session_channel_open or has_active_forwarder
         )
 
         return self.proxyserver.running and open_channel_exists and not self.closed
