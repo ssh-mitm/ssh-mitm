@@ -27,7 +27,6 @@ import logging
 import os
 import socket
 import threading
-from multiprocessing import Condition
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, Union, cast
 from uuid import uuid4
@@ -36,12 +35,12 @@ import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
 
+from sshmitm.core.exceptions import SessionStartError
 from sshmitm.core.forwarders.base import BaseForwarder
 from sshmitm.core.interfaces.server import ProxySFTPServer
 from sshmitm.core.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
-from sshmitm.core.exceptions import SessionStartError
 
 if TYPE_CHECKING:
     from paramiko.pkey import PKey

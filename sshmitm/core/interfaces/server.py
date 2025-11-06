@@ -551,7 +551,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
     ) -> None:
         with self.session.authenticator.ssh_client_created:
             self.session.authenticator.ssh_client_created.wait_for(
-                lambda: self.session.authenticator.ssh_client_auth_finished.is_set()
+                self.session.authenticator.ssh_client_auth_finished.is_set
             )
             try:
                 self.session.sftp_client = SFTPClient.from_client(

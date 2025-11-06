@@ -3,7 +3,6 @@ import os
 import select
 import sys
 import threading
-import time
 from binascii import hexlify
 from socket import socket
 from typing import List, Optional, Tuple, Type, Union
