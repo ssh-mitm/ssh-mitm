@@ -16,7 +16,7 @@ from rich.console import Console
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm import project_metadata
-from sshmitm.core.exceptions import KeyGenerationError
+from sshmitm.core.exceptions import KeyGenerationError, SessionStartError
 from sshmitm.core.forwarders.scp import SCPBaseForwarder, SCPForwarder
 from sshmitm.core.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
 from sshmitm.core.forwarders.ssh import SSHBaseForwarder, SSHForwarder
@@ -363,13 +363,9 @@ class SSHProxyServer:
                 logging.debug(
                     "incoming connection from %s to %s", str(addr), remoteaddr
                 )
-                if session.start():
-                    while session.running:
-                        time.sleep(0.1)
-                        session.start_forwarder("ssh", threaded=False)
-                        session.start_forwarder("ssh", threaded=True)
-
-                else:
+                try:
+                    session.start()
+                except SessionStartError:
                     logging.warning("(%s) session not started", session)
                     self._threads.remove(threading.current_thread())
         except Exception:  # pylint: disable=broad-exception-caught

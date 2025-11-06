@@ -41,6 +41,7 @@ from sshmitm.core.interfaces.server import ProxySFTPServer
 from sshmitm.core.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
+from sshmitm.core.exceptions import SessionStartError
 
 if TYPE_CHECKING:
     from paramiko.pkey import PKey
@@ -124,6 +125,8 @@ class Session(BaseSession):
         self.closed = False
 
         self._registered_forwarders = {}
+        self.new_forwarders_registered = threading.Event()
+        self.forwarders_lock = threading.Lock()
 
         self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
@@ -142,8 +145,8 @@ class Session(BaseSession):
         self.remote_address_reachable: bool = True
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
-        self.authenticator: "sshmitm.core.authentication.Authenticator" = authenticator_class(
-            self
+        self.authenticator: "sshmitm.core.authentication.Authenticator" = (
+            authenticator_class(self)
         )
 
         self.env_requests: Dict[bytes, bytes] = {}
@@ -160,9 +163,11 @@ class Session(BaseSession):
     ) -> bool:
         if name in self._registered_forwarders:
             return False
-        self._registered_forwarders[name] = interface(
-            self, client_channel=client_channel, **kwargs
-        )
+        with self.forwarders_lock:
+            self._registered_forwarders[name] = interface(
+                self, client_channel=client_channel, **kwargs
+            )
+            self.new_forwarders_registered.set()
         return True
 
     def get_forwarder(self, name: str) -> Optional[BaseForwarder]:
@@ -201,12 +206,9 @@ class Session(BaseSession):
             session_channel_open = not self.channel.closed
 
         has_active_forwarder = any(
-            forwarder.is_active
-            for forwarder in self._registered_forwarders.values()
+            forwarder.is_active for forwarder in self._registered_forwarders.values()
         )
-        open_channel_exists = (
-            session_channel_open or has_active_forwarder
-        )
+        open_channel_exists = session_channel_open or has_active_forwarder
 
         return self.proxyserver.running and open_channel_exists and not self.closed
 
@@ -285,7 +287,7 @@ class Session(BaseSession):
         self.sftp_client_ready.set()
         return True
 
-    def start(self) -> bool:
+    def start(self) -> None:
         """
         Start the session and initialize the underlying transport.
         """
@@ -302,31 +304,37 @@ class Session(BaseSession):
                 transport_error, EOFError
             ):
                 self.transport.close()
-                return False
+                raise SessionStartError
 
         if not self.channel:
             logging.error("(%s) session error opening channel!", self)
             self.transport.close()
-            return False
+            raise SessionStartError
 
         # wait for authentication
         event.wait()
 
         if not self.transport.is_active():
-            return False
+            raise SessionStartError
 
         self.proxyserver.client_tunnel_interface.setup(self)
 
         if not self._start_channels():
-            return False
+            raise SessionStartError
+        self._run_server_loop()
 
+    def _run_server_loop(self) -> None:
         logging.info(
             "%s %s - session started",
             Colors.emoji("information"),
             Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
         )
-
-        return True
+        while self.running:
+            if self.new_forwarders_registered.wait(timeout=0.1):
+                with self.forwarders_lock:
+                    self.start_forwarder("ssh", threaded=False)
+                    self.start_forwarder("scp", threaded=True)
+                    self.new_forwarders_registered.clear()
 
     def close(self) -> None:
         """

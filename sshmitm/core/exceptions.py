@@ -32,3 +32,9 @@ class MissingClient(Exception):
     """
     Exception raised when a client cannot be found for a given host.
     """
+
+
+class SessionStartError(Exception):
+    """
+    Exception raised when session start failed.
+    """
