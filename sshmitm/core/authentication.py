@@ -159,6 +159,9 @@ class Authenticator(BaseModule):
         self.session = session
         self.session.register_session_thread()
 
+        self.ssh_client_auth_finished = threading.Event()
+        self.ssh_client_created: threading.Condition = threading.Condition()
+
     def close(self) -> None:
         logging.debug("%s.close", self.__class__.__name__)
         if self.has_forwarded_agent:
@@ -362,7 +365,7 @@ class Authenticator(BaseModule):
             raise MissingHostException
 
         auth_status = paramiko.common.AUTH_FAILED
-        with self.session.ssh_client_created:
+        with self.ssh_client_created:
             self.session.ssh_client = SSHClient(
                 host,
                 port,
@@ -390,8 +393,8 @@ class Authenticator(BaseModule):
                 return paramiko.common.AUTH_FAILED
             if run_post_auth:
                 self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
-            self.session.ssh_client_auth_finished = True
-            self.session.ssh_client_created.notify_all()
+            self.ssh_client_auth_finished.set()
+            self.ssh_client_created.notify_all()
         return auth_status
 
     def pre_auth_action(self) -> None:

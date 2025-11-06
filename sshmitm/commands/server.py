@@ -141,7 +141,7 @@ class SSHServerModules(SubCommand):
             server_tunnel_interface=args.server_tunnel_interface,
             client_tunnel_interface=args.client_tunnel_interface,
             authentication_interface=args.auth_interface,
-            authenticator=args.authenticator,
+            authenticator_class=args.authenticator,
             transparent=args.transparent,
             banner_name=args.banner_name,
             debug=args.debug,

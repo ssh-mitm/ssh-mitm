@@ -71,7 +71,7 @@ class Session(BaseSession):
     :param proxyserver: Instance of 'sshmitm.core.server.SSHProxyServer' class
     :param client_socket: A socket instance representing the connection from the client
     :param client_address: Address information of the client
-    :param authenticator: Type of the authentication class to be used
+    :param authenticator_class: Type of the authentication class to be used
     :param remoteaddr: Remote address information
     """
 
@@ -94,7 +94,7 @@ class Session(BaseSession):
         proxyserver: "sshmitm.core.server.SSHProxyServer",
         client_socket: socket.socket,
         client_address: Union[Tuple[str, int], Tuple[str, int, int, int]],
-        authenticator: Type["sshmitm.core.authentication.Authenticator"],
+        authenticator_class: Type["sshmitm.core.authentication.Authenticator"],
         remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]],
         banner_name: Optional[str] = None,
     ) -> None:
@@ -121,14 +121,11 @@ class Session(BaseSession):
         self.proxyserver: "sshmitm.core.server.SSHProxyServer" = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
-        self.name = f"{client_address}->{remoteaddr}"
         self.closed = False
 
         self._registered_forwarders = {}
 
         self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
-        self.ssh_client_auth_finished: bool = False
-        self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
 
         self.sftp_requested: bool = False
@@ -145,7 +142,7 @@ class Session(BaseSession):
         self.remote_address_reachable: bool = True
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
-        self.authenticator: "sshmitm.core.authentication.Authenticator" = authenticator(
+        self.authenticator: "sshmitm.core.authentication.Authenticator" = authenticator_class(
             self
         )
 
@@ -223,7 +220,7 @@ class Session(BaseSession):
         if self._transport is None:
             self._transport = Transport(self.client_socket)
             if self.banner_name:
-                self.transport.local_version = f"SSH-2.0-{self.banner_name}"
+                self._transport.local_version = f"SSH-2.0-{self.banner_name}"
             key_negotiation.handle_key_negotiation(self)
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
@@ -364,7 +361,7 @@ class Session(BaseSession):
         self.closed = True
 
     def __str__(self) -> str:
-        return self.name
+        return f"{self.client_address}->{self.socket_remote_address}"
 
     def __enter__(self) -> "Session":
         return self

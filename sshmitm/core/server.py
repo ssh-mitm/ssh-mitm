@@ -61,7 +61,7 @@ class SSHProxyServer:
             LocalPortForwardingForwarder
         ] = LocalPortForwardingForwarder,
         authentication_interface: Type[BaseServerInterface] = ServerInterface,
-        authenticator: Type[Authenticator] = AuthenticatorPassThrough,
+        authenticator_class: Type[Authenticator] = AuthenticatorPassThrough,
         transparent: bool = False,
         session_class: Type[Session] = Session,
         banner_name: Optional[str] = None,
@@ -95,7 +95,7 @@ class SSHProxyServer:
         self.authentication_interface: Type[BaseServerInterface] = (
             authentication_interface
         )
-        self.authenticator: Type[Authenticator] = authenticator
+        self.authenticator_class: Type[Authenticator] = authenticator_class
         self.transparent: bool = transparent
         self.session_class: Type[Session] = session_class
         self.banner_name: Optional[str] = banner_name
@@ -356,7 +356,7 @@ class SSHProxyServer:
                 self,
                 client,
                 addr,
-                self.authenticator,
+                self.authenticator_class,
                 remoteaddr,
                 self.banner_name,
             ) as session:
