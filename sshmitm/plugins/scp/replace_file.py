@@ -27,6 +27,8 @@ process_data(traffic: bytes) -> bytes: Processes the SCP data and returns the mo
 import os
 from typing import TYPE_CHECKING
 
+import paramiko
+
 from sshmitm.core.forwarders.scp import SCPForwarder
 
 if TYPE_CHECKING:
@@ -50,7 +52,7 @@ class SCPReplaceFile(SCPForwarder):
         self,
         session: "sshmitm.core.session.Session",
         *,
-        client_channel=None,
+        client_channel: paramiko.Channel = None,
         scp_command: bytes = b"",
     ) -> None:
         super().__init__(

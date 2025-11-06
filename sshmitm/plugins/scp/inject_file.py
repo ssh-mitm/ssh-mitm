@@ -14,6 +14,8 @@ import logging
 import os
 from typing import TYPE_CHECKING, Union
 
+import paramiko
+
 from sshmitm.core.forwarders.scp import SCPForwarder
 
 if TYPE_CHECKING:
@@ -57,7 +59,7 @@ class SCPInjectFile(SCPForwarder):
         self,
         session: "sshmitm.core.session.Session",
         *,
-        client_channel=None,
+        client_channel: paramiko.Channel = None,
         scp_command: bytes = b"",
     ) -> None:
         super().__init__(

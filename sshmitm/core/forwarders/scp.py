@@ -19,7 +19,7 @@ class AbstractSCPBaseForwarder(BaseForwarder):
         self,
         session: "sshmitm.core.session.Session",
         *,
-        client_channel=None,
+        client_channel: paramiko.Channel = None,
         scp_command: bytes = b"",
     ) -> None:
         super().__init__(session, client_channel=client_channel)
@@ -63,7 +63,7 @@ class AbstractSCPBaseForwarder(BaseForwarder):
                         "[chan %d] Initiating SCP remote to remote",
                         self.client_channel.get_id(),
                     )
-                    if not self.authenticator.has_forwarded_agent:
+                    if not self.session.proxyserver.authenticator.has_forwarded_agent:
                         logging.warning(
                             "[chan %d] SCP remote to remote needs a forwarded agent",
                             self.client_channel.get_id(),
@@ -205,7 +205,7 @@ class SCPForwarder(SCPBaseForwarder):
         self,
         session: "sshmitm.core.session.Session",
         *,
-        client_channel=None,
+        client_channel: paramiko.Channel = None,
         scp_command: bytes = b"",
     ) -> None:
         super().__init__(

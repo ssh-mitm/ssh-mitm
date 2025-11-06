@@ -365,14 +365,11 @@ class SSHProxyServer:
                 )
                 if session.start():
                     while session.running:
-                        try:
-                            time.sleep(0.1)
-                            if "ssh" in session._registered_interfaces:
-                                session._registered_interfaces["ssh"].start()
-                            elif "scp" in session._registered_interfaces:
-                                session._registered_interfaces["scp"].start_thread()
-                        except Exception:  # pylint: disable=broad-exception-caught
-                            logging.exception("Error!!!")
+                        time.sleep(0.1)
+                        if "ssh" in session._registered_interfaces:
+                            session._registered_interfaces["ssh"].start()
+                        elif "scp" in session._registered_interfaces:
+                            session._registered_interfaces["scp"].start_thread()
 
                 else:
                     logging.warning("(%s) session not started", session)

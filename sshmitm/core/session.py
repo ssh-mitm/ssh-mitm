@@ -36,6 +36,8 @@ import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
 
+from sshmitm.core.forwarders.base import BaseForwarder
+from sshmitm.core.interfaces.server import ProxySFTPServer
 from sshmitm.core.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
@@ -151,7 +153,14 @@ class Session(BaseSession):
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
         self.banner_name = banner_name
 
-    def register_interface(self, *, name, interface, client_channel, **kwargs) -> bool:
+    def register_interface(
+        self,
+        *,
+        name: str,
+        interface: Type[BaseForwarder],
+        client_channel: paramiko.Channel,
+        **kwargs: object,
+    ) -> bool:
         if name in self._registered_interfaces:
             return False
         self._registered_interfaces[name] = interface(
@@ -188,9 +197,7 @@ class Session(BaseSession):
         if "scp" in self._registered_interfaces:
             scp_channel_open = self._registered_interfaces["scp"].is_active
         open_channel_exists = (
-            session_channel_open
-            or ssh_channel_open
-            or scp_channel_open
+            session_channel_open or ssh_channel_open or scp_channel_open
         )
 
         return self.proxyserver.running and open_channel_exists and not self.closed
