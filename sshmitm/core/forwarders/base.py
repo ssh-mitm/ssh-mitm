@@ -1,5 +1,6 @@
 from abc import abstractmethod
 import logging
+import threading
 from typing import TYPE_CHECKING, Optional
 
 import paramiko
@@ -28,6 +29,11 @@ class BaseForwarder(BaseModule):
     ) -> None:
         super().__init__()
 
+        self._thread_lock = threading.Lock()
+        self._thread = None  # Referenz auf den Thread speichern
+        self._forwarding_started: bool = False
+        self._forwarding_running: bool = False
+
         self.session: "Session" = session
         self._client_channel: Optional[paramiko.Channel] = client_channel
         self._server_channel: Optional[paramiko.Channel] = None
@@ -42,7 +48,34 @@ class BaseForwarder(BaseModule):
     def server_channel(self) -> Optional[paramiko.Channel]:
         return self._server_channel
 
-    @abstractmethod
+    def start(self) -> None:
+        try:
+            with self._thread_lock:
+                if self._forwarding_started:
+                    return
+                self._forwarding_started = True
+                self._forwarding_running = True
+            self.forward()
+        finally:
+            with self._thread_lock:
+                self._forwarding_running = False
+
+    def start_thread(self) -> None:
+        with self._thread_lock:
+            if self._forwarding_started:
+                return
+        self._thread = threading.Thread(target=self.start)
+        self._thread.start()
+
+    @property
+    def is_active(self) -> bool:
+        if self.client_channel.closed:
+            return False
+        if self._thread is not None and self._thread.is_alive():
+            return True
+        with self._thread_lock:
+            return self._forwarding_running
+
     def forward(self) -> None:
         """Forwards data between the client and the server"""
         logging.debug("BaseForwarder.forward called")

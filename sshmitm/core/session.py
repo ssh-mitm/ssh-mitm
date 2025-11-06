@@ -187,13 +187,9 @@ class Session(BaseSession):
         if self.channel is not None:
             session_channel_open = not self.channel.closed
         if self.ssh_interface_session:
-            ssh_channel_open = not self.ssh_interface_session.client_channel.closed
+            ssh_channel_open = self.ssh_interface_session.is_active
         if self.scp_interface_session:
-            scp_channel_open = (
-                not self.scp_interface_session.client_channel.closed
-                if self.scp_interface_session
-                else False
-            )
+            scp_channel_open = self.scp_interface_session.is_active
         if self.netconf_channel is not None:
             netconf_channel_open = (
                 not self.netconf_channel.closed if self.netconf_channel else False
