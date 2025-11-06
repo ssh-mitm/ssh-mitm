@@ -17,7 +17,6 @@ from rich.console import Console
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm import project_metadata
 from sshmitm.core.exceptions import KeyGenerationError
-from sshmitm.core.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
 from sshmitm.core.forwarders.scp import SCPBaseForwarder, SCPForwarder
 from sshmitm.core.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
 from sshmitm.core.forwarders.ssh import SSHBaseForwarder, SSHForwarder
@@ -53,7 +52,6 @@ class SSHProxyServer:
         key_length: int = 2048,
         ssh_interface: Type[SSHBaseForwarder] = SSHForwarder,
         scp_interface: Type[SCPBaseForwarder] = SCPForwarder,
-        netconf_interface: Type[NetconfBaseForwarder] = NetconfForwarder,
         sftp_interface: Type[BaseSFTPServerInterface] = SFTPProxyServerInterface,
         sftp_handler: Type[SFTPHandlerBasePlugin] = SFTPHandlerPlugin,
         server_tunnel_interface: Type[
@@ -83,7 +81,6 @@ class SSHProxyServer:
 
         self.ssh_interface: Type[SSHBaseForwarder] = ssh_interface
         self.scp_interface: Type[SCPBaseForwarder] = scp_interface
-        self.netconf_interface: Type[NetconfBaseForwarder] = netconf_interface
         self.sftp_handler: Type[SFTPHandlerBasePlugin] = sftp_handler
         self.sftp_interface: Type[BaseSFTPServerInterface] = (
             self.sftp_handler.get_interface() or sftp_interface
@@ -374,13 +371,6 @@ class SSHProxyServer:
                                 session._registered_interfaces["ssh"].start()
                             elif "scp" in session._registered_interfaces:
                                 session._registered_interfaces["scp"].start_thread()
-                            elif session.netconf_requested and self.netconf_interface:
-                                session.netconf_requested = False
-                                netconf_interface = self.netconf_interface(session)
-                                thread = threading.Thread(
-                                    target=netconf_interface.forward
-                                )
-                                thread.start()
                         except Exception:  # pylint: disable=broad-exception-caught
                             logging.exception("Error!!!")
 

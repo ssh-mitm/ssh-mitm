@@ -32,13 +32,13 @@ from typing import (
 
 import argcomplete
 
-from sshmitm.project_metadata import MODULE_NAME
 from sshmitm.core.compat import metadata
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import ModuleError
 from sshmitm.moduleparser.formatter import ModuleFormatter
 from sshmitm.moduleparser.modules import BaseModule, SubCommand
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
+from sshmitm.project_metadata import MODULE_NAME
 
 if TYPE_CHECKING:
     from configparser import ConfigParser

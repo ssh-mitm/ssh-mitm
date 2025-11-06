@@ -36,7 +36,6 @@ import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
 
-from sshmitm.core.interfaces.server import ProxyNetconfServer, ProxySFTPServer
 from sshmitm.core.logger import THREAD_DATA, Colors
 from sshmitm.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
@@ -130,12 +129,6 @@ class Session(BaseSession):
         self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
 
-        self.netconf_requested: bool = False
-        self.netconf_command: bytes = b""
-        self.netconf_channel: Optional[paramiko.Channel] = None
-        self.netconf_client: Optional[sshmitm.core.clients.netconf.NetconfClient] = None
-        self.netconf_client_ready = threading.Event()
-
         self.sftp_requested: bool = False
         self.sftp_channel: Optional[paramiko.Channel] = None
         self.sftp_client: Optional[sshmitm.core.clients.sftp.SFTPClient] = None
@@ -161,7 +154,9 @@ class Session(BaseSession):
     def register_interface(self, *, name, interface, client_channel, **kwargs) -> bool:
         if name in self._registered_interfaces:
             return False
-        self._registered_interfaces[name] = interface(self, client_channel=client_channel, **kwargs)
+        self._registered_interfaces[name] = interface(
+            self, client_channel=client_channel, **kwargs
+        )
         return True
 
     def get_session_log_dir(self) -> Optional[str]:
@@ -185,7 +180,6 @@ class Session(BaseSession):
         session_channel_open: bool = True
         ssh_channel_open: bool = False
         scp_channel_open: bool = False
-        netconf_channel_open: bool = False
 
         if self.channel is not None:
             session_channel_open = not self.channel.closed
@@ -193,15 +187,10 @@ class Session(BaseSession):
             ssh_channel_open = self._registered_interfaces["ssh"].is_active
         if "scp" in self._registered_interfaces:
             scp_channel_open = self._registered_interfaces["scp"].is_active
-        if self.netconf_channel is not None:
-            netconf_channel_open = (
-                not self.netconf_channel.closed if self.netconf_channel else False
-            )
         open_channel_exists = (
             session_channel_open
             or ssh_channel_open
             or scp_channel_open
-            or netconf_channel_open
         )
 
         return self.proxyserver.running and open_channel_exists and not self.closed
@@ -233,12 +222,6 @@ class Session(BaseSession):
                 sftp_si=self.proxyserver.sftp_interface,
                 session=self,
             )
-            self._transport.set_subsystem_handler(
-                name="netconf",
-                handler=ProxyNetconfServer,
-                sftp_si=self.proxyserver.netconf_interface,
-                session=self,
-            )
 
         return self._transport
 
@@ -248,7 +231,6 @@ class Session(BaseSession):
         # create client or master channel
         if self.ssh_client:
             self.sftp_client_ready.set()
-            self.netconf_client_ready.set()
             return True
 
         # Connect method start
@@ -281,13 +263,11 @@ class Session(BaseSession):
             "scp" not in self._registered_interfaces
             and "ssh" not in self._registered_interfaces
             and not self.sftp_requested
-            and not self.netconf_requested
         ) and self.transport.is_active():
             self.transport.close()
             return False
 
         self.sftp_client_ready.set()
-        self.netconf_client_ready.set()
         return True
 
     def start(self) -> bool:

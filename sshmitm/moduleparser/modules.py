@@ -15,11 +15,11 @@ from typing import (
     cast,
 )
 
-from sshmitm.project_metadata import MODULE_NAME
 from sshmitm.core.compat import metadata
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import InvalidModuleArguments, ModuleError
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
+from sshmitm.project_metadata import MODULE_NAME
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser import ModuleParser

@@ -47,9 +47,15 @@ class SCPReplaceFile(SCPForwarder):
         )
 
     def __init__(
-        self, session: "sshmitm.core.session.Session", *, client_channel=None, scp_command: bytes = b""
+        self,
+        session: "sshmitm.core.session.Session",
+        *,
+        client_channel=None,
+        scp_command: bytes = b"",
     ) -> None:
-        super().__init__(session, client_channel=client_channel, scp_command=scp_command)
+        super().__init__(
+            session, client_channel=client_channel, scp_command=scp_command
+        )
         self.args.scp_replace_file = os.path.expanduser(self.args.scp_replace_file)
 
         self.data_sent = False

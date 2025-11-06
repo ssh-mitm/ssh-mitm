@@ -16,7 +16,11 @@ if TYPE_CHECKING:
 
 class AbstractSCPBaseForwarder(BaseForwarder):
     def __init__(
-        self, session: "sshmitm.core.session.Session", *, client_channel=None, scp_command: bytes = b"",
+        self,
+        session: "sshmitm.core.session.Session",
+        *,
+        client_channel=None,
+        scp_command: bytes = b"",
     ) -> None:
         super().__init__(session, client_channel=client_channel)
         self.scp_command: bytes = scp_command
@@ -198,9 +202,15 @@ class SCPForwarder(SCPBaseForwarder):
     """forwards a file from or to the remote server"""
 
     def __init__(
-        self, session: "sshmitm.core.session.Session", *, client_channel=None, scp_command: bytes = b""
+        self,
+        session: "sshmitm.core.session.Session",
+        *,
+        client_channel=None,
+        scp_command: bytes = b"",
     ) -> None:
-        super().__init__(session, client_channel=client_channel, scp_command=scp_command)
+        super().__init__(
+            session, client_channel=client_channel, scp_command=scp_command
+        )
 
         self.await_response = False
         self.bytes_remaining = 0

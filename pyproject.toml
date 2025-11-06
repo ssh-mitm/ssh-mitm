@@ -54,7 +54,6 @@ check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
 
 [project.entry-points."sshmitm.BaseSession"]
 base = "sshmitm.core.session:Session"
-elasticlog = "sshmitm.contrib.elasticlog.session:ElasticlogSession"
 
 [project.entry-points."sshmitm.Authenticator"]
 passthrough = "sshmitm.plugins.authentication.passthrough:AuthenticatorPassThrough"
@@ -65,11 +64,6 @@ base = "sshmitm.core.interfaces.server:ServerInterface"
 
 [project.entry-points."sshmitm.SSHBaseForwarder"]
 mirrorshell = "sshmitm.plugins.ssh.mirrorshell:SSHMirrorForwarder"
-elasticlog = "sshmitm.contrib.elasticlog.ssh:SSHForwarderElasticLog"
-
-[project.entry-points."sshmitm.NetconfBaseForwarder"]
-base = "sshmitm.core.forwarders.netconf:NetconfForwarder"
-elasticlog = "sshmitm.contrib.elasticlog.netconf:NetconfForwarderElasticLog"
 
 [project.entry-points."sshmitm.SCPBaseForwarder"]
 debug_traffic = "sshmitm.plugins.scp.debug_traffic:SCPDebugForwarder"
@@ -78,7 +72,6 @@ replace_file = "sshmitm.plugins.scp.replace_file:SCPReplaceFile"
 store_file = "sshmitm.plugins.scp.store_file:SCPStorageForwarder"
 replace-command = "sshmitm.plugins.scp.rewrite_command:SCPRewriteCommand"
 CVE-2022-29154 = "sshmitm.plugins.scp.cve202229154:CVE202229154"
-elasticlog = "sshmitm.contrib.elasticlog.scp:SCPForwarderElasticLog"
 
 [project.entry-points."sshmitm.BaseSFTPServerInterface"]
 base = "sshmitm.core.interfaces.sftp:SFTPProxyServerInterface"

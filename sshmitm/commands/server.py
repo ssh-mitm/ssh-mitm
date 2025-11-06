@@ -4,7 +4,6 @@ from typing import Optional
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm import project_metadata
 from sshmitm.core.authentication import Authenticator
-from sshmitm.core.forwarders.netconf import NetconfBaseForwarder
 from sshmitm.core.forwarders.scp import SCPBaseForwarder
 from sshmitm.core.forwarders.sftp import SFTPHandlerBasePlugin
 from sshmitm.core.forwarders.ssh import SSHBaseForwarder
@@ -50,12 +49,6 @@ class SSHServerModules(SubCommand):
             dest="sftp_handler",
             help="Specifies the handler for SFTP operations, responsible for processing file transfer requests and managing file system interactions.",
             baseclass=SFTPHandlerBasePlugin,
-        )
-        self.parser.add_module(
-            "--netconf-interface",
-            dest="netconf_interface",
-            help="Sets the base interface for Netconf (RFC 6242)",
-            baseclass=NetconfBaseForwarder,
         )
         self.parser.add_module(
             "--remote-port-forwarder",
@@ -143,7 +136,6 @@ class SSHServerModules(SubCommand):
             key_length=args.host_key_length,
             ssh_interface=args.ssh_interface,
             scp_interface=args.scp_interface,
-            netconf_interface=args.netconf_interface,
             sftp_interface=args.sftp_interface,
             sftp_handler=args.sftp_handler,
             server_tunnel_interface=args.server_tunnel_interface,

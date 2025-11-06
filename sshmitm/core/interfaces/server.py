@@ -9,7 +9,6 @@ from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.sftp import _VERSION, CMD_INIT, CMD_VERSION, SFTPError
 
-from sshmitm.core.clients.netconf import NetconfClient
 from sshmitm.core.clients.sftp import SFTPClient
 from sshmitm.moduleparser import BaseModule
 
@@ -136,12 +135,6 @@ class ServerInterface(BaseServerInterface):
                 scp_command=command,
             )
             return True
-        if self.session.netconf_requested:
-            logging.debug("got netconf command: %s", command.decode("utf8"))
-            self.session.netconf_requested = True
-            self.session.netconf_command = command
-            self.session.netconf_channel = channel
-            return True
 
         if not self.args.disable_ssh:
             # we can use the scp forwarder for command executions
@@ -157,7 +150,7 @@ class ServerInterface(BaseServerInterface):
                 name="scp",
                 interface=self.session.proxyserver.scp_interface,
                 client_channel=channel,
-                scp_command=command
+                scp_command=command,
             )
             return True
         logging.warning("ssh command not allowed!")
@@ -398,9 +391,6 @@ class ServerInterface(BaseServerInterface):
         if name.lower() == "sftp":
             self.session.sftp_requested = True
             self.session.sftp_channel = channel
-        elif name.lower() == "netconf":
-            self.session.netconf_requested = True
-            self.session.netconf_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 
     def check_port_forward_request(self, address: str, port: int) -> int:
@@ -491,7 +481,7 @@ class ServerInterface(BaseServerInterface):
             pixelwidth,
             pixelheight,
         )
-        if "ssh "not in self.session._registered_interfaces:
+        if "ssh " not in self.session._registered_interfaces:
             logging.error("ssh interface not initialized!")
             return False
         self.session._registered_interfaces.server_channel.resize_pty(
@@ -583,49 +573,3 @@ class ProxySFTPServer(paramiko.SFTPServer):
         self.session.sftp_client.subsystem_count -= 1
         self.session.sftp_client.close()
         super().finish_subsystem()
-
-
-class ProxyNetconfServer(paramiko.SubsystemHandler):
-    def __init__(  # pylint: disable=too-many-arguments
-        self,
-        channel: paramiko.Channel,
-        name: str,
-        server: ServerInterface,
-        netconf_forwarder: Any,
-        session: "sshmitm.core.session.Session",
-        *largs: Any,
-        **kwargs: Any,
-    ) -> None:
-        """
-        Initializes the subsystem handler class ProxyNetconfServer.
-        """
-        super().__init__(channel, name, server)
-        self.session = session
-        self.session.register_session_thread()
-
-        # Due to compatibility reasons in the dynamic function call that must support other subsystem handlers, the arguments netconf_forwarder, *largs, **kwargs are mandatory.
-        #         To prevent the linter (pyling, ruff) from failing, they are combined to an anonymous tuple.
-        _ = (netconf_forwarder, largs, kwargs)
-
-    def start_subsystem(
-        self, name: str, transport: paramiko.Transport, channel: paramiko.Channel
-    ) -> None:
-        with self.session.ssh_client_created:
-            self.session.ssh_client_created.wait_for(
-                lambda: self.session.ssh_client_auth_finished
-            )
-            self.session.netconf_client = NetconfClient.from_client(
-                self.session.ssh_client
-            )
-            if not self.session.netconf_client:
-                logging.error("no netconf client available")
-                return
-            self.session.netconf_client.subsystem_count += 1
-            super().start_subsystem(name, transport, channel)
-
-    def finish_subsystem(self) -> None:
-        super().finish_subsystem()
-        if not self.session.netconf_client:
-            return
-        self.session.netconf_client.subsystem_count -= 1
-        self.session.netconf_client.close()

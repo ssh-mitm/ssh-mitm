@@ -3,9 +3,9 @@ from typing import TYPE_CHECKING, Any, Dict, Optional, Sequence, Type, Union
 
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 
-from sshmitm.project_metadata import MODULE_NAME
 from sshmitm.core.compat import metadata
 from sshmitm.core.logger import Colors
+from sshmitm.project_metadata import MODULE_NAME
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser.modules import BaseModule
