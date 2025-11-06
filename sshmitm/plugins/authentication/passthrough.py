@@ -397,17 +397,17 @@ class AuthenticatorPassThrough(Authenticator):
             )
 
         if (
-            self.session.accepted_key is not None
-            and self.session.remote_key != self.session.accepted_key
+            self.accepted_key is not None
+            and self.remote_key != self.accepted_key
         ):
             logmessage.append(
                 "\tAccepted-Publickey: "
-                f"{self.session.accepted_key.get_name()} {self.session.accepted_key.fingerprint} {self.session.accepted_key.get_bits()}bits"
+                f"{self.accepted_key.get_name()} {self.accepted_key.fingerprint} {self.accepted_key.get_bits()}bits"
             )
 
-        if self.session.remote_key is not None:
+        if self.remote_key is not None:
             logmessage.append(
-                f"\tRemote-Publickey: {self.session.remote_key.get_name()} {self.session.remote_key.fingerprint} {self.session.remote_key.get_bits()}bits"
+                f"\tRemote-Publickey: {self.remote_key.get_name()} {self.remote_key.fingerprint} {self.remote_key.get_bits()}bits"
             )
 
         ssh_keys = None

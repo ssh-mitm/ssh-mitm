@@ -162,6 +162,10 @@ class Authenticator(BaseModule):
         self.ssh_client_auth_finished = threading.Event()
         self.ssh_client_created: threading.Condition = threading.Condition()
 
+        self.remote_key: Optional[PKey] = None
+        self.accepted_key: Optional[PKey] = None
+
+
     def close(self) -> None:
         logging.debug("%s.close", self.__class__.__name__)
         if self.has_forwarded_agent:
@@ -236,13 +240,13 @@ class Authenticator(BaseModule):
             )
             self.session.username = remote_credentials.username
             self.session.password = remote_credentials.password
-            self.session.remote_key = remote_credentials.key
+            self.remote_key = remote_credentials.key
             self.session.remote_address = (
                 remote_credentials.host,
                 remote_credentials.port,
             )
-        if key and not self.session.remote_key:
-            self.session.remote_key = key
+        if key and not self.remote_key:
+            self.remote_key = key
 
         if (
             self.session.remote_address[0] is None
@@ -265,12 +269,12 @@ class Authenticator(BaseModule):
                     self.session.remote_address[1],
                     self.session.password,
                 )
-            if self.session.remote_key:
+            if self.remote_key:
                 return self.auth_publickey(
                     self.session.username,
                     self.session.remote_address[0],
                     self.session.remote_address[1],
-                    self.session.remote_key,
+                    self.remote_key,
                 )
         except MissingHostException:
             logging.error("no remote host")

@@ -258,7 +258,7 @@ class ServerInterface(BaseServerInterface):
             "check_auth_interactive: username=%s, submethods=%s", username, submethods
         )
         is_trivial_auth = (
-            self.args.enable_trivial_auth and self.session.accepted_key is not None
+            self.args.enable_trivial_auth and self.session.authenticator.accepted_key is not None
         )
         logging.debug("trivial authentication possible")
         if not self.args.enable_keyboard_interactive_auth and not is_trivial_auth:
@@ -274,7 +274,7 @@ class ServerInterface(BaseServerInterface):
     ) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive_response: responses=%s", responses)
         is_trivial_auth = (
-            self.args.enable_trivial_auth and self.session.accepted_key is not None
+            self.args.enable_trivial_auth and self.session.authenticator.accepted_key is not None
         )
         if self.args.disable_keyboard_interactive_prompts or is_trivial_auth:
             self.session.authenticator.authenticate(self.session.username, key=None)
@@ -340,15 +340,15 @@ class ServerInterface(BaseServerInterface):
                     "ignoring argument --disallow-publickey-auth, first key still accepted"
                 )
             self.session.authenticator.authenticate(username, key=None)
-            self.session.accepted_key = key
+            self.session.authenticator.accepted_key = key
             return paramiko.common.AUTH_SUCCESSFUL
         if not self.session.remote_address_reachable:
             return paramiko.common.AUTH_FAILED
 
         auth_result: int = self.session.authenticator.authenticate(username, key=key)
         if auth_result == paramiko.common.AUTH_SUCCESSFUL:
-            self.session.accepted_key = key
-        if self.session.accepted_key is not None and self.args.enable_trivial_auth:
+            self.session.authenticator.accepted_key = key
+        if self.session.authenticator.accepted_key is not None and self.args.enable_trivial_auth:
             logging.debug("found valid key for trivial authentication")
             return paramiko.common.AUTH_FAILED
         if self.args.disallow_publickey_auth:

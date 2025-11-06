@@ -142,8 +142,6 @@ class Session(BaseSession):
         self.socket_remote_address = remoteaddr
         self.remote_address: Tuple[Optional[str], Optional[int]] = (None, None)
         self.remote_address_reachable: bool = True
-        self.remote_key: Optional[PKey] = None
-        self.accepted_key: Optional[PKey] = None
         self.authenticator: "sshmitm.core.authentication.Authenticator" = (
             authenticator_class(self)
         )
