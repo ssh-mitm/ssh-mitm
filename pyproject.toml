@@ -61,6 +61,7 @@ remoteauth = "sshmitm.plugins.authentication.remoteauth:AuthenticatorRemote"
 
 [project.entry-points."sshmitm.BaseServerInterface"]
 base = "sshmitm.core.interfaces.server:ServerInterface"
+mitm = "sshmitm.plugins.serverinterface.mitm_server_interface:MitmServerInterface"
 
 [project.entry-points."sshmitm.SSHBaseForwarder"]
 mirrorshell = "sshmitm.plugins.ssh.mirrorshell:SSHMirrorForwarder"
