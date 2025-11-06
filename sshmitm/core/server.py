@@ -370,10 +370,10 @@ class SSHProxyServer:
                     while session.running:
                         try:
                             time.sleep(0.1)
-                            if session.ssh_interface_session:
-                                session.ssh_interface_session.start()
-                            elif session.scp_interface_session:
-                                session.scp_interface_session.start_thread()
+                            if "ssh" in session._registered_interfaces:
+                                session._registered_interfaces["ssh"].start()
+                            elif "scp" in session._registered_interfaces:
+                                session._registered_interfaces["scp"].start_thread()
                             elif session.netconf_requested and self.netconf_interface:
                                 session.netconf_requested = False
                                 netconf_interface = self.netconf_interface(session)

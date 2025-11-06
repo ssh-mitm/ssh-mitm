@@ -123,8 +123,7 @@ class Session(BaseSession):
         self.name = f"{client_address}->{remoteaddr}"
         self.closed = False
 
-        self.ssh_interface_session = None
-        self.scp_interface_session = None
+        self._registered_interfaces = {}
 
         self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
         self.ssh_client_auth_finished: bool = False
@@ -161,6 +160,12 @@ class Session(BaseSession):
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
         self.banner_name = banner_name
 
+    def register_interface(self, *, name, interface, client_channel, **kwargs) -> bool:
+        if name in self._registered_interfaces:
+            return False
+        self._registered_interfaces[name] = interface(self, client_channel=client_channel, **kwargs)
+        return True
+
     def get_session_log_dir(self) -> Optional[str]:
         """
         Returns the directory where the ssh session logs will be stored.
@@ -186,10 +191,10 @@ class Session(BaseSession):
 
         if self.channel is not None:
             session_channel_open = not self.channel.closed
-        if self.ssh_interface_session:
-            ssh_channel_open = self.ssh_interface_session.is_active
-        if self.scp_interface_session:
-            scp_channel_open = self.scp_interface_session.is_active
+        if "ssh" in self._registered_interfaces:
+            ssh_channel_open = self._registered_interfaces["ssh"].is_active
+        if "scp" in self._registered_interfaces:
+            scp_channel_open = self._registered_interfaces["scp"].is_active
         if self.netconf_channel is not None:
             netconf_channel_open = (
                 not self.netconf_channel.closed if self.netconf_channel else False
@@ -275,8 +280,8 @@ class Session(BaseSession):
 
         # Connect method end
         if (
-            not self.scp_interface_session
-            and not self.ssh_interface_session
+            "scp" not in self._registered_interfaces
+            and "ssh" not in self._registered_interfaces
             and not self.sftp_requested
             and not self.netconf_requested
         ) and self.transport.is_active():

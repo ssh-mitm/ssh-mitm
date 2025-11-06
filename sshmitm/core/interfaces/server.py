@@ -130,8 +130,10 @@ class ServerInterface(BaseServerInterface):
         if command.decode("utf8").startswith("scp"):
             logging.debug("got scp command: %s", command.decode("utf8"))
             self.session.scp_command = command
-            self.session.scp_interface_session = self.session.proxyserver.scp_interface(
-                self.session, client_channel=channel
+            self.session.register_interface(
+                name="scp",
+                interface=self.session.proxyserver.scp_interface,
+                client_channel=channel
             )
             return True
         if self.session.netconf_requested:
@@ -152,8 +154,10 @@ class ServerInterface(BaseServerInterface):
                 self.session.ssh_pty_kwargs = None
 
             self.session.scp_command = command
-            self.session.scp_interface_session = self.session.proxyserver.scp_interface(
-                self.session, client_channel=channel
+            self.session.register_interface(
+                name="scp",
+                interface=self.session.proxyserver.scp_interface,
+                client_channel=channel
             )
             return True
         logging.warning("ssh command not allowed!")
@@ -167,8 +171,9 @@ class ServerInterface(BaseServerInterface):
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
         logging.debug("check_channel_shell_request: channel=%s", channel)
         if not self.args.disable_ssh:
-            self.session.ssh_interface_session = self.session.proxyserver.ssh_interface(
-                self.session,
+            self.session.register_interface(
+                name="ssh",
+                interface=self.session.proxyserver.ssh_interface,
                 client_channel=channel,
             )
             return True
@@ -486,10 +491,10 @@ class ServerInterface(BaseServerInterface):
             pixelwidth,
             pixelheight,
         )
-        if not self.session.ssh_interface_session:
-            logging.error("session.ssh_interface_session not initialized!")
+        if "ssh "not in self.session._registered_interfaces:
+            logging.error("ssh interface not initialized!")
             return False
-        self.session.ssh_interface_session.server_channel.resize_pty(
+        self.session._registered_interfaces.server_channel.resize_pty(
             width, height, pixelwidth, pixelheight
         )
         return True
