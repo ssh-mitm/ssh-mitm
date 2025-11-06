@@ -130,8 +130,6 @@ class Session(BaseSession):
         self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
 
-        self.scp_command: bytes = b""
-
         self.netconf_requested: bool = False
         self.netconf_command: bytes = b""
         self.netconf_channel: Optional[paramiko.Channel] = None

@@ -16,9 +16,10 @@ if TYPE_CHECKING:
 
 class AbstractSCPBaseForwarder(BaseForwarder):
     def __init__(
-        self, session: "sshmitm.core.session.Session", *, client_channel=None
+        self, session: "sshmitm.core.session.Session", *, client_channel=None, scp_command: bytes = b"",
     ) -> None:
         super().__init__(session, client_channel=client_channel)
+        self.scp_command: bytes = scp_command
         self.client_exit_code_received = False
         self.server_exit_code_received = False
         self.forwarding_started: bool = False
@@ -42,23 +43,23 @@ class AbstractSCPBaseForwarder(BaseForwarder):
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
-        self.session.scp_command = self.rewrite_scp_command(
-            self.session.scp_command.decode("utf8")
+        self.scp_command = self.rewrite_scp_command(
+            self.scp_command.decode("utf8")
         ).encode()
-        self.server_channel.exec_command(self.session.scp_command)  # nosec
+        self.server_channel.exec_command(self.scp_command)  # nosec
 
         # Wait for SCP remote to remote auth, command exec and copy to finish
-        if self.session.scp_command.decode("utf8").startswith("scp"):
+        if self.scp_command.decode("utf8").startswith("scp"):
             if (
-                self.session.scp_command.find(b" -t ") == -1
-                and self.session.scp_command.find(b" -f ") == -1
+                self.scp_command.find(b" -t ") == -1
+                and self.scp_command.find(b" -f ") == -1
             ):
                 if self.client_channel is not None:
                     logging.debug(
                         "[chan %d] Initiating SCP remote to remote",
                         self.client_channel.get_id(),
                     )
-                    if not self.session.authenticator.has_forwarded_agent:
+                    if not self.authenticator.has_forwarded_agent:
                         logging.warning(
                             "[chan %d] SCP remote to remote needs a forwarded agent",
                             self.client_channel.get_id(),
@@ -66,7 +67,7 @@ class AbstractSCPBaseForwarder(BaseForwarder):
                 while not self._closed(self.server_channel):
                     time.sleep(1)
 
-        elif self.session.scp_command.decode("utf8").startswith("mosh-server"):
+        elif self.scp_command.decode("utf8").startswith("mosh-server"):
             while not self._closed(self.server_channel):
                 time.sleep(1)
 
@@ -106,7 +107,7 @@ class AbstractSCPBaseForwarder(BaseForwarder):
                     self.close_session_with_status(self.client_channel, status)
                     logging.info(
                         "remote command '%s' exited with code: %s",
-                        self.session.scp_command.decode("utf-8"),
+                        self.scp_command.decode("utf-8"),
                         status,
                     )
                     time.sleep(0.1)
@@ -197,9 +198,9 @@ class SCPForwarder(SCPBaseForwarder):
     """forwards a file from or to the remote server"""
 
     def __init__(
-        self, session: "sshmitm.core.session.Session", *, client_channel=None
+        self, session: "sshmitm.core.session.Session", *, client_channel=None, scp_command: bytes = b""
     ) -> None:
-        super().__init__(session, client_channel=client_channel)
+        super().__init__(session, client_channel=client_channel, scp_command=scp_command)
 
         self.await_response = False
         self.bytes_remaining = 0
@@ -267,8 +268,8 @@ class SCPForwarder(SCPBaseForwarder):
         return traffic
 
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
-        if self.session.scp_command.startswith(b"scp"):
+        if self.scp_command.startswith(b"scp"):
             return self.handle_scp(traffic)
-        if self.session.scp_command.startswith(b"mosh-server"):
+        if self.scp_command.startswith(b"mosh-server"):
             return handle_mosh(self.session, traffic, isclient)
-        return self.process_command_data(self.session.scp_command, traffic, isclient)
+        return self.process_command_data(self.scp_command, traffic, isclient)

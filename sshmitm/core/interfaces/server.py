@@ -129,11 +129,11 @@ class ServerInterface(BaseServerInterface):
             return False
         if command.decode("utf8").startswith("scp"):
             logging.debug("got scp command: %s", command.decode("utf8"))
-            self.session.scp_command = command
             self.session.register_interface(
                 name="scp",
                 interface=self.session.proxyserver.scp_interface,
-                client_channel=channel
+                client_channel=channel,
+                scp_command=command,
             )
             return True
         if self.session.netconf_requested:
@@ -153,11 +153,11 @@ class ServerInterface(BaseServerInterface):
             if command.startswith(b"mosh-server"):
                 self.session.ssh_pty_kwargs = None
 
-            self.session.scp_command = command
             self.session.register_interface(
                 name="scp",
                 interface=self.session.proxyserver.scp_interface,
-                client_channel=channel
+                client_channel=channel,
+                scp_command=command
             )
             return True
         logging.warning("ssh command not allowed!")
