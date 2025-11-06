@@ -366,10 +366,8 @@ class SSHProxyServer:
                 if session.start():
                     while session.running:
                         time.sleep(0.1)
-                        if "ssh" in session._registered_interfaces:
-                            session._registered_interfaces["ssh"].start()
-                        elif "scp" in session._registered_interfaces:
-                            session._registered_interfaces["scp"].start_thread()
+                        session.start_forwarder("ssh", threaded=False)
+                        session.start_forwarder("ssh", threaded=True)
 
                 else:
                     logging.warning("(%s) session not started", session)

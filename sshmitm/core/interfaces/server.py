@@ -128,7 +128,7 @@ class ServerInterface(BaseServerInterface):
             return False
         if command.decode("utf8").startswith("scp"):
             logging.debug("got scp command: %s", command.decode("utf8"))
-            self.session.register_interface(
+            self.session.register_forwarder(
                 name="scp",
                 interface=self.session.proxyserver.scp_interface,
                 client_channel=channel,
@@ -146,7 +146,7 @@ class ServerInterface(BaseServerInterface):
             if command.startswith(b"mosh-server"):
                 self.session.ssh_pty_kwargs = None
 
-            self.session.register_interface(
+            self.session.register_forwarder(
                 name="scp",
                 interface=self.session.proxyserver.scp_interface,
                 client_channel=channel,
@@ -164,7 +164,7 @@ class ServerInterface(BaseServerInterface):
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
         logging.debug("check_channel_shell_request: channel=%s", channel)
         if not self.args.disable_ssh:
-            self.session.register_interface(
+            self.session.register_forwarder(
                 name="ssh",
                 interface=self.session.proxyserver.ssh_interface,
                 client_channel=channel,
@@ -481,10 +481,10 @@ class ServerInterface(BaseServerInterface):
             pixelwidth,
             pixelheight,
         )
-        if "ssh " not in self.session._registered_interfaces:
+        if not self.session.get_forwarder("ssh"):
             logging.error("ssh interface not initialized!")
             return False
-        self.session._registered_interfaces.server_channel.resize_pty(
+        self.session.get_forwarder("ssh").server_channel.resize_pty(
             width, height, pixelwidth, pixelheight
         )
         return True

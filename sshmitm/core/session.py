@@ -124,7 +124,7 @@ class Session(BaseSession):
         self.name = f"{client_address}->{remoteaddr}"
         self.closed = False
 
-        self._registered_interfaces = {}
+        self._registered_forwarders = {}
 
         self.ssh_client: Optional[sshmitm.core.clients.ssh.SSHClient] = None
         self.ssh_client_auth_finished: bool = False
@@ -153,7 +153,7 @@ class Session(BaseSession):
         self.session_log_dir: Optional[str] = self.get_session_log_dir()
         self.banner_name = banner_name
 
-    def register_interface(
+    def register_forwarder(
         self,
         *,
         name: str,
@@ -161,11 +161,23 @@ class Session(BaseSession):
         client_channel: paramiko.Channel,
         **kwargs: object,
     ) -> bool:
-        if name in self._registered_interfaces:
+        if name in self._registered_forwarders:
             return False
-        self._registered_interfaces[name] = interface(
+        self._registered_forwarders[name] = interface(
             self, client_channel=client_channel, **kwargs
         )
+        return True
+
+    def get_forwarder(self, name: str) -> Optional[BaseForwarder]:
+        return self._registered_forwarders.get(name)
+
+    def start_forwarder(self, name: str, *, threaded: bool) -> bool:
+        if name not in self._registered_forwarders:
+            return False
+        if threaded:
+            self._registered_forwarders[name].start_thread()
+        else:
+            self._registered_forwarders[name].start()
         return True
 
     def get_session_log_dir(self) -> Optional[str]:
@@ -192,10 +204,10 @@ class Session(BaseSession):
 
         if self.channel is not None:
             session_channel_open = not self.channel.closed
-        if "ssh" in self._registered_interfaces:
-            ssh_channel_open = self._registered_interfaces["ssh"].is_active
-        if "scp" in self._registered_interfaces:
-            scp_channel_open = self._registered_interfaces["scp"].is_active
+        if "ssh" in self._registered_forwarders:
+            ssh_channel_open = self._registered_forwarders["ssh"].is_active
+        if "scp" in self._registered_forwarders:
+            scp_channel_open = self._registered_forwarders["scp"].is_active
         open_channel_exists = (
             session_channel_open or ssh_channel_open or scp_channel_open
         )
@@ -267,8 +279,8 @@ class Session(BaseSession):
 
         # Connect method end
         if (
-            "scp" not in self._registered_interfaces
-            and "ssh" not in self._registered_interfaces
+            "scp" not in self._registered_forwarders
+            and "ssh" not in self._registered_forwarders
             and not self.sftp_requested
         ) and self.transport.is_active():
             self.transport.close()
