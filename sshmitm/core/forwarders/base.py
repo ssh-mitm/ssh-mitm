@@ -19,6 +19,7 @@ class BaseForwarder(BaseModule):
 
     # Slow file transmission
     BUF_LEN = 65536 * 100
+    IS_THREADED: bool = False
 
     def __init__(
         self,
@@ -48,6 +49,12 @@ class BaseForwarder(BaseModule):
         return self._server_channel
 
     def start(self) -> None:
+        if self.IS_THREADED:
+            self._start_threaded_forwarding()
+        else:
+            self._start_forwarding()
+
+    def _start_forwarding(self) -> None:
         try:
             with self._thread_lock:
                 if self._forwarding_started:
@@ -59,11 +66,11 @@ class BaseForwarder(BaseModule):
             with self._thread_lock:
                 self._forwarding_running = False
 
-    def start_thread(self) -> None:
+    def _start_threaded_forwarding(self) -> None:
         with self._thread_lock:
             if self._forwarding_started:
                 return
-        self._thread = threading.Thread(target=self.start)
+        self._thread = threading.Thread(target=self._start_forwarding)
         self._thread.start()
 
     @property

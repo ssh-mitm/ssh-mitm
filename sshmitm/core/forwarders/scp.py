@@ -15,6 +15,9 @@ if TYPE_CHECKING:
 
 
 class AbstractSCPBaseForwarder(BaseForwarder):
+
+    IS_THREADED = True
+
     def __init__(
         self,
         session: "sshmitm.core.session.Session",

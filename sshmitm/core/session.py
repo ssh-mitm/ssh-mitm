@@ -172,15 +172,6 @@ class Session(BaseSession):
     def get_forwarder(self, name: str) -> Optional[BaseForwarder]:
         return self._registered_forwarders.get(name)
 
-    def start_forwarder(self, name: str, *, threaded: bool) -> bool:
-        if name not in self._registered_forwarders:
-            return False
-        if threaded:
-            self._registered_forwarders[name].start_thread()
-        else:
-            self._registered_forwarders[name].start()
-        return True
-
     def get_session_log_dir(self) -> Optional[str]:
         """
         Returns the directory where the ssh session logs will be stored.
@@ -331,8 +322,9 @@ class Session(BaseSession):
         while self.running:
             if self.new_forwarders_registered.wait(timeout=0.1):
                 with self.forwarders_lock:
-                    self.start_forwarder("ssh", threaded=False)
-                    self.start_forwarder("scp", threaded=True)
+                    for name, forwarder in self._registered_forwarders.items():
+                        logging.debug("starting %s forwarder", name)
+                        forwarder.start()
                     self.new_forwarders_registered.clear()
 
     def close(self) -> None:
