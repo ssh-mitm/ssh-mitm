@@ -15,6 +15,7 @@ from rich.console import Console
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm import project_metadata
+from sshmitm.core.authentication import Authenticator, AuthenticatorRemote
 from sshmitm.core.exceptions import KeyGenerationError, SessionStartError
 from sshmitm.core.forwarders.scp import SCPBaseForwarder, SCPForwarder
 from sshmitm.core.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
@@ -32,10 +33,6 @@ from sshmitm.core.logger import Colors
 from sshmitm.core.multisocket import create_server_sock
 from sshmitm.core.session import Session
 from sshmitm.core.sshkeys import SSHPubKey
-from sshmitm.plugins.authentication.passthrough import (
-    Authenticator,
-    AuthenticatorPassThrough,
-)
 
 
 class SSHProxyServer:
@@ -60,7 +57,7 @@ class SSHProxyServer:
             LocalPortForwardingForwarder
         ] = LocalPortForwardingForwarder,
         authentication_interface: Type[BaseServerInterface] = ServerInterface,
-        authenticator_class: Type[Authenticator] = AuthenticatorPassThrough,
+        authenticator_class: Type[Authenticator] = AuthenticatorRemote,
         transparent: bool = False,
         session_class: Type[Session] = Session,
         banner_name: Optional[str] = None,

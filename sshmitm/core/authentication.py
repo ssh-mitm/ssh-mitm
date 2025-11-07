@@ -413,3 +413,25 @@ class Authenticator(BaseModule):
 
         :param success: indicates if the authentication was successful or not
         """
+
+
+class AuthenticatorRemote(Authenticator):
+
+    @classmethod
+    def parser_arguments(cls) -> None:
+        super().parser_arguments()
+        cls.argument_group()
+
+    def auth_publickey(self, username: str, host: str, port: int, key: PKey) -> int:
+        logging.debug(
+            "AuthenticatorRemote.auth_publickey: username=%s, key=%s %s %sbits",
+            username,
+            key.get_name(),
+            key.fingerprint,
+            key.get_bits(),
+        )
+        if key.can_sign():
+            return self.connect(
+                username, host, port, AuthenticationMethod.PUBLICKEY, key=key
+            )
+        return paramiko.common.AUTH_FAILED
