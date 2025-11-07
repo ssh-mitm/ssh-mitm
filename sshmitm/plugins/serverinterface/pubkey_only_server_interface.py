@@ -1,7 +1,5 @@
-import inspect
 import logging
-import os
-from typing import TYPE_CHECKING, List, Optional, Union
+from typing import TYPE_CHECKING, List, Optional
 
 import paramiko
 from paramiko.pkey import PKey
@@ -10,7 +8,6 @@ from sshmitm.core.interfaces.server import ServerInterface
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.core.authentication import RemoteCredentials
 
 
 class PubkeyOnlyServerInterface(ServerInterface):
@@ -22,8 +19,7 @@ class PubkeyOnlyServerInterface(ServerInterface):
     @classmethod
     def parser_arguments(cls) -> None:
         super().parser_arguments()
-        group_name = "Server Publickey Authentication Options"
-        plugin_group = cls.argument_group(group_name, config_section=group_name)
+        plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--auth-username",
             dest="auth_username",
@@ -36,6 +32,7 @@ class PubkeyOnlyServerInterface(ServerInterface):
         )
 
     def get_allowed_auths(self, username: str) -> str:
+        del username
         return "publickey"
 
     def check_auth_publickey_pk_lookup(self, username: str, key: PKey) -> int:
