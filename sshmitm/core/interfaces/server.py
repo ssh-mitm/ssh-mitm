@@ -1,6 +1,5 @@
 import inspect
 import logging
-import os
 import struct
 from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union
 
@@ -14,7 +13,6 @@ from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.core.authentication import RemoteCredentials
     from sshmitm.core.forwarders.tunnel import (
         LocalPortForwardingForwarder,
         RemotePortForwardingForwarder,
@@ -34,10 +32,9 @@ class BaseServerInterface(paramiko.ServerInterface, BaseModule):
                 RemotePortForwardingForwarder,
             ]
         ] = []
-        self.possible_auth_methods: Optional[List[str]] = None
 
 
-class ServerInterface(BaseServerInterface):
+class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-methods
     """SSH-MITM server implementation"""
 
     @classmethod
@@ -56,63 +53,28 @@ class ServerInterface(BaseServerInterface):
             help="Disables SCP (Secure Copy Protocol) functionality, preventing file transfers via SCP.",
         )
         plugin_group.add_argument(
-            "--disable-password-auth",
-            dest="disable_password_auth",
+            "--disable-subsystems",
+            dest="disable_subsystems",
             action="store_true",
-            help="Disables password-based authentication, forcing clients to use alternative authentication methods.",
+            help="Disables subsystems like SFTP.",
         )
         plugin_group.add_argument(
-            "--disable-publickey-auth",
-            dest="disable_pubkey_auth",
+            "--disable-port-forwarding",
+            dest="disable_port_forwarding",
             action="store_true",
-            help="Disables public key authentication. Note that this is not RFC-4252 compliant.",
+            help="Disables subsystems like SFTP.",
         )
         plugin_group.add_argument(
-            "--accept-first-publickey",
-            dest="accept_first_publickey",
+            "--disable-environment-requests",
+            dest="disable_environment_requests",
             action="store_true",
-            help="Accepts the first public key provided by the client without checking if the user is allowed to log in using public key authentication.",
+            help="Disables environment requests from the ssh client.",
         )
         plugin_group.add_argument(
-            "--disallow-publickey-auth",
-            dest="disallow_publickey_auth",
-            action="store_true",
-            help="Disallows public key authentication but still verifies whether public key authentication would be possible.",
-        )
-        plugin_group.add_argument(
-            "--enable-none-auth",
-            dest="enable_none_auth",
-            action="store_true",
-            help='Enables "none" authentication, which allows connections without any authentication.',
-        )
-        plugin_group.add_argument(
-            "--enable-trivial-auth",
-            dest="enable_trivial_auth",
-            action="store_true",
-            help='Enables "trivial success authentication" phishing attack, which simulates a successful authentication without actual validation.',
-        )
-        plugin_group.add_argument(
-            "--enable-keyboard-interactive-auth",
-            dest="enable_keyboard_interactive_auth",
-            action="store_true",
-            help='Enables "keyboard-interactive" authentication, allowing interactive authentication prompts.',
-        )
-        plugin_group.add_argument(
-            "--disable-keyboard-interactive-prompts",
-            dest="disable_keyboard_interactive_prompts",
+            "--disable-agent-forwarding",
+            dest="disable_agent_forwarding",
             action="store_true",
             help="Disables prompts for keyboard-interactive authentication, preventing interactive authentication challenges.",
-        )
-        plugin_group.add_argument(
-            "--extra-auth-methods",
-            dest="extra_auth_methods",
-            help="Specifies additional authentication method names that are supported by the server.",
-        )
-        plugin_group.add_argument(
-            "--disable-auth-method-lookup",
-            dest="disable_auth_method_lookup",
-            action="store_true",
-            help="Disables the lookup of supported authentication methods on the remote server during the authentication process.",
         )
 
     def check_channel_exec_request(
@@ -158,6 +120,8 @@ class ServerInterface(BaseServerInterface):
 
     def check_channel_forward_agent_request(self, channel: paramiko.Channel) -> bool:
         logging.debug("check_channel_forward_agent_request: channel=%s", channel)
+        if self.args.disable_agent_forwarding:
+            return False
         self.session.authenticator.agent_requested.set()
         return True
 
@@ -205,50 +169,10 @@ class ServerInterface(BaseServerInterface):
 
     def get_allowed_auths(self, username: str) -> str:
         logging.debug("get_allowed_auths: username=%s", username)
-        if (
-            self.possible_auth_methods is None
-            and not self.args.disable_auth_method_lookup
-        ):
-            creds: RemoteCredentials = (
-                self.session.authenticator.get_remote_host_credentials(username)
-            )
-            if creds.host is not None and creds.port is not None:
-                try:
-                    self.possible_auth_methods = (
-                        self.session.authenticator.get_auth_methods(
-                            creds.host, creds.port, username
-                        )
-                    )
-                    logging.info(
-                        "Remote auth-methods: %s", str(self.possible_auth_methods)
-                    )
-                except paramiko.ssh_exception.SSHException as ex:
-                    self.session.remote_address_reachable = False
-                    logging.error(ex)
-                    return "publickey"
-        allowed_auths = []
-        if self.args.extra_auth_methods:
-            allowed_auths.extend(self.args.extra_auth_methods.split(","))
-        if self.args.enable_keyboard_interactive_auth or self.args.enable_trivial_auth:
-            allowed_auths.append("keyboard-interactive")
-        if not self.args.disable_pubkey_auth:
-            allowed_auths.append("publickey")
-        if not self.args.disable_password_auth:
-            allowed_auths.append("password")
-        if allowed_auths or self.args.enable_none_auth:
-            allowed_authentication_methods = ",".join(allowed_auths)
-            logging.debug(
-                "Allowed authentication methods: %s", allowed_authentication_methods
-            )
-            return allowed_authentication_methods
-        logging.warning('Authentication is set to "none", but logins are disabled!')
-        return "none"
+        return "publickey"
 
     def check_auth_none(self, username: str) -> int:
         logging.debug("check_auth_none: username=%s", username)
-        if self.args.enable_none_auth:
-            self.session.authenticator.authenticate(username, key=None)
-            return paramiko.common.AUTH_SUCCESSFUL
         return paramiko.common.AUTH_FAILED
 
     def check_auth_interactive(
@@ -257,33 +181,13 @@ class ServerInterface(BaseServerInterface):
         logging.debug(
             "check_auth_interactive: username=%s, submethods=%s", username, submethods
         )
-        is_trivial_auth = (
-            self.args.enable_trivial_auth and self.session.authenticator.accepted_key is not None
-        )
-        logging.debug("trivial authentication possible")
-        if not self.args.enable_keyboard_interactive_auth and not is_trivial_auth:
-            return paramiko.common.AUTH_FAILED
-        self.session.username = username
-        auth_interactive_query = paramiko.server.InteractiveQuery()
-        if not self.args.disable_keyboard_interactive_prompts and not is_trivial_auth:
-            auth_interactive_query.add_prompt("Password (kb-interactive): ", False)
-        return auth_interactive_query
+        return paramiko.common.AUTH_FAILED
 
     def check_auth_interactive_response(
         self, responses: List[str]
     ) -> Union[int, paramiko.server.InteractiveQuery]:
         logging.debug("check_auth_interactive_response: responses=%s", responses)
-        is_trivial_auth = (
-            self.args.enable_trivial_auth and self.session.authenticator.accepted_key is not None
-        )
-        if self.args.disable_keyboard_interactive_prompts or is_trivial_auth:
-            self.session.authenticator.authenticate(self.session.username, key=None)
-            return paramiko.common.AUTH_SUCCESSFUL
-        if not responses:
-            return paramiko.common.AUTH_FAILED
-        return self.session.authenticator.authenticate(
-            self.session.username, password=responses[0]
-        )
+        return paramiko.common.AUTH_FAILED
 
     def check_auth_publickey(self, username: str, key: PKey) -> int:
 
@@ -323,48 +227,33 @@ class ServerInterface(BaseServerInterface):
             )
             raise paramiko.ssh_exception.AuthenticationException(error_message)
 
-        if self.session.session_log_dir:
-            os.makedirs(self.session.session_log_dir, exist_ok=True)
-            pubkeyfile_path = os.path.join(self.session.session_log_dir, "publickeys")
-            with open(pubkeyfile_path, "a+", encoding="utf-8") as pubkeyfile:
-                pubkeyfile.write(
-                    f"{key.get_name()} {key.get_base64()} saved-from-auth-publickey\n"
-                )
-        if self.args.disable_pubkey_auth:
-            logging.debug("Publickey login attempt, but publickey auth was disabled!")
-            return paramiko.common.AUTH_FAILED
-        if self.args.accept_first_publickey:
-            logging.debug("host probing disabled - first key accepted")
-            if self.args.disallow_publickey_auth:
-                logging.debug(
-                    "ignoring argument --disallow-publickey-auth, first key still accepted"
-                )
-            self.session.authenticator.authenticate(username, key=None)
-            self.session.authenticator.accepted_key = key
-            return paramiko.common.AUTH_SUCCESSFUL
-        if not self.session.remote_address_reachable:
-            return paramiko.common.AUTH_FAILED
+        if not sig_attached:
+            return self.check_auth_publickey_pk_lookup(username, key)
+        return self.check_auth_publickey_authenticate(username, key)
 
-        auth_result: int = self.session.authenticator.authenticate(username, key=key)
-        if auth_result == paramiko.common.AUTH_SUCCESSFUL:
-            self.session.authenticator.accepted_key = key
-        if self.session.authenticator.accepted_key is not None and self.args.enable_trivial_auth:
-            logging.debug("found valid key for trivial authentication")
-            return paramiko.common.AUTH_FAILED
-        if self.args.disallow_publickey_auth:
-            return paramiko.common.AUTH_FAILED
-        return auth_result
+    def check_auth_publickey_pk_lookup(self, username: str, key: PKey) -> int:
+        logging.debug(
+            "%s.check_auth_publickey_pk_lookup: username=%s, key=%s",
+            self.__class__.__name__,
+            username,
+            key,
+        )
+        return paramiko.common.AUTH_FAILED
+
+    def check_auth_publickey_authenticate(self, username: str, key: PKey) -> int:
+        logging.debug(
+            "%s.check_auth_publickey_authenticate: username=%s, key=%s",
+            self.__class__.__name__,
+            username,
+            key,
+        )
+        return paramiko.common.AUTH_FAILED
 
     def check_auth_password(self, username: str, password: str) -> int:
         logging.debug(
             "check_auth_password: username=%s, password=%s", username, password
         )
-        if self.args.disable_password_auth:
-            logging.warning("Password login attempt, but password auth was disabled!")
-            return paramiko.common.AUTH_FAILED
-        if not self.session.remote_address_reachable:
-            return paramiko.common.AUTH_FAILED
-        return self.session.authenticator.authenticate(username, password=password)
+        return paramiko.common.AUTH_FAILED
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
         logging.debug("check_channel_request: kind=%s , chanid=%s", kind, chanid)
@@ -379,6 +268,8 @@ class ServerInterface(BaseServerInterface):
             name,
             value,
         )
+        if self.args.disable_environment_requests:
+            return False
         self.session.env_requests[name] = value
         return True
 
@@ -388,12 +279,14 @@ class ServerInterface(BaseServerInterface):
         logging.debug(
             "check_channel_subsystem_request: channel=%s, name=%s", channel, name
         )
+        if self.args.disable_subsystems:
+            return False
         if name.lower() == "sftp":
             self.session.sftp_requested = True
             self.session.sftp_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 
-    def check_port_forward_request(self, address: str, port: int) -> int:
+    def check_port_forward_request(self, address: str, port: int) -> Union[int, bool]:
         """
         Note that the if the client requested the port, we must handle it or
         return false.
@@ -402,6 +295,10 @@ class ServerInterface(BaseServerInterface):
         If it can't be opened, we just return false.
         """
         logging.debug("check_port_forward_request: address=%s, port=%s", address, port)
+        if self.args.disable_port_forwarding:
+            logging.debug("port forwarding disabled")
+            return False
+
         if self.session.ssh_client is None:
             logging.debug("check_port_forward_request: session.ssh_client is None")
             return False
@@ -423,7 +320,7 @@ class ServerInterface(BaseServerInterface):
             return False
 
     def cancel_port_forward_request(self, address: str, port: int) -> None:
-        logging.info("cancel_port_forward_request: address=%s, port=%s", address, port)
+        logging.debug("cancel_port_forward_request: address=%s, port=%s", address, port)
         username = self.session.transport.get_username()
         logging.info(
             "Cancel port forward request on %s:%i by %s.",
@@ -432,6 +329,11 @@ class ServerInterface(BaseServerInterface):
             username,
             extra={"username": username},
         )
+        if self.args.disable_port_forwarding:
+            logging.warning(
+                "port forwarding disabled but got cancel_port_forward_request"
+            )
+            return
         if self.session.ssh_client is None:
             logging.debug("cancel_port_forward_request: session.ssh_client is None!")
             return
@@ -453,7 +355,9 @@ class ServerInterface(BaseServerInterface):
             destination,
             username,
         )
-
+        if self.args.disable_port_forwarding:
+            logging.debug("port forwarding disabled")
+            return paramiko.common.OPEN_FAILED_ADMINISTRATIVELY_PROHIBITED
         try:
             tunnel_forwarder = self.session.proxyserver.client_tunnel_interface(
                 self.session, chanid, origin, destination

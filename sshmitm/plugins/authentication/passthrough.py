@@ -396,10 +396,7 @@ class AuthenticatorPassThrough(Authenticator):
                 f"\tPassword: {display_password or Colors.stylize('*******', fg('dark_gray'))}"
             )
 
-        if (
-            self.accepted_key is not None
-            and self.remote_key != self.accepted_key
-        ):
+        if self.accepted_key is not None and self.remote_key != self.accepted_key:
             logmessage.append(
                 "\tAccepted-Publickey: "
                 f"{self.accepted_key.get_name()} {self.accepted_key.fingerprint} {self.accepted_key.get_bits()}bits"

@@ -165,7 +165,6 @@ class Authenticator(BaseModule):
         self.remote_key: Optional[PKey] = None
         self.accepted_key: Optional[PKey] = None
 
-
     def close(self) -> None:
         logging.debug("%s.close", self.__class__.__name__)
         if self.has_forwarded_agent:
