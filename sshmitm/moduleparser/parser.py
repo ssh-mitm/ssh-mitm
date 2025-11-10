@@ -142,9 +142,8 @@ class ModuleParser(BaseModuleArgumentParser):
             self.subcommand.required = True
 
         # Iterate over all entry points in the ``sshmitm.SubCommand`` group
-        for entry_point in metadata.entry_points(
-            group=f"{self.entry_point_prefix}.{SubCommand.__name__}"
-        ):
+        group_name = f"{self.entry_point_prefix}.{SubCommand.__name__}"
+        for entry_point in metadata.entry_points(group=group_name):
             # Skip if the subcommand is already registered
             if entry_point.name in self._registered_subcommands:
                 continue

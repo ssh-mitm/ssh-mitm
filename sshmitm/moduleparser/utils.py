@@ -20,6 +20,7 @@ def load_module(
     to load a ``BaseModule`` based on a command-line argument. The action searches
     for the specified module in the entry points and loads it if found.
 
+    :param entry_point_prefix: Prefix for the entrypoint to separate different plugins.
     :param entry_point_class: The base class of the module to load.
     :return: A custom ``argparse.Action`` class for loading modules.
     """
@@ -51,9 +52,8 @@ def load_module(
             del option_string
             if values:
                 # Search for the module in the entry points
-                for entry_point in metadata.entry_points(
-                    group=f"{entry_point_prefix}.{entry_point_class.__name__}"
-                ):
+                group_name = f"{entry_point_prefix}.{entry_point_class.__name__}"
+                for entry_point in metadata.entry_points(group=group_name):
                     if values in (entry_point.name, entry_point.module):
                         values = [entry_point.load()]
                         setattr(namespace, self.dest, values[0] if values else None)
@@ -72,15 +72,15 @@ def set_module_kwargs(
     including the available choices and help text. It retrieves the available
     modules from the entry points and formats the help text with descriptions.
 
+    :param entry_point_prefix: Prefix for the entrypoint to separate different plugins.
     :param entry_point_class: The base class of the module.
     :param kwargs: Additional keyword arguments for the module.
     :return: Updated keyword arguments with choices and help text.
     """
     # Retrieve and sort entry points for the module
+    group_name = f"{entry_point_prefix}.{entry_point_class.__name__}"
     entry_points = sorted(
-        metadata.entry_points(
-            group=f"{entry_point_prefix}.{entry_point_class.__name__}"
-        ),
+        metadata.entry_points(group=group_name),
         key=lambda x: x.name,
     )
 

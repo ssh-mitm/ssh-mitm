@@ -197,13 +197,13 @@ class BaseModule(ABC):  # noqa: B024
         """
         Load a module class from an entry point.
 
+        :param entry_point_prefix: Prefix for the entrypoint to separate different plugins.
         :param name: Name of the entry point.
         :param entry_point_class: Base class for the module.
         :return: The loaded module class, or ``None`` if not found.
         """
-        for entry_point in metadata.entry_points(
-            group=f"{entry_point_prefix}.{entry_point_class.__name__}"
-        ):
+        group_name = f"{entry_point_prefix}.{entry_point_class.__name__}"
+        for entry_point in metadata.entry_points(group=group_name):
             if name in (entry_point.name, entry_point.module):
                 return cast("Type[BaseModule]", entry_point.load())
         return None
