@@ -19,7 +19,6 @@ from sshmitm.core.compat import metadata
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import InvalidModuleArguments, ModuleError
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
-from sshmitm.project_metadata import MODULE_NAME
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser import ModuleParser
@@ -97,8 +96,10 @@ class BaseModule(ABC):  # noqa: B024
         :param kwargs: Keyword arguments for the module.
         :raises ModuleError: If the baseclass is not a subclass of ``BaseModule``.
         """
+        logging.error("called from Module.add_module")
         # Extract the baseclass from kwargs
         baseclass: Type[BaseModule] = kwargs.pop("baseclass", BaseModule)
+        entry_point_prefix: Type[BaseModule] = kwargs.pop("entry_point_prefix", None)
 
         # Validate that the baseclass is a subclass of BaseModule
         if not inspect.isclass(baseclass) or not issubclass(baseclass, BaseModule):
@@ -111,14 +112,15 @@ class BaseModule(ABC):  # noqa: B024
             raise ModuleError
 
         # Set the action to load the module
-        kwargs["action"] = load_module(baseclass)
+        kwargs["action"] = load_module(entry_point_prefix, baseclass)
 
         # Add the module to the module list if parser and modules are initialized
         if cls.modules() is not None and cls.parser() is not None:
             cls.modules().append(
                 (
                     cls.parser().add_argument(
-                        *args, **set_module_kwargs(baseclass, **kwargs)
+                        *args,
+                        **set_module_kwargs(entry_point_prefix, baseclass, **kwargs),
                     ),
                     baseclass,
                 )
@@ -190,7 +192,7 @@ class BaseModule(ABC):  # noqa: B024
 
     @staticmethod
     def load_from_entrypoint(
-        name: str, entry_point_class: Type["BaseModule"]
+        entry_point_prefix: str, name: str, entry_point_class: Type["BaseModule"]
     ) -> Optional[Type["BaseModule"]]:
         """
         Load a module class from an entry point.
@@ -200,7 +202,7 @@ class BaseModule(ABC):  # noqa: B024
         :return: The loaded module class, or ``None`` if not found.
         """
         for entry_point in metadata.entry_points(
-            group=f"{MODULE_NAME}.{entry_point_class.__name__}"
+            group=f"{entry_point_prefix}.{entry_point_class.__name__}"
         ):
             if name in (entry_point.name, entry_point.module):
                 return cast("Type[BaseModule]", entry_point.load())
@@ -216,7 +218,10 @@ class SubCommand(ABC):
     """
 
     def __init__(
-        self, name: str, subcommand: "argparse._SubParsersAction[ModuleParser]"
+        self,
+        entry_point_prefix: str,
+        name: str,
+        subcommand: "argparse._SubParsersAction[ModuleParser]",
     ) -> None:
         """
         Initialize the subcommand with a name and subparser action.
@@ -228,6 +233,7 @@ class SubCommand(ABC):
             name,
             allow_abbrev=False,
             help=self.docs(),
+            entry_point_prefix=entry_point_prefix,
             config_section=self.config_section(),
         )
 

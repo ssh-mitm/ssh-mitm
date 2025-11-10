@@ -21,7 +21,6 @@ class MitmServerInterface(ServerInterface):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        logging.error("create mitm group")
         super().parser_arguments()
         plugin_group = cls.argument_group()
         plugin_group.add_argument(

@@ -115,6 +115,7 @@ def main() -> None:
     # Initialize the ModuleParser which also holds configuration and is used to
     # discover/install subcommands.
     parser = ModuleParser(
+        entry_point_prefix=project_metadata.MODULE_NAME,
         config=get_config(),
         prog=prog_name,
         description=f"{project_metadata.PROJECT_NAME} Tools",

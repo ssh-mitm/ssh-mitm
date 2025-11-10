@@ -38,7 +38,6 @@ from sshmitm.moduleparser.exceptions import ModuleError
 from sshmitm.moduleparser.formatter import ModuleFormatter
 from sshmitm.moduleparser.modules import BaseModule, SubCommand
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
-from sshmitm.project_metadata import MODULE_NAME
 
 if TYPE_CHECKING:
     from configparser import ConfigParser
@@ -61,7 +60,11 @@ class ModuleParser(BaseModuleArgumentParser):
     CONFIG_LOADED = False
 
     def __init__(
-        self, *args: Any, config: Optional["ConfigParser"] = None, **kwargs: Any
+        self,
+        *args: Any,
+        entry_point_prefix: Optional[str] = None,
+        config: Optional["ConfigParser"] = None,
+        **kwargs: Any,
     ) -> None:
         """
         Initialize the ``ModuleParser``.
@@ -72,7 +75,13 @@ class ModuleParser(BaseModuleArgumentParser):
         """
         # Set the formatter class to ``ModuleFormatter`` for consistent argument formatting
         kwargs["formatter_class"] = ModuleFormatter
-        super().__init__(*args, add_help=False, config=config, **kwargs)
+        super().__init__(
+            *args,
+            add_help=False,
+            entry_point_prefix=entry_point_prefix,
+            config=config,
+            **kwargs,
+        )
         self.__kwargs = kwargs
         self._extra_modules: List[Tuple[argparse.Action, type]] = []
         self._module_parsers: Set[argparse.ArgumentParser] = {self}
@@ -134,7 +143,7 @@ class ModuleParser(BaseModuleArgumentParser):
 
         # Iterate over all entry points in the ``sshmitm.SubCommand`` group
         for entry_point in metadata.entry_points(
-            group=f"{MODULE_NAME}.{SubCommand.__name__}"
+            group=f"{self.entry_point_prefix}.{SubCommand.__name__}"
         ):
             # Skip if the subcommand is already registered
             if entry_point.name in self._registered_subcommands:
@@ -142,7 +151,9 @@ class ModuleParser(BaseModuleArgumentParser):
 
             # Load the subcommand class from the entry point
             subcommand_cls = cast("Type[SubCommand]", entry_point.load())
-            subcommand = subcommand_cls(entry_point.name, self.subcommand)
+            subcommand = subcommand_cls(
+                self.entry_point_prefix, entry_point.name, self.subcommand
+            )
             subcommand.register_arguments()
             self._registered_subcommands[entry_point.name] = subcommand
 
@@ -279,7 +290,7 @@ class ModuleParser(BaseModuleArgumentParser):
         if default_value:
             if isinstance(default_value, str):
                 kwargs["default"] = BaseModule.load_from_entrypoint(
-                    default_value, baseclass
+                    self.entry_point_prefix, default_value, baseclass
                 )
         else:
             # If no default value, try to load it from the configuration
@@ -298,7 +309,7 @@ class ModuleParser(BaseModuleArgumentParser):
                     kwargs["default"] = getattr(module, part_class)
                 else:
                     kwargs["default"] = BaseModule.load_from_entrypoint(
-                        default_value, baseclass
+                        self.entry_point_prefix, default_value, baseclass
                     )
 
         # Validate that the baseclass is a subclass of BaseModule
@@ -312,9 +323,9 @@ class ModuleParser(BaseModuleArgumentParser):
             raise ModuleError
 
         # Add the module action to the plugin group
-        kwargs["action"] = load_module(baseclass)
+        kwargs["action"] = load_module(self.entry_point_prefix, baseclass)
         action = self.plugin_group.add_argument(
-            *args, **set_module_kwargs(baseclass, **kwargs)
+            *args, **set_module_kwargs(self.entry_point_prefix, baseclass, **kwargs)
         )
         self._extra_modules.append((action, baseclass))
         logging.debug("Baseclass: %s", baseclass)

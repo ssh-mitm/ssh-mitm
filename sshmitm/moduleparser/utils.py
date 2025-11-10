@@ -5,13 +5,14 @@ from colored.colored import attr, fg  # type: ignore[import-untyped]
 
 from sshmitm.core.compat import metadata
 from sshmitm.core.logger import Colors
-from sshmitm.project_metadata import MODULE_NAME
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser.modules import BaseModule
 
 
-def load_module(entry_point_class: Type["BaseModule"]) -> Type["argparse.Action"]:
+def load_module(
+    entry_point_prefix: str, entry_point_class: Type["BaseModule"]
+) -> Type["argparse.Action"]:
     """
     Create an action class to load a ``BaseModule`` from an entry point.
 
@@ -51,7 +52,7 @@ def load_module(entry_point_class: Type["BaseModule"]) -> Type["argparse.Action"
             if values:
                 # Search for the module in the entry points
                 for entry_point in metadata.entry_points(
-                    group=f"{MODULE_NAME}.{entry_point_class.__name__}"
+                    group=f"{entry_point_prefix}.{entry_point_class.__name__}"
                 ):
                     if values in (entry_point.name, entry_point.module):
                         values = [entry_point.load()]
@@ -62,7 +63,7 @@ def load_module(entry_point_class: Type["BaseModule"]) -> Type["argparse.Action"
 
 
 def set_module_kwargs(
-    entry_point_class: Type["BaseModule"], **kwargs: Any
+    entry_point_prefix: str, entry_point_class: Type["BaseModule"], **kwargs: Any
 ) -> Dict[str, Any]:
     """
     Set keyword arguments for a module, including choices and help text.
@@ -77,7 +78,9 @@ def set_module_kwargs(
     """
     # Retrieve and sort entry points for the module
     entry_points = sorted(
-        metadata.entry_points(group=f"{MODULE_NAME}.{entry_point_class.__name__}"),
+        metadata.entry_points(
+            group=f"{entry_point_prefix}.{entry_point_class.__name__}"
+        ),
         key=lambda x: x.name,
     )
 

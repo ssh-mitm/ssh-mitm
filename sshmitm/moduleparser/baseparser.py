@@ -140,6 +140,7 @@ class BaseModuleArgumentParser(argparse.ArgumentParser):
         if config:
             BaseModuleArgumentParser.ARGCONF = config
 
+        self.entry_point_prefix = kwargs.pop("entry_point_prefix", None)
         self.config_section = kwargs.pop("config_section", None)
         super().__init__(*args, **kwargs)
         self.exit_on_error = True
