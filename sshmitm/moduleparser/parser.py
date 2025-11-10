@@ -274,15 +274,17 @@ class ModuleParser(BaseModuleArgumentParser):
         argcomplete.autocomplete(parser)
         return parser
 
-    def add_module(self, *args: Any, **kwargs: Any) -> None:
+    def add_module(
+        self, *args: Any, baseclass: Type[BaseModule] = BaseModule, **kwargs: Any
+    ) -> None:
         """
         Add a module to the parser.
 
         :param args: Variable length argument list.
+        :param baseclass: baseclass for modules.
         :param kwargs: Arbitrary keyword arguments.
         """
         # Extract the baseclass from kwargs
-        baseclass = kwargs.pop("baseclass", BaseModule)
         default_value = kwargs.get("default")
 
         # Handle the default value if provided

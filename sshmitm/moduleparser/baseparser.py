@@ -128,7 +128,12 @@ class BaseModuleArgumentParser(argparse.ArgumentParser):
     ARGCONF = None
 
     def __init__(
-        self, *args: Any, config: Optional["ConfigParser"] = None, **kwargs: Any
+        self,
+        *args: Any,
+        entry_point_prefix: Optional[str] = None,
+        config: Optional["ConfigParser"] = None,
+        config_section: Optional[str] = None,
+        **kwargs: Any,
     ) -> None:
         """
         Initialize the ``BaseModuleArgumentParser``.
@@ -140,8 +145,8 @@ class BaseModuleArgumentParser(argparse.ArgumentParser):
         if config:
             BaseModuleArgumentParser.ARGCONF = config
 
-        self.entry_point_prefix = kwargs.pop("entry_point_prefix", None)
-        self.config_section = kwargs.pop("config_section", None)
+        self.entry_point_prefix = entry_point_prefix
+        self.config_section = config_section
         super().__init__(*args, **kwargs)
         self.exit_on_error = True
 
@@ -160,7 +165,9 @@ class BaseModuleArgumentParser(argparse.ArgumentParser):
             return
         super().error(message)
 
-    def add_argument_group(self, *args: Any, **kwargs: Any) -> argparse._ArgumentGroup:
+    def add_argument_group(
+        self, *args: Any, config_section: Optional[str] = None, **kwargs: Any
+    ) -> argparse._ArgumentGroup:
         """
         Add an argument group to the parser.
 
@@ -168,10 +175,10 @@ class BaseModuleArgumentParser(argparse.ArgumentParser):
         functionality, similar to the main parser.
 
         :param args: Positional arguments for ``add_argument_group``.
+        :param config_section: config section name for default argument values.
         :param kwargs: Keyword arguments for ``add_argument_group``.
         :return: The created argument group.
         """
-        config_section = kwargs.pop("config_section", None)
         group = argparse._ArgumentGroup(  # pylint:disable=protected-access
             self, *args, **kwargs
         )

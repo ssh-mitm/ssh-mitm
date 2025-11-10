@@ -88,18 +88,26 @@ class BaseModule(ABC):  # noqa: B024
             setattr(self.args, param_name, param_value)
 
     @classmethod
-    def add_module(cls, *args: Any, **kwargs: Any) -> None:
+    def add_module(
+        cls,
+        *args: Any,
+        entry_point_prefix: Optional[str] = None,
+        baseclass: "Optional[Type[BaseModule]]" = None,
+        **kwargs: Any,
+    ) -> None:
         """
         Add a submodule to the module's parser.
 
         :param args: Positional arguments for the module.
+        :param baseclass: baseclass for modules.
+        :param entry_point_prefix: Prefix for the entrypoint to separate different plugins.
         :param kwargs: Keyword arguments for the module.
         :raises ModuleError: If the baseclass is not a subclass of ``BaseModule``.
         """
         logging.error("called from Module.add_module")
         # Extract the baseclass from kwargs
-        baseclass: Type[BaseModule] = kwargs.pop("baseclass", BaseModule)
-        entry_point_prefix: Type[BaseModule] = kwargs.pop("entry_point_prefix", None)
+        if baseclass is None:
+            baseclass = BaseModule
 
         # Validate that the baseclass is a subclass of BaseModule
         if not inspect.isclass(baseclass) or not issubclass(baseclass, BaseModule):
