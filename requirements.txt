@@ -38,7 +38,7 @@ pycparser==2.23
     # via cffi
 pygments==2.19.2
     # via rich
-pynacl==1.6.0
+pynacl==1.6.2
     # via paramiko
 python-json-logger==4.0.0
     # via -r requirements.in
