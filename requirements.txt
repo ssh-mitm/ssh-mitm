@@ -24,9 +24,13 @@ cryptography==46.0.3
     # via paramiko
 idna==3.11
     # via requests
+importlib-metadata==8.7.1 ; python_version < "3.10"
+    # via -r requirements.in
+importlib-resources==6.5.2 ; python_version < "3.10"
+    # via -r requirements.in
 invoke==2.2.1
     # via paramiko
-markdown-it-py==4.0.0
+markdown-it-py==3.0.0
     # via rich
 mdurl==0.1.2
     # via markdown-it-py
@@ -50,7 +54,15 @@ requests==2.32.5
     # via -r requirements.in
 rich==14.2.0
     # via -r requirements.in
-urllib3==2.5.0
+typing-extensions==4.15.0
+    # via
+    #   cryptography
+    #   python-json-logger
+urllib3==2.6.3
     # via requests
 wrapt==2.0.0
     # via -r requirements.in
+zipp==3.23.0
+    # via
+    #   importlib-metadata
+    #   importlib-resources
