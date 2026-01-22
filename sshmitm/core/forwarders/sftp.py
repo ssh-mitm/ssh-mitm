@@ -7,7 +7,7 @@ import paramiko
 from paramiko.sftp_attr import SFTPAttributes
 
 from sshmitm.core.interfaces.sftp import BaseSFTPServerInterface
-from sshmitm.moduleparser import BaseModule
+from sshmitm.core.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     from _typeshed import ReadableBuffer

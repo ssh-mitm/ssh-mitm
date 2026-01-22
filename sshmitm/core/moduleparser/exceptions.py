@@ -1,7 +1,7 @@
 from typing import TYPE_CHECKING, Optional, Tuple, Type, Union
 
 if TYPE_CHECKING:
-    from sshmitm.moduleparser.modules import BaseModule
+    from sshmitm.core.moduleparser.modules import BaseModule
 
 
 class BaseModuleError(Exception):

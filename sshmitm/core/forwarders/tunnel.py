@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING, Optional, Tuple, Union
 
 import paramiko
 
-from sshmitm.moduleparser import BaseModule
+from sshmitm.core.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm

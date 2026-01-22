@@ -7,7 +7,7 @@ import sys
 
 import paramiko
 
-from sshmitm.moduleparser import SubCommand
+from sshmitm.core.moduleparser import SubCommand
 
 
 def perform_cve_2023_25136(args: argparse.Namespace) -> bool:

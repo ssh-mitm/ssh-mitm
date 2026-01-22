@@ -12,7 +12,7 @@ from sshmitm.core.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.core.exceptions import MissingHostException
 from sshmitm.core.forwarders.agent import AgentProxy
 from sshmitm.core.logger import Colors
-from sshmitm.moduleparser import BaseModule
+from sshmitm.core.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm

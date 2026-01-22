@@ -8,7 +8,7 @@ from paramiko.sftp_handle import SFTPHandle
 
 from sshmitm.core.exceptions import MissingClient
 from sshmitm.core.interfaces.server import BaseServerInterface
-from sshmitm.moduleparser import BaseModule
+from sshmitm.core.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import os

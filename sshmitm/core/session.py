@@ -39,7 +39,7 @@ from sshmitm.core.exceptions import SessionStartError
 from sshmitm.core.forwarders.base import BaseForwarder
 from sshmitm.core.interfaces.server import ProxySFTPServer
 from sshmitm.core.logger import THREAD_DATA, Colors
-from sshmitm.moduleparser import BaseModule
+from sshmitm.core.moduleparser import BaseModule
 from sshmitm.plugins.session import key_negotiation
 
 if TYPE_CHECKING:

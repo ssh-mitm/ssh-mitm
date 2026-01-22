@@ -16,12 +16,12 @@ from typing import (
 )
 
 from sshmitm.core.compat import metadata
-from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
-from sshmitm.moduleparser.exceptions import InvalidModuleArguments, ModuleError
-from sshmitm.moduleparser.utils import load_module, set_module_kwargs
+from sshmitm.core.moduleparser.baseparser import BaseModuleArgumentParser
+from sshmitm.core.moduleparser.exceptions import InvalidModuleArguments, ModuleError
+from sshmitm.core.moduleparser.utils import load_module, set_module_kwargs
 
 if TYPE_CHECKING:
-    from sshmitm.moduleparser import ModuleParser
+    from sshmitm.core.moduleparser import ModuleParser
 
 
 class BaseModule(ABC):  # noqa: B024

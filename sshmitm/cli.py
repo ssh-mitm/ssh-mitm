@@ -32,7 +32,7 @@ from sshmitm import __version__ as ssh_mitm_version
 from sshmitm import project_metadata
 from sshmitm.core.compat import resources
 from sshmitm.core.logger import Colors, FailSaveLogStream, PlainJsonFormatter
-from sshmitm.moduleparser import ModuleParser
+from sshmitm.core.moduleparser import ModuleParser
 from sshmitm.workarounds import monkeypatch, transport
 
 

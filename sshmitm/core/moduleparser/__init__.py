@@ -12,8 +12,8 @@ to the module parser functionality.
    A list of public objects available from this module.
 """
 
-from sshmitm.moduleparser.modules import BaseModule, SubCommand
-from sshmitm.moduleparser.parser import ModuleParser
+from sshmitm.core.moduleparser.modules import BaseModule, SubCommand
+from sshmitm.core.moduleparser.parser import ModuleParser
 
 __all__ = [
     "BaseModule",

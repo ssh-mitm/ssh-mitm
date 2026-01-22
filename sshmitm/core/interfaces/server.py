@@ -9,7 +9,7 @@ from paramiko.pkey import PKey
 from paramiko.sftp import _VERSION, CMD_INIT, CMD_VERSION, SFTPError
 
 from sshmitm.core.clients.sftp import SFTPClient
-from sshmitm.moduleparser import BaseModule
+from sshmitm.core.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm

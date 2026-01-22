@@ -7,7 +7,7 @@ from sshmitm.core.compat import metadata
 from sshmitm.core.logger import Colors
 
 if TYPE_CHECKING:
-    from sshmitm.moduleparser.modules import BaseModule
+    from sshmitm.core.moduleparser.modules import BaseModule
 
 
 def load_module(
