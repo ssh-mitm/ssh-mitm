@@ -14,7 +14,10 @@ from sshmitm.core.clients.ssh import AuthenticationMethod
 from sshmitm.core.forwarders.agent import AgentProxy
 from sshmitm.core.logger import Colors
 from sshmitm.core.sshkeys import SSHPubKey
-from sshmitm.plugins.authentication.userenumeration import PublicKeyEnumerationError, PublicKeyEnumerator
+from sshmitm.plugins.authentication.userenumeration import (
+    PublicKeyEnumerationError,
+    PublicKeyEnumerator,
+)
 
 if TYPE_CHECKING:
     import sshmitm
