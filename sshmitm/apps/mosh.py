@@ -9,7 +9,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
 from sshmitm.core.logger import Colors
 from sshmitm.core.session import Session
-from sshmitm.core.utils import format_hex
+from sshmitm.contrib.utils import format_hex
 
 
 class UdpProxy:

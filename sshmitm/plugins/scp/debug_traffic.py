@@ -9,7 +9,7 @@ hexwidth and prints the data as a hexdump.
 """
 
 from sshmitm.core.forwarders.scp import SCPForwarder
-from sshmitm.core.utils import format_hex
+from sshmitm.contrib.utils import format_hex
 
 
 class SCPDebugForwarder(SCPForwarder):
