@@ -33,7 +33,7 @@ from sshmitm import project_metadata
 from sshmitm.core.compat import resources
 from sshmitm.core.logger import Colors, FailSaveLogStream, PlainJsonFormatter
 from sshmitm.core.moduleparser import ModuleParser
-from sshmitm.workarounds import monkeypatch, transport
+from sshmitm.core.workarounds import monkeypatch, transport
 
 
 def get_config() -> ConfigParser:

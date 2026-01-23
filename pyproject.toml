@@ -208,8 +208,8 @@ ignore = [
     "UP",      # pyupgrade (UP) relevant errors
 ]
 [tool.ruff.lint.per-file-ignores]
-"sshmitm/workarounds/monkeypatch.py" = ["ALL"]
-"sshmitm/workarounds/transport.py" = ["ALL"]
+"sshmitm/core/workarounds/monkeypatch.py" = ["ALL"]
+"sshmitm/core/workarounds/transport.py" = ["ALL"]
 
 
 [tool.bumpversion]
