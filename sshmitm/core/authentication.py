@@ -86,7 +86,7 @@ class RemoteCredentials:
         ]:
             try:
                 return key_cls.from_private_key_file(path, password=passphrase)
-            except (  # noqa: PERF203 # `try`-`except` within a loop incurs performance overhead
+            except (
                 paramiko.SSHException
             ):
                 continue

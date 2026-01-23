@@ -15,7 +15,10 @@ def format_hex(data: bytes, hexwidth: int = 19) -> str:
         hexa = list(
             map(
                 "".join,
-                zip(*[iter(binascii.hexlify(data_part).decode("utf-8"))] * 2),
+                zip(
+                    *[iter(binascii.hexlify(data_part).decode("utf-8"))] * 2,
+                    strict=False,
+                ),
             )
         )
         while hexwidth - len(hexa) > 0:

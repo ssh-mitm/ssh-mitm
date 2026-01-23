@@ -70,7 +70,9 @@ class SSHPubKey:
         :returns: The MD5 fingerprint string in the form ``MD5:xx:xx:...``.
         """
         fp_plain = hashlib.md5(self.key.asbytes(), usedforsecurity=False).hexdigest()
-        return "MD5:" + ":".join(a + b for a, b in zip(fp_plain[::2], fp_plain[1::2]))
+        return "MD5:" + ":".join(
+            a + b for a, b in zip(fp_plain[::2], fp_plain[1::2], strict=False)
+        )
 
     def hash_sha256(self) -> str:
         """

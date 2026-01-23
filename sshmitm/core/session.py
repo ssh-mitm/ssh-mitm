@@ -28,7 +28,7 @@ import os
 import socket
 import threading
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Dict, Optional, Self, Tuple, Type, Union, cast
 from uuid import uuid4
 
 import paramiko
@@ -360,7 +360,7 @@ class Session(BaseSession):
     def __str__(self) -> str:
         return f"{self.client_address}->{self.socket_remote_address}"
 
-    def __enter__(self) -> "Session":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(

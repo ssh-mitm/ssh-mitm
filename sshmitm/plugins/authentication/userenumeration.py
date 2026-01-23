@@ -2,7 +2,7 @@ import logging
 import socket
 import threading
 from types import TracebackType
-from typing import Any, Optional, Type, Union
+from typing import Any, Optional, Self, Type, Union
 
 import paramiko
 from paramiko import PKey
@@ -80,7 +80,7 @@ class PublicKeyEnumerator:
         if self.sock is not None:
             self.sock.close()
 
-    def __enter__(self) -> "PublicKeyEnumerator":
+    def __enter__(self) -> Self:
         self.connect()
         return self
 
