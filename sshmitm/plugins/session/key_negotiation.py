@@ -16,7 +16,6 @@ from sshmitm.plugins.session.clientaudit import SSHClientAudit
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.core.session import Session  # noqa: F401
 
 
 class KeyNegotiationData:

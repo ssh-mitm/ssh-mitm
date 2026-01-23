@@ -47,7 +47,6 @@ if TYPE_CHECKING:
 
     import sshmitm
     from sshmitm.core.interfaces.server import BaseServerInterface
-    from sshmitm.core.server import SSHProxyServer  # noqa: F401
 
 
 class BaseSession(BaseModule):

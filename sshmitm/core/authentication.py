@@ -86,9 +86,7 @@ class RemoteCredentials:
         ]:
             try:
                 return key_cls.from_private_key_file(path, password=passphrase)
-            except (
-                paramiko.SSHException
-            ):
+            except paramiko.SSHException:
                 continue
 
         msg = "Unbekanntes oder ungültiges Schlüsselformat."

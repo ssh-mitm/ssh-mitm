@@ -117,11 +117,11 @@ dependencies = [
 
 [tool.hatch.envs.lint.scripts]
 check = [
-    "bandit -r sshmitm",
     "black --check sshmitm",
+    "bandit -r sshmitm",
+    "ruff check sshmitm",
     "flake8 sshmitm",
     "pylint sshmitm",
-    "ruff check sshmitm",
     #"- mypy sshmitm",
 ]
 
