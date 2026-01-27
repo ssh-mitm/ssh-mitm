@@ -19,4 +19,4 @@ perform powerful and effective man-in-the-middle attacks.
    :maxdepth: 1
    :hidden:
 
-   api/sshmitm
+   ../api/sshmitm

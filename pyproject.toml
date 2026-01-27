@@ -51,14 +51,14 @@ audit = "sshmitm.commands.audit:Audit"
 check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
 
 [project.entry-points."sshmitm.BaseSession"]
-base = "sshmitm.core.session:Session"
+base = "sshmitmcore.session:Session"
 
 [project.entry-points."sshmitm.Authenticator"]
-remoteauth = "sshmitm.core.authentication:AuthenticatorRemote"
+remoteauth = "sshmitmcore.authentication:AuthenticatorRemote"
 passthrough = "sshmitm.plugins.authentication.passthrough:AuthenticatorPassThrough"
 
 [project.entry-points."sshmitm.BaseServerInterface"]
-base = "sshmitm.core.interfaces.server:ServerInterface"
+base = "sshmitmcore.interfaces.server:ServerInterface"
 mitm = "sshmitm.plugins.serverinterface.mitm_server_interface:MitmServerInterface"
 pubkeyonly = "sshmitm.plugins.serverinterface.pubkey_only_server_interface:PubkeyOnlyServerInterface"
 
@@ -74,7 +74,7 @@ replace-command = "sshmitm.plugins.scp.rewrite_command:SCPRewriteCommand"
 CVE-2022-29154 = "sshmitm.plugins.scp.cve202229154:CVE202229154"
 
 [project.entry-points."sshmitm.BaseSFTPServerInterface"]
-base = "sshmitm.core.interfaces.sftp:SFTPProxyServerInterface"
+base = "sshmitmcore.interfaces.sftp:SFTPProxyServerInterface"
 
 [project.entry-points."sshmitm.SFTPHandlerBasePlugin"]
 replace_file = "sshmitm.plugins.sftp.replace_file:SFTPProxyReplaceHandler"
