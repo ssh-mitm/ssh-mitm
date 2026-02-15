@@ -36,6 +36,7 @@ import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
+from typing_extensions import Self
 
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import ProxyNetconfServer, ProxySFTPServer
@@ -428,7 +429,7 @@ class Session(BaseSession):
     def __str__(self) -> str:
         return self.name
 
-    def __enter__(self) -> "Session":
+    def __enter__(self) -> Self:
         return self
 
     def __exit__(

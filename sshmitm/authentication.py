@@ -10,6 +10,7 @@ from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import PKey
+from typing_extensions import Self
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.exceptions import MissingHostException
@@ -93,7 +94,7 @@ class PublicKeyEnumerator:
         if self.sock is not None:
             self.sock.close()
 
-    def __enter__(self) -> "PublicKeyEnumerator":
+    def __enter__(self) -> Self:
         self.connect()
         return self
 
