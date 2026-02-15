@@ -93,6 +93,9 @@ path = "sshmitm/__init__.py"
 [tool.hatch.metadata.hooks.requirements_txt]
 files = ["requirements.in"]
 
+[tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
+production = ["requirements.txt"]
+
 [tool.hatch.build]
 include = [
     "requirements.in",

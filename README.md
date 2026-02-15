@@ -71,33 +71,52 @@ When publickey authentication is possible, a forwarded agent is needed to login 
 
 ## Installation
 
-**SSH-MITM** can be installed as a
-[Flatpak](https://flathub.org/apps/at.ssh_mitm.server),
-[Ubuntu Snap](https://snapcraft.io/ssh-mitm),
-[AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest)
-and [PIP-Package](https://pypi.org/project/ssh-mitm/).
+SSH-MITM is available as:
 
-Community-supported options include installations via `[Nix](https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm) and running on [Android devices](https://github.com/ssh-mitm/ssh-mitm/discussions/83#discussioncomment-1531873).
+* [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest) (recommended for most users)
+* [Flatpak](https://flathub.org/apps/at.ssh_mitm.server)
+* [Ubuntu Snap](https://snapcraft.io/ssh-mitm)
+* [PIP-Package](https://pypi.org/project/ssh-mitm/)
 
-Install from Flathub:
+Community-supported options include:
 
-    flatpak install flathub at.ssh_mitm.server
-    flatpak run at.ssh_mitm.server
+* [Nix](https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm)
 
-Install from Snap store:
+For more details, see the [SSH-MITM installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
 
-    sudo snap install ssh-mitm
+### Install as AppImage:
 
-Install as AppImage:
+```bash
+wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+chmod +x ssh-mitm*.AppImage
+```
 
-    wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-    chmod +x ssh-mitm*.AppImage
+### Install from Flathub:
 
-Install python package:
+```bash
+flatpak install flathub at.ssh_mitm.server
+flatpak run at.ssh_mitm.server
+```
 
-    python3 -m pip install ssh-mitm
+### Install from Snap store:
 
-For more installation methods, refer to the [SSH-MITM installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
+```bash
+sudo snap install ssh-mitm
+```
+
+### Install python package:
+
+To install **SSH-MITM** with tested and stable dependencies (recommended):
+
+```bash
+python3 -m pip install "ssh-mitm[production]"
+```
+
+For a development installation (without fixed dependency versions):
+
+```bash
+python3 -m pip install ssh-mitm
+```
 
 
 <p align="right">(<a href="#top">back to top</a>)</p>
