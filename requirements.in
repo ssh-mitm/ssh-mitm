@@ -8,6 +8,7 @@ paramiko>=4.0,<4.1
 python-json-logger
 pytz
 pyyaml
-rich
-wrapt
 requests
+rich
+typing_extensions
+wrapt

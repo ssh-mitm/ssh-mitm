@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ssh-mitm"
-dynamic = ["version", "dependencies"]
+dynamic = ["version", "dependencies", "optional-dependencies"]
 authors = [
     {name = "SSH-MITM Dev-Team", email = "support@ssh-mitm.at"}
 ]

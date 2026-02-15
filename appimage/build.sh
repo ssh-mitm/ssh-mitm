@@ -4,7 +4,7 @@ set -e
 export ARCH=$(uname -m)
 
 # define download urls
-python_download_url="https://github.com/indygreg/python-build-standalone/releases/download/20230726/cpython-3.11.4+20230726-x86_64_v2-unknown-linux-gnu-pgo+lto-full.tar.zst"
+python_download_url="https://github.com/astral-sh/python-build-standalone/releases/download/20260211/cpython-3.11.14+20260211-x86_64-unknown-linux-gnu-install_only_stripped.tar.gz"
 appimagetool_download_url="https://github.com/AppImage/AppImageKit/releases/download/continuous/appimagetool-$ARCH.AppImage"
 
 
@@ -21,12 +21,12 @@ fi
 
 mkdir -p build/appimage/AppDir
 
-if [ ! -f build/python.tar.zst ]; then
-  curl -L -o build/python.tar.zst  "$python_download_url"
+if [ ! -f build/python.tar.gz ]; then
+  curl -L -o build/python.tar.gz  "$python_download_url"
 fi
-tar --use-compress-program=unzstd -xvf build/python.tar.zst -C build/appimage/AppDir --transform 's/python\/install/python/' python/install
+tar -xvf build/python.tar.gz -C build/appimage/AppDir
 
-build/appimage/AppDir/python/bin/python3 -m pip install -r requirements-dev.txt .
+build/appimage/AppDir/python/bin/python3 -m pip install .[production]
 
 # install files in AppDir
 cp appimage/AppRun build/appimage/AppDir/
