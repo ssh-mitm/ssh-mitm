@@ -36,7 +36,7 @@ paramiko==4.0.0
     # via -r requirements.in
 pycparser==3.0
     # via cffi
-pygments==2.19.2
+pygments==2.20.0
     # via rich
 pynacl==1.6.2
     # via paramiko
