@@ -8,7 +8,8 @@ This module contains the implementation of the SFTP client.
 
 import logging
 import os
-from typing import TYPE_CHECKING, Any, Callable, List, Optional, Tuple, Union
+from collections.abc import Callable
+from typing import TYPE_CHECKING, Any, Optional
 
 import paramiko
 from paramiko.pkey import PKey
@@ -38,17 +39,17 @@ class SFTPClient(SSHClient):
         host: str,
         port: int,
         method: AuthenticationMethod,
-        password: Optional[str],
+        password: str | None,
         user: str,
-        key: Optional[PKey],
+        key: PKey | None,
         session: "sshmitm.session.Session",
     ) -> None:
         super().__init__(host, port, method, password, user, key, session)
-        self._sftp: Optional[paramiko.SFTPClient] = None
+        self._sftp: paramiko.SFTPClient | None = None
         self.subsystem_count = 0
 
     @classmethod
-    def from_client(cls, ssh_client: Optional[SSHClient]) -> Optional["SFTPClient"]:
+    def from_client(cls, ssh_client: SSHClient | None) -> Optional["SFTPClient"]:
         """
         Create an SFTPClient instance from an SSHClient instance.
 
@@ -112,7 +113,7 @@ class SFTPClient(SSHClient):
         return True
 
     def open(
-        self, filename: Union[str, bytes], mode: str = "r", bufsize: int = -1
+        self, filename: str | bytes, mode: str = "r", bufsize: int = -1
     ) -> SFTPFile:
         """
         Open a file on the SFTP server.
@@ -128,7 +129,7 @@ class SFTPClient(SSHClient):
             raise paramiko.SFTPError(msg)
         return self._sftp.open(filename, mode, bufsize)
 
-    def chmod(self, path: Union[str, bytes], mode: int) -> int:
+    def chmod(self, path: str | bytes, mode: int) -> int:
         """
         Changes the mode (permission) of the specified path.
 
@@ -141,7 +142,7 @@ class SFTPClient(SSHClient):
         self._sftp.chmod(path, mode)
         return paramiko.sftp.SFTP_OK
 
-    def chown(self, path: Union[str, bytes], uid: int, gid: int) -> int:
+    def chown(self, path: str | bytes, uid: int, gid: int) -> int:
         """
         Changes the owner and group of the specified path.
 
@@ -157,9 +158,9 @@ class SFTPClient(SSHClient):
 
     def get(
         self,
-        remotepath: Union[str, bytes],
-        localpath: Union[str, bytes],
-        callback: Optional[Callable[[int, int], Any]] = None,
+        remotepath: str | bytes,
+        localpath: str | bytes,
+        callback: Callable[[int, int], Any] | None = None,
     ) -> int:
         """
         Downloads a file from the remote SFTP server and saves it to the local file system.
@@ -175,13 +176,13 @@ class SFTPClient(SSHClient):
             return paramiko.sftp.SFTP_FAILURE
         try:
             self._sftp.get(remotepath, localpath, callback)
-        except (IOError, OSError) as ex:
+        except OSError as ex:
             logging.error(ex)
             os.remove(localpath)
             return paramiko.sftp.SFTP_FAILURE
         return paramiko.sftp.SFTP_OK
 
-    def listdir_attr(self, path: str = ".") -> Union[int, List[SFTPAttributes]]:
+    def listdir_attr(self, path: str = ".") -> int | list[SFTPAttributes]:
         """
         This method returns the list of files and directories in the given path with their attributes.
 
@@ -192,7 +193,7 @@ class SFTPClient(SSHClient):
             return paramiko.sftp.SFTP_FAILURE
         return self._sftp.listdir_attr(path)
 
-    def lstat(self, path: Union[str, bytes]) -> Union[int, SFTPAttributes]:
+    def lstat(self, path: str | bytes) -> int | SFTPAttributes:
         """
         This method returns the attributes of the file/directory at the given path.
 
@@ -203,7 +204,7 @@ class SFTPClient(SSHClient):
             return paramiko.sftp.SFTP_FAILURE
         return self._sftp.lstat(path)
 
-    def mkdir(self, path: Union[str, bytes], mode: int = 511) -> int:
+    def mkdir(self, path: str | bytes, mode: int = 511) -> int:
         """
         This method creates a new directory at the given path.
 
@@ -218,8 +219,8 @@ class SFTPClient(SSHClient):
 
     def put(
         self,
-        localpath: Union[str, bytes],
-        remotepath: Union[str, bytes],
+        localpath: str | bytes,
+        remotepath: str | bytes,
         callback: Any = None,
         confirm: bool = True,
     ) -> None:
@@ -235,7 +236,7 @@ class SFTPClient(SSHClient):
         msg = "put not implemented"
         raise NotImplementedError(msg)
 
-    def readlink(self, path: Union[str, bytes]) -> Union[int, str]:
+    def readlink(self, path: str | bytes) -> int | str:
         """
         This method returns the target of the symbolic link or a failure code.
 
@@ -246,7 +247,7 @@ class SFTPClient(SSHClient):
             return paramiko.sftp.SFTP_FAILURE
         return self._sftp.readlink(path) or paramiko.sftp.SFTP_FAILURE
 
-    def remove(self, path: Union[str, bytes]) -> int:
+    def remove(self, path: str | bytes) -> int:
         """
         This method removes the specified file.
 
@@ -258,7 +259,7 @@ class SFTPClient(SSHClient):
         self._sftp.remove(path)
         return paramiko.sftp.SFTP_OK
 
-    def rename(self, oldpath: Union[str, bytes], newpath: Union[str, bytes]) -> int:
+    def rename(self, oldpath: str | bytes, newpath: str | bytes) -> int:
         """
         This method renames a file.
 
@@ -271,7 +272,7 @@ class SFTPClient(SSHClient):
         self._sftp.rename(oldpath, newpath)
         return paramiko.sftp.SFTP_OK
 
-    def rmdir(self, path: Union[str, bytes]) -> int:
+    def rmdir(self, path: str | bytes) -> int:
         """
         This method removes the specified directory.
 
@@ -283,7 +284,7 @@ class SFTPClient(SSHClient):
         self._sftp.rmdir(path)
         return paramiko.sftp.SFTP_OK
 
-    def stat(self, path: Union[str, bytes]) -> Union[int, SFTPAttributes]:
+    def stat(self, path: str | bytes) -> int | SFTPAttributes:
         """
         This method returns the status of a file.
 
@@ -294,7 +295,7 @@ class SFTPClient(SSHClient):
             return paramiko.sftp.SFTP_FAILURE
         return self._sftp.stat(path)
 
-    def utime(self, path: Union[str, bytes], times: Tuple[float, float]) -> int:
+    def utime(self, path: str | bytes, times: tuple[float, float]) -> int:
         """
         Update the access and modification time of a file.
 
@@ -307,7 +308,7 @@ class SFTPClient(SSHClient):
         self._sftp.utime(path, times)
         return paramiko.sftp.SFTP_OK
 
-    def symlink(self, source: Union[str, bytes], dest: Union[str, bytes]) -> int:
+    def symlink(self, source: str | bytes, dest: str | bytes) -> int:
         """
         Create a symbolic link pointing to `source` at `dest`.
 

@@ -1,10 +1,10 @@
 import logging
 import socket
 import sys
-from typing import TYPE_CHECKING, ClassVar, List, Optional, Tuple, Union
+from typing import TYPE_CHECKING, ClassVar
 
 import paramiko
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 
 from sshmitm.forwarders.tunnel import (
     BaseClientTunnelHandler,
@@ -28,8 +28,8 @@ class ClientTunnelHandler(BaseClientTunnelHandler):
     def __init__(
         self,
         session: "sshmitm.session.Session",
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        username: str | None = None,
+        password: str | None = None,
     ) -> None:
         super().__init__(session)
         self.username = username
@@ -37,14 +37,14 @@ class ClientTunnelHandler(BaseClientTunnelHandler):
 
     def handle_request(
         self,
-        listenaddr: Tuple[str, int],
-        client: Union[socket.socket, paramiko.Channel],
-        addr: Optional[Tuple[str, int]],
+        listenaddr: tuple[str, int],
+        client: socket.socket | paramiko.Channel,
+        addr: tuple[str, int] | None,
     ) -> None:
         if self.session.ssh_client is None or self.session.ssh_client.transport is None:
             return
-        destination: Optional[Tuple[str, int]] = None
-        socksconnection: Optional[Union[Socks4Server, Socks5Server]] = None
+        destination: tuple[str, int] | None = None
+        socksconnection: Socks4Server | Socks5Server | None = None
         try:
             socksversion = client.recv(1)
             if socksversion == Socks4Server.SOCKSVERSION:
@@ -100,7 +100,7 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
             help="Specifies the password for authenticating with the SOCKS5 server. Required if a username is provided.",
         )
 
-    tcpservers: ClassVar[List[TCPServerThread]] = []
+    tcpservers: ClassVar[list[TCPServerThread]] = []
 
     # Setup should occur after master channel establishment
 

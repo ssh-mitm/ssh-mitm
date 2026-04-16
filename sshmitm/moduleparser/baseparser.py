@@ -12,8 +12,8 @@ class AddArgumentMethod:
         self,
         *,
         parser: "BaseModuleArgumentParser",
-        container: Optional[argparse._ActionsContainer] = None,
-        config_section: Optional[str] = None,
+        container: argparse._ActionsContainer | None = None,
+        config_section: str | None = None,
     ) -> None:
         self.parser = parser
         self.container = container or parser

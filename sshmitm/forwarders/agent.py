@@ -1,6 +1,5 @@
 import os
 import time
-from typing import List, Tuple, Union
 
 from paramiko.agent import Agent, AgentClientProxy, AgentKey, AgentServerProxy
 from paramiko.channel import Channel
@@ -9,7 +8,7 @@ from paramiko.transport import Transport
 
 class AgentProxy:
     def __init__(self, transport: Transport) -> None:
-        self.agents: List[Union[Agent, AgentClientProxy]] = []
+        self.agents: list[Agent | AgentClientProxy] = []
         self.transport = transport
         agent_proxy = AgentServerProxy(self.transport)
         os.environ.update(agent_proxy.get_env())
@@ -21,7 +20,7 @@ class AgentProxy:
         # agent is still sending over the channel
         # agent.close()  # noqa: ERA001
 
-    def get_keys(self) -> Tuple[AgentKey, ...]:
+    def get_keys(self) -> tuple[AgentKey, ...]:
         return self.keys
 
     def forward_agent(self, client_channel: Channel) -> bool:

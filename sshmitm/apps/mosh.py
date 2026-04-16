@@ -2,9 +2,9 @@ import base64
 import logging
 import socket
 import threading
-from typing import List, Tuple, cast
+from typing import cast
 
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
 from sshmitm.logger import Colors
@@ -41,7 +41,7 @@ class UdpProxy:
         self.target_ip = target_ip
         self.target_port = target_port
         self.buf_size = buf_size
-        self.pair_list: List[List[Tuple[str, int]]] = []
+        self.pair_list: list[list[tuple[str, int]]] = []
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.listen_ip, self.listen_port))
 
@@ -61,7 +61,7 @@ class UdpProxy:
         timed_thread.daemon = True
         timed_thread.start()
 
-    def check_pairing(self, addr: Tuple[str, int]) -> Tuple[str, int]:
+    def check_pairing(self, addr: tuple[str, int]) -> tuple[str, int]:
         """
         Get the destination address to forward incoming messages to.
 

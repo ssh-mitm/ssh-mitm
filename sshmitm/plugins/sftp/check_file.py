@@ -2,7 +2,6 @@ import logging
 import os
 import uuid
 import zipfile
-from typing import Optional, Type, Union
 
 import paramiko
 from paramiko import SFTPAttributes
@@ -28,9 +27,7 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
 
     class SFTPInterface(SFTPProxyServerInterface):
 
-        def open(
-            self, path: str, flags: int, attr: SFTPAttributes
-        ) -> Union[SFTPHandle, int]:
+        def open(self, path: str, flags: int, attr: SFTPAttributes) -> SFTPHandle | int:
             logging.info(
                 "open from check_file with: path=%s flags=%s attr=%s", path, flags, attr
             )
@@ -49,16 +46,16 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
                     self, self.session, sftp_handler, path, flags, attr, use_buffer=True
                 )
 
-            except (OSError, IOError) as exc:
+            except OSError as exc:
                 logging.exception("Error")
-                return paramiko.SFTPServer.convert_errno(exc.errno)
+                return paramiko.SFTPServer.convert_errno(exc.errno or 0)
             except Exception:  # pylint: disable=broad-exception-caught
                 logging.exception("Error")
                 return paramiko.sftp.SFTP_FAILURE
             return fobj
 
     @classmethod
-    def get_interface(cls) -> Optional[Type[BaseSFTPServerInterface]]:
+    def get_interface(cls) -> type[BaseSFTPServerInterface] | None:
         return cls.SFTPInterface
 
     def check_file(self) -> bool:
@@ -98,7 +95,7 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
         super().close()
 
     def handle_data(
-        self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None
+        self, data: bytes, *, offset: int | None = None, length: int | None = None
     ) -> bytes:
         del offset
         del length

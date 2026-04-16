@@ -1,7 +1,7 @@
 import logging
 import os
 import uuid
-from typing import BinaryIO, Optional
+from typing import BinaryIO
 
 from sshmitm.forwarders.sftp import SFTPBaseHandle, SFTPHandlerPlugin
 
@@ -24,7 +24,7 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
         self.file_id = str(uuid.uuid4())
         self.sftp_storage_dir = None
         self.output_path = None
-        self.out_file: Optional[BinaryIO] = None
+        self.out_file: BinaryIO | None = None
 
         if self.sftp.session.session_log_dir and self.args.store_sftp_files:
             self.sftp_storage_dir = os.path.join(
@@ -45,7 +45,7 @@ class SFTPHandlerStoragePlugin(SFTPHandlerPlugin):
             self.out_file.close()
 
     def handle_data(
-        self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None
+        self, data: bytes, *, offset: int | None = None, length: int | None = None
     ) -> bytes:
         del offset
         del length

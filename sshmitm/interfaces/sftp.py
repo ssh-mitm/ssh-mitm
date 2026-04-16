@@ -1,5 +1,5 @@
 import logging
-from typing import TYPE_CHECKING, List, Union, cast
+from typing import TYPE_CHECKING, cast
 
 import paramiko
 from paramiko.sftp import SFTP_NO_SUCH_FILE
@@ -42,20 +42,20 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             return paramiko.sftp.SFTP_FAILURE
         return self.session.sftp_client.chown(path, attr.st_uid, attr.st_gid)
 
-    def list_folder(self, path: str) -> Union[List[SFTPAttributes], int]:
+    def list_folder(self, path: str) -> list[SFTPAttributes] | int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
-        return self.session.sftp_client.listdir_attr(path)
+        return cast("list[SFTPAttributes]", self.session.sftp_client.listdir_attr(path))
 
-    def lstat(self, path: str) -> Union[SFTPAttributes, int]:
+    def lstat(self, path: str) -> SFTPAttributes | int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
         try:
-            return self.session.sftp_client.lstat(path)
+            return cast("SFTPAttributes", self.session.sftp_client.lstat(path))
         except FileNotFoundError:
             logging.debug("File %s not found", path)
             return SFTP_NO_SUCH_FILE
@@ -69,9 +69,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             return self.session.sftp_client.mkdir(path)
         return self.session.sftp_client.mkdir(path, attr.st_mode)
 
-    def open(
-        self, path: str, flags: int, attr: SFTPAttributes
-    ) -> Union[SFTPHandle, int]:
+    def open(self, path: str, flags: int, attr: SFTPAttributes) -> SFTPHandle | int:
         try:
             self.session.sftp_client_ready.wait()
             if self.session.sftp_client is None:
@@ -83,20 +81,20 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             fobj = sftp_file_handle(self, self.session, sftp_handler, path, flags, attr)
             fobj.open_remote_file()
 
-        except (OSError, IOError) as exc:
+        except OSError as exc:
             logging.exception("Error")
-            return paramiko.SFTPServer.convert_errno(exc.errno)
+            return paramiko.SFTPServer.convert_errno(exc.errno or 0)
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error")
             return paramiko.sftp.SFTP_FAILURE
         return fobj
 
-    def readlink(self, path: str) -> Union[str, int]:
+    def readlink(self, path: str) -> str | int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
-        return self.session.sftp_client.readlink(path)
+        return cast("str", self.session.sftp_client.readlink(path))
 
     def remove(self, path: str) -> int:
         self.session.sftp_client_ready.wait()
@@ -119,13 +117,13 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             raise MissingClient(msg)
         return self.session.sftp_client.rmdir(path)
 
-    def stat(self, path: str) -> Union[SFTPAttributes, int]:
+    def stat(self, path: str) -> SFTPAttributes | int:
         self.session.sftp_client_ready.wait()
         if self.session.sftp_client is None:
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
         try:
-            return self.session.sftp_client.stat(path)
+            return cast("SFTPAttributes", self.session.sftp_client.stat(path))
         except FileNotFoundError:
             logging.debug("File %s not found", path)
             return SFTP_NO_SUCH_FILE

@@ -1,24 +1,12 @@
 import logging
-from enum import Enum
 from typing import TYPE_CHECKING, Optional
 
 from paramiko.pkey import PKey
 
-from sshmitm.clients.ssh import SSHClient
+from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 
 if TYPE_CHECKING:
     import sshmitm
-
-
-class AuthenticationMethod(Enum):
-    """
-    An enumeration of possible authentication methods that can be
-    used to connect to a remote host.
-    """
-
-    PASSWORD = "password"  # nosec # noqa: S105
-    PUBLICKEY = "publickey"
-    AGENT = "agent"
 
 
 class NetconfClient(SSHClient):
@@ -39,16 +27,16 @@ class NetconfClient(SSHClient):
         host: str,
         port: int,
         method: AuthenticationMethod,
-        password: Optional[str],
+        password: str | None,
         user: str,
-        key: Optional[PKey],
+        key: PKey | None,
         session: "sshmitm.session.Session",
     ) -> None:
         super().__init__(host, port, method, password, user, key, session)
         self.subsystem_count = 0
 
     @classmethod
-    def from_client(cls, ssh_client: Optional[SSHClient]) -> Optional["NetconfClient"]:
+    def from_client(cls, ssh_client: SSHClient | None) -> Optional["NetconfClient"]:
         """
         Create an NetconfClient instance from an SSHClient instance.
 
@@ -89,3 +77,7 @@ class NetconfClient(SSHClient):
         :return: Whether the netconf client is running.
         """
         return self.subsystem_count > 0
+
+    def close(self) -> None:
+        if self.transport is not None:
+            self.transport.close()

@@ -25,7 +25,7 @@ the program will exit with exit code 1.
 import argparse
 import logging
 import sys
-from typing import NoReturn, Optional, cast
+from typing import NoReturn, cast
 
 try:
     import tkinter as tk
@@ -37,9 +37,7 @@ except ImportError:
     TKINTER_IMPORTED = False
 
 
-def ask_pass(
-    primary_message: str, secondary_message: Optional[str] = None
-) -> Optional[str]:
+def ask_pass(primary_message: str, secondary_message: str | None = None) -> str | None:
     """
     This function displays a dialog box for the user to enter a password.
      The dialog box has a primary message, and an optional secondary message.
@@ -57,7 +55,7 @@ def ask_pass(
     return None
 
 
-def confirm(primary_message: str, secondary_message: Optional[str] = None) -> bool:
+def confirm(primary_message: str, secondary_message: str | None = None) -> bool:
     """
     Confirms a question with yes or no answer.
 
@@ -88,7 +86,7 @@ def main() -> NoReturn:
     if primary_message == "":
         primary_message = "ssh-askpass"
 
-    secondary_message: Optional[str] = "\n".join(lines[1:]).strip()
+    secondary_message: str | None = "\n".join(lines[1:]).strip()
     if secondary_message == "":
         secondary_message = None
 

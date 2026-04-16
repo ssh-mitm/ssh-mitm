@@ -17,7 +17,7 @@ process_data: This method stores the data transmitted during SCP file transfer t
 import logging
 import os
 import uuid
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 from sshmitm.forwarders.scp import SCPForwarder
 
@@ -46,7 +46,7 @@ class SCPStorageForwarder(SCPForwarder):
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session)
-        self.file_id: Optional[str] = None
+        self.file_id: str | None = None
         self.scp_storage_dir = None
         if self.session.session_log_dir:
             self.scp_storage_dir = os.path.join(self.session.session_log_dir, "scp")

@@ -1,9 +1,9 @@
 import logging
 from socket import socket
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import paramiko
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 
 from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
 from sshmitm.logger import Colors
@@ -11,6 +11,7 @@ from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 if TYPE_CHECKING:
     import sshmitm
+    from sshmitm.interfaces.server import ServerInterface
 
 
 class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
@@ -32,8 +33,8 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
     def __init__(
         self,
         session: "sshmitm.session.Session",
-        server_interface: "sshmitm.interfaces.server.ServerInterface",
-        destination: Optional[Tuple[str, int]],
+        server_interface: "ServerInterface",
+        destination: tuple[str, int] | None,
     ) -> None:
         super().__init__(session, server_interface, destination)
         self.tcpserver = TCPServerThread(
@@ -53,9 +54,9 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
 
     def handle_request(
         self,
-        listenaddr: Tuple[str, int],
-        client: Union[socket, paramiko.Channel],
-        addr: Tuple[str, int],
+        listenaddr: tuple[str, int],
+        client: socket | paramiko.Channel,
+        addr: tuple[str, int],
     ) -> None:
         del listenaddr  # unused arguments
         try:

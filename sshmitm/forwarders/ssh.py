@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Optional
 
 import paramiko
 
@@ -9,7 +8,7 @@ from sshmitm.forwarders.base import BaseForwarder
 
 class SSHBaseForwarder(BaseForwarder):  # pylint: disable=abstract-method
     @property
-    def client_channel(self) -> Optional[paramiko.Channel]:
+    def client_channel(self) -> paramiko.Channel | None:
         return self.session.ssh_channel
 
     def check_if_channels_are_closed(self) -> bool:

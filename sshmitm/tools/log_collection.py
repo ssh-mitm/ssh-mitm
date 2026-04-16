@@ -2,8 +2,9 @@
 import datetime
 import hashlib
 import logging
+from collections.abc import Sequence
 from threading import Thread
-from typing import Optional
+from typing import Any
 
 import requests
 
@@ -19,7 +20,7 @@ class LogForwarder:
         client_port: int,
         server_ip: str,
         server_port: int,
-        log_webhook_dest: Optional[str] = None,
+        log_webhook_dest: str | None = None,
     ) -> None:
         self.client_ip = client_ip
         self.client_port = client_port
@@ -28,29 +29,29 @@ class LogForwarder:
 
         self.log_webhook_dest = log_webhook_dest
 
-        self.username = None
-        self.password = None
-        self.cipher = None
+        self.username: str | None = None
+        self.password: str | None = None
+        self.cipher: str | None = None
 
-        self.server_server_extensions = None
-        self.server_proto_version = None
-        self.server_software_version = None
-        self.server_preferred_ciphers = None
-        self.server_preferred_kex = None
-        self.server_preferred_macs = None
-        self.server_preferred_compression = None
-        self.server_hassh = None
+        self.server_server_extensions: dict[str, bytes] | None = None
+        self.server_proto_version: str | None = None
+        self.server_software_version: str | None = None
+        self.server_preferred_ciphers: str | None = None
+        self.server_preferred_kex: str | None = None
+        self.server_preferred_macs: str | None = None
+        self.server_preferred_compression: str | None = None
+        self.server_hassh: str | None = None
 
-        self.client_server_extensions = None
-        self.client_proto_version = None
-        self.client_software_version = None
-        self.client_preferred_ciphers = None
-        self.client_preferred_kex = None
-        self.client_preferred_macs = None
-        self.client_preferred_compression = None
-        self.client_hassh = None
+        self.client_server_extensions: dict[str, bytes] | None = None
+        self.client_proto_version: str | None = None
+        self.client_software_version: str | None = None
+        self.client_preferred_ciphers: str | None = None
+        self.client_preferred_kex: str | None = None
+        self.client_preferred_macs: str | None = None
+        self.client_preferred_compression: str | None = None
+        self.client_hassh: str | None = None
 
-    def set_credentials(self, username: str, password: str) -> None:
+    def set_credentials(self, username: str, password: str | None) -> None:
         self.username = username
         self.password = password
 
@@ -59,13 +60,13 @@ class LogForwarder:
 
     def set_server_transport_metadata(
         self,
-        server_extensions: str,
+        server_extensions: dict[str, bytes],
         proto_version: str,
         software_version: str,
-        preferred_ciphers: tuple,
-        preferred_kex: tuple,
-        preferred_macs: tuple,
-        preferred_compression: tuple,
+        preferred_ciphers: Sequence[str],
+        preferred_kex: Sequence[str],
+        preferred_macs: Sequence[str],
+        preferred_compression: Sequence[str],
     ) -> None:
         self.server_server_extensions = server_extensions
         self.server_proto_version = proto_version
@@ -77,20 +78,18 @@ class LogForwarder:
         # hassh as defined here: https://github.com/salesforce/hassh
         # ruff: noqa: S324
         self.server_hassh = hashlib.md5(  # nosec
-            f"{self.server_preferred_ciphers};{self.server_preferred_kex};{self.server_preferred_macs};{self.server_preferred_compression}".encode(
-                "utf-8"
-            )
+            f"{self.server_preferred_ciphers};{self.server_preferred_kex};{self.server_preferred_macs};{self.server_preferred_compression}".encode()
         ).hexdigest()
 
     def set_client_transport_metadata(
         self,
-        server_extensions: str,
+        server_extensions: dict[str, bytes],
         proto_version: str,
         software_version: str,
-        preferred_ciphers: tuple,
-        preferred_kex: tuple,
-        preferred_macs: tuple,
-        preferred_compression: tuple,
+        preferred_ciphers: Sequence[str],
+        preferred_kex: Sequence[str],
+        preferred_macs: Sequence[str],
+        preferred_compression: Sequence[str],
     ) -> None:
         self.client_server_extensions = server_extensions
         self.client_proto_version = proto_version
@@ -102,20 +101,18 @@ class LogForwarder:
         # hassh as defined here: https://github.com/salesforce/hassh
         # ruff: noqa: S324
         self.client_hassh = hashlib.md5(  # nosec
-            f"{self.client_preferred_ciphers};{self.client_preferred_kex};{self.client_preferred_macs};{self.client_preferred_compression}".encode(
-                "utf-8"
-            )
+            f"{self.client_preferred_ciphers};{self.client_preferred_kex};{self.client_preferred_macs};{self.client_preferred_compression}".encode()
         ).hexdigest()
 
     def __build_payload(
         self,
         event_outcome: str,
-        client_msg: Optional[str] = None,
-        client_msg_err: Optional[str] = None,
-        server_msg: Optional[str] = None,
-        server_msg_err: Optional[str] = None,
-    ) -> dict:
-        current_timestamp = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
+        client_msg: str | None = None,
+        client_msg_err: str | None = None,
+        server_msg: str | None = None,
+        server_msg_err: str | None = None,
+    ) -> dict[str, Any]:
+        current_timestamp = datetime.datetime.now(tz=datetime.UTC).isoformat()
         return {
             # Using current timestamp in @timestamp, because we don't have access to the actual creation timestamp of the ssh action from the source side.
             "@timestamp": current_timestamp,
@@ -182,7 +179,9 @@ class LogForwarder:
         )
         thread.start()
 
-    def forward_server_msg(self, server_msg: str, client_msg: str) -> None:
+    def forward_server_msg(
+        self, server_msg: str, client_msg: str | None = None
+    ) -> None:
         if self.log_webhook_dest is None:
             return
 
@@ -221,7 +220,7 @@ class LogForwarder:
         thread.start()
 
     def forward_server_error_message(
-        self, client_msg: str, server_msg_err: str
+        self, client_msg: str | None = None, server_msg_err: str = ""
     ) -> None:
         if self.log_webhook_dest is None:
             return
@@ -241,7 +240,7 @@ class LogForwarder:
         thread.start()
 
     @staticmethod
-    def __send_payload(webhook_dst: str, payload: dict) -> None:
+    def __send_payload(webhook_dst: str, payload: dict[str, Any]) -> None:
         """
         Send the payload to the webhook destination.
         """

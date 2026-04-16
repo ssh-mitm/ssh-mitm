@@ -1,7 +1,8 @@
 import logging
 import re
 import time
-from typing import TYPE_CHECKING, Callable, Optional
+from collections.abc import Callable
+from typing import TYPE_CHECKING
 
 import paramiko
 from paramiko.common import cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_REQUEST
@@ -21,7 +22,7 @@ class SCPBaseForwarder(BaseForwarder):
         self.server_exit_code_received = False
 
     @property
-    def client_channel(self) -> Optional[paramiko.Channel]:
+    def client_channel(self) -> paramiko.Channel | None:
         return self.session.scp_channel
 
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
@@ -173,7 +174,7 @@ class SCPBaseForwarder(BaseForwarder):
         self.close_session_with_status(channel=channel, status=None)
 
     def close_session_with_status(
-        self, channel: paramiko.Channel, status: Optional[int]
+        self, channel: paramiko.Channel, status: int | None
     ) -> None:
         # pylint: disable=protected-access
         if channel.closed:
@@ -212,8 +213,8 @@ class SCPForwarder(SCPBaseForwarder):
         self.bytes_remaining = 0
         self.bytes_to_write = 0
 
-        self.file_command: Optional[str] = None
-        self.file_mode: Optional[str] = None
+        self.file_command: str | None = None
+        self.file_mode: str | None = None
         self.file_size: int = 0
         self.file_name: str = ""
 

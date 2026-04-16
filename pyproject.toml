@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ssh-mitm"
-dynamic = ["version", "dependencies"]
+dynamic = ["version", "dependencies", "optional-dependencies"]
 authors = [
     {name = "SSH-MITM Dev-Team", email = "support@ssh-mitm.at"}
 ]
@@ -24,8 +24,6 @@ keywords = [
 ]
 classifiers = [
     "Programming Language :: Python :: 3",
-    "Programming Language :: Python :: 3.9",
-    "Programming Language :: Python :: 3.10",
     "Programming Language :: Python :: 3.11",
     "Programming Language :: Python :: 3.12",
     "Programming Language :: Python :: 3.13",
@@ -34,7 +32,7 @@ classifiers = [
     "Topic :: System :: Networking",
     "Development Status :: 5 - Production/Stable",
 ]
-requires-python = ">= 3.9"
+requires-python = ">= 3.11"
 
 [project.urls]
 Homepage = "https://www.ssh-mitm.at"
@@ -93,6 +91,9 @@ path = "sshmitm/__init__.py"
 [tool.hatch.metadata.hooks.requirements_txt]
 files = ["requirements.in"]
 
+[tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
+production = ["requirements.txt"]
+
 [tool.hatch.build]
 include = [
     "requirements.in",
@@ -119,7 +120,7 @@ check = [
     "flake8 sshmitm",
     "pylint sshmitm",
     "ruff check sshmitm",
-    #"- mypy sshmitm",
+    "mypy sshmitm",
 ]
 
 [tool.hatch.envs.docs]
@@ -200,7 +201,6 @@ ignore = [
     "T201",    # `print` found
     "TRY301",  # Abstract `raise` to an inner function
     "TRY400",  # Use `logging.exception` instead of `logging.error`
-    "UP",      # pyupgrade (UP) relevant errors
 ]
 [tool.ruff.lint.per-file-ignores]
 "sshmitm/workarounds/monkeypatch.py" = ["ALL"]

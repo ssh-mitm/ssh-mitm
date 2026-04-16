@@ -20,7 +20,7 @@ to remote servers, execute commands, and transfer files.
 
 import logging
 from enum import Enum
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import paramiko
 import paramiko.hostkeys
@@ -72,24 +72,24 @@ class SSHClient(BaseSSHClient):
         host: str,
         port: int,
         method: AuthenticationMethod,
-        password: Optional[str],
+        password: str | None,
         user: str,
-        key: Optional[PKey],
+        key: PKey | None,
         session: "sshmitm.session.Session",
-        fingerprints: Optional[str] = None,
+        fingerprints: str | None = None,
         disable_fingerprint_warning: bool = False,
     ) -> None:
         super().__init__()
-        self.session: "sshmitm.session.Session" = session
+        self.session: sshmitm.session.Session = session
         self.session.register_session_thread()
         self.host: str = host
         self.port: int = port
         self.method: AuthenticationMethod = method
         self.user: str = user
-        self.password: Optional[str] = password
-        self.agent: Optional[AgentProxy] = self.session.agent
-        self.key: Optional[PKey] = key
-        self.transport: Optional[paramiko.Transport] = None
+        self.password: str | None = password
+        self.agent: AgentProxy | None = self.session.agent
+        self.key: PKey | None = key
+        self.transport: paramiko.Transport | None = None
         self.connected: bool = False
         self.fingerprints: list[str] = [
             f.strip() for f in (fingerprints or "").split(",") if f.strip()

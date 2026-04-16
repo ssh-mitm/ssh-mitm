@@ -1,9 +1,9 @@
 # Module `formatter` shadows a Python standard-library module
 
 import argparse
-from typing import Any, List, Optional
+from typing import Any
 
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 
 from sshmitm.logger import Colors
 
@@ -19,7 +19,7 @@ class ModuleFormatter(argparse.HelpFormatter):
             self,
             formatter: argparse.HelpFormatter,
             parent: Any,
-            heading: Optional[str] = None,
+            heading: str | None = None,
         ) -> None:
             self.formatter = formatter
             self.parent = parent
@@ -52,6 +52,6 @@ class ModuleFormatter(argparse.HelpFormatter):
             # join the section-initial newline, the heading and the help
             return join(["\n", heading, item_help, "\n"])
 
-    def _split_lines(self, text: str, width: int) -> List[str]:
+    def _split_lines(self, text: str, width: int) -> list[str]:
         del width
         return text.splitlines()
