@@ -11,6 +11,7 @@ from sshmitm.moduleparser import BaseModule
 
 if TYPE_CHECKING:
     import sshmitm
+    from sshmitm.interfaces.server import ServerInterface
     from sshmitm.session import Session  # noqa: F401
 
 
@@ -168,7 +169,7 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     def __init__(
         self,
         session: "sshmitm.session.Session",
-        server_interface: "sshmitm.interfaces.server.ServerInterface",
+        server_interface: "ServerInterface",
         destination: tuple[str, int] | None,
     ) -> None:
         super(RemotePortForwardingBaseForwarder, self).__init__()

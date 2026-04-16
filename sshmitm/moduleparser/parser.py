@@ -95,7 +95,7 @@ class ModuleParser(
             if entry_point.name in self._registered_subcommands:
                 continue
             subcommand_cls = cast("type[SubCommand]", entry_point.load())
-            subcommand = subcommand_cls(entry_point.name, self.subcommand)
+            subcommand = subcommand_cls(entry_point.name, self.subcommand)  # type: ignore[arg-type]
             subcommand.register_arguments()
             self._registered_subcommands[entry_point.name] = subcommand
 

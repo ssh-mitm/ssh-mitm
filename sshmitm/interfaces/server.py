@@ -1,12 +1,12 @@
 import logging
 import os
 import struct
-from typing import TYPE_CHECKING, Any
+from typing import TYPE_CHECKING, Any, cast
 
 import paramiko
 from paramiko.message import Message
 from paramiko.pkey import PKey
-from paramiko.sftp import _VERSION, CMD_INIT, CMD_VERSION, SFTPError
+from paramiko.sftp import CMD_INIT, CMD_VERSION, SFTPError
 
 from sshmitm.clients.netconf import NetconfClient
 from sshmitm.clients.sftp import SFTPClient
@@ -20,6 +20,9 @@ if TYPE_CHECKING:
         RemotePortForwardingForwarder,
         TunnelForwarder,
     )
+
+
+_VERSION = 3
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
@@ -508,14 +511,14 @@ class ProxySFTPServer(paramiko.SFTPServer):
         # original implementaion:
         # https://github.com/paramiko/paramiko/blob/d9ab89a0f8ae37a25d44565d5eb03a5d93fed5b9/paramiko/sftp.py#L153
 
-        t, data = self._read_packet()
+        t, data = self._read_packet()  # type: ignore[attr-defined]
         if t != CMD_INIT:
             raise SFTPError("Incompatible sftp protocol")  # noqa: TRY003,EM101
         version = struct.unpack(">I", data[:4])[0]
         msg = Message()
         msg.add_int(_VERSION)
-        self._send_packet(CMD_VERSION, msg)
-        return version
+        self._send_packet(CMD_VERSION, msg)  # type: ignore[attr-defined]
+        return cast("int", version)
 
     def start_subsystem(
         self, name: str, transport: paramiko.Transport, channel: paramiko.Channel

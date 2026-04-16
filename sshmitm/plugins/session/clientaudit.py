@@ -13,7 +13,6 @@ from sshmitm.plugins.session.server_host_key_algorithms import (
 )
 
 if TYPE_CHECKING:
-    import sshmitm
     from sshmitm.plugins.session.key_negotiation import KeyNegotiationData
 
 
@@ -73,7 +72,7 @@ class SSHClientAudit:
 
     def __init__(
         self,
-        key_negotiation_data: "sshmitm.plugins.session.key_negotiation.KeyNegotiationData",
+        key_negotiation_data: "KeyNegotiationData",
         client_version: str,
         client_name: str | None = None,
         client_info: dict[str, dict[str, Any]] | None = None,

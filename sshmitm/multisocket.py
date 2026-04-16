@@ -89,7 +89,7 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
         family = socket.AF_UNSPEC
     if reuse_addr is None:
         reuse_addr = os.name == "posix" and sys.platform != "cygwin"
-    err = None
+    err: OSError | None = None
     info = socket.getaddrinfo(
         host, port, family, socket.SOCK_STREAM, 0, socket.AI_PASSIVE
     )
@@ -98,7 +98,7 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
         # preferred over IPv6
         info.sort(key=lambda x: x[0] == socket.AF_INET, reverse=True)
     for res in info:
-        res_address_family, socktype, proto, _, res_socket_address = res
+        res_address_family, socktype, proto, _canonname, res_socket_address = res
         sock = None
         try:
             sock = socket.socket(res_address_family, socktype, proto)
@@ -119,8 +119,8 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
                     sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
             sock.bind(res_socket_address)
             sock.listen(queue_size)
-        except OSError as _:
-            err = _
+        except OSError as exc:
+            err = exc
             if sock is not None:
                 sock.close()
         else:

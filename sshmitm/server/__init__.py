@@ -202,7 +202,7 @@ class SSHProxyServer:
         if not self.key_file:
             try:
                 self._hostkey = self.key_algorithm_class.generate(  # type: ignore[union-attr]
-                    bits=key_algorithm_bits
+                    bits=key_algorithm_bits or 2048
                 )
             except ValueError as err:
                 logging.error(str(err))

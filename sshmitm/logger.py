@@ -5,7 +5,7 @@ from datetime import UTC, datetime
 from typing import Any
 
 from colored.colored import stylize
-from pythonjsonlogger import jsonlogger
+from pythonjsonlogger.json import JsonFormatter
 from rich._emoji_codes import EMOJI
 from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
@@ -70,7 +70,7 @@ class FailSaveLogStream:
         )
 
 
-class PlainJsonFormatter(jsonlogger.JsonFormatter):
+class PlainJsonFormatter(JsonFormatter):
     def process_log_record(self, log_data: dict[str, Any]) -> dict[str, Any]:
         log_data["message"] = log_data["message"].strip()
         return log_data

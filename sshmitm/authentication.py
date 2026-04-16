@@ -237,11 +237,12 @@ class RemoteCredentials:
         with open(path, encoding="utf-8") as f:
             f.read()
 
-        for key_cls in [
+        key_classes: list[type[paramiko.PKey]] = [
             paramiko.Ed25519Key,
             paramiko.ECDSAKey,
             paramiko.RSAKey,
-        ]:
+        ]
+        for key_cls in key_classes:
             try:
                 return key_cls.from_private_key_file(path, password=passphrase)
             except (  # `try`-`except` within a loop incurs performance overhead

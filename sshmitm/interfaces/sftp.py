@@ -47,7 +47,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         if self.session.sftp_client is None:
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
-        return self.session.sftp_client.listdir_attr(path)
+        return cast("list[SFTPAttributes]", self.session.sftp_client.listdir_attr(path))
 
     def lstat(self, path: str) -> SFTPAttributes | int:
         self.session.sftp_client_ready.wait()
@@ -55,7 +55,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
         try:
-            return self.session.sftp_client.lstat(path)
+            return cast("SFTPAttributes", self.session.sftp_client.lstat(path))
         except FileNotFoundError:
             logging.debug("File %s not found", path)
             return SFTP_NO_SUCH_FILE
@@ -83,7 +83,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
 
         except OSError as exc:
             logging.exception("Error")
-            return paramiko.SFTPServer.convert_errno(exc.errno)
+            return paramiko.SFTPServer.convert_errno(exc.errno or 0)
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error")
             return paramiko.sftp.SFTP_FAILURE
@@ -94,7 +94,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
         if self.session.sftp_client is None:
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
-        return self.session.sftp_client.readlink(path)
+        return cast("str", self.session.sftp_client.readlink(path))
 
     def remove(self, path: str) -> int:
         self.session.sftp_client_ready.wait()
@@ -123,7 +123,7 @@ class SFTPProxyServerInterface(BaseSFTPServerInterface):
             msg = "self.session.sftp_client is None!"
             raise MissingClient(msg)
         try:
-            return self.session.sftp_client.stat(path)
+            return cast("SFTPAttributes", self.session.sftp_client.stat(path))
         except FileNotFoundError:
             logging.debug("File %s not found", path)
             return SFTP_NO_SUCH_FILE

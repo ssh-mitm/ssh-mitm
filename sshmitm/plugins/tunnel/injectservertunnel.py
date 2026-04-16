@@ -11,6 +11,7 @@ from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 if TYPE_CHECKING:
     import sshmitm
+    from sshmitm.interfaces.server import ServerInterface
 
 
 class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
@@ -32,7 +33,7 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
     def __init__(
         self,
         session: "sshmitm.session.Session",
-        server_interface: "sshmitm.interfaces.server.ServerInterface",
+        server_interface: "ServerInterface",
         destination: tuple[str, int] | None,
     ) -> None:
         super().__init__(session, server_interface, destination)

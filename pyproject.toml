@@ -120,7 +120,7 @@ check = [
     "flake8 sshmitm",
     "pylint sshmitm",
     "ruff check sshmitm",
-    #"- mypy sshmitm",
+    "mypy sshmitm",
 ]
 
 [tool.hatch.envs.docs]

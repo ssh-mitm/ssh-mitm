@@ -48,7 +48,7 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
 
             except OSError as exc:
                 logging.exception("Error")
-                return paramiko.SFTPServer.convert_errno(exc.errno)
+                return paramiko.SFTPServer.convert_errno(exc.errno or 0)
             except Exception:  # pylint: disable=broad-exception-caught
                 logging.exception("Error")
                 return paramiko.sftp.SFTP_FAILURE

@@ -1,7 +1,7 @@
 import io
 import logging
 import os
-from typing import TYPE_CHECKING, cast
+from typing import TYPE_CHECKING
 
 import paramiko
 from paramiko.sftp_attr import SFTPAttributes
@@ -27,7 +27,7 @@ class SFTPHandlerBasePlugin(BaseModule):
 
     @classmethod
     def get_file_handle(cls) -> type["SFTPBaseHandle"]:
-        return cast("type[SFTPBaseHandle]", SFTPBaseHandle)
+        return SFTPBaseHandle
 
     def close(self) -> None:
         pass
@@ -67,13 +67,13 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
 
         self.use_buffer = use_buffer
         self.buffer = io.BytesIO()
-        self.writefile: paramiko.sftp_file.SFTPFile | None = (
+        self.writefile: paramiko.sftp_file.SFTPFile | io.BytesIO | None = (
             self.buffer if use_buffer else None
         )
-        self.readfile: paramiko.sftp_file.SFTPFile | None = (
+        self.readfile: paramiko.sftp_file.SFTPFile | io.BytesIO | None = (
             self.buffer if use_buffer else None
         )
-        self.remote_file = None
+        self.remote_file: paramiko.sftp_file.SFTPFile | None = None
 
     def open_remote_file(self) -> int | None:
         # Code aus dem StubSFTPServer der Paramiko Demo auf GitHub

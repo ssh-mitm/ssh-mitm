@@ -27,7 +27,7 @@ import logging
 import os
 import socket
 import threading
-from multiprocessing import Condition
+from threading import Condition
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Self, cast
 from uuid import uuid4
@@ -48,6 +48,9 @@ if TYPE_CHECKING:
     from paramiko.pkey import PKey
 
     import sshmitm
+    import sshmitm.clients.netconf
+    import sshmitm.clients.sftp
+    import sshmitm.clients.ssh
     from sshmitm.interfaces.server import BaseServerInterface
     from sshmitm.server import SSHProxyServer  # noqa: F401
 
@@ -143,6 +146,7 @@ class Session(BaseSession):
 
         self.netconf_requested: bool = False
         self.netconf_channel: paramiko.Channel | None = None
+        self.netconf_command: bytes = b""
         self.netconf_client: sshmitm.clients.netconf.NetconfClient | None = None
         self.netconf_client_ready = threading.Event()
 
@@ -366,18 +370,21 @@ class Session(BaseSession):
         )
 
         # Username and password become available after authentication
-        self.log_forwarder.set_credentials(self.username, self.password)
-        self.log_forwarder.set_cipher(self.transport.remote_cipher)
+        self.log_forwarder.set_credentials(self.username, self.password or "")
+        self.log_forwarder.set_cipher(cast("str", self.transport.remote_cipher))  # type: ignore[attr-defined]
         # Set ssh transport metadata
-        self.log_forwarder.set_server_transport_metadata(
-            server_extensions=self.ssh_client.transport.server_extensions,
-            proto_version=self.ssh_client.transport.remote_version.split("-", 3)[1],
-            software_version=self.ssh_client.transport.remote_version.split("-", 3)[2],
-            preferred_ciphers=self.ssh_client.transport.preferred_ciphers,
-            preferred_kex=self.ssh_client.transport.preferred_kex,
-            preferred_macs=self.ssh_client.transport.preferred_macs,
-            preferred_compression=self.ssh_client.transport.preferred_compression,
-        )
+        if self.ssh_client is not None and self.ssh_client.transport is not None:
+            self.log_forwarder.set_server_transport_metadata(
+                server_extensions=self.ssh_client.transport.server_extensions,
+                proto_version=self.ssh_client.transport.remote_version.split("-", 3)[1],
+                software_version=self.ssh_client.transport.remote_version.split("-", 3)[
+                    2
+                ],
+                preferred_ciphers=self.ssh_client.transport.preferred_ciphers,
+                preferred_kex=self.ssh_client.transport.preferred_kex,
+                preferred_macs=self.ssh_client.transport.preferred_macs,
+                preferred_compression=self.ssh_client.transport.preferred_compression,
+            )
         self.log_forwarder.set_client_transport_metadata(
             server_extensions=self.transport.server_extensions,
             proto_version=self.transport.remote_version.split("-", 3)[1],

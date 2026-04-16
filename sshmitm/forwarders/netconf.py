@@ -38,12 +38,13 @@ class NetconfForwarder(NetconfBaseForwarder):
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
 
-        if self.client_channel.eof_received:
+        if self.client_channel is not None and self.client_channel.eof_received:
             logging.debug("client channel eof received")
             self.server_channel.shutdown_write()
         if self.server_channel.eof_received:
             logging.debug("server channel eof received")
-            self.client_channel.shutdown_write()
+            if self.client_channel is not None:
+                self.client_channel.shutdown_write()
 
         # Invoke the netconf subsystem on the server.
         self.server_channel.invoke_subsystem("netconf")
