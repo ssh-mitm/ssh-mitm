@@ -3,7 +3,7 @@
 import argparse
 from typing import Any
 
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 
 from sshmitm.logger import Colors
 

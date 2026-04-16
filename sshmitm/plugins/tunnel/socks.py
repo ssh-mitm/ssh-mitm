@@ -4,7 +4,7 @@ import sys
 from typing import TYPE_CHECKING, ClassVar
 
 import paramiko
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 
 from sshmitm.forwarders.tunnel import (
     BaseClientTunnelHandler,

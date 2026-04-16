@@ -4,7 +4,7 @@ import threading
 from datetime import UTC, datetime
 from typing import Any
 
-from colored.colored import stylize  # type: ignore[import-untyped]
+from colored.colored import stylize
 from pythonjsonlogger import jsonlogger
 from rich._emoji_codes import EMOJI
 from rich.highlighter import NullHighlighter

@@ -128,7 +128,7 @@ class SubCommand(ABC):
     def __init__(
         self, name: str, subcommand: "argparse._SubParsersAction[ModuleParser]"
     ) -> None:
-        self.parser = subcommand.add_parser(  # type: ignore[call-arg]
+        self.parser = subcommand.add_parser(
             name,
             allow_abbrev=False,
             help=self.docs(),

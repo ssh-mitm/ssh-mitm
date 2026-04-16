@@ -102,7 +102,7 @@ def main() -> None:
         Colors.stylize_func = False
         root_logger.handlers.clear()
         log_handler = logging.StreamHandler(stream=FailSaveLogStream(debug=args.debug))
-        formatter = PlainJsonFormatter()  # type: ignore[no-untyped-call]
+        formatter = PlainJsonFormatter()
         log_handler.setFormatter(formatter)
         root_logger.addHandler(log_handler)
     else:

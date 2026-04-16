@@ -2,7 +2,7 @@ import argparse
 from collections.abc import Sequence
 from typing import TYPE_CHECKING, Any
 
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 
 from sshmitm.logger import Colors
 from sshmitm.utils import metadata

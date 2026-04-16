@@ -3,7 +3,7 @@ import re
 from typing import TYPE_CHECKING
 
 import yaml
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 from paramiko import Transport, common
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException

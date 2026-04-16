@@ -3,7 +3,7 @@ from socket import socket
 from typing import TYPE_CHECKING
 
 import paramiko
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 
 from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
 from sshmitm.logger import Colors

@@ -7,7 +7,7 @@ import time
 from typing import TYPE_CHECKING
 
 import paramiko
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 
 from sshmitm.forwarders.ssh import SSHForwarder
 from sshmitm.logger import Colors

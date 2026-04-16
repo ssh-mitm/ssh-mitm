@@ -3,7 +3,7 @@ import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, cast
 
-from colored.colored import attr, fg  # type: ignore[import-untyped]
+from colored.colored import attr, fg
 from packaging import version
 from paramiko import ECDSAKey
 

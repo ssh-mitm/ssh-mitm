@@ -7,7 +7,7 @@ import time
 from binascii import hexlify
 from socket import socket
 
-from colored import attr, fg  # type: ignore[import-untyped]
+from colored import attr, fg
 from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey
 from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
@@ -201,7 +201,7 @@ class SSHProxyServer:
 
         if not self.key_file:
             try:
-                self._hostkey = self.key_algorithm_class.generate(  # type: ignore[attr-defined]
+                self._hostkey = self.key_algorithm_class.generate(  # type: ignore[union-attr]
                     bits=key_algorithm_bits
                 )
             except ValueError as err:
