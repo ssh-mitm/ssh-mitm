@@ -23,17 +23,12 @@ import argparse
 import inspect
 import logging
 import os
+from collections.abc import Sequence
 from importlib import import_module
 from typing import (
     TYPE_CHECKING,
     Any,
-    Dict,
-    List,
     Optional,
-    Sequence,
-    Set,
-    Tuple,
-    Type,
     cast,
 )
 
@@ -62,11 +57,11 @@ class ModuleParser(
         kwargs["formatter_class"] = ModuleFormatter
         super().__init__(*args, add_help=False, config=config, **kwargs)
         self.__kwargs = kwargs
-        self._extra_modules: List[Tuple[argparse.Action, type]] = []
-        self._module_parsers: Set[argparse.ArgumentParser] = {self}
+        self._extra_modules: list[tuple[argparse.Action, type]] = []
+        self._module_parsers: set[argparse.ArgumentParser] = {self}
         self.plugin_group = self.add_argument_group(self.config_section)
-        self.subcommand: Optional["argparse._SubParsersAction[ModuleParser]"] = None
-        self._registered_subcommands: Dict[str, SubCommand] = {}
+        self.subcommand: argparse.Action | None = None
+        self._registered_subcommands: dict[str, SubCommand] = {}
         self.add_config_arg()
 
     def add_config_arg(self) -> None:
@@ -99,7 +94,7 @@ class ModuleParser(
         ):
             if entry_point.name in self._registered_subcommands:
                 continue
-            subcommand_cls = cast("Type[SubCommand]", entry_point.load())
+            subcommand_cls = cast("type[SubCommand]", entry_point.load())
             subcommand = subcommand_cls(entry_point.name, self.subcommand)
             subcommand.register_arguments()
             self._registered_subcommands[entry_point.name] = subcommand
@@ -111,10 +106,10 @@ class ModuleParser(
         self,
         *,
         parsed_args: argparse.Namespace,
-        args: Optional[Sequence[str]],
-        namespace: Optional[argparse.Namespace],
-        modules: List[Tuple[argparse.Action, Type[BaseModule]]],
-    ) -> List[argparse.ArgumentParser]:
+        args: Sequence[str] | None,
+        namespace: argparse.Namespace | None,
+        modules: list[tuple[argparse.Action, type[BaseModule]]],
+    ) -> list[argparse.ArgumentParser]:
         modulelist = [
             getattr(parsed_args, m[0].dest)
             for m in modules
@@ -125,11 +120,11 @@ class ModuleParser(
     def _get_sub_modules(
         self,
         *,
-        args: Optional[Sequence[str]],
-        namespace: Optional[argparse.Namespace],
-        modules: Optional[List[Type[BaseModule]]],
-    ) -> List[argparse.ArgumentParser]:
-        moduleparsers: List[argparse.ArgumentParser] = []
+        args: Sequence[str] | None,
+        namespace: argparse.Namespace | None,
+        modules: list[type[BaseModule]] | None,
+    ) -> list[argparse.ArgumentParser]:
+        moduleparsers: list[argparse.ArgumentParser] = []
         if not modules:
             return moduleparsers
 
@@ -159,8 +154,8 @@ class ModuleParser(
 
     def _create_parser(
         self,
-        args: Optional[Sequence[str]] = None,
-        namespace: Optional[argparse.Namespace] = None,
+        args: Sequence[str] | None = None,
+        namespace: argparse.Namespace | None = None,
     ) -> "argparse.ArgumentParser":
         parsed_args_tuple = super().parse_known_args(args=args, namespace=namespace)
 
@@ -231,8 +226,8 @@ class ModuleParser(
 
     def parse_args(  # type: ignore[override]
         self,
-        args: Optional[Sequence[str]] = None,
-        namespace: Optional[argparse.Namespace] = None,
+        args: Sequence[str] | None = None,
+        namespace: argparse.Namespace | None = None,
     ) -> argparse.Namespace:
         parser = self._create_parser(args=args, namespace=namespace)
         args_namespace = parser.parse_args(args, namespace)
@@ -242,8 +237,8 @@ class ModuleParser(
 
     def parse_known_args(  # type: ignore[override]
         self,
-        args: Optional[Sequence[str]] = None,
-        namespace: Optional[argparse.Namespace] = None,
-    ) -> Tuple[argparse.Namespace, List[str]]:
+        args: Sequence[str] | None = None,
+        namespace: argparse.Namespace | None = None,
+    ) -> tuple[argparse.Namespace, list[str]]:
         parser = self._create_parser(args=args, namespace=namespace)
         return parser.parse_known_args(args, namespace)

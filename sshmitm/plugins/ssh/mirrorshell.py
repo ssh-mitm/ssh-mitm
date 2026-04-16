@@ -4,7 +4,7 @@ import select
 import socket
 import threading
 import time
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
@@ -20,7 +20,7 @@ if TYPE_CHECKING:
 class InjectServer(paramiko.ServerInterface):
     def __init__(self, server_channel: paramiko.channel.Channel) -> None:
         self.server_channel = server_channel
-        self.injector_channel: Optional[paramiko.channel.Channel] = None
+        self.injector_channel: paramiko.channel.Channel | None = None
 
     def check_auth_none(self, username: str) -> int:
         del username
@@ -90,7 +90,7 @@ class SSHMirrorForwarder(SSHForwarder):
                 self.args.ssh_mirrorshell_key
             )
 
-        self.sessionlog: Optional[TerminalLogFormat] = None
+        self.sessionlog: TerminalLogFormat | None = None
         if self.args.store_ssh_session and self.session.session_log_dir:
             try:
                 self.sessionlog = ScriptLogFormat(
@@ -106,9 +106,9 @@ class SSHMirrorForwarder(SSHForwarder):
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self.injector_sock.bind((self.args.ssh_mirrorshell_net, 0))
         self.injector_sock.listen(5)
-        self.inject_server: Optional[InjectServer] = None
+        self.inject_server: InjectServer | None = None
 
-        self.injector_client_sock: Optional[socket.socket] = None
+        self.injector_client_sock: socket.socket | None = None
 
         self.conn_thread = threading.Thread(target=self.injector_connect)
         self.conn_thread.start()
@@ -129,7 +129,7 @@ class SSHMirrorForwarder(SSHForwarder):
                 if len(readable) == 1 and readable[0] is self.injector_sock:
                     try:
                         self.injector_client_sock, _ = self.injector_sock.accept()
-                    except socket.error:
+                    except OSError:
                         break
 
                     mirror_transport = paramiko.Transport(self.injector_client_sock)

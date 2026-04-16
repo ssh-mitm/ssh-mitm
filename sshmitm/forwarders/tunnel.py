@@ -3,7 +3,7 @@ import select
 import threading
 import time
 from socket import socket
-from typing import TYPE_CHECKING, Optional, Tuple, Union
+from typing import TYPE_CHECKING
 
 import paramiko
 
@@ -23,8 +23,8 @@ class BaseClientTunnelHandler:
 class TunnelForwarder(threading.Thread):
     def __init__(
         self,
-        local_ch: Optional[Union[socket, paramiko.Channel]],
-        remote_ch: Optional[Union[socket, paramiko.Channel]],
+        local_ch: socket | paramiko.Channel | None,
+        remote_ch: socket | paramiko.Channel | None,
     ) -> None:
         super().__init__()
         self.local_ch = local_ch
@@ -84,7 +84,7 @@ class TunnelForwarder(threading.Thread):
         if self.remote_ch:
             self.close_channel(self.remote_ch)
 
-    def close_channel(self, channel: Union[socket, paramiko.Channel]) -> None:
+    def close_channel(self, channel: socket | paramiko.Channel) -> None:
         if not isinstance(channel, paramiko.Channel):  # socket.socket
             channel.close()
             return
@@ -111,8 +111,8 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
         self,
         session: "sshmitm.session.Session",
         chanid: int,
-        origin: Optional[Tuple[str, int]],
-        destination: Optional[Tuple[str, int]],
+        origin: tuple[str, int] | None,
+        destination: tuple[str, int] | None,
     ) -> None:
         self.session = session
         self.session.register_session_thread()
@@ -169,7 +169,7 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
         self,
         session: "sshmitm.session.Session",
         server_interface: "sshmitm.interfaces.server.ServerInterface",
-        destination: Optional[Tuple[str, int]],
+        destination: tuple[str, int] | None,
     ) -> None:
         super(RemotePortForwardingBaseForwarder, self).__init__()
         self.session = session
@@ -186,8 +186,8 @@ class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):
     def handler(
         self,
         channel: paramiko.Channel,
-        origin: Optional[Tuple[str, int]],
-        destination: Optional[Tuple[str, int]],
+        origin: tuple[str, int] | None,
+        destination: tuple[str, int] | None,
     ) -> None:
         try:
             logging.debug(

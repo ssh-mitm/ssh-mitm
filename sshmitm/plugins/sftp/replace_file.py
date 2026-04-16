@@ -1,6 +1,5 @@
 import logging
 import os
-from typing import Optional, Type, Union
 
 from paramiko import SFTPAttributes
 
@@ -13,7 +12,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
     """Replaces a SFTP transmitted File during transit"""
 
     class SFTPInterface(SFTPProxyServerInterface):
-        def lstat(self, path: str) -> Union[SFTPAttributes, int]:
+        def lstat(self, path: str) -> SFTPAttributes | int:
             self.session.sftp_client_ready.wait()
             args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
             if self.session.sftp_client is None:
@@ -26,11 +25,11 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
             stat_remote.st_size = stat_replace.st_size
             return stat_remote
 
-        def stat(self, path: str) -> Union[SFTPAttributes, int]:
+        def stat(self, path: str) -> SFTPAttributes | int:
             return self.lstat(path)
 
     @classmethod
-    def get_interface(cls) -> Optional[Type[BaseSFTPServerInterface]]:
+    def get_interface(cls) -> type[BaseSFTPServerInterface] | None:
         return cls.SFTPInterface
 
     @classmethod
@@ -63,7 +62,7 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
         self.replacement.close()
 
     def handle_data(
-        self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None
+        self, data: bytes, *, offset: int | None = None, length: int | None = None
     ) -> bytes:
         del data
         del offset

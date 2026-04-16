@@ -1,8 +1,8 @@
 import logging
 import sys
 import threading
-from datetime import datetime, timezone
-from typing import Any, Dict
+from datetime import UTC, datetime
+from typing import Any
 
 from colored.colored import stylize  # type: ignore[import-untyped]
 from pythonjsonlogger import jsonlogger
@@ -71,15 +71,15 @@ class FailSaveLogStream:
 
 
 class PlainJsonFormatter(jsonlogger.JsonFormatter):
-    def process_log_record(self, log_data: Dict[str, Any]) -> Dict[str, Any]:
+    def process_log_record(self, log_data: dict[str, Any]) -> dict[str, Any]:
         log_data["message"] = log_data["message"].strip()
         return log_data
 
     def add_fields(
         self,
-        log_data: Dict[str, Any],
+        log_data: dict[str, Any],
         record: logging.LogRecord,
-        message_dict: Dict[str, Any],
+        message_dict: dict[str, Any],
     ) -> None:
         super().add_fields(log_data, record, message_dict)
         log_data["tid"] = threading.get_native_id()
@@ -88,7 +88,5 @@ class PlainJsonFormatter(jsonlogger.JsonFormatter):
         session = getattr(THREAD_DATA, "session", None)
         log_data["sessionid"] = session.sessionid if session is not None else None
 
-        log_data["timestamp"] = datetime.now(timezone.utc).strftime(
-            "%Y-%m-%dT%H:%M:%S.%fZ"
-        )
+        log_data["timestamp"] = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         log_data["level"] = record.levelname

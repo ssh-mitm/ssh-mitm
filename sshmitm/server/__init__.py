@@ -6,7 +6,6 @@ import threading
 import time
 from binascii import hexlify
 from socket import socket
-from typing import List, Optional, Tuple, Type, Union
 
 from colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey
@@ -41,63 +40,63 @@ class SSHProxyServer:
         listen_address: str,
         listen_port: int,
         *,
-        key_file: Optional[str] = None,
+        key_file: str | None = None,
         key_algorithm: str = "rsa",
         key_length: int = 2048,
-        ssh_interface: Type[SSHBaseForwarder] = SSHForwarder,
-        scp_interface: Type[SCPBaseForwarder] = SCPForwarder,
-        netconf_interface: Type[NetconfBaseForwarder] = NetconfForwarder,
-        sftp_interface: Type[BaseSFTPServerInterface] = SFTPProxyServerInterface,
-        sftp_handler: Type[SFTPHandlerBasePlugin] = SFTPHandlerPlugin,
-        server_tunnel_interface: Type[
+        ssh_interface: type[SSHBaseForwarder] = SSHForwarder,
+        scp_interface: type[SCPBaseForwarder] = SCPForwarder,
+        netconf_interface: type[NetconfBaseForwarder] = NetconfForwarder,
+        sftp_interface: type[BaseSFTPServerInterface] = SFTPProxyServerInterface,
+        sftp_handler: type[SFTPHandlerBasePlugin] = SFTPHandlerPlugin,
+        server_tunnel_interface: type[
             RemotePortForwardingForwarder
         ] = RemotePortForwardingForwarder,
-        client_tunnel_interface: Type[
+        client_tunnel_interface: type[
             LocalPortForwardingForwarder
         ] = LocalPortForwardingForwarder,
-        authentication_interface: Type[BaseServerInterface] = ServerInterface,
-        authenticator: Type[Authenticator] = AuthenticatorPassThrough,
+        authentication_interface: type[BaseServerInterface] = ServerInterface,
+        authenticator: type[Authenticator] = AuthenticatorPassThrough,
         transparent: bool = False,
-        session_class: Type[Session] = Session,
-        banner_name: Optional[str] = None,
+        session_class: type[Session] = Session,
+        banner_name: str | None = None,
         debug: bool = False,
-        log_webhook_dest: Optional[str] = None,
+        log_webhook_dest: str | None = None,
     ) -> None:
-        self._threads: List[threading.Thread] = []
-        self._hostkey: Optional[PKey] = None
+        self._threads: list[threading.Thread] = []
+        self._hostkey: PKey | None = None
 
         self.listen_port = listen_port
         self.listen_address = listen_address
         self.running = False
 
-        self.key_file: Optional[str] = key_file
+        self.key_file: str | None = key_file
         self.key_algorithm: str = key_algorithm
-        self.key_algorithm_class: Optional[Type[PKey]] = None
+        self.key_algorithm_class: type[PKey] | None = None
         self.key_length: int = key_length
 
-        self.ssh_interface: Type[SSHBaseForwarder] = ssh_interface
-        self.scp_interface: Type[SCPBaseForwarder] = scp_interface
-        self.netconf_interface: Type[NetconfBaseForwarder] = netconf_interface
-        self.sftp_handler: Type[SFTPHandlerBasePlugin] = sftp_handler
-        self.sftp_interface: Type[BaseSFTPServerInterface] = (
+        self.ssh_interface: type[SSHBaseForwarder] = ssh_interface
+        self.scp_interface: type[SCPBaseForwarder] = scp_interface
+        self.netconf_interface: type[NetconfBaseForwarder] = netconf_interface
+        self.sftp_handler: type[SFTPHandlerBasePlugin] = sftp_handler
+        self.sftp_interface: type[BaseSFTPServerInterface] = (
             self.sftp_handler.get_interface() or sftp_interface
         )
-        self.server_tunnel_interface: Type[RemotePortForwardingForwarder] = (
+        self.server_tunnel_interface: type[RemotePortForwardingForwarder] = (
             server_tunnel_interface
         )
-        self.client_tunnel_interface: Type[LocalPortForwardingForwarder] = (
+        self.client_tunnel_interface: type[LocalPortForwardingForwarder] = (
             client_tunnel_interface
         )
         # Server Interface
-        self.authentication_interface: Type[BaseServerInterface] = (
+        self.authentication_interface: type[BaseServerInterface] = (
             authentication_interface
         )
-        self.authenticator: Type[Authenticator] = authenticator
+        self.authenticator: type[Authenticator] = authenticator
         self.transparent: bool = transparent
-        self.session_class: Type[Session] = session_class
-        self.banner_name: Optional[str] = banner_name
+        self.session_class: type[Session] = session_class
+        self.banner_name: str | None = banner_name
         self.debug: bool = debug
-        self.log_webhook_dest: Optional[str] = log_webhook_dest
+        self.log_webhook_dest: str | None = log_webhook_dest
 
         try:
             self.generate_host_key()
@@ -224,7 +223,7 @@ class SSHProxyServer:
                 raise KeyGenerationError
 
     def _key_from_filepath(
-        self, filename: str, klass: Type[PKey], password: Optional[str]
+        self, filename: str, klass: type[PKey], password: str | None
     ) -> PKey:
         """
         Attempt to derive a `.PKey` from given string path ``filename``:
@@ -250,7 +249,7 @@ class SSHProxyServer:
         return key
 
     @property
-    def host_key(self) -> Optional[PKey]:
+    def host_key(self) -> PKey | None:
         if not self._hostkey:
             self.generate_host_key()
         return self._hostkey
@@ -271,7 +270,7 @@ class SSHProxyServer:
 
     def start(self) -> None:
         self._clean_environment()
-        sock: Optional[socket] = None
+        sock: socket | None = None
 
         try:
             sock = create_server_sock(
@@ -336,8 +335,8 @@ class SSHProxyServer:
     def create_session(
         self,
         client: socket,
-        addr: Union[Tuple[str, int], Tuple[str, int, int, int]],
-        remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]],
+        addr: tuple[str, int] | tuple[str, int, int, int],
+        remoteaddr: tuple[str, int] | tuple[str, int, int, int],
     ) -> None:
         try:
             with self.session_class(

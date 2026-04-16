@@ -1,6 +1,5 @@
 import logging
 import time
-from typing import Optional
 
 import paramiko
 
@@ -11,7 +10,7 @@ class NetconfBaseForwarder(SCPBaseForwarder):
     __netconf_terminator = b"]]>]]>"
 
     @property
-    def client_channel(self) -> Optional[paramiko.Channel]:
+    def client_channel(self) -> paramiko.Channel | None:
         return self.session.netconf_channel
 
     def read_netconf_data(self, chan: paramiko.Channel, responses: int = 1) -> bytes:

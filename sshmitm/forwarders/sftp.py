@@ -1,7 +1,7 @@
 import io
 import logging
 import os
-from typing import TYPE_CHECKING, Optional, Type, Union, cast
+from typing import TYPE_CHECKING, cast
 
 import paramiko
 from paramiko.sftp_attr import SFTPAttributes
@@ -19,21 +19,21 @@ class SFTPHandlerBasePlugin(BaseModule):
     def __init__(self, sftp: "SFTPBaseHandle", filename: str) -> None:
         super().__init__()
         self.filename: str = filename
-        self.sftp: "SFTPBaseHandle" = sftp
+        self.sftp: SFTPBaseHandle = sftp
 
     @classmethod
-    def get_interface(cls) -> Optional[Type[BaseSFTPServerInterface]]:
+    def get_interface(cls) -> type[BaseSFTPServerInterface] | None:
         return None
 
     @classmethod
-    def get_file_handle(cls) -> Type["SFTPBaseHandle"]:
-        return cast("Type[SFTPBaseHandle]", SFTPBaseHandle)
+    def get_file_handle(cls) -> type["SFTPBaseHandle"]:
+        return cast("type[SFTPBaseHandle]", SFTPBaseHandle)
 
     def close(self) -> None:
         pass
 
     def handle_data(
-        self, data: bytes, *, offset: Optional[int] = None, length: Optional[int] = None
+        self, data: bytes, *, offset: int | None = None, length: int | None = None
     ) -> bytes:
         del offset, length  # unused arguments
         return data
@@ -48,7 +48,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         self,
         server_interface: BaseSFTPServerInterface,
         session: "sshmitm.session.Session",
-        plugin: Type[SFTPHandlerBasePlugin],
+        plugin: type[SFTPHandlerBasePlugin],
         filename: str,
         open_flags: int,
         open_attr: SFTPAttributes,
@@ -67,15 +67,15 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
 
         self.use_buffer = use_buffer
         self.buffer = io.BytesIO()
-        self.writefile: Optional[paramiko.sftp_file.SFTPFile] = (
+        self.writefile: paramiko.sftp_file.SFTPFile | None = (
             self.buffer if use_buffer else None
         )
-        self.readfile: Optional[paramiko.sftp_file.SFTPFile] = (
+        self.readfile: paramiko.sftp_file.SFTPFile | None = (
             self.buffer if use_buffer else None
         )
         self.remote_file = None
 
-    def open_remote_file(self) -> Optional[int]:
+    def open_remote_file(self) -> int | None:
         # Code aus dem StubSFTPServer der Paramiko Demo auf GitHub
         if (self.open_flags & os.O_CREAT) and self.open_attr:
             self.open_attr._flags &= ~self.open_attr.FLAG_PERMISSIONS  # type: ignore[attr-defined]
@@ -110,7 +110,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         self.plugin.close()
         super().close()
 
-    def read(self, offset: int, length: int) -> Union[bytes, int]:
+    def read(self, offset: int, length: int) -> bytes | int:
         logging.debug("R_OFFSET: %s", offset)
         if self.readfile is None:
             return paramiko.sftp.SFTP_FAILURE

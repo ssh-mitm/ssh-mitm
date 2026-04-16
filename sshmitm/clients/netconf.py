@@ -39,16 +39,16 @@ class NetconfClient(SSHClient):
         host: str,
         port: int,
         method: AuthenticationMethod,
-        password: Optional[str],
+        password: str | None,
         user: str,
-        key: Optional[PKey],
+        key: PKey | None,
         session: "sshmitm.session.Session",
     ) -> None:
         super().__init__(host, port, method, password, user, key, session)
         self.subsystem_count = 0
 
     @classmethod
-    def from_client(cls, ssh_client: Optional[SSHClient]) -> Optional["NetconfClient"]:
+    def from_client(cls, ssh_client: SSHClient | None) -> Optional["NetconfClient"]:
         """
         Create an NetconfClient instance from an SSHClient instance.
 

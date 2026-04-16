@@ -1,5 +1,5 @@
 from abc import abstractmethod
-from typing import TYPE_CHECKING, Optional
+from typing import TYPE_CHECKING
 
 import paramiko
 
@@ -29,7 +29,7 @@ class BaseForwarder(BaseModule):
         )
         if session.agent is not None:
             session.agent.forward_agent(self.server_channel)
-        self.session: "Session" = session
+        self.session: Session = session
         self.session.register_session_thread()
 
         # pass environment variables from client to server
@@ -38,7 +38,7 @@ class BaseForwarder(BaseModule):
 
     @property
     @abstractmethod
-    def client_channel(self) -> Optional[paramiko.Channel]:
+    def client_channel(self) -> paramiko.Channel | None:
         """Returns the client channel for the current plugin type"""
 
     @abstractmethod

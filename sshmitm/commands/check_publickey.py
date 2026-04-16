@@ -2,7 +2,6 @@ import argparse
 import sys
 from collections import defaultdict
 from pathlib import Path
-from typing import Dict, List, Optional
 
 from rich import print as rich_print
 
@@ -15,7 +14,7 @@ class CheckPublickey(SubCommand):
     """checks a username and publickey against a server"""
 
     @classmethod
-    def config_section(cls) -> Optional[str]:
+    def config_section(cls) -> str | None:
         return None
 
     def register_arguments(self) -> None:
@@ -38,7 +37,7 @@ class CheckPublickey(SubCommand):
         )
 
     @staticmethod
-    def print_valid_keys(valid_keys: Dict[str, List[str]]) -> None:
+    def print_valid_keys(valid_keys: dict[str, list[str]]) -> None:
         if not valid_keys:
             rich_print("[bold red]:cross_mark: No valid keys found[/bold red]")
             return
@@ -64,7 +63,7 @@ class CheckPublickey(SubCommand):
 
         :param args: Namespace object that contains the necessary parameters.
         """
-        keys: Dict[str, List[str]] = defaultdict(list)
+        keys: dict[str, list[str]] = defaultdict(list)
         try:
             for file_path in args.public_keys:
                 with (
@@ -79,7 +78,7 @@ class CheckPublickey(SubCommand):
         except FileNotFoundError as exc:
             sys.exit(str(exc))
 
-        valid_keys: Dict[str, List[str]] = defaultdict(list)
+        valid_keys: dict[str, list[str]] = defaultdict(list)
         try:
             with PublicKeyEnumerator(args.host, args.port) as enumerator:
                 for filename, pubkeys in keys.items():

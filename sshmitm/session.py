@@ -29,14 +29,13 @@ import socket
 import threading
 from multiprocessing import Condition
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Dict, Optional, Tuple, Type, Union, cast
+from typing import TYPE_CHECKING, Any, Self, cast
 from uuid import uuid4
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
-from typing_extensions import Self
 
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import ProxyNetconfServer, ProxySFTPServer
@@ -96,11 +95,11 @@ class Session(BaseSession):
         self,
         proxyserver: "sshmitm.server.SSHProxyServer",
         client_socket: socket.socket,
-        client_address: Union[Tuple[str, int], Tuple[str, int, int, int]],
-        authenticator: Type["sshmitm.authentication.Authenticator"],
-        remoteaddr: Union[Tuple[str, int], Tuple[str, int, int, int]],
-        banner_name: Optional[str] = None,
-        log_webhook_dest: Optional[str] = None,
+        client_address: tuple[str, int] | tuple[str, int, int, int],
+        authenticator: type["sshmitm.authentication.Authenticator"],
+        remoteaddr: tuple[str, int] | tuple[str, int, int, int],
+        banner_name: str | None = None,
+        log_webhook_dest: str | None = None,
     ) -> None:
         """
         Initialize the class instance.
@@ -118,11 +117,11 @@ class Session(BaseSession):
             Colors.emoji("information"),
             Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
         )
-        self._transport: Optional[paramiko.Transport] = None
+        self._transport: paramiko.Transport | None = None
 
-        self.channel: Optional[paramiko.Channel] = None
+        self.channel: paramiko.Channel | None = None
 
-        self.proxyserver: "sshmitm.server.SSHProxyServer" = proxyserver
+        self.proxyserver: sshmitm.server.SSHProxyServer = proxyserver
         self.client_socket = client_socket
         self.client_address = client_address
         self.name = f"{client_address}->{remoteaddr}"
@@ -131,41 +130,41 @@ class Session(BaseSession):
         self.agent_requested: threading.Event = threading.Event()
 
         self.ssh_requested: bool = False
-        self.ssh_channel: Optional[paramiko.Channel] = None
-        self.ssh_client: Optional[sshmitm.clients.ssh.SSHClient] = None
+        self.ssh_channel: paramiko.Channel | None = None
+        self.ssh_client: sshmitm.clients.ssh.SSHClient | None = None
         self.ssh_client_auth_finished: bool = False
         self.ssh_client_created: Condition = Condition()
-        self.ssh_pty_kwargs: Optional[Dict[str, Any]] = None
-        self.ssh_remote_channel: Optional[paramiko.Channel] = None
+        self.ssh_pty_kwargs: dict[str, Any] | None = None
+        self.ssh_remote_channel: paramiko.Channel | None = None
 
         self.scp_requested: bool = False
-        self.scp_channel: Optional[paramiko.Channel] = None
+        self.scp_channel: paramiko.Channel | None = None
         self.scp_command: bytes = b""
 
         self.netconf_requested: bool = False
-        self.netconf_channel: Optional[paramiko.Channel] = None
-        self.netconf_client: Optional[sshmitm.clients.netconf.NetconfClient] = None
+        self.netconf_channel: paramiko.Channel | None = None
+        self.netconf_client: sshmitm.clients.netconf.NetconfClient | None = None
         self.netconf_client_ready = threading.Event()
 
         self.sftp_requested: bool = False
-        self.sftp_channel: Optional[paramiko.Channel] = None
-        self.sftp_client: Optional[sshmitm.clients.sftp.SFTPClient] = None
+        self.sftp_channel: paramiko.Channel | None = None
+        self.sftp_client: sshmitm.clients.sftp.SFTPClient | None = None
         self.sftp_client_ready = threading.Event()
 
         self.username: str = ""
-        self.username_provided: Optional[str] = None
-        self.password: Optional[str] = None
-        self.password_provided: Optional[str] = None
+        self.username_provided: str | None = None
+        self.password: str | None = None
+        self.password_provided: str | None = None
         self.socket_remote_address = remoteaddr
-        self.remote_address: Tuple[Optional[str], Optional[int]] = (None, None)
+        self.remote_address: tuple[str | None, int | None] = (None, None)
         self.remote_address_reachable: bool = True
-        self.remote_key: Optional[PKey] = None
-        self.accepted_key: Optional[PKey] = None
-        self.agent: Optional[AgentProxy] = None
-        self.authenticator: "sshmitm.authentication.Authenticator" = authenticator(self)
+        self.remote_key: PKey | None = None
+        self.accepted_key: PKey | None = None
+        self.agent: AgentProxy | None = None
+        self.authenticator: sshmitm.authentication.Authenticator = authenticator(self)
 
-        self.env_requests: Dict[bytes, bytes] = {}
-        self.session_log_dir: Optional[str] = self.get_session_log_dir()
+        self.env_requests: dict[bytes, bytes] = {}
+        self.session_log_dir: str | None = self.get_session_log_dir()
         self.banner_name = banner_name
 
         self.log_forwarder = LogForwarder(
@@ -176,7 +175,7 @@ class Session(BaseSession):
             log_webhook_dest=log_webhook_dest,
         )
 
-    def get_session_log_dir(self) -> Optional[str]:
+    def get_session_log_dir(self) -> str | None:
         """
         Returns the directory where the ssh session logs will be stored.
 
@@ -237,7 +236,7 @@ class Session(BaseSession):
                     msg = "ciphers must be a tuple"
                     raise ValueError(msg)
                 self._transport.get_security_options().ciphers = self.CIPHERS
-            host_key: Optional[PKey] = self.proxyserver.host_key
+            host_key: PKey | None = self.proxyserver.host_key
             if host_key is not None:
                 self._transport.add_server_key(host_key)
             # this will set the subsystemhandler to ProxySFTPServer and passes the arguments
@@ -434,9 +433,9 @@ class Session(BaseSession):
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_value: Optional[BaseException],
-        traceback: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_value: BaseException | None,
+        traceback: TracebackType | None,
     ) -> None:
         del exc_type
         del exc_value

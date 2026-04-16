@@ -22,7 +22,7 @@ import select
 import socket
 import threading
 import time
-from typing import Callable, List, Optional, Tuple, Union
+from collections.abc import Callable
 
 import paramiko
 
@@ -40,16 +40,13 @@ class TCPServerThread(threading.Thread):
 
     def __init__(  # pylint: disable=too-many-arguments
         self,
-        request_handler: Optional[
+        request_handler: (
             Callable[
-                [
-                    Tuple[str, int],
-                    Union[socket.socket, paramiko.Channel],
-                    Tuple[str, int],
-                ],
+                [tuple[str, int], socket.socket | paramiko.Channel, tuple[str, int]],
                 None,
             ]
-        ] = None,
+            | None
+        ) = None,
         network: str = "127.0.0.1",
         port: int = 0,
         run_status: bool = True,
@@ -67,7 +64,7 @@ class TCPServerThread(threading.Thread):
         self.socket.bind((self.network, self.port))
         self.network, self.port = self.socket.getsockname()
         self.socket.listen(5)
-        self.threads: List[threading.Thread] = []
+        self.threads: list[threading.Thread] = []
 
     def run(self) -> None:
         """
@@ -84,7 +81,7 @@ class TCPServerThread(threading.Thread):
             time.sleep(0.1)
 
     def handle_request(
-        self, client: Union[socket.socket, paramiko.Channel], addr: Tuple[str, int]
+        self, client: socket.socket | paramiko.Channel, addr: tuple[str, int]
     ) -> None:
         """
         Call the handle request callback for a new connection.

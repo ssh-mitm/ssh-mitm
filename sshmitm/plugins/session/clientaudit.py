@@ -1,7 +1,7 @@
 import logging
 import re
 from collections import defaultdict
-from typing import TYPE_CHECKING, Any, DefaultDict, Dict, List, Optional, Union, cast
+from typing import TYPE_CHECKING, Any, cast
 
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from packaging import version
@@ -48,7 +48,7 @@ class ClientAuditReport:
         title: str,
         *,
         vulnerable: bool = False,
-        messages: Optional[List[str]] = None,
+        messages: list[str] | None = None,
     ) -> None:
         self.title = title
         self.messages = messages or []
@@ -75,17 +75,17 @@ class SSHClientAudit:
         self,
         key_negotiation_data: "sshmitm.plugins.session.key_negotiation.KeyNegotiationData",
         client_version: str,
-        client_name: Optional[str] = None,
-        client_info: Optional[Dict[str, Dict[str, Any]]] = None,
+        client_name: str | None = None,
+        client_info: dict[str, dict[str, Any]] | None = None,
     ) -> None:
-        self.key_negotiation_data: "KeyNegotiationData" = key_negotiation_data
-        self.client_name: Optional[str] = client_name
+        self.key_negotiation_data: KeyNegotiationData = key_negotiation_data
+        self.client_name: str | None = client_name
         self.client_version: str = client_version
-        self.client_info: Dict[str, Dict[str, Any]] = client_info or {}
-        self.product_name: Optional[str] = cast("str", self.client_info.get("name", ""))
-        self.vendor_url: Optional[str] = cast("str", self.client_info.get("url", ""))
+        self.client_info: dict[str, dict[str, Any]] = client_info or {}
+        self.product_name: str | None = cast("str", self.client_info.get("name", ""))
+        self.vendor_url: str | None = cast("str", self.client_info.get("url", ""))
 
-    def get_version_string(self) -> Optional[str]:
+    def get_version_string(self) -> str | None:
         """
         This method returns version string extracted from the `client_version` string in the `key_negotiation_data` object
         using the `version_regex` field of `client_info` dictionary.
@@ -102,8 +102,8 @@ class SSHClientAudit:
 
     def between_versions(
         self,
-        version_min: Union[None, float, str],
-        version_max: Union[None, float, str],
+        version_min: None | float | str,
+        version_max: None | float | str,
     ) -> bool:
         """
         This method returns `True` if the version string is between `version_min` and `version_max`.
@@ -132,8 +132,8 @@ class SSHClientAudit:
             return False
 
     def check_cves(
-        self, vulnerabilities: DefaultDict[str, List[Optional[ClientAuditReport]]]
-    ) -> List[str]:
+        self, vulnerabilities: defaultdict[str, list[ClientAuditReport | None]]
+    ) -> list[str]:
         """
         This method returns a list of strings representing the Common Vulnerabilities and Exposures (CVEs) found in the client,
         along with the information available in the `vulnerabilities` dictionary.
@@ -141,7 +141,7 @@ class SSHClientAudit:
         :param vulnerabilities: dictionary of CVEs and their descriptions
         :return: list of strings representing the CVEs and their information
         """
-        cvelist: Dict[str, Vulnerability] = {}
+        cvelist: dict[str, Vulnerability] = {}
         for cve, description in self.client_info.get("vulnerabilities", {}).items():
             version_min = description.get("version_min", "")
             version_max = description.get("version_max", "")
@@ -149,7 +149,7 @@ class SSHClientAudit:
             if self.between_versions(version_min, version_max):
                 cvelist[cve] = Vulnerability(cve, indocs)
 
-        cvemessagelist: List[str] = []
+        cvemessagelist: list[str] = []
         if cvelist:
             for cve_entry in cvelist.values():
                 cvemessagelist.append(f"  * {cve_entry.cve}: {cve_entry.url}")
@@ -170,13 +170,13 @@ class SSHClientAudit:
                         )
         return cvemessagelist
 
-    def _find_known_server_host_key_algos(self) -> List[str]:
+    def _find_known_server_host_key_algos(self) -> list[str]:
         """
         This method returns a list of strings representing the server host key algorithms known to the client.
 
         :return: list of strings representing server host key algorithms
         """
-        messages: List[str] = []
+        messages: list[str] = []
         for (
             client_name,
             server_host_key_algorithms_list,
@@ -207,14 +207,14 @@ class SSHClientAudit:
             )
         return messages
 
-    def _check_known_clients(self, client_name: str) -> List[str]:
+    def _check_known_clients(self, client_name: str) -> list[str]:
         """
         Check if a client with the given ID is already registered as a known client.
 
         :param client_id: ID of the client to check
         :return: True if the client is known, False otherwise
         """
-        messages: List[str] = []
+        messages: list[str] = []
         if client_name not in SERVER_HOST_KEY_ALGORITHMS:
             return self._find_known_server_host_key_algos()
         server_host_key_algorithms = SERVER_HOST_KEY_ALGORITHMS.get(client_name)
@@ -242,7 +242,7 @@ class SSHClientAudit:
             )
         return messages
 
-    def check_key_negotiation(self) -> Dict[str, ClientAuditReport]:
+    def check_key_negotiation(self) -> dict[str, ClientAuditReport]:
         """
         Check if a key negotiation data is known.
         """
@@ -252,7 +252,7 @@ class SSHClientAudit:
                 self.client_info.get("name", ""),
             )
 
-        messages: List[str] = []
+        messages: list[str] = []
         if (
             self.client_name is None
             or self.client_name not in SERVER_HOST_KEY_ALGORITHMS
@@ -270,7 +270,7 @@ class SSHClientAudit:
         )
         return {"clientaudit": report}
 
-    def check_terrapin_attack(self) -> Dict[str, ClientAuditReport]:
+    def check_terrapin_attack(self) -> dict[str, ClientAuditReport]:
         cha_cha20 = "chacha20-poly1305@openssh.com"
         etm_suffix = "-etm@openssh.com"
         cbc_suffix = "-cbc"
@@ -323,8 +323,8 @@ class SSHClientAudit:
         """
         Run an audit on the client with the given ID.
         """
-        vulnerabilities: DefaultDict[str, List[Optional[ClientAuditReport]]] = (
-            defaultdict(list)
+        vulnerabilities: defaultdict[str, list[ClientAuditReport | None]] = defaultdict(
+            list
         )
         for audit_type, audit_results in self.check_key_negotiation().items():
             vulnerabilities[audit_type].append(audit_results)
@@ -390,7 +390,7 @@ class SSHClientAudit:
             },
         )
 
-    def audit(self) -> Optional[ClientAuditReport]:
+    def audit(self) -> ClientAuditReport | None:
         """
         Run audits on all clients.
         """

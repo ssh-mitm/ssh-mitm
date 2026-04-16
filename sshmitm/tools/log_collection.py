@@ -3,7 +3,6 @@ import datetime
 import hashlib
 import logging
 from threading import Thread
-from typing import Optional
 
 import requests
 
@@ -19,7 +18,7 @@ class LogForwarder:
         client_port: int,
         server_ip: str,
         server_port: int,
-        log_webhook_dest: Optional[str] = None,
+        log_webhook_dest: str | None = None,
     ) -> None:
         self.client_ip = client_ip
         self.client_port = client_port
@@ -77,9 +76,7 @@ class LogForwarder:
         # hassh as defined here: https://github.com/salesforce/hassh
         # ruff: noqa: S324
         self.server_hassh = hashlib.md5(  # nosec
-            f"{self.server_preferred_ciphers};{self.server_preferred_kex};{self.server_preferred_macs};{self.server_preferred_compression}".encode(
-                "utf-8"
-            )
+            f"{self.server_preferred_ciphers};{self.server_preferred_kex};{self.server_preferred_macs};{self.server_preferred_compression}".encode()
         ).hexdigest()
 
     def set_client_transport_metadata(
@@ -102,20 +99,18 @@ class LogForwarder:
         # hassh as defined here: https://github.com/salesforce/hassh
         # ruff: noqa: S324
         self.client_hassh = hashlib.md5(  # nosec
-            f"{self.client_preferred_ciphers};{self.client_preferred_kex};{self.client_preferred_macs};{self.client_preferred_compression}".encode(
-                "utf-8"
-            )
+            f"{self.client_preferred_ciphers};{self.client_preferred_kex};{self.client_preferred_macs};{self.client_preferred_compression}".encode()
         ).hexdigest()
 
     def __build_payload(
         self,
         event_outcome: str,
-        client_msg: Optional[str] = None,
-        client_msg_err: Optional[str] = None,
-        server_msg: Optional[str] = None,
-        server_msg_err: Optional[str] = None,
+        client_msg: str | None = None,
+        client_msg_err: str | None = None,
+        server_msg: str | None = None,
+        server_msg_err: str | None = None,
     ) -> dict:
-        current_timestamp = datetime.datetime.now(tz=datetime.timezone.utc).isoformat()
+        current_timestamp = datetime.datetime.now(tz=datetime.UTC).isoformat()
         return {
             # Using current timestamp in @timestamp, because we don't have access to the actual creation timestamp of the ssh action from the source side.
             "@timestamp": current_timestamp,

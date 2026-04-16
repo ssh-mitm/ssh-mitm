@@ -1,7 +1,7 @@
 import logging
 import socket
 from enum import Enum
-from typing import List, Optional, Tuple, Union, cast
+from typing import cast
 
 import paramiko
 
@@ -70,13 +70,13 @@ class Socks5Server:
 
     def __init__(
         self,
-        listenaddress: Tuple[str, int],
-        username: Optional[str] = None,
-        password: Optional[str] = None,
+        listenaddress: tuple[str, int],
+        username: str | None = None,
+        password: str | None = None,
     ) -> None:
         self.listenaddress = listenaddress
-        self.username: Optional[str] = username
-        self.password: Optional[str] = password
+        self.username: str | None = username
+        self.password: str | None = password
         self.auth_required: bool = (
             self.username is not None and self.password is not None
         )
@@ -93,8 +93,8 @@ class Socks5Server:
         return bytes([int(server_port / 256)]) + bytes([int(server_port % 256)])
 
     def _get_auth_methods(
-        self, clientsock: Union[socket.socket, paramiko.Channel]
-    ) -> List[Socks5AuthenticationType]:
+        self, clientsock: socket.socket | paramiko.Channel
+    ) -> list[Socks5AuthenticationType]:
         """Ermittelt die angebotenen Authentifizierungsmechanismen"""
         methods_count = int.from_bytes(clientsock.recv(1), byteorder="big")
         try:
@@ -110,7 +110,7 @@ class Socks5Server:
             raise Socks5Error(msg)
         return methods
 
-    def _authenticate(self, clientsock: Union[socket.socket, paramiko.Channel]) -> bool:
+    def _authenticate(self, clientsock: socket.socket | paramiko.Channel) -> bool:
         """Authentifiziert den Benutzer"""
         authmethods = self._get_auth_methods(clientsock)
 
@@ -153,8 +153,8 @@ class Socks5Server:
         return False
 
     def _get_address(  # noqa: C901,PLR0915
-        self, clientsock: Union[socket.socket, paramiko.Channel]
-    ) -> Optional[Tuple[str, int]]:
+        self, clientsock: socket.socket | paramiko.Channel
+    ) -> tuple[str, int] | None:
         """Ermittelt das Ziel aus der Socks Anfrage"""
         # check socks version
         if clientsock.recv(1) != Socks5Server.SOCKSVERSION:
@@ -211,7 +211,7 @@ class Socks5Server:
 
         dst_port = dst_port_b[0] * 256 + dst_port_b[1]
 
-        address: Optional[Tuple[str, int]] = None
+        address: tuple[str, int] | None = None
         reply = Socks5CommandReply.COMMAND_NOT_SUPPORTED
         if command is Socks5Command.CONNECT:
             address = (dst_addr, dst_port)
@@ -233,9 +233,9 @@ class Socks5Server:
 
     def get_address(
         self,
-        clientsock: Union[socket.socket, paramiko.Channel],
+        clientsock: socket.socket | paramiko.Channel,
         ignore_version: bool = False,
-    ) -> Optional[Tuple[str, int]]:
+    ) -> tuple[str, int] | None:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks5Server.SOCKSVERSION:

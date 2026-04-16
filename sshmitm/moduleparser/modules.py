@@ -2,16 +2,11 @@ import argparse
 import inspect
 import logging
 from abc import ABC, abstractmethod
+from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
     Any,
     ClassVar,
-    Dict,
-    List,
-    Optional,
-    Sequence,
-    Tuple,
-    Type,
     cast,
 )
 
@@ -25,14 +20,14 @@ if TYPE_CHECKING:
 
 
 class BaseModule(ABC):  # noqa: B024
-    _parser: Optional[BaseModuleArgumentParser] = None
-    _modules: Optional[List[Tuple[argparse.Action, Any]]] = None
-    _argument_groups: ClassVar[Dict[str, argparse._ArgumentGroup]] = {}
+    _parser: BaseModuleArgumentParser | None = None
+    _modules: list[tuple[argparse.Action, Any]] | None = None
+    _argument_groups: ClassVar[dict[str, argparse._ArgumentGroup]] = {}
 
     def __init__(
         self,
-        args: Optional[Sequence[str]] = None,
-        namespace: Optional[argparse.Namespace] = None,
+        args: Sequence[str] | None = None,
+        namespace: argparse.Namespace | None = None,
         **kwargs: Any,
     ) -> None:
         self.args: argparse.Namespace
@@ -56,7 +51,7 @@ class BaseModule(ABC):  # noqa: B024
     @classmethod
     def add_module(cls, *args: Any, **kwargs: Any) -> None:
         # remove "baseclass" from arguments
-        baseclass: Type[BaseModule] = kwargs.pop("baseclass", BaseModule)
+        baseclass: type[BaseModule] = kwargs.pop("baseclass", BaseModule)
         if not inspect.isclass(baseclass) or not issubclass(baseclass, BaseModule):
             logging.error(
                 "Baseclass %s mast be subclass of %s not %s",
@@ -82,7 +77,7 @@ class BaseModule(ABC):  # noqa: B024
         pass
 
     @classmethod
-    def modules(cls) -> List[Tuple[argparse.Action, Any]]:
+    def modules(cls) -> list[tuple[argparse.Action, Any]]:
         if "_modules" not in cls.__dict__ or cls._modules is None:
             cls._modules = []
         return cls._modules
@@ -104,9 +99,9 @@ class BaseModule(ABC):  # noqa: B024
     @classmethod
     def argument_group(
         cls,
-        title: Optional[str] = None,
+        title: str | None = None,
         *,
-        description: Optional[str] = None,
+        description: str | None = None,
     ) -> argparse._ArgumentGroup:
         group_title = title or cls.__name__
         if not description and cls.__doc__:
@@ -119,13 +114,13 @@ class BaseModule(ABC):  # noqa: B024
 
     @staticmethod
     def load_from_entrypoint(
-        name: str, entry_point_class: Type["BaseModule"]
-    ) -> Optional[Type["BaseModule"]]:
+        name: str, entry_point_class: type["BaseModule"]
+    ) -> type["BaseModule"] | None:
         for entry_point in metadata.entry_points(
             group=f"sshmitm.{entry_point_class.__name__}"
         ):
             if name in (entry_point.name, entry_point.module):
-                return cast("Type[BaseModule]", entry_point.load())
+                return cast("type[BaseModule]", entry_point.load())
         return None
 
 
@@ -148,11 +143,11 @@ class SubCommand(ABC):
         pass
 
     @classmethod
-    def docs(cls) -> Optional[str]:
+    def docs(cls) -> str | None:
         if not cls.__doc__:
             return None
         return cls.__doc__.strip().split("\n", maxsplit=1)[0]
 
     @classmethod
-    def config_section(cls) -> Optional[str]:
+    def config_section(cls) -> str | None:
         return cls.__name__.replace("_", "-")

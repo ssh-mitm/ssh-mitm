@@ -30,7 +30,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - removed support for DSS keys
 - replaced sshpubkeys module with paramiko based utility class to handle ssh public keys
 - updated documentation for the next relese of SSH-MITM
-- updated Python 3.11.14 (cpython-3.11.14+20260211) 
+- dropped Python 3.9/3.10 support, raised minimum version to 3.11
 
 
 ## [5.0.1] - 2025-01-22

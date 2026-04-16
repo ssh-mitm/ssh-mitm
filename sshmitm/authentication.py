@@ -5,12 +5,11 @@ import sys
 import threading
 from abc import abstractmethod
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, List, Optional, Type, Union
+from typing import TYPE_CHECKING, Any, Self
 
 import paramiko
 from colored.colored import attr, fg  # type: ignore[import-untyped]
 from paramiko import PKey
-from typing_extensions import Self
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.exceptions import MissingHostException
@@ -75,8 +74,8 @@ class PublicKeyEnumerator:
 
     def __init__(self, hostname_or_ip: str, port: int) -> None:
         self.remote_address = (hostname_or_ip, port)
-        self.sock: Optional[socket.socket] = None
-        self.transport: Optional[paramiko.transport.Transport] = None
+        self.sock: socket.socket | None = None
+        self.transport: paramiko.transport.Transport | None = None
         self.connected: bool = False
 
     def connect(self) -> None:
@@ -100,14 +99,14 @@ class PublicKeyEnumerator:
 
     def __exit__(
         self,
-        exc_type: Optional[Type[BaseException]],
-        exc_val: Optional[BaseException],
-        exc_tb: Optional[TracebackType],
+        exc_type: type[BaseException] | None,
+        exc_val: BaseException | None,
+        exc_tb: TracebackType | None,
     ) -> None:
         self.close()
 
     def check_publickey(
-        self, username: str, public_key: Union[str, paramiko.pkey.PublicBlob]
+        self, username: str, public_key: str | paramiko.pkey.PublicBlob
     ) -> bool:
         # pylint: disable=protected-access
         def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore[no-untyped-def] # noqa: ANN001
@@ -122,7 +121,7 @@ class PublicKeyEnumerator:
             self.auth_event.set()
             self.authenticated = True
 
-        def parse_service_accept(self, message: paramiko.message.Message) -> Optional[Any]:  # type: ignore[no-untyped-def] # noqa: ANN001
+        def parse_service_accept(self, message: paramiko.message.Message) -> Any | None:  # type: ignore[no-untyped-def] # noqa: ANN001
             """
             A helper function that parses the service accept message.
 
@@ -186,10 +185,10 @@ class RemoteCredentials:
         self,
         *,
         username: str,
-        password: Optional[str] = None,
-        key: Optional[PKey] = None,
-        host: Optional[str] = None,
-        port: Optional[int] = None,
+        password: str | None = None,
+        key: PKey | None = None,
+        host: str | None = None,
+        port: int | None = None,
     ) -> None:
         """
         The `__init__` method is the constructor of the class and it is used to initialize the attributes of the class.
@@ -205,28 +204,28 @@ class RemoteCredentials:
         (str) a string representing the username of the remote host.
         """
 
-        self.password: Optional[str] = password
+        self.password: str | None = password
         """
         (str) an optional string representing the password of the remote host. This argument is optional and if not specified, the value will be `None`.
         """
 
-        self.key: Optional[PKey] = key
+        self.key: PKey | None = key
         """
         (PKey) an optional `PKey` object representing a private key used to authenticate with the remote host. This argument is optional and if not specified, the value will be `None`.
         """
 
-        self.host: Optional[str] = host
+        self.host: str | None = host
         """
         (str) an optional string representing the hostname or IP address of the remote host. This argument is optional and if not specified, the value will be `None`.
         """
 
-        self.port: Optional[int] = port
+        self.port: int | None = port
         """
         (int) an optional integer representing the port number used to connect to the remote host. This argument is optional and if not specified, the value will be `None`.
         """
 
     @staticmethod
-    def load_private_key(path: str, passphrase: Optional[str] = None) -> paramiko.PKey:
+    def load_private_key(path: str, passphrase: str | None = None) -> paramiko.PKey:
         """
         Loads an OpenSSH private key from a file and returns a Paramiko PKey object.
 
@@ -235,7 +234,7 @@ class RemoteCredentials:
         :return: Instance of paramiko.PKey (e.g., RSAKey, Ed25519Key, ECDSAKey)
         :raises: paramiko.ssh_exception.SSHException for invalid or unknown key format
         """
-        with open(path, "r", encoding="utf-8") as f:
+        with open(path, encoding="utf-8") as f:
             f.read()
 
         for key_cls in [
@@ -245,7 +244,7 @@ class RemoteCredentials:
         ]:
             try:
                 return key_cls.from_private_key_file(path, password=passphrase)
-            except (  # noqa: PERF203 # `try`-`except` within a loop incurs performance overhead
+            except (  # `try`-`except` within a loop incurs performance overhead
                 paramiko.SSHException
             ):
                 continue
@@ -361,7 +360,7 @@ class Authenticator(BaseModule):
         self.session.register_session_thread()
 
     def get_remote_host_credentials(
-        self, username: str, password: Optional[str] = None, key: Optional[PKey] = None
+        self, username: str, password: str | None = None, key: PKey | None = None
     ) -> RemoteCredentials:
         """
         Get the credentials for remote host.
@@ -391,8 +390,8 @@ class Authenticator(BaseModule):
 
     @abstractmethod
     def get_auth_methods(
-        self, host: str, port: int, username: Optional[str] = None
-    ) -> Optional[List[str]]:
+        self, host: str, port: int, username: str | None = None
+    ) -> list[str] | None:
         """
         Get the available authentication methods for a remote host.
 
@@ -404,9 +403,9 @@ class Authenticator(BaseModule):
 
     def authenticate(
         self,
-        username: Optional[str] = None,
-        password: Optional[str] = None,
-        key: Optional[PKey] = None,
+        username: str | None = None,
+        password: str | None = None,
+        key: PKey | None = None,
         store_credentials: bool = True,
     ) -> int:
         """
@@ -567,8 +566,8 @@ class Authenticator(BaseModule):
         host: str,
         port: int,
         method: AuthenticationMethod,
-        password: Optional[str] = None,
-        key: Optional[PKey] = None,
+        password: str | None = None,
+        key: PKey | None = None,
         *,
         run_post_auth: bool = True,
     ) -> int:
@@ -649,13 +648,13 @@ class AuthenticatorPassThrough(Authenticator):
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session=session)
 
-        self.pubkey_enumerator: Optional[PublicKeyEnumerator] = None
+        self.pubkey_enumerator: PublicKeyEnumerator | None = None
         self.pubkey_auth_success: bool = False
-        self.valid_key: Optional[PKey] = None
+        self.valid_key: PKey | None = None
 
     def get_auth_methods(
-        self, host: str, port: int, username: Optional[str] = None
-    ) -> Optional[List[str]]:
+        self, host: str, port: int, username: str | None = None
+    ) -> list[str] | None:
         """
         Get the available authentication methods for a remote host.
 
@@ -764,10 +763,10 @@ class AuthenticatorPassThrough(Authenticator):
         All this information can be saved to a log file for later review.
         """
 
-        def get_agent_pubkeys() -> List[SSHPubKey]:
+        def get_agent_pubkeys() -> list[SSHPubKey]:
             pubkeyfile_path = None
 
-            keys_parsed: List[SSHPubKey] = []
+            keys_parsed: list[SSHPubKey] = []
             if self.session.agent is None:
                 return keys_parsed
 

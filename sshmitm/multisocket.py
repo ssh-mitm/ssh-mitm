@@ -7,13 +7,12 @@ import contextlib
 import os
 import socket
 import sys
-from typing import Optional, Tuple
 
 __author__ = "Giampaolo Rodola' <g.rodola [AT] gmail [DOT] com>"
 __license__ = "MIT"
 
 
-def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
+def has_dual_stack(sock: socket.socket | None = None) -> bool:
     """Return True if kernel allows creating a socket which is able to
     listen for both IPv4 and IPv6 connections.
     If *sock* is provided the check is made against it.
@@ -31,14 +30,14 @@ def has_dual_stack(sock: Optional[socket.socket] = None) -> bool:
         with contextlib.closing(sock):
             sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, False)
             return True
-    except socket.error:
+    except OSError:
         return False
 
 
 def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
-    address: Tuple[str, int],
-    family: Optional[socket.AddressFamily] = None,  # pylint: disable=no-member
-    reuse_addr: Optional[bool] = None,
+    address: tuple[str, int],
+    family: socket.AddressFamily | None = None,  # pylint: disable=no-member
+    reuse_addr: bool | None = None,
     transparent: bool = False,
     queue_size: int = 5,
     dual_stack: bool = has_dual_stack(),
@@ -78,7 +77,7 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
     AF_INET6 = getattr(  # pylint: disable=invalid-name # noqa: N806
         socket, "AF_INET6", 0
     )
-    host: Optional[str]
+    host: str | None
     port: int
     host, port = address
     if host in ("", "0.0.0.0"):  # nosec
@@ -120,7 +119,7 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
                     sock.setsockopt(socket.IPPROTO_IPV6, socket.IPV6_V6ONLY, 1)
             sock.bind(res_socket_address)
             sock.listen(queue_size)
-        except socket.error as _:
+        except OSError as _:
             err = _
             if sock is not None:
                 sock.close()
@@ -129,4 +128,4 @@ def create_server_sock(  # pylint: disable=too-many-arguments # noqa: C901
     if err is not None:
         raise err
     msg = "getaddrinfo returns an empty list"
-    raise socket.error(msg)
+    raise OSError(msg)

@@ -1,7 +1,7 @@
 import logging
 import socket
 from enum import Enum
-from typing import Optional, Tuple, Union, cast
+from typing import cast
 
 import paramiko
 
@@ -42,7 +42,7 @@ class Socks4Server:
 
     SOCKSVERSION = b"\x04"
 
-    def __init__(self, listenaddress: Tuple[str, int]) -> None:
+    def __init__(self, listenaddress: tuple[str, int]) -> None:
         self.listenaddress = listenaddress
 
     @property
@@ -57,8 +57,8 @@ class Socks4Server:
         return bytes([int(server_port / 256)]) + bytes([int(server_port % 256)])
 
     def _get_address(
-        self, clientsock: Union[socket.socket, paramiko.Channel]
-    ) -> Optional[Tuple[str, int]]:
+        self, clientsock: socket.socket | paramiko.Channel
+    ) -> tuple[str, int] | None:
         """Ermittelt das Ziel aus der Socks Anfrage"""
         # get socks command
         try:
@@ -87,7 +87,7 @@ class Socks4Server:
                 break
             userid += nextchr
 
-        address: Optional[Tuple[str, int]] = None
+        address: tuple[str, int] | None = None
         reply = Socks4CommandReply.FAILED
         if command is Socks4Command.CONNECT:
             address = (dst_addr, dst_port)
@@ -98,9 +98,9 @@ class Socks4Server:
 
     def get_address(
         self,
-        clientsock: Union[socket.socket, paramiko.Channel],
+        clientsock: socket.socket | paramiko.Channel,
         ignore_version: bool = False,
-    ) -> Optional[Tuple[str, int]]:
+    ) -> tuple[str, int] | None:
         try:
             # check socks version
             if not ignore_version and clientsock.recv(1) != Socks4Server.SOCKSVERSION:

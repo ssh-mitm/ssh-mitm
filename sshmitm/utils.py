@@ -1,18 +1,11 @@
 import base64
 import binascii
 import hashlib
-import sys
-from typing import Optional
+from importlib import metadata, resources
 
 from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey
 
 __all__ = ["SSHPubKey", "format_hex", "metadata", "resources"]
-
-if sys.version_info >= (3, 10):
-    from importlib import metadata, resources
-else:
-    import importlib_metadata as metadata
-    import importlib_resources as resources
 
 
 def format_hex(data: bytes, hexwidth: int = 19) -> str:
@@ -29,7 +22,10 @@ def format_hex(data: bytes, hexwidth: int = 19) -> str:
         hexa = list(
             map(
                 "".join,
-                zip(*[iter(binascii.hexlify(data_part).decode("utf-8"))] * 2),
+                zip(
+                    *[iter(binascii.hexlify(data_part).decode("utf-8"))] * 2,
+                    strict=False,
+                ),
             )
         )
         while hexwidth - len(hexa) > 0:
@@ -47,7 +43,7 @@ def format_hex(data: bytes, hexwidth: int = 19) -> str:
 
 class SSHPubKey:
 
-    def __init__(self, key: PKey, comment: Optional[str] = None) -> None:
+    def __init__(self, key: PKey, comment: str | None = None) -> None:
         self.key = key
         self.comment = comment
 
@@ -64,7 +60,7 @@ class SSHPubKey:
             raise ValueError("Ungültige SSH-Zeile: " + line)
 
         key_type, key_data = parts[0], parts[1]
-        comment: Optional[str] = parts[2] if len(parts) == 3 else None
+        comment: str | None = parts[2] if len(parts) == 3 else None
         key_bytes = base64.b64decode(key_data)
 
         key_obj: PKey
@@ -85,7 +81,9 @@ class SSHPubKey:
 
         For specification, see RFC4716, section 4."""
         fp_plain = hashlib.md5(self.key.asbytes(), usedforsecurity=False).hexdigest()
-        return "MD5:" + ":".join(a + b for a, b in zip(fp_plain[::2], fp_plain[1::2]))
+        return "MD5:" + ":".join(
+            a + b for a, b in zip(fp_plain[::2], fp_plain[1::2], strict=False)
+        )
 
     def hash_sha256(self) -> str:
         """Calculate sha256 fingerprint."""

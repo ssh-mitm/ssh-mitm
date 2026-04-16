@@ -3,15 +3,12 @@ import os
 import time
 from abc import ABC, abstractmethod
 from pathlib import Path
-from typing import Optional, Union
 
 import pytz
 
 
 class TerminalLogFormat(ABC):
-    def __init__(
-        self, logdir: Union[str, os.PathLike[str]], prefix: str = "session"
-    ) -> None:
+    def __init__(self, logdir: str | os.PathLike[str], prefix: str = "session") -> None:
         self.logdir = logdir
         self.prefix = prefix
         self.subdirectory = self.get_subdirectory()
@@ -42,9 +39,7 @@ class TerminalLogFormat(ABC):
 
 
 class ScriptLogFormat(TerminalLogFormat):
-    def __init__(
-        self, logdir: Union[str, os.PathLike[str]], prefix: str = "session"
-    ) -> None:
+    def __init__(self, logdir: str | os.PathLike[str], prefix: str = "session") -> None:
         super().__init__(logdir, prefix)
         timecomponent = str(time.time()).split(".", maxsplit=1)[0]
 
@@ -58,11 +53,11 @@ class ScriptLogFormat(TerminalLogFormat):
         self.timeingfile = (
             self.subdirectory / Path(f"ssh_time_{timecomponent}.log")
         ).open("wb")
-        self.timestamp: Optional[datetime.datetime] = None
+        self.timestamp: datetime.datetime | None = None
 
         self.file_stdout.write(
             "Session started on {}\n".format(  # pylint: disable=consider-using-f-string
-                datetime.datetime.now(tz=datetime.timezone.utc)
+                datetime.datetime.now(tz=datetime.UTC)
                 .replace(tzinfo=pytz.utc)
                 .strftime("%a %d %b %Y %H:%M:%S %Z")
             ).encode()
@@ -90,9 +85,9 @@ class ScriptLogFormat(TerminalLogFormat):
 
     def write_timingfile(self, text: bytes) -> None:
         if not self.timestamp:
-            self.timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
+            self.timestamp = datetime.datetime.now(tz=datetime.UTC)
         oldtime = self.timestamp
-        self.timestamp = datetime.datetime.now(tz=datetime.timezone.utc)
+        self.timestamp = datetime.datetime.now(tz=datetime.UTC)
         diff = self.timestamp - oldtime
         self.timeingfile.write(
             f"{diff.seconds}.{diff.microseconds} {len(text)}\n".encode()

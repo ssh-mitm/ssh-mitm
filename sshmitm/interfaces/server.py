@@ -1,7 +1,7 @@
 import logging
 import os
 import struct
-from typing import TYPE_CHECKING, Any, List, Optional, Tuple, Type, Union
+from typing import TYPE_CHECKING, Any
 
 import paramiko
 from paramiko.message import Message
@@ -25,16 +25,14 @@ if TYPE_CHECKING:
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__()
-        self.session: "sshmitm.session.Session" = session
+        self.session: sshmitm.session.Session = session
         self.session.register_session_thread()
-        self.forwarders: List[
-            Union[
-                TunnelForwarder,
-                LocalPortForwardingForwarder,
-                RemotePortForwardingForwarder,
-            ]
+        self.forwarders: list[
+            TunnelForwarder
+            | LocalPortForwardingForwarder
+            | RemotePortForwardingForwarder
         ] = []
-        self.possible_auth_methods: Optional[List[str]] = None
+        self.possible_auth_methods: list[str] | None = None
 
 
 class ServerInterface(BaseServerInterface):
@@ -251,8 +249,8 @@ class ServerInterface(BaseServerInterface):
         return paramiko.common.AUTH_FAILED
 
     def check_auth_interactive(
-        self, username: str, submethods: Union[bytes, str]
-    ) -> Union[int, paramiko.server.InteractiveQuery]:
+        self, username: str, submethods: bytes | str
+    ) -> int | paramiko.server.InteractiveQuery:
         logging.debug(
             "check_auth_interactive: username=%s, submethods=%s", username, submethods
         )
@@ -269,8 +267,8 @@ class ServerInterface(BaseServerInterface):
         return auth_interactive_query
 
     def check_auth_interactive_response(
-        self, responses: List[str]
-    ) -> Union[int, paramiko.server.InteractiveQuery]:
+        self, responses: list[str]
+    ) -> int | paramiko.server.InteractiveQuery:
         logging.debug("check_auth_interactive_response: responses=%s", responses)
         is_trivial_auth = (
             self.args.enable_trivial_auth and self.session.accepted_key is not None
@@ -416,7 +414,7 @@ class ServerInterface(BaseServerInterface):
         self.session.ssh_client.transport.cancel_port_forward(address, port)
 
     def check_channel_direct_tcpip_request(
-        self, chanid: int, origin: Tuple[str, int], destination: Tuple[str, int]
+        self, chanid: int, origin: tuple[str, int], destination: tuple[str, int]
     ) -> int:
         username = self.session.transport.get_username()
         logging.info(
@@ -467,7 +465,7 @@ class ServerInterface(BaseServerInterface):
         channel: paramiko.Channel,
         single_connection: bool,
         auth_protocol: str,
-        auth_cookie: Union[bytes, bytearray],
+        auth_cookie: bytes | bytearray,
         screen_number: int,
     ) -> bool:
         logging.debug(
@@ -482,7 +480,7 @@ class ServerInterface(BaseServerInterface):
 
     def check_global_request(
         self, kind: str, msg: paramiko.message.Message
-    ) -> Union[bool, Tuple[Union[bool, int, str], ...]]:
+    ) -> bool | tuple[bool | int | str, ...]:
         logging.debug("check_global_request: kind=%s, msg=%s", kind, msg)
         return False
 
@@ -493,7 +491,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
         channel: paramiko.Channel,
         name: str,
         server: ServerInterface,
-        sftp_si: Type[paramiko.SFTPServerInterface],
+        sftp_si: type[paramiko.SFTPServerInterface],
         session: "sshmitm.session.Session",
         *largs: Any,
         **kwargs: Any,

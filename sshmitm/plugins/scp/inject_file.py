@@ -87,14 +87,7 @@ class SCPInjectFile(SCPForwarder):
             self.args.scp_inject_file,
             self.client_channel.get_id(),
         )
-        command = "{}{} {} {}\n".format(  # pylint: disable=consider-using-f-string
-            self.file_command,
-            "{:o}".format(  # pylint: disable=consider-using-f-string
-                self.inject_file_stat.st_mode
-            )[2:],
-            self.inject_file_stat.st_size,
-            self.args.scp_inject_file.split("/")[-1],
-        )
+        command = f"{self.file_command}{f'{self.inject_file_stat.st_mode:o}'[2:]} {self.inject_file_stat.st_size} {self.args.scp_inject_file.split('/')[-1]}\n"
         logging.debug("Sending command %s", command.strip())
         self.client_channel.sendall(command.encode())
         if not wait_ok():
