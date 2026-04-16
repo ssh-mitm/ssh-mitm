@@ -46,7 +46,7 @@ pytz==2025.2
     # via -r requirements.in
 pyyaml==6.0.3
     # via -r requirements.in
-requests==2.32.5
+requests==2.33.0
     # via -r requirements.in
 rich==14.3.2
     # via -r requirements.in
