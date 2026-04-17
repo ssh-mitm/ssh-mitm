@@ -125,11 +125,23 @@ check = [
 
 [tool.hatch.envs.docs]
 detached = false
+dependencies = [
+    "sphinx",
+    "pydata-sphinx-theme",
+    "sphinx-sitemap<2.4.0",
+    "sphinx-reredirects",
+    "sphinx-design",
+    "sphinx-notfound-page",
+    "sphinx-copybutton",
+    "sphinxcontrib-mermaid",
+    "sphinx-togglebutton",
+    "sphinx-autodoc-typehints",
+    "sphinx_mdinclude",
+]
 
 [tool.hatch.envs.docs.scripts]
 build = [
-    "pip install -r doc/requirements.txt",
-    "sphinx-apidoc -T -e -M -d 1 -o doc/api sshmitm",
+    "sphinx-apidoc -T -e -M -d 1 -o doc/develop/api sshmitm",
     "sphinx-build doc build/html",
 ]
 

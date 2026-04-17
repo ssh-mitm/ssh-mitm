@@ -165,7 +165,7 @@ No further configuration is required for this.
 
 
 Local port forwarding
---------------------
+---------------------
 
 .. figure:: /images/ssh-mitm_client_port_inject.png
   :scale: 100
@@ -200,7 +200,7 @@ However, it is also possible to let a vulnerability scanner that can communicate
 
 
 Remote port forwarding
----------------------
+----------------------
 
 .. figure:: /images/ssh-mitm_server_port_inject.png
   :scale: 100

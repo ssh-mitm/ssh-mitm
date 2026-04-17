@@ -20,6 +20,16 @@ back to password-authentication.
 When publickey authentication is possible, a forwarded agent is needed to login to the remote server.
 In cases, when no agent was forwarded, SSH-MITM can redirect the session to a honeypot.
 
+
+.. admonition:: :fas:`scale-balanced` Legal Notice
+   :class: legal-notice
+
+   SSH-MITM is intended for authorized security audits, penetration testing, and research only.
+   Do not use it against systems you do not own or have explicit written permission to test.
+   Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
+   See the :doc:`Legal Notice </get_started/legal>` for details.
+
+
 Installation
 ============
 
@@ -153,14 +163,6 @@ SSH-MITM can redirect the connection to a honeypot.
       --fallback-host HONEYPOT \
       --fallback-username HONEYPOT_USER \
       --fallback-password HONEYPOT_PASSWORD
-
-
-.. warning::
-
-   **Legal Notice:** SSH-MITM is intended for authorized security audits, penetration testing, and research only.
-   Do not use it against systems you do not own or have explicit written permission to test.
-   Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
-   See the :doc:`Legal Notice </get_started/legal>` for details.
 
 
 .. toctree::

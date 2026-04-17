@@ -485,6 +485,10 @@ div[class^="highlight"] pre {
     margin-right: 4px
 }
 
+.legal-notice .admonition-title:before {
+    content: none
+}
+
 .warning {
     background: #ffedcc
 }

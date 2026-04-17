@@ -100,6 +100,9 @@ typehints_defaults = "comma"
 typehints_use_signature = False
 typehints_use_signature_return = False
 
+autodoc_mock_imports = ["_typeshed"]
+suppress_warnings = ["sphinx_autodoc_typehints.forward_reference"]
+
 master_doc = "index"
 html_permalinks = False
 html_baseurl = "https://docs.ssh-mitm.at/"
