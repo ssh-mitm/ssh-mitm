@@ -155,6 +155,14 @@ SSH-MITM can redirect the connection to a honeypot.
       --fallback-password HONEYPOT_PASSWORD
 
 
+.. warning::
+
+   **Legal Notice:** SSH-MITM is intended for authorized security audits, penetration testing, and research only.
+   Do not use it against systems you do not own or have explicit written permission to test.
+   Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
+   See the :doc:`Legal Notice </get_started/legal>` for details.
+
+
 .. toctree::
    :maxdepth: 1
    :hidden:
@@ -164,4 +172,3 @@ SSH-MITM can redirect the connection to a honeypot.
    develop/index
    vulnerabilities/index
    changelog
-   legal

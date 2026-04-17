@@ -26,3 +26,4 @@ and plugin support for customization.
    file_transfer
    portforwarding
    faq
+   legal
