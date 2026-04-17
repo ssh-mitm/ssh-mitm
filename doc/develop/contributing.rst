@@ -22,7 +22,8 @@ volunteered) and open a pull request with proposed implementation.
 If you are not certain about the implementation, using draft pull requests is encouraged.
 
 If you believe you’ve found a security vulnerability in SSH-MITM,
-please report it to support@ssh-mitm.at.
+please report it privately via `GitHub Security Advisories <https://github.com/ssh-mitm/ssh-mitm/security/advisories>`_.
+Do not create a public issue.
 
 We are very pleased to have you as a contributor, and we hope you will find valuable your impact on the projects.
 Thank you for sharing your interests, ideas, and skills with us.

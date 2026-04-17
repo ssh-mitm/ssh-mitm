@@ -1,47 +1,42 @@
 # Security Policy
 
-## Supported Versions
-
-For SSH-MITM, security updates and patches will only be provided for the most current release. 
-Users are encouraged to update to the latest version to ensure they receive all security updates and new features.
-
-| Version | Supported          |
-| ------- | ------------------ |
-| Latest  | :white_check_mark: |
-| < Older | :x:                |
-
 ## Reporting a Vulnerability
 
-If you discover a security issue in SSH-MITM, please report it by following this process. We take all security bugs in SSH-MITM seriously and appreciate your efforts to responsibly disclose your findings.
+If you discover a security vulnerability in SSH-MITM, please report it privately and responsibly.
 
-### How to Report
+**Do not** create public issues or pull requests that contain details about the vulnerability.
 
-To report a security issue, please send an email to [support@ssh-mitm.at](mailto:support@ssh-mitm.at) with the following details:
+Instead, use GitHub's private **Security Advisories** feature:
 
-- Description of the vulnerability
-- Steps to reproduce (if applicable)
-- Impact of the vulnerability
-- Any other information you deem important
+- Go to [SSH-MITM's Security Advisories page](https://github.com/ssh-mitm/ssh-mitm/security/advisories)
+- Click **"Report a vulnerability"**
 
-### Response Process
+Alternatively, you can reach us by email at [support@ssh-mitm.at](mailto:support@ssh-mitm.at).
 
-Upon receiving your email, the SSH-MITM team will:
+We aim to respond within **7–14 business days** and will keep you informed throughout the process.
 
-1. Confirm receipt of your vulnerability report
-2. Investigate and assess the impact of the reported issue
-3. Work on a fix and prepare a security release if necessary
-4. Publicly announce the security issue after the fix is released
+## Supported Versions
 
-Your confidentiality and security are important to us. We will endeavor to keep you informed throughout our response process.
+Security updates are provided for the latest release only. Please update to the latest version to receive all security patches.
 
-### Public Disclosure Timing
+| Version | Supported |
+| ------- | --------- |
+| Latest  | ✅        |
+| Older   | ❌        |
 
-Public disclosure of the vulnerability will be coordinated with you. We aim to ensure that our users have a chance to upgrade and secure their systems before the vulnerability is disclosed publicly.
+## Response Process
 
-### Recognition
+After receiving your report, we will:
 
-Contributors who report security vulnerabilities will be acknowledged in the release notes of the patch that addresses the issue, if they choose to be.
+1. Confirm receipt of the report
+2. Investigate and assess the impact
+3. Develop a fix and prepare a release
+4. Coordinate public disclosure with you so users have time to upgrade
 
----
+## Recognition
 
-SSH-MITM values the security and integrity of our users' systems and data. We are committed to continually improving the security of our software. Thank you for your support and cooperation in keeping SSH-MITM safe and secure.
+If you wish, contributors who report security vulnerabilities will be acknowledged in the release notes of the corresponding patch.
+
+## Responsible Disclosure
+
+We appreciate responsible disclosures and are committed to resolving vulnerabilities in a timely manner. Thank you for helping keep SSH-MITM secure.

@@ -18,7 +18,7 @@ the destination server. If publickey authentication is not possible, the authent
 back to password-authentication.
 
 When publickey authentication is possible, a forwarded agent is needed to login to the remote server.
-In cases, when no agent was forwarded, SSH-MITM can rediredt the session to a honeypot.
+In cases, when no agent was forwarded, SSH-MITM can redirect the session to a honeypot.
 
 Installation
 ============
@@ -70,7 +70,7 @@ If you use ``pip``, you can install it with:
 
 .. code-block:: none
 
-    $ python3 -m pip install ssh-mitm
+    $ python3 -m pip install "ssh-mitm[production]"
 
 
 For more installation methods, refer to the  :doc:`installation guide </get_started/installation>`.
@@ -112,7 +112,6 @@ You will see the credentials in the log output.
 Hijack a SSH terminal session
 =============================
 
-Getting the plain text credentials is only half the fun.
 SSH-MITM proxy server is able to hijack a ssh session and allows you to interact with it.
 
 Let's get started with hijacking the session.
@@ -133,7 +132,7 @@ To hijack the session, you can use your favorite ssh client. This connection doe
 
 After you are connected, your session will only be updated with new responses, but you are able to execute commands.
 
-Try to execute somme commands in the hijacked session or in the original session.
+Try to execute some commands in the hijacked session or in the original session.
 
 The output will be shown in both sessions.
 

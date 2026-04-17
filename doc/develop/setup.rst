@@ -17,7 +17,7 @@ Install Python
 --------------
 
 SSH-MITM is written in the `Python <https://python.org>`_ programming language, and
-requires you have at least version 3.8 installed locally. If you haven’t
+requires you have at least version 3.11 installed locally. If you haven’t
 installed Python before, the recommended way to install it is to use
 your systems package manager. Remember to get the ‘Python 3’ version,
 and **not** the ‘Python 2’ version!
@@ -57,7 +57,7 @@ happen.
 
       python -V
 
-   This should return a version number greater than or equal to 3.8.
+   This should return a version number greater than or equal to 3.11.
 
 
 3. Install the development version of SSH-MITM. This lets you edit

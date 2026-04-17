@@ -23,7 +23,7 @@ Following these steps helps you diagnose if the problem is likely from SSH-MITM 
 
      3. Install SSH-MITM::
 
-         $ python3 -m pip install ssh-mitm
+         $ python3 -m pip install "ssh-mitm[production]"
 
      3. Start SSH-MITM::
 

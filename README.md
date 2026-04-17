@@ -16,17 +16,38 @@
   </p>
 </p>
 
+[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8906/badge)](https://www.bestpractices.dev/projects/8906)
+[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
+[![CodeFactor](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm/badge)](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm)
+[![Documentation Status](https://readthedocs.org/projects/ssh-mitm/badge/?version=latest)](https://docs.ssh-mitm.at/?badge=latest)
+[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
+[![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm?color=%23434ee6)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
+<a rel="me" href="https://defcon.social/@sshmitm"><img src="https://img.shields.io/mastodon/follow/109597663767801251?color=%236364FF&domain=https%3A%2F%2Fdefcon.social&label=Mastodon&style=plastic"></a>
 
-<h3 align="center">Contributors</h3>
-<p align="center">
-<a href="https://github.com/ssh-mitm/ssh-mitm/graphs/contributors">
-  <img src="https://contrib.rocks/image?repo=ssh-mitm/ssh-mitm" />
-</a>
-</p>
+**Legal notice:** SSH-MITM is intended for authorized security audits, penetration testing, and research only.
+Do not use it against systems you do not own or have explicit written permission to test.
+Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
+
+---
+
+## Quick Install
+
+### AppImage (recommended — no installation required)
+
+```bash
+wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+chmod +x ssh-mitm-x86_64.AppImage
+./ssh-mitm-x86_64.AppImage server --remote-host <target-host>
+```
+
+For other installation options (pip, Flatpak, Snap) see the [Installation](#installation) section below.
+
+---
 
 ## Table of Contents
 
 - [Introduction](#introduction)
+- [Use Cases](#use-cases)
 - [Features](#features)
 - [Installation](#installation)
 - [Quickstart](#quickstart)
@@ -37,101 +58,88 @@
 
 ## Introduction
 
-[![OpenSSF Best Practices](https://www.bestpractices.dev/projects/8906/badge)](https://www.bestpractices.dev/projects/8906)
-[![Code style: black](https://img.shields.io/badge/code%20style-black-000000.svg)](https://github.com/psf/black)
-[![CodeFactor](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm/badge)](https://www.codefactor.io/repository/github/ssh-mitm/ssh-mitm)
-[![Documentation Status](https://readthedocs.org/projects/ssh-mitm/badge/?version=latest)](https://docs.ssh-mitm.at/?badge=latest)
-[![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
-[![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm?color=%23434ee6)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
-<a rel="me" href="https://defcon.social/@sshmitm"><img src="https://img.shields.io/mastodon/follow/109597663767801251?color=%236364FF&domain=https%3A%2F%2Fdefcon.social&label=Mastodon&style=plastic"></a>
+**SSH-MITM** is a man-in-the-middle SSH server for security audits and malware analysis.
 
+Password and **publickey authentication** are supported. SSH-MITM can detect if a user is able to log in with publickey authentication on the remote server, allowing it to accept the same key as the destination server. If publickey authentication is not possible, it falls back to password authentication.
 
-**SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
+When publickey authentication is possible, a forwarded agent is needed to log in to the remote server. If no agent is forwarded, SSH-MITM can redirect the session to a honeypot.
 
-Password and **publickey authentication** are supported and SSH-MITM is able to detect, if a user is able to login with publickey authentication on the remote server. This allows SSH-MITM to accept the same key as the destination server. If publickey authentication is not possible, the authentication will fall back to password-authentication.
+<p align="right">(<a href="#top">back to top</a>)</p>
 
-When publickey authentication is possible, a forwarded agent is needed to login to the remote server. In cases, when no agent was forwarded, SSH-MITM can rediredt the session to a honeypot.
+## Use Cases
+
+- **Penetration testing** — audit SSH clients and servers in authorized engagements
+- **Security research** — analyze SSH client behavior and authentication flows
+- **Training environments** — demonstrate MITM attacks in controlled lab setups
+- **Malware analysis** — inspect SSH traffic from suspicious clients in isolated environments
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Features
 
-* publickey authentication
-   * accept same key as destination server
-   * Phishing FIDO Tokens ([Information from OpenSSH](https://www.openssh.com/agent-restrict.html))
-* hijacking and logging of terminal sessions
-* store and replace files during SCP/SFTP file transferes
-* port porwarding
-  * SOCKS 4/5 support for dynamic port forwarding
-* intercept MOSH connections
-* audit clients against known vulnerabilities
-* plugin support
+| Feature | Description |
+| ------- | ----------- |
+| Publickey authentication | Accepts the same key as the destination server; detects and falls back to password auth |
+| FIDO2 token phishing | Intercepts hardware token authentication via the trivial authentication attack ([OpenSSH info](https://www.openssh.com/agent-restrict.html)) |
+| Session hijacking | Mirror and interact with live SSH sessions in real time |
+| File interception | Store and replace files during SCP/SFTP transfers |
+| Port forwarding | TCP and dynamic forwarding with SOCKS 4/5 support |
+| MOSH interception | Intercept MOSH connections |
+| Client auditing | Check connecting clients against known vulnerabilities |
+| Plugin support | Extend functionality with custom plugins |
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Installation
 
-SSH-MITM is available as:
+### Requirements
 
-* [AppImage](https://github.com/ssh-mitm/ssh-mitm/releases/latest) (recommended for most users)
-* [Flatpak](https://flathub.org/apps/at.ssh_mitm.server)
-* [Ubuntu Snap](https://snapcraft.io/ssh-mitm)
-* [PIP-Package](https://pypi.org/project/ssh-mitm/)
+- Linux (x86_64)
+- Python 3.11 or newer (for pip installation)
 
-Community-supported options include:
+### AppImage (recommended)
 
-* [Nix](https://search.nixos.org/packages?channel=unstable&show=ssh-mitm&type=packages&query=ssh-mitm)
-
-For more details, see the [SSH-MITM installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
-
-### Install as AppImage:
+No installation required — just download and run:
 
 ```bash
 wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-chmod +x ssh-mitm*.AppImage
+chmod +x ssh-mitm-x86_64.AppImage
 ```
 
-### Install from Flathub:
+### Flatpak
 
 ```bash
 flatpak install flathub at.ssh_mitm.server
 flatpak run at.ssh_mitm.server
 ```
 
-### Install from Snap store:
+### Snap
 
 ```bash
 sudo snap install ssh-mitm
 ```
 
-### Install python package:
-
-To install **SSH-MITM** with tested and stable dependencies (recommended):
+### pip (Python 3.11+)
 
 ```bash
-python3 -m pip install "ssh-mitm[production]"
+pip install "ssh-mitm[production]"
 ```
 
-For a development installation (without fixed dependency versions):
-
-```bash
-python3 -m pip install ssh-mitm
-```
-
+For more details, see the [SSH-MITM installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Quickstart
 
-To start SSH-MITM, all you have to do is run this command in your terminal of choice.
+Start SSH-MITM and point it at your target host (replace `<target-host>` with the SSH server you want to audit):
 
-    ssh-mitm server --remote-host 192.168.0.x
+    ssh-mitm server --remote-host <target-host>
 
-Now let's try to connect. SSH-MITM is listening on port 10022.
+SSH-MITM listens on port 10022 by default. Connect through the proxy:
 
     ssh -p 10022 testuser@proxyserver
 
-You will see the credentials in the log output.
+You will see the intercepted credentials in the log output:
 
     INFO     Remote authentication succeeded
         Remote Address: 127.0.0.1:22
@@ -143,30 +151,27 @@ You will see the credentials in the log output.
 
 ## Session hijacking
 
-Getting the plain text credentials is only half the fun.
-When a client connects, the ssh-mitm starts a new server, which is used for session hijacking.
+When a client connects, SSH-MITM starts a mirror shell that can be used for session hijacking:
 
     INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
 
-To hijack the session, you can use your favorite ssh client.
+Connect to the mirror shell with any SSH client:
 
     ssh -p 34463 127.0.0.1
 
-Try to execute somme commands in the hijacked session or in the original session.
-
-The output will be shown in both sessions.
+Commands executed in either the original or the hijacked session will be visible in both.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Phishing FIDO Tokens
 
-SSH-MITM is able to phish FIDO2 Tokens which can be used for 2 factor authentication.
+SSH-MITM is able to phish FIDO2 tokens which can be used for two-factor authentication.
 
-The attack is called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html) ([CVE-2021-36367](https://docs.ssh-mitm.at/CVE-2021-36367.html), [CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html)) and can be enabled with the command line argument `--enable-trivial-auth`.
+The attack is called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html) ([CVE-2021-36367](https://docs.ssh-mitm.at/CVE-2021-36367.html), [CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html)) and can be enabled with the command line argument `--enable-trivial-auth`:
 
   ssh-mitm server --enable-trivial-auth
 
-Using the trivial authentication attack does not break password authentication, because the attack is only performed when a publickey login is possible.
+The attack is only performed when publickey login is possible, so password authentication continues to work normally.
 
 <p align="center">
   <b>Video explaining the phishing attack:</b><br/>
@@ -177,7 +182,7 @@ Using the trivial authentication attack does not break password authentication, 
 </p>
 
 <p align="center">
-  <b><a href="https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf">Downlaod presentation slides</a></b>
+  <b><a href="https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf">Download presentation slides</a></b>
 </p>
 
 <p align="right">(<a href="#top">back to top</a>)</p>
@@ -195,13 +200,17 @@ Don't forget to give the project a star! Thanks again!
 4. Push to the Branch (`git push origin feature/AmazingFeature`)
 5. Open a Pull Request
 
-See also the list of [contributors](https://github.com/ssh-mitm/ssh-mitm/graphs/contributors) who participated in this project.
-
 <p align="right">(<a href="#top">back to top</a>)</p>
 
 ## Contact
 
-- E-Mail: support@ssh-mitm.at
+- E-Mail: [support@ssh-mitm.at](mailto:support@ssh-mitm.at)
 - [Issue Tracker](https://github.com/ssh-mitm/ssh-mitm/issues)
 
 <p align="right">(<a href="#top">back to top</a>)</p>
+
+## Contributors
+
+<a href="https://github.com/ssh-mitm/ssh-mitm/graphs/contributors">
+  <img src="https://contrib.rocks/image?repo=ssh-mitm/ssh-mitm" />
+</a>

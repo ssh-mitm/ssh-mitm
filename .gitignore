@@ -144,3 +144,4 @@ doc/api/
 doc/develop/api/
 .DirIcon
 squashfs-root
+.ruff_cache/
