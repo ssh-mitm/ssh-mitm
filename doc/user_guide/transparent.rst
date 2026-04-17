@@ -55,7 +55,7 @@ To setup SSH-MITM in transparent mode, the system has to be prepared.
 Routing configuration
 =====================
 
-Following configuration is needed to redirect the incomming traffic to SSH-MITM.
+Following configuration is needed to redirect the incoming traffic to SSH-MITM.
 
 .. code-block:: none
 

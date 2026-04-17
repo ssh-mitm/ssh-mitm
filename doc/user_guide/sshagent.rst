@@ -126,7 +126,7 @@ SSH-Agent Breaking
 SSH-MITM can try to break in to the client and force agent forwarding.
 Most clients should ignore this breakin attempt or close the session.
 
-This feature allowes an auditor the check if the client is resistant against agent breaking attempts.
+This feature allows an auditor to check if the client is resistant against agent breaking attempts.
 
 .. code-block:: bash
 

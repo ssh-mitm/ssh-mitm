@@ -5,8 +5,7 @@
 Hijack a SSH terminal session
 =============================
 
-Getting the plain text credentials is only half the fun.
-SSH-MITM proxy server is able to hijack a ssh session and allows you to interact with it.
+SSH-MITM proxy server is able to hijack an SSH session and allows you to interact with it.
 
 Let's get started with hijacking the session.
 
@@ -26,7 +25,7 @@ To hijack the session, you can use your favorite ssh client. This connection doe
 
 After you are connected, your session will only be updated with new responses, but you are able to execute commands.
 
-Try to execute somme commands in the hijacked session or in the original session.
+Try to execute some commands in the hijacked session or in the original session.
 
 The output will be shown in both sessions.
 
@@ -47,7 +46,7 @@ To start SSH-MITM to log the session, the arguments ``--session-log-dir`` and ``
     INFO     ℹ session 7c43d2b2-51e7-4351-a468-c6768ea04d30 created
 
 SSH-MITM generates a unique Id for each client.
-The log direcory contains subfolders for each session.
+The log directory contains subfolders for each session.
 
 .. code-block:: none
 

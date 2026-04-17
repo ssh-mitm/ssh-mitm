@@ -42,7 +42,7 @@ Authentication methods
 none authentication
 """""""""""""""""""
 
-The easiest way for a phishing attack is to use "none" autnentication.
+The easiest way for a phishing attack is to use "none" authentication.
 This is used to grant a client access to a server without a login.
 For a Man in the Middle attacker, this is interesting in that no other authentication methods are executed.
 
@@ -54,10 +54,10 @@ only for selected users and only a password is sufficient for all others. In suc
 the attacker would no longer have the possibility to ask for the password and a login would no longer be possible for the attacker.
 
 
-publikey authentication
-"""""""""""""""""""""""
+Publickey authentication
+""""""""""""""""""""""""
 
-Publikey authentication is a non-trivial authentication.
+Publickey authentication is a non-trivial authentication method.
 The reason is that the client creates a signature with the private key, which should be validated by the server.
 
 However, an attacker cannot make a client bypass the signature process.
@@ -79,8 +79,8 @@ It is essential that an authentication using publickey authentication against th
 the Middle server must never be successful. Otherwise, there is a risk that the phishing attack will be noticed.
 
 
-keyboard-interactive" authentication
-""""""""""""""""""""""""""""""""""""
+"keyboard-interactive" authentication
+"""""""""""""""""""""""""""""""""""""
 
 The actual phishing attack takes place in the "keyboard-interactive" authentication method.
 With "keyboard-interactive" any number of prompts can be sent to the client. The number of prompts must therefore be >=0.

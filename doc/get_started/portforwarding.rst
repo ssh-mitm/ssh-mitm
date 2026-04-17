@@ -63,7 +63,7 @@ For example, say you wanted to let a developer access your internal file storage
 
 The -R option specifies remote port forwarding.
 For the duration of the SSH session, the developer would be able to access
-your filestorage (Nextcloud) by connecting the webbroweser to port 8443 on the remoteserver.
+your filestorage (Nextcloud) by connecting the web browser to port 8443 on the remoteserver.
 
 
 
@@ -82,7 +82,7 @@ Each program that uses the proxy server needs to be configured specifically, and
 .. note::
 
   Dynamic port forwarding is implemented in the ssh client. The server receives a normal local portforwarding request
-  and does require not know anything about dynamic port forwarding.
+  and does not need to know anything about dynamic port forwarding.
 
   The only difference between local port forwarding and dynamic portforwarding is how the port forwarding is configured.
   With local portforwarding you have to know each connection when the ssh client is started.

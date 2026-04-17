@@ -1,5 +1,5 @@
 ======================================
-:fas:`copy` File transferrs (SCP/SFTP)
+:fas:`copy` File transfers (SCP/SFTP)
 ======================================
 
 In this chapter, we will explore how to intercept and manipulate file transfers using
@@ -33,7 +33,7 @@ between a local host and a remote host or between two remote hosts.
 Store intercepted files
 -----------------------
 
-To copy a from a server to the client, following SCP command was used:
+To copy a file from a server to the client, the following SCP command was used:
 
 .. code-block:: none
 
@@ -46,17 +46,15 @@ To store files, which are transferred with SCP, following arguments must be prov
     $ ssh-mitm server --session-log-dir ~/sshlogs --store-scp-files
     INFO     ℹ session 7c43d2b2-51e7-4351-a468-c6768ea04d30 created
 
-SSH-MITM generates a unique Id for each client and the log direcory contains subfolders for each session.
-Also a uniquie Id for each file transfer is assigned.
+SSH-MITM generates a unique Id for each client and the log directory contains subfolders for each session.
+Also a unique Id for each file transfer is assigned.
 
 .. code-block:: none
 
     INFO     file bash -> a5a0e5d2-4cbd-4c25-8430-a3b79e71273d
 
 The reason for the unique id as filename is, multiple files with the same filename can be transferred.
-This avoids name collissions and avoids overriting already existing files.
-
-.. code-bloc
+This avoids name collisions and avoids overwriting already existing files.
 
 .. code-block:: none
 
@@ -73,15 +71,15 @@ This avoids name collissions and avoids overriting already existing files.
 Replace files
 -------------
 
-There are some situation, where it's useful to replace a transferred file with another one.
+There are some situations where it's useful to replace a transferred file with another one.
 
 This can be done with another SCP-interface in SSH-MITM.
 
 .. note::
 
     The default interface replace-file interface replaces all files with a given one.
-    This means, all files will be replaces with the same file, but it's easy to extend this
-    plugin to provide a more sofficticated workflow, which is able to replace only specific files.
+    This means, all files will be replaced with the same file, but it's easy to extend this
+    plugin to provide a more sophisticated workflow, which is able to replace only specific files.
 
 .. code-block:: none
 
@@ -104,24 +102,22 @@ Store intercepted files
 
     $ scp -P 10022 testuser@proxyserver:/bin/bash .
 
-to store files, which are transferred with SCP, following arguments must be provided:
+To store files which are transferred with SFTP, the following arguments must be provided:
 
 .. code-block:: none
 
     $ ssh-mitm server --session-log-dir ~/sshlogs --store-sftp-files
     INFO     ℹ session 7c43d2b2-51e7-4351-a468-c6768ea04d30 created
 
-SSH-MITM generates a unique Id for each client and the log direcory contains subfolders for each session.
-Also a uniquie Id for each file transfer is assigned.
+SSH-MITM generates a unique Id for each client and the log directory contains subfolders for each session.
+Also a unique Id for each file transfer is assigned.
 
 .. code-block:: none
 
     INFO     file bash -> a5a0e5d2-4cbd-4c25-8430-a3b79e71273d
 
 The reason for the unique id as filename is, multiple files with the same filename can be transferred.
-This avoids name collissions and avoids overriting already existing files.
-
-.. code-bloc
+This avoids name collisions and avoids overwriting already existing files.
 
 .. code-block:: none
 
@@ -138,15 +134,15 @@ This avoids name collissions and avoids overriting already existing files.
 Replace files
 -------------
 
-There are some situation, where it's useful to replace a transferred file with another one.
+There are some situations where it's useful to replace a transferred file with another one.
 
 This can be done with another SCP-interface in SSH-MITM.
 
 .. note::
 
     The default interface replace-file interface replaces all files with a given one.
-    This means, all files will be replaces with the same file, but it's easy to extend this
-    plugin to provide a more sofficticated workflow, which is able to replace only specific files.
+    This means, all files will be replaced with the same file, but it's easy to extend this
+    plugin to provide a more sophisticated workflow, which is able to replace only specific files.
 
 .. code-block:: none
 

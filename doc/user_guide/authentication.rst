@@ -116,7 +116,7 @@ With SSH, within the encrypted channel, the password is transmitted in clear tex
 
 Another problem is that accounts with weak passwords can be compromised relatively easily through a brute force attack. This happens very often with IoT devices because they often have the same username on many devices and they are protected by a default password or only a weak password is set.
 
-On the client side, password authentication should not be used because of security concernes.
+On the client side, password authentication should not be used because of security concerns.
 
 
 Support in SSH-MITM

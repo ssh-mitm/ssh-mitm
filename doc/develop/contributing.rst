@@ -48,7 +48,7 @@ One of the most important parts of SSH-MITM is its documentation.
 Good documentation makes it easier for users to learn how to use the tool.
 It also makes it easier to teach others, and to maintain and improve the code itself.
 There are many ways to improve documentation, such as reading tutorials and reporting confusing parts,
-finding type-os and minor errors in docs, writing your own guides and tutorials,
+finding typos and minor errors in docs, writing your own guides and tutorials,
 improving docstrings within the code, and improving documentation style and design.
 
 Improving code
