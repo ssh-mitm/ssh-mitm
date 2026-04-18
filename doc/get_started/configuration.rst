@@ -106,6 +106,8 @@
 
    :option string session-log-dir: |br|
       Specifies the directory where session logs will be stored.
+   :option string log-webhook-dest: |br|
+      Specifies a webhook URL where session log events are sent.
 
 Authentication-Plugins
 ----------------------
@@ -250,7 +252,7 @@ SCP-Plugins
 
    .. code-block:: ini
 
-      [SCPStorageForwarder]
+      [sshmitm.plugins.scp.store_file:SCPStorageForwarder]
       store-scp-files = False
       store-command-data = False
 
@@ -306,14 +308,25 @@ SFTP-Handler-Plugins
    :option string sftp-replace-file: |br|
       Specifies the path to the file that will be used for replacement during SFTP file transfers. This option is required.
 
-Port-Forwarding-Plugins
------------------------
-
-.. confval:: [InjectableRemotePortForwardingForwarder]
+.. confval:: [sshmitm.plugins.sftp.check_file:SFTPHandlerCheckFilePlugin]
 
    .. code-block:: ini
 
-      [InjectableRemotePortForwardingForwarder]
+      [sshmitm.plugins.sftp.check_file:SFTPHandlerCheckFilePlugin]
+      clamav-socket = /tmp/clamd.sock
+
+   :option string clamav-socket: :bdg-primary:`/tmp/clamd.sock` |br|
+      Specifies the path to the ClamAV Unix domain socket used to scan transferred files via INSTREAM. |br|
+      Requires a running ClamAV daemon (``clamd``) with the socket accessible at the given path.
+
+Port-Forwarding-Plugins
+-----------------------
+
+.. confval:: [sshmitm.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardingForwarder]
+
+   .. code-block:: ini
+
+      [sshmitm.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardingForwarder]
       server-tunnel-net = 127.0.0.1
 
    :option string server-tunnel-net: :bdg-primary:`127.0.0.1` |br|
