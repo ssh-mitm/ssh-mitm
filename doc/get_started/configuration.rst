@@ -73,8 +73,9 @@
       host-key-length = 2048
       request-agent-breakin = False
       banner-name =
+      log-webhook-dest =
 
-   :option integer listen-address: :bdg-primary:`::` |br|
+   :option string listen-address: :bdg-primary:`::` |br|
       Specifies the listen address for incoming connections (default: all interfaces).
    :option integer listen-port: :bdg-primary:`10022` |br|
       Specifies the port on which SSH-MITM listens for incoming SSH connections. |br|
@@ -95,6 +96,12 @@
    :option string banner-name: |br|
       Sets a custom SSH server banner presented to clients during the initial connection. |br|
       If not specified, the default banner is ``SSH-2.0-SSHMITM_<version>``.
+   :option string log-webhook-dest: |br|
+      Transmits SSH commands and responses to a remote HTTP server for log collection and analysis. |br|
+      Specify a URL, e.g. ``http://localhost:8080/log``.
+
+Session-Plugins
+---------------
 
 .. confval:: [sshmitm.session:Session]
 
@@ -102,12 +109,9 @@
 
       [sshmitm.session:Session]
       session-log-dir =
-      log-webhook-dest =
 
    :option string session-log-dir: |br|
       Specifies the directory where session logs will be stored.
-   :option string log-webhook-dest: |br|
-      Specifies a webhook URL where session log events are sent.
 
 Authentication-Plugins
 ----------------------
@@ -124,6 +128,7 @@ Authentication-Plugins
       disable-remote-fingerprint-warning = False
       auth-username =
       auth-password =
+      auth-key =
       auth-hide-credentials = False
       enable-auth-fallback = False
       fallback-host =
@@ -145,6 +150,8 @@ Authentication-Plugins
       Specifies the username for remote authentication.
    :option string auth-password: |br|
       Specifies the password for remote authentication.
+   :option string auth-key: |br|
+      Specifies the path to an SSH private key used for remote authentication.
    :option boolean auth-hide-credentials: :bdg-primary-line:`True` :bdg-primary:`False` |br|
       Prevents logging of credentials, which is useful for presentations or security-sensitive environments.
    :option boolean enable-auth-fallback: :bdg-primary-line:`True` :bdg-primary:`False` |br|
