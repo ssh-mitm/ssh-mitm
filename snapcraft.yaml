@@ -1,13 +1,13 @@
-name: ssh-mitm # you probably want to 'snapcraft register <name>'
-base: core20 # the base snap is the execution environment for this snap
-version: '5.0.1' # just for humans, typically '1.2+git' or '1.3.2'
-license: GPL-3.0
+name: ssh-mitm
+base: core24
+version: '5.0.1'
+license: GPL-3.0-only
 website: https://docs.ssh-mitm.at
 source-code: https://github.com/ssh-mitm/ssh-mitm
 issues: https://github.com/ssh-mitm/ssh-mitm/issues
 contact: support@ssh-mitm.at
 title: SSH-MITM - ssh audits made simple
-summary: man in the middle SSH Server for security audits and malware analysis # 79 char long summary
+summary: man in the middle SSH Server for security audits and malware analysis
 description: |
   Password and publickey authentication are supported and SSH-MITM is able to detect,
   if a user is able to login with publickey authentication on the remote server.
@@ -17,27 +17,31 @@ description: |
   password-authentication.
 
   When publickey authentication is possible, a forwarded agent is needed to login
-  to the remote server. In cases, when no agent was forwarded, SSH-MITM can rediredt
+  to the remote server. In cases, when no agent was forwarded, SSH-MITM can redirect
   the session to a honeypot.
 
 icon: snap/gui/ssh-mitm.png
-grade: stable # must be 'stable' to release into candidate/stable channels
-confinement: strict # use 'strict' once you have the right plugs and slots
+grade: stable
+confinement: strict
+compression: lzo
 
-architectures:
-  - build-on: [amd64, arm64, armhf]
+platforms:
+  amd64:
+  arm64:
+  armhf:
 
 parts:
   ssh-mitm:
-    # See 'snapcraft plugins'
     plugin: python
     source: .
+    python-packages:
+      - pip
+
 apps:
   ssh-mitm:
     command: bin/ssh-mitm
     environment:
       PYTHONIOENCODING: utf-8
-      PYTHONOPTIMIZE: 1
     plugs:
       - home
       - network
