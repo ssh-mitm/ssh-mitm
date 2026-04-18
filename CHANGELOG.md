@@ -22,6 +22,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed issues with SFTP file transfers
 - Fixed stat and lstat command in sftp interface by returning SFTP_NO_SUCH_FILE if remote file does not exist
 - fix #187 - forward pty change requests to the remote server
+- fixed SFTP check file plugin - get and plost works as intedet
 
 ### Changed
 

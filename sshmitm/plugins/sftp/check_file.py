@@ -1,7 +1,9 @@
+import io
 import logging
 import os
 import uuid
 import zipfile
+from typing import cast
 
 import paramiko
 from paramiko import SFTPAttributes
@@ -31,9 +33,6 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
             logging.info(
                 "open from check_file with: path=%s flags=%s attr=%s", path, flags, attr
             )
-            if not flags & (os.O_WRONLY | os.O_RDWR):
-                logging.warning("sftp get not implemented. path=%s", path)
-                return paramiko.sftp.SFTP_PERMISSION_DENIED
             try:
                 self.session.sftp_client_ready.wait()
                 if self.session.sftp_client is None:
@@ -45,6 +44,17 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
                 fobj = sftp_file_handle(
                     self, self.session, sftp_handler, path, flags, attr, use_buffer=True
                 )
+
+                if not flags & (os.O_WRONLY | os.O_RDWR):
+                    # Download: load remote file into buffer and check before serving
+                    remote_file = self.session.sftp_client.open(path, "rb")
+                    fobj.buffer = io.BytesIO(remote_file.read())
+                    remote_file.close()
+                    fobj.readfile = fobj.buffer
+                    if not cast("SFTPHandlerCheckFilePlugin", fobj.plugin).check_file():
+                        logging.warning("sftp get blocked: invalid file. path=%s", path)
+                        return paramiko.sftp.SFTP_PERMISSION_DENIED
+                    fobj.buffer.seek(0)
 
             except OSError as exc:
                 logging.exception("Error")
@@ -72,6 +82,11 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
         return True
 
     def close(self) -> None:
+        # Downloads are checked in open(); nothing to forward to server
+        if not self.sftp.open_flags & (os.O_WRONLY | os.O_RDWR):
+            super().close()
+            return
+
         # Check the buffered file content before forwarding
         if not self.check_file():
             raise paramiko.SFTPError(paramiko.sftp.SFTP_FAILURE, "Invalid ZIP archive")
