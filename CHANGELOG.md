@@ -9,7 +9,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- added example check_file plugin - will be improved to send files to ClamAV
+- added example check_file plugin to send files to ClamAV
 - added option to use ssh private keys for remote authentication
 - added option to provide remote ssh server fingerprints
 - added new authentication plugin "AuthenticatorRemote" which allows to provide remote credentials without passthrough
@@ -22,7 +22,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Fixed issues with SFTP file transfers
 - Fixed stat and lstat command in sftp interface by returning SFTP_NO_SUCH_FILE if remote file does not exist
 - fix #187 - forward pty change requests to the remote server
-- fixed SFTP check file plugin - get and plost works as intedet
 
 ### Changed
 

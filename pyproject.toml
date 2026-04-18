@@ -153,6 +153,9 @@ build = [
     "appimage/build.sh",
 ]
 
+[tool.black]
+target-version = ["py311"]
+
 [tool.flake8]
 ignore = ["E203", "E501", "W503"]
 

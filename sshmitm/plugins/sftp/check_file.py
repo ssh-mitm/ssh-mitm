@@ -1,8 +1,9 @@
 import io
 import logging
 import os
+import socket
+import struct
 import uuid
-import zipfile
 from typing import cast
 
 import paramiko
@@ -14,9 +15,53 @@ from sshmitm.forwarders.sftp import SFTPBaseHandle, SFTPHandlerPlugin
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
 
 
+class ClamAVClient:
+    def __init__(
+        self, socket_path: str = "/tmp/clamd.sock"  # nosec B108  # noqa: S108
+    ) -> None:
+        self.socket_path = socket_path
+
+    def _connect(self) -> socket.socket:
+        s = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        s.connect(self.socket_path)
+        return s
+
+    def _read_response(self, sock: socket.socket) -> str:
+        data = b""
+        while True:
+            chunk = sock.recv(4096)
+            if not chunk:
+                break
+            data += chunk
+            if data.endswith((b"\x00", b"\n")):
+                break
+        return data.decode("utf-8", errors="replace").strip()
+
+    def instream(self, data: bytes, chunk_size: int = 1024) -> str:
+        with self._connect() as sock:
+            sock.sendall(b"zINSTREAM\x00")
+            pos = 0
+            while pos < len(data):
+                chunk = data[pos : pos + chunk_size]
+                sock.sendall(struct.pack(">I", len(chunk)))
+                sock.sendall(chunk)
+                pos += chunk_size
+            sock.sendall(struct.pack(">I", 0))
+            return self._read_response(sock)
+
+
 class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
-    """Buffers transferred files in memory and forwards on close,
-    checks ZIP content on close"""
+    """Buffers transferred files in memory, scans with ClamAV before forwarding"""
+
+    @classmethod
+    def parser_arguments(cls) -> None:
+        plugin_group = cls.argument_group()
+        plugin_group.add_argument(
+            "--clamav-socket",
+            dest="clamav_socket",
+            default="/tmp/clamd.sock",  # nosec B108  # noqa: S108
+            help="Path to the ClamAV Unix domain socket (default: /tmp/clamd.sock).",
+        )
 
     def __init__(self, sftp: SFTPBaseHandle, filename: str) -> None:
         super().__init__(sftp, filename)
@@ -69,16 +114,22 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
         return cls.SFTPInterface
 
     def check_file(self) -> bool:
-        """List the content of the buffered ZIP archive"""
+        """Scan the buffered file with ClamAV via INSTREAM"""
         self.sftp.buffer.seek(0)
+        data = self.sftp.buffer.read()
         try:
-            with zipfile.ZipFile(self.sftp.buffer) as z:
-                logging.info("ZIP archive contents for %s:", self.filename)
-                for info in z.infolist():
-                    logging.info("  %s - %d bytes", info.filename, info.file_size)
-        except zipfile.BadZipFile:
-            logging.error("File %s is not a valid ZIP archive", self.filename)
+            client = ClamAVClient(self.args.clamav_socket)
+            result = client.instream(data)
+        except OSError:
+            logging.exception("ClamAV connection failed for %s", self.filename)
             return False
+        if "FOUND" in result:
+            logging.warning("ClamAV detected threat in %s: %s", self.filename, result)
+            return False
+        if "ERROR" in result:
+            logging.error("ClamAV scan error for %s: %s", self.filename, result)
+            return False
+        logging.info("ClamAV scan clean for %s: %s", self.filename, result)
         return True
 
     def close(self) -> None:
@@ -89,7 +140,9 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
 
         # Check the buffered file content before forwarding
         if not self.check_file():
-            raise paramiko.SFTPError(paramiko.sftp.SFTP_FAILURE, "Invalid ZIP archive")
+            raise paramiko.SFTPError(
+                paramiko.sftp.SFTP_FAILURE, "ClamAV scan rejected file"
+            )
 
         self.sftp.open_remote_file()
         self.sftp.buffer.seek(0)  # Go to beginning of buffer
