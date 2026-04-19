@@ -220,3 +220,39 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "sshmitm/workarounds/monkeypatch.py" = ["ALL"]
 "sshmitm/workarounds/transport.py" = ["ALL"]
+
+[tool.bumpversion]
+commit = false
+tag = false
+tag_name = "{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "snapcraft.yaml"
+
+[[tool.bumpversion.files]]
+filename = "sshmitm/__init__.py"
+
+[[tool.bumpversion.files]]
+filename = "CHANGELOG.md"
+search = "[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/{current_version}...master"
+replace = "[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/{new_version}...master\n[{new_version}]: https://github.com/ssh-mitm/ssh-mitm/compare/{current_version}...{new_version}"
+
+[[tool.bumpversion.files]]
+filename = "CHANGELOG.md"
+search = "## [Unreleased]"
+replace = "## [Unreleased]\n\n## [{new_version}] - {now:%Y-%m-%d}"
+
+[[tool.bumpversion.files]]
+filename = "man1/ssh-mitm.1"
+search = '"SSH-MITM {current_version}" "SSH-MITM Manual"'
+replace = '"SSH-MITM {new_version}" "SSH-MITM Manual"'
+
+[[tool.bumpversion.files]]
+filename = "man1/ssh-mitm-audit.1"
+search = '"SSH-MITM {current_version}" "SSH-MITM Manual"'
+replace = '"SSH-MITM {new_version}" "SSH-MITM Manual"'
+
+[[tool.bumpversion.files]]
+filename = "man1/ssh-mitm-server.1"
+search = '"SSH-MITM {current_version}" "SSH-MITM Manual"'
+replace = '"SSH-MITM {new_version}" "SSH-MITM Manual"'
