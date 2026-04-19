@@ -1,12 +1,14 @@
 """Textual TUI for browsing SSH-MITM plugins."""
+
 from __future__ import annotations
 
 import argparse
+import contextlib
 import os
 import sys
 from configparser import ConfigParser
 from dataclasses import dataclass
-from typing import Any
+from typing import TYPE_CHECKING
 
 from textual.app import App, ComposeResult
 from textual.binding import Binding
@@ -25,18 +27,27 @@ from sshmitm.forwarders.tunnel import (
 )
 from sshmitm.interfaces.server import BaseServerInterface
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
-from sshmitm.moduleparser.modules import BaseModule
 from sshmitm.session import BaseSession
 from sshmitm.utils import metadata, resources
 
+if TYPE_CHECKING:
+    from sshmitm.moduleparser.modules import BaseModule
 
 PLUGIN_TYPES: list[tuple[type[BaseModule], str, str]] = [
     (SSHBaseForwarder, "--ssh-interface", "SSH Terminal Forwarder"),
     (SCPBaseForwarder, "--scp-interface", "SCP File Transfer Forwarder"),
     (BaseSFTPServerInterface, "--sftp-interface", "SFTP Server Interface"),
     (SFTPHandlerBasePlugin, "--sftp-handler", "SFTP File Handler"),
-    (RemotePortForwardingBaseForwarder, "--remote-port-forwarder", "Remote Port Forwarder"),
-    (LocalPortForwardingBaseForwarder, "--local-port-forwarder", "Local Port Forwarder"),
+    (
+        RemotePortForwardingBaseForwarder,
+        "--remote-port-forwarder",
+        "Remote Port Forwarder",
+    ),
+    (
+        LocalPortForwardingBaseForwarder,
+        "--local-port-forwarder",
+        "Local Port Forwarder",
+    ),
     (BaseServerInterface, "--auth-interface", "SSH Server Interface"),
     (Authenticator, "--authenticator", "Authenticator"),
     (BaseSession, "--session-class", "Session"),
@@ -64,12 +75,14 @@ class PluginInfo:
     def actions(self) -> list[argparse.Action]:
         try:
             parser = self.loaded_class.parser()
-        except Exception:  # noqa: BLE001
+        except Exception:  # noqa: BLE001  # pylint: disable=broad-exception-caught
             return []
         return [
             a
-            for a in parser._actions
-            if not isinstance(a, argparse._HelpAction)
+            for a in parser._actions  # pylint: disable=protected-access
+            if not isinstance(
+                a, argparse._HelpAction  # pylint: disable=protected-access
+            )
             and a.help != argparse.SUPPRESS
         ]
 
@@ -77,6 +90,7 @@ class PluginInfo:
 # ---------------------------------------------------------------------------
 # Config helpers
 # ---------------------------------------------------------------------------
+
 
 def _load_default_cfg() -> ConfigParser:
     cfg = ConfigParser()
@@ -89,7 +103,7 @@ def _get_config_path() -> str | None:
     p = argparse.ArgumentParser(add_help=False)
     p.add_argument("--config", dest="config_path")
     parsed, _ = p.parse_known_args(sys.argv[1:])
-    return parsed.config_path
+    return str(parsed.config_path) if parsed.config_path is not None else None
 
 
 def _load_user_cfg(path: str) -> ConfigParser:
@@ -189,13 +203,20 @@ class DetailPane(ScrollableContainer):
             "Flag", "Default", "Req.", "Description"
         )
         self._set_visible(False)
-        self.query_one("#placeholder").update(
+        self.query_one("#placeholder", Static).update(
             "[dim]Select a plugin from the tree on the left.[/dim]"
         )
 
     def _set_visible(self, visible: bool) -> None:
         self.query_one("#placeholder").display = not visible
-        for wid_id in ("#sec-info", "#lbl-args", "#tbl-args", "#lbl-cfg", "#tbl-cfg", "#sec-snippet"):
+        for wid_id in (
+            "#sec-info",
+            "#lbl-args",
+            "#tbl-args",
+            "#lbl-cfg",
+            "#tbl-cfg",
+            "#sec-snippet",
+        ):
             self.query_one(wid_id).display = visible
 
     def show(
@@ -303,12 +324,13 @@ class DetailPane(ScrollableContainer):
 # App
 # ---------------------------------------------------------------------------
 
-class PluginBrowserApp(App):
+
+class PluginBrowserApp(App[None]):
     """SSH-MITM Plugin Browser"""
 
     TITLE = "SSH-MITM Plugin Browser"
     CSS = TCSS
-    BINDINGS = [
+    BINDINGS = [  # noqa: RUF012
         Binding("q", "quit", "Quit"),
         Binding("tab", "focus_detail", "Detail"),
         Binding("escape", "focus_tree", "Tree"),
@@ -365,7 +387,9 @@ class PluginBrowserApp(App):
                     ),
                 )
 
-    def on_tree_node_selected(self, event: Tree.NodeSelected) -> None:
+    def on_tree_node_selected(
+        self, event: Tree.NodeSelected[PluginInfo | None]
+    ) -> None:
         info: PluginInfo | None = event.node.data
         if info is not None:
             self.selected_plugin = info
@@ -378,16 +402,12 @@ class PluginBrowserApp(App):
         )
 
     def action_focus_detail(self) -> None:
-        try:
+        with contextlib.suppress(NoMatches):
             self.query_one(DetailPane).focus()
-        except NoMatches:
-            pass
 
     def action_focus_tree(self) -> None:
-        try:
+        with contextlib.suppress(NoMatches):
             self.query_one("#plugin-tree", Tree).focus()
-        except NoMatches:
-            pass
 
 
 def run_tui() -> None:

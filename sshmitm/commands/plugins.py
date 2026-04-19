@@ -4,11 +4,12 @@ import sys
 from configparser import ConfigParser
 from typing import Any
 
+from rich import box
 from rich.console import Console
 from rich.panel import Panel
 from rich.rule import Rule
 from rich.syntax import Syntax
-from rich.table import Table, box
+from rich.table import Table
 from rich.text import Text
 from rich.tree import Tree
 
@@ -27,14 +28,21 @@ from sshmitm.moduleparser.modules import BaseModule
 from sshmitm.session import BaseSession
 from sshmitm.utils import metadata, resources
 
-
 PLUGIN_TYPES: list[tuple[type[BaseModule], str, str]] = [
     (SSHBaseForwarder, "--ssh-interface", "SSH Terminal Forwarder"),
     (SCPBaseForwarder, "--scp-interface", "SCP File Transfer Forwarder"),
     (BaseSFTPServerInterface, "--sftp-interface", "SFTP Server Interface"),
     (SFTPHandlerBasePlugin, "--sftp-handler", "SFTP File Handler"),
-    (RemotePortForwardingBaseForwarder, "--remote-port-forwarder", "Remote Port Forwarder"),
-    (LocalPortForwardingBaseForwarder, "--local-port-forwarder", "Local Port Forwarder"),
+    (
+        RemotePortForwardingBaseForwarder,
+        "--remote-port-forwarder",
+        "Remote Port Forwarder",
+    ),
+    (
+        LocalPortForwardingBaseForwarder,
+        "--local-port-forwarder",
+        "Local Port Forwarder",
+    ),
     (BaseServerInterface, "--auth-interface", "SSH Server Interface"),
     (Authenticator, "--authenticator", "Authenticator"),
     (BaseSession, "--session-class", "Session"),
@@ -42,7 +50,7 @@ PLUGIN_TYPES: list[tuple[type[BaseModule], str, str]] = [
 
 
 def _ep_value(ep: Any) -> str:
-    return ep.value
+    return str(ep.value)
 
 
 def _first_line(doc: str | None) -> str:
@@ -79,7 +87,7 @@ def _get_config_path() -> str | None:
     p = argparse.ArgumentParser(add_help=False)
     p.add_argument("--config", dest="config_path")
     parsed, _ = p.parse_known_args(sys.argv[1:])
-    return parsed.config_path
+    return str(parsed.config_path) if parsed.config_path is not None else None
 
 
 class Plugins(SubCommand):
@@ -90,7 +98,9 @@ class Plugins(SubCommand):
         return None
 
     def register_arguments(self) -> None:
-        subparsers = self.parser.add_subparsers(dest="plugins_command", metavar="COMMAND")
+        subparsers = self.parser.add_subparsers(
+            dest="plugins_command", metavar="COMMAND"
+        )
 
         show_parser = subparsers.add_parser(
             "show",
@@ -118,11 +128,14 @@ class Plugins(SubCommand):
         if command == "show":
             plugin_name = getattr(args, "plugin", None)
             if plugin_name:
-                _show_detail(console, plugin_name, args)
+                _show_detail(console, plugin_name)
             else:
                 _show_all(console)
         elif command == "tui":
-            from sshmitm.commands.plugins_tui import run_tui  # noqa: PLC0415
+            from sshmitm.commands.plugins_tui import (  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+                run_tui,
+            )
+
             run_tui()
         else:
             self.parser.print_help()
@@ -131,6 +144,7 @@ class Plugins(SubCommand):
 # ---------------------------------------------------------------------------
 # List view  —  ssh-mitm plugins show
 # ---------------------------------------------------------------------------
+
 
 def _show_all(console: Console) -> None:
     console.print()
@@ -183,13 +197,16 @@ def _show_all(console: Console) -> None:
 # Detail view  —  ssh-mitm plugins show <name>
 # ---------------------------------------------------------------------------
 
-def _show_detail(console: Console, name: str, args: argparse.Namespace) -> None:
+
+def _show_detail(console: Console, name: str) -> None:
     result = _find_plugin(name)
     if result is None:
-        console.print(f"\n[bold red]:cross_mark:  Plugin not found:[/bold red] {name}\n")
+        console.print(
+            f"\n[bold red]:cross_mark:  Plugin not found:[/bold red] {name}\n"
+        )
         return
 
-    base_class, type_label, cli_flag, ep, loaded_class = result
+    _, type_label, cli_flag, ep, loaded_class = result
     config_section = f"{loaded_class.__module__}:{loaded_class.__name__}"
     doc = (loaded_class.__doc__ or "").strip()
 
@@ -225,13 +242,13 @@ def _show_detail(console: Console, name: str, args: argparse.Namespace) -> None:
     # --- arguments ---
     try:
         plugin_parser = loaded_class.parser()
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001  # pylint: disable=broad-exception-caught
         return
 
     actions = [
         a
-        for a in plugin_parser._actions
-        if not isinstance(a, argparse._HelpAction)
+        for a in plugin_parser._actions  # pylint: disable=protected-access
+        if not isinstance(a, argparse._HelpAction)  # pylint: disable=protected-access
         and a.help != argparse.SUPPRESS
     ]
 
@@ -271,11 +288,13 @@ def _show_detail(console: Console, name: str, args: argparse.Namespace) -> None:
         console.print(arg_table)
 
     # --- config values ---
-    _show_config_values(console, config_section, actions, default_cfg, user_cfg, config_path)
+    _show_config_values(
+        console, config_section, actions, default_cfg, user_cfg, config_path
+    )
     console.print()
 
 
-def _show_config_values(
+def _show_config_values(  # pylint: disable=too-many-arguments  # noqa: C901
     console: Console,
     config_section: str,
     actions: list[argparse.Action],
@@ -346,7 +365,7 @@ def _show_config_values(
 
     subtitle = ""
     if show_user_col:
-        subtitle = f"[bold cyan]bold cyan[/bold cyan] = overrides default.ini"
+        subtitle = "[bold cyan]bold cyan[/bold cyan] = overrides default.ini"
 
     console.print(
         Panel(
