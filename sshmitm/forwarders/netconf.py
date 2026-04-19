@@ -7,6 +7,66 @@
     Do not use in production without understanding the limitations documented
     below.
 
+Testing
+-------
+
+Two test setups are recommended — one against a legacy RFC 4742 server to
+verify baseline functionality, and one against a modern RFC 6242 server to
+reproduce the chunked-framing failure described below.
+
+**Legacy server: yuma123 / netconfd (RFC 4742, ``]]>]]>`` framing)**
+
+Install from the distribution package manager::
+
+    # Debian / Ubuntu
+    sudo apt install yuma123
+
+Start the server (requires root or ``CAP_NET_BIND_SERVICE`` for port 830)::
+
+    sudo netconfd --no-startup --superuser=$USER
+
+``netconfd`` uses RFC 4742 framing and is therefore compatible with the
+current forwarder. Use this setup to test the happy path.
+
+**Modern server: netopeer2 (RFC 6242, chunked framing)**
+
+Build and install ``libyang``, ``sysrepo``, ``libnetconf2``, and
+``netopeer2`` from source following the upstream documentation at
+https://github.com/CESNET/netopeer2. This setup is more involved but
+represents current real-world NETCONF deployments and will reproduce the
+chunked-framing failure in this forwarder.
+
+**Client**
+
+``netconf-console`` is a lightweight Python client suitable for both setups::
+
+    pip install netconf-console
+
+    # Basic <get> request
+    netconf-console --host=localhost --port=830 -u admin --get
+
+Alternatively use ``yangcli``, which ships with yuma123::
+
+    yangcli user=admin server=localhost
+
+**Inserting SSH-MITM between client and server**
+
+::
+
+    netconf-console → SSH-MITM (10022) → netconfd / netopeer2 (830)
+
+Start SSH-MITM::
+
+    ssh-mitm server --remote-host localhost --remote-port 830 --listen-port 10022
+
+Point the client at SSH-MITM::
+
+    netconf-console --host=localhost --port=10022 -u admin --get
+
+With the yuma123 server the session should complete successfully. With
+netopeer2 the session will stall or produce garbled output, demonstrating
+the RFC 6242 gap documented below.
+
 Known limitations and bugs
 --------------------------
 
