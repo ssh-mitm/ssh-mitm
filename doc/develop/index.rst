@@ -21,7 +21,7 @@ In this chapter, we cover:
 
 #. **Setting Up a Development Environment**: A step-by-step guide to setting up your development environment. This includes system requirements, installing necessary tools like Python and git, and configuring your setup to start developing.
 
-#. **Building and Testing Plugins**: Insight into the process of building plugins for SSH-MITM, from conceptualization to implementation. You'll learn about the architectural considerations, the coding standards, and the testing procedures to ensure your plugin integrates seamlessly with SSH-MITM.
+#. **Developing Plugins**: A detailed guide to every plugin type in SSH-MITM — SSH forwarders, SCP forwarders, SFTP handlers, port-forwarding plugins, authenticators, and more. Covers base classes, required methods, CLI argument registration, and packaging.
 
 #. **Understanding the API**: An overview of the SSH-MITM package and its API, giving you the knowledge to interact with and extend SSH-MITM’s capabilities effectively.
 
@@ -33,4 +33,5 @@ By the end of this chapter, you will have a comprehensive understanding of the d
    :hidden:
 
    contributing
+   plugins
    api
