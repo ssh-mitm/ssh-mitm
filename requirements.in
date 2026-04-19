@@ -8,4 +8,5 @@ pytz
 pyyaml
 requests
 rich
+textual
 wrapt

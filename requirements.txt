@@ -26,18 +26,29 @@ idna==3.11
     # via requests
 invoke==3.0.3
     # via paramiko
-markdown-it-py==4.0.0
-    # via rich
+linkify-it-py==2.1.0
+    # via markdown-it-py
+markdown-it-py[linkify]==4.0.0
+    # via
+    #   mdit-py-plugins
+    #   rich
+    #   textual
+mdit-py-plugins==0.5.0
+    # via textual
 mdurl==0.1.2
     # via markdown-it-py
 packaging==26.1
     # via -r requirements.in
 paramiko==4.0.0
     # via -r requirements.in
+platformdirs==4.9.6
+    # via textual
 pycparser==3.0
     # via cffi
 pygments==2.20.0
-    # via rich
+    # via
+    #   rich
+    #   textual
 pynacl==1.6.2
     # via paramiko
 python-json-logger==4.1.0
@@ -49,7 +60,15 @@ pyyaml==6.0.3
 requests==2.33.1
     # via -r requirements.in
 rich==15.0.0
+    # via
+    #   -r requirements.in
+    #   textual
+textual==8.2.4
     # via -r requirements.in
+typing-extensions==4.15.0
+    # via textual
+uc-micro-py==2.0.0
+    # via linkify-it-py
 urllib3==2.6.3
     # via requests
 wrapt==2.1.2

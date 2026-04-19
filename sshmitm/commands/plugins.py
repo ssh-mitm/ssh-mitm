@@ -108,7 +108,7 @@ class Plugins(SubCommand):
 
         subparsers.add_parser(
             "tui",
-            help="open interactive plugin browser (requires: pip install textual)",
+            help="open interactive plugin browser",
         )
 
     def execute(self, args: argparse.Namespace) -> None:
@@ -122,14 +122,7 @@ class Plugins(SubCommand):
             else:
                 _show_all(console)
         elif command == "tui":
-            try:
-                from sshmitm.commands.plugins_tui import run_tui  # noqa: PLC0415
-            except ImportError:
-                console.print(
-                    "[bold red]Textual is not installed.[/bold red]\n"
-                    "Install it with:  [bold]pip install textual[/bold]"
-                )
-                return
+            from sshmitm.commands.plugins_tui import run_tui  # noqa: PLC0415
             run_tui()
         else:
             self.parser.print_help()
