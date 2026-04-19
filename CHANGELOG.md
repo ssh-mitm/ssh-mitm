@@ -9,6 +9,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- added `ssh-mitm plugins` subcommand to inspect and browse available plugins
+  - `ssh-mitm plugins show` lists all registered plugins grouped by type (tree view)
+  - `ssh-mitm plugins show <name>` shows detailed info for a plugin: type, class, config section, arguments, and config values from `default.ini` (and an optional `--config` file side-by-side)
+  - `ssh-mitm plugins tui` opens an interactive terminal UI (requires `pip install textual`) with a plugin tree on the left and a scrollable detail panel (info, arguments, configuration) on the right
+- added plugin development documentation under `doc/develop/plugins.rst`
 - added example check_file plugin to send files to ClamAV
 - added option to use ssh private keys for remote authentication
 - added option to provide remote ssh server fingerprints
