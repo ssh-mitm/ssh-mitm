@@ -130,11 +130,6 @@ class SSHServerModules(SubCommand):
             default=f"SSHMITM_{ssh_mitm_version}",
             help="Sets a custom SSH server banner presented to clients during the initial connection. Default: ``SSH-2.0-SSHMITM_<version>``.",
         )
-        parser_group.add_argument(
-            "--log-webhook-dest",
-            dest="log_webhook_dest",
-            help="Transmits SSH commands and responses to a remote HTTP server for log collection and analyzation",
-        )
 
     def execute(self, args: argparse.Namespace) -> None:
         if args.request_agent_breakin:
@@ -157,7 +152,6 @@ class SSHServerModules(SubCommand):
             transparent=args.transparent,
             banner_name=args.banner_name,
             debug=args.debug,
-            log_webhook_dest=args.log_webhook_dest,
         )
         proxy.print_serverinfo(args.log_format == "json")
         proxy.start()
