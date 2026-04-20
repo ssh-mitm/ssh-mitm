@@ -57,7 +57,63 @@ class InjectServer(paramiko.ServerInterface):
 
 
 class SSHMirrorForwarder(SSHForwarder):
-    """Mirrors the shell to another client"""
+    """Mirror an SSH shell session to a second client (live session monitoring and injection)
+
+    This plugin opens a secondary SSH listener on a random port for each intercepted session.
+    A second client (e.g. a security analyst) can connect to that port with a plain ``ssh``
+    command and observe the session in real time.  The mirror client can also type into the
+    terminal - keystrokes are forwarded to the remote server as if they came from the
+    original user.
+
+    **Usage example**
+
+    Start SSH-MITM with the mirror-shell plugin::
+
+        ssh-mitm server --ssh-forwarder sshmitm.plugins.ssh.mirrorshell.SSHMirrorForwarder
+
+    When a client connects, SSH-MITM prints a connection hint similar to::
+
+        [i] created mirrorshell on port 34521. connect with: ssh -p 34521 127.0.0.1
+
+    Connect from a second terminal to observe (and optionally interact with) the session::
+
+        ssh -p 34521 127.0.0.1
+
+    **Parameters**
+
+    ``--ssh-mirrorshell-net <address>``
+        Local address or interface on which the injector SSH listener is bound.
+        Defaults to ``0.0.0.0`` when not specified.  Set this to ``127.0.0.1`` to
+        restrict access to the local machine only.
+
+    ``--ssh-mirrorshell-key <path>``
+        Path to an RSA private key file used as the host key for the injector SSH
+        server.  When omitted, a temporary 2048-bit RSA key is generated for every
+        session.  Providing a fixed key avoids SSH host-key-changed warnings when
+        reconnecting.
+
+    ``--store-ssh-session``
+        Record the complete terminal session (stdin, stdout, and stderr) to disk in
+        *scriptreplay* format.  Requires ``--log-dir`` to be set so that SSH-MITM
+        knows where to write the log files.
+
+    ``--ssh-terminal-log-formatter script``
+        Select the terminal log format.  Currently the only supported value is
+        ``script``, which produces files compatible with the ``scriptreplay`` tool.
+
+    **Notes**
+
+    * Only one mirror client can be connected per session at a time.  A new
+      connection replaces the previous one.
+    * The mirror connection uses no authentication - any client that can reach the
+      listener port can connect.  Bind to a restricted interface
+      (``--ssh-mirrorshell-net 127.0.0.1``) when running in untrusted environments.
+    * Session recordings are stored under ``<log-dir>/<session-id>/terminal_sessions/``
+      and consist of three files per session: ``ssh_in_*.log``, ``ssh_out_*.log``, and
+      ``ssh_time_*.log``.  Play back a recording with::
+
+          scriptreplay ssh_time_<ts>.log ssh_out_<ts>.log
+    """
 
     HOST_KEY_LENGTH = 2048
 

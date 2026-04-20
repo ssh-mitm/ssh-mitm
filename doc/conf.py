@@ -15,8 +15,12 @@
 # sys.path.insert(0, os.path.abspath('.'))
 
 import datetime
+import warnings
 
+from sphinx.deprecation import RemovedInSphinx10Warning
 from sphinx.util.docfields import TypedField
+
+warnings.filterwarnings("ignore", category=RemovedInSphinx10Warning, module="sphinx_autodoc_typehints")
 
 # -- Project information -----------------------------------------------------
 
@@ -35,10 +39,16 @@ extensions = [
     "sphinx_togglebutton",
     "sphinx.ext.autodoc",
     "sphinx.ext.autosectionlabel",
+    "sphinx.ext.napoleon",
     "sphinxcontrib.mermaid",
     "sphinx_autodoc_typehints",
-    "sphinx_mdinclude",
+    "myst_parser",
 ]
+
+autodoc_default_options = {
+    "undoc-members": False,
+}
+myst_enable_extensions = ["colon_fence"]
 
 html_title = "SSH-MITM"
 html_theme = "pydata_sphinx_theme"
@@ -100,7 +110,7 @@ typehints_defaults = "comma"
 typehints_use_signature = False
 typehints_use_signature_return = False
 
-autodoc_mock_imports = ["_typeshed"]
+autodoc_mock_imports = ["_typeshed", "textual_dev"]
 suppress_warnings = ["sphinx_autodoc_typehints.forward_reference"]
 
 master_doc = "index"

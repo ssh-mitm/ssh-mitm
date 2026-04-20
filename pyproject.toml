@@ -94,6 +94,7 @@ files = ["requirements.in"]
 
 [tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
 production = ["requirements.txt"]
+docs = ["doc/requirements.txt"]
 
 [tool.hatch.build]
 include = [
@@ -126,19 +127,7 @@ check = [
 
 [tool.hatch.envs.docs]
 detached = false
-dependencies = [
-    "sphinx",
-    "pydata-sphinx-theme",
-    "sphinx-sitemap<2.4.0",
-    "sphinx-reredirects",
-    "sphinx-design",
-    "sphinx-notfound-page",
-    "sphinx-copybutton",
-    "sphinxcontrib-mermaid",
-    "sphinx-togglebutton",
-    "sphinx-autodoc-typehints",
-    "sphinx_mdinclude",
-]
+features = ["docs"]
 
 [tool.hatch.envs.docs.scripts]
 build = [
