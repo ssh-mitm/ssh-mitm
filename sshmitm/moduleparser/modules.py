@@ -103,6 +103,8 @@ class BaseModule(ABC):  # noqa: B024
         *,
         description: str | None = None,
     ) -> argparse._ArgumentGroup:
+        if "_argument_groups" not in cls.__dict__:
+            cls._argument_groups = {}
         group_title = title or cls.__name__
         if not description and cls.__doc__:
             description = cls.__doc__.strip().split("\n", maxsplit=1)[0]
