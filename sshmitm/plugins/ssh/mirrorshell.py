@@ -79,28 +79,6 @@ class SSHMirrorForwarder(SSHForwarder):
 
         ssh -p 34521 127.0.0.1
 
-    **Parameters**
-
-    ``--ssh-mirrorshell-net <address>``
-        Local address or interface on which the injector SSH listener is bound.
-        Defaults to ``0.0.0.0`` when not specified.  Set this to ``127.0.0.1`` to
-        restrict access to the local machine only.
-
-    ``--ssh-mirrorshell-key <path>``
-        Path to an RSA private key file used as the host key for the injector SSH
-        server.  When omitted, a temporary 2048-bit RSA key is generated for every
-        session.  Providing a fixed key avoids SSH host-key-changed warnings when
-        reconnecting.
-
-    ``--store-ssh-session``
-        Record the complete terminal session (stdin, stdout, and stderr) to disk in
-        *scriptreplay* format.  Requires ``--log-dir`` to be set so that SSH-MITM
-        knows where to write the log files.
-
-    ``--ssh-terminal-log-formatter script``
-        Select the terminal log format.  Currently the only supported value is
-        ``script``, which produces files compatible with the ``scriptreplay`` tool.
-
     **Notes**
 
     * Only one mirror client can be connected per session at a time.  A new
@@ -119,6 +97,38 @@ class SSHMirrorForwarder(SSHForwarder):
 
     @classmethod
     def parser_arguments(cls) -> None:
+        """Configures command-line arguments for the SSH-MirrorShell plugin.
+
+        Available Arguments:
+
+        ``--ssh-mirrorshell-net <address>``
+            Specifies the local address or network interface on which the SSH injector
+            listener binds. This determines where the SSH server will accept connections.
+
+            - **Default:** ``0.0.0.0`` (all available interfaces)
+            - **Example:** ``127.0.0.1`` (restricts access to the local machine only)
+
+        ``--ssh-mirrorshell-key <path>``
+            Path to an RSA private key file used as the host key for the SSH injector server.
+            If omitted, a temporary 2048-bit RSA key is generated for each session.
+
+            - **Purpose:** Using a fixed key avoids "host-key-changed" warnings when
+            reconnecting to the server.
+            - **Example:** ``--ssh-mirrorshell-key /path/to/private_key.pem``
+
+        ``--store-ssh-session``
+            Enables recording of the complete terminal session (stdin, stdout, stderr)
+            to disk in *scriptreplay* format. This is useful for auditing or debugging.
+
+            - **Requirement:** ``--log-dir`` must be set to specify where log files are stored.
+            - **Note:** Logs are saved in a format compatible with the ``scriptreplay`` tool.
+
+        ``--ssh-terminal-log-formatter script``
+            Selects the format for terminal session logs. Currently, only ``script`` is
+            supported, which produces files compatible with the ``scriptreplay`` utility.
+
+            - **Default:** ``script``
+        """
         plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--ssh-mirrorshell-net",
