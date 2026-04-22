@@ -477,7 +477,6 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
                 f"[bold cyan]{plugin.name}[/bold cyan]\n",
                 f"[dim]Type[/dim]            [bold white]{plugin.type_label}[/bold white]  [yellow]{plugin.cli_flag}[/yellow]",
                 f"[dim]Class[/dim]           [cyan]{plugin.ep_value}[/cyan]",
-                f"[dim]Config section[/dim]  [cyan]{plugin.config_section}[/cyan]",
                 "",
             ]
             self.query_one("#sec-info", Static).update("\n".join(lines))
