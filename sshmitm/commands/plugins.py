@@ -5,6 +5,7 @@ from __future__ import annotations
 import argparse
 import contextlib
 import functools
+import importlib.resources
 import inspect
 import os
 import re
@@ -277,119 +278,11 @@ class Plugins(SubCommand):
 # ---------------------------------------------------------------------------
 
 
-_TCSS = """
-Screen { layout: vertical; }
-
-#main {
-    layout: horizontal;
-    height: 1fr;
-}
-
-#sidebar {
-    width: 30;
-    min-width: 22;
-    border-right: solid $primary-darken-2;
-    background: $surface;
-}
-
-#sidebar-title {
-    background: $primary-darken-2;
-    color: $text;
-    text-align: center;
-    padding: 0 1;
-    text-style: bold;
-}
-
-#plugin-tree {
-    height: 1fr;
-    scrollbar-size: 1 1;
-}
-
-#detail {
-    width: 1fr;
-    height: 1fr;
-    background: $panel;
-    layout: vertical;
-}
-
-#placeholder {
-    height: auto;
-    padding: 2;
-    color: $text-muted;
-}
-
-#plugin-view {
-    height: 1fr;
-    layout: vertical;
-}
-
-#top-section {
-    height: 20;
-    border-bottom: solid $primary-darken-2;
-}
-
-#sec-info {
-    height: auto;
-    padding: 1 2 0 2;
-}
-
-#sec-doc {
-    height: auto;
-    padding: 0 2 1 2;
-}
-
-#tabs {
-    height: 1fr;
-}
-
-/* Tab: CLI Parameters */
-#args-split {
-    height: 1fr;
-    layout: horizontal;
-}
-
-#groups-sidebar {
-    width: 35;
-    min-width: 22;
-    border-right: solid $primary-darken-2;
-    background: $surface;
-}
-
-#groups-sidebar-title {
-    background: $primary-darken-2;
-    color: $text;
-    text-align: center;
-    padding: 0 1;
-    text-style: bold;
-}
-
-#groups-tree {
-    height: 1fr;
-    scrollbar-size: 1 1;
-}
-
-#cli-scroll {
-    width: 1fr;
-    height: 1fr;
-    padding: 1 2;
-}
-
-/* Tab: Config Section */
-#cfg-scroll {
-    width: 1fr;
-    height: 1fr;
-}
-
-#cfg-header {
-    height: auto;
-    padding: 1 2 0 2;
-}
-
-#tbl-config {
-    height: auto;
-    margin: 1 2;
-}
-"""
+_TCSS = (
+    importlib.resources.files("sshmitm")
+    .joinpath("data/plugins_browser.tcss")
+    .read_text(encoding="utf-8")
+)
 
 
 def _run_tui() -> None:  # noqa: C901, PLR0915
@@ -413,6 +306,17 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
         if val is None:
             val = items.get(dest.replace("_", "-"))
         return val
+
+    def _type_label(action: argparse.Action) -> str:
+        if action.type is not None:
+            return getattr(action.type, "__name__", str(action.type))
+        if action.__class__.__name__ in (
+            "_StoreTrueAction",
+            "_StoreFalseAction",
+            "BooleanOptionalAction",
+        ):
+            return "bool"
+        return "str"
 
     def _fmt_cfg_val(val: str | None) -> str:
         if val is None:
@@ -440,7 +344,9 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
         lines += [f"## {flags_md}", ""]
 
         if action.help:
-            lines += [inspect.cleandoc(action.help), ""]
+            help_text = inspect.cleandoc(action.help)
+            help_text = re.sub(r"\n(?!\n)", "  \n", help_text)
+            lines += [help_text, ""]
 
         lines += [
             "### CLI Properties",
@@ -449,13 +355,7 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             "|:---|:---|",
         ]
 
-        if action.type is not None:
-            type_name = getattr(action.type, "__name__", str(action.type))
-            lines.append(f"| **Type** | `{type_name}` |")
-
-        if hasattr(action, "choices") and action.choices:
-            choices_str = " &nbsp;·&nbsp; ".join(f"`{c}`" for c in action.choices)
-            lines.append(f"| **Choices** | {choices_str} |")
+        lines.append(f"| **Type** | `{_type_label(action)}` |")
 
         default = action.default
         if default is None or default is argparse.SUPPRESS or default is False:
@@ -484,6 +384,11 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
         if config_label is not None:
             user_val = _cfg_get(user_items, action.dest)
             lines.append(f"| **{config_label}** | {_fmt_cfg_val(user_val)} |")
+
+        if hasattr(action, "choices") and action.choices:
+            lines += ["", "### Choices", ""]
+            for choice in action.choices:
+                lines.append(f"- `{choice}`")
 
         lines.append("")
         return "\n".join(lines)
@@ -534,7 +439,7 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
                         Horizontal(id="args-split"),
                     ):
                         with Vertical(id="groups-sidebar"):
-                            yield Tree("", id="groups-tree")
+                            yield _PluginTree("", id="groups-tree")
                         with VerticalScroll(id="cli-scroll"):
                             yield Markdown("", id="md-cli")
                     with (
@@ -590,12 +495,17 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
                     if first is None:
                         first = (node, group, action)
 
-            self._fill_config_tab_for_section(plugin.config_section)
+            self._fill_config_tab_for_section(plugin.config_section, plugin.actions)
 
             if first is not None:
-                node, group, action = first
-                groups_tree.move_cursor(node)
-                await self._show_action(action, group)
+                groups_tree.move_cursor(first[0])
+                overview = "\n".join(_group_markdown(g) for g in plugin.argument_groups)
+                await self.query_one("#md-cli", Markdown).update(overview)
+            else:
+                await self.query_one("#md-cli", Markdown).update(
+                    "*This plugin has no configurable arguments.*"
+                )
+            self.query_one("#cli-scroll").scroll_home(animate=False)
 
         async def show_plugin_type(self, type_info: PluginTypeInfo) -> None:
             """Show info about a plugin type category."""
@@ -614,20 +524,22 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
 
             parts: list[str] = []
             if type_info.help_text:
-                parts.append(type_info.help_text)
+                parts.append(re.sub(r"\n(?!\n)", "  \n", type_info.help_text))
             if type_info.doc:
                 parts.append(type_info.doc)
             await self.query_one("#sec-doc", Markdown).update("\n\n---\n\n".join(parts))
 
             groups_tree = self.query_one("#groups-tree", Tree)
             groups_tree.clear()
-            await self.query_one("#md-cli", Markdown).update(
-                "*Select a plugin from the list to view its parameters.*"
-            )
 
             tbl = self.query_one("#tbl-config", DataTable)
             tbl.clear(columns=True)
             self.query_one("#cfg-header", Static).update("")
+
+            await self.query_one("#md-cli", Markdown).update(
+                "*Select a plugin from the list to view its parameters.*"
+            )
+            self.query_one("#cli-scroll").scroll_home(animate=False)
 
         async def show_general_group(
             self,
@@ -665,17 +577,16 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
                 if first is None:
                     first = (node, action)
 
-            self._fill_config_tab_for_section(group_info.config_section)
+            self._fill_config_tab_for_section(
+                group_info.config_section, _visible_actions(group_info.group)
+            )
 
             if first is not None:
-                node, action = first
-                groups_tree.move_cursor(node)
-                await self._show_action(action, group_info.group)
-            else:
-                await self.query_one("#md-cli", Markdown).update(
-                    _group_markdown(group_info.group)
-                )
-                self.query_one("#cli-scroll").scroll_home(animate=False)
+                groups_tree.move_cursor(first[0])
+            await self.query_one("#md-cli", Markdown).update(
+                _group_markdown(group_info.group)
+            )
+            self.query_one("#cli-scroll").scroll_home(animate=False)
 
         async def show_general_action(
             self,
@@ -715,17 +626,29 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
                 if action is action_info.action:
                     target_node = node
 
-            self._fill_config_tab_for_section(action_info.config_section)
+            self._fill_config_tab_for_section(
+                action_info.config_section, _visible_actions(action_info.group)
+            )
 
             if target_node is not None:
                 groups_tree.move_cursor(target_node)
             await self._show_action(action_info.action, action_info.group)
 
-        def _fill_config_tab_for_section(self, section: str) -> None:
+        def _fill_config_tab_for_section(
+            self,
+            section: str,
+            actions: list[argparse.Action] | None = None,
+        ) -> None:
             cfg_items = _cfg_items(self._default_cfg, section)
             user_items = _cfg_items(self._user_cfg, section)
             all_keys = sorted(set(cfg_items) | set(user_items))
             has_user = self._user_cfg is not None
+
+            action_map: dict[str, argparse.Action] = {}
+            if actions:
+                for a in actions:
+                    action_map[a.dest] = a
+                    action_map[a.dest.replace("_", "-")] = a
 
             self.query_one("#cfg-header", Static).update(
                 f"[bold cyan]\\[{section}][/bold cyan]"
@@ -733,15 +656,23 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
 
             tbl = self.query_one("#tbl-config", DataTable)
             tbl.clear(columns=True)
-            cols: list[str] = ["Key", "default.ini"]
+            has_actions = bool(action_map)
+            cols: list[str] = ["Key"]
+            if has_actions:
+                cols.append("Type")
+            cols.append("default.ini")
             if has_user:
                 cols.append(os.path.basename(self._config_path or "config"))
             tbl.add_columns(*cols)
             for key in all_keys:
+                row: list[str] = [key]
+                if has_actions:
+                    act = action_map.get(key)
+                    row.append(_type_label(act) if act is not None else "")
+                row.append(cfg_items.get(key, ""))
                 if has_user:
-                    tbl.add_row(key, cfg_items.get(key, ""), user_items.get(key, ""))
-                else:
-                    tbl.add_row(key, cfg_items.get(key, ""))
+                    row.append(user_items.get(key, ""))
+                tbl.add_row(*row)
 
         async def _show_action(
             self,
@@ -804,6 +735,16 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             ):
                 await self._show_group_overview(data)
 
+    class _PluginTree(Tree[Any]):
+        BINDINGS = [  # noqa: RUF012
+            Binding("enter", "select_cursor", "Show Info", show=True),
+            Binding("space", "toggle_node", "Expand/Collapse", show=True),
+        ]
+
+        def __init__(self, *args: Any, **kwargs: Any) -> None:
+            super().__init__(*args, **kwargs)
+            self.auto_expand = False
+
     class PluginBrowserApp(App[None]):
         """SSH-MITM Plugin Browser"""
 
@@ -832,18 +773,19 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             yield Header()
             with Horizontal(id="main"):
                 with Vertical(id="sidebar"):
-                    yield Tree("SSH-MITM", id="plugin-tree")
+                    yield _PluginTree("SSH-MITM", id="plugin-tree")
                 yield DetailPane(id="detail")
             yield Footer()
 
         def on_mount(self) -> None:
+            self.theme = "gruvbox"
             self._populate_tree()
-            tree = self.query_one("#plugin-tree", Tree)
+            tree = self.query_one("#plugin-tree", _PluginTree)
             tree.show_root = False
             tree.focus()
 
         def _populate_tree(self) -> None:
-            tree = self.query_one("#plugin-tree", Tree)
+            tree = self.query_one("#plugin-tree", _PluginTree)
             tree.root.expand()
 
             plugin_types, general_groups = _server_info()
@@ -904,7 +846,7 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
 
         def action_focus_tree(self) -> None:
             with contextlib.suppress(NoMatches):
-                self.query_one("#plugin-tree", Tree).focus()
+                self.query_one("#plugin-tree", _PluginTree).focus()
 
         def action_shrink_desc(self) -> None:
             with contextlib.suppress(NoMatches):

@@ -26,12 +26,12 @@ class SCPInjectFile(SCPForwarder):
     This feature is based on a OpenSSH Client Vulnerability 'SSHtranger Things'
     that has been patched with version > OpenSSH 8.0p1
 
-    Title:     SSHtranger Things
-    Author:    Mark E. Haase <mhaase@hyperiongray.com>
-    Homepage:  https://www.hyperiongray.com
-    Date:      2019-01-17
-    CVE:       CVE-2019-6111, CVE-2019-6110
-    Advisory:  https://sintonen.fi/advisories/scp-client-multiple-vulnerabilities.txt
+    * Title:     SSHtranger Things
+    * Author:    Mark E. Haase <mhaase@hyperiongray.com>
+    * Homepage:  https://www.hyperiongray.com
+    * Date:      2019-01-17
+    * CVE:       CVE-2019-6111, CVE-2019-6110
+    * Advisory:  https://sintonen.fi/advisories/scp-client-multiple-vulnerabilities.txt
     """
 
     @classmethod
