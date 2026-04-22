@@ -46,11 +46,8 @@ from sshmitm.moduleparser import ModuleParser
 from sshmitm.workarounds import monkeypatch, transport
 
 
-def main() -> None:
-    """
-    Main function of the SSH-MITM tools, it provides a CLI interface to use the `audit` and `server` subcommands.
-    """
-
+def create_parser() -> ModuleParser:
+    """Create and return the main SSH-MITM argument parser without parsing or side effects."""
     prog_name = os.path.basename(os.environ.get("ARGV0", "ssh-mitm"))
     if os.environ.get("container"):  # noqa: SIM112
         prog_name = "at.ssh_mitm.server"
@@ -87,12 +84,20 @@ def main() -> None:
         action="store_true",
         help="Disables workarounds for compatibility issues with certain SSH clients. Some clients may require these workarounds to function correctly.",
     )
-    parser.add_argument(
+    parser_group.add_argument(
         "--log-format",
         dest="log_format",
         choices=["text", "json"],
         help="Defines the format of the log output. Using `json` suppresses standard output and formats logs as JSON.",
     )
+    return parser
+
+
+def main() -> None:
+    """
+    Main function of the SSH-MITM tools, it provides a CLI interface to use the `audit` and `server` subcommands.
+    """
+    parser = create_parser()
     parser.load_subcommands()
     args = parser.parse_args()
 

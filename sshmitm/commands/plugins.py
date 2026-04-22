@@ -37,7 +37,6 @@ from textual.widgets import (
     DataTable,
     Footer,
     Header,
-    Label,
     Markdown,
     Static,
     TabbedContent,
@@ -45,6 +44,7 @@ from textual.widgets import (
     Tree,
 )
 
+from sshmitm.cli import create_parser as _create_main_parser
 from sshmitm.moduleparser import SubCommand
 from sshmitm.moduleparser.parser import (
     ModuleParser,
@@ -70,19 +70,95 @@ def _class_to_label(cls_name: str) -> str:
     return " ".join(words)
 
 
+@dataclass
+class PluginTypeInfo:
+    type_label: str
+    cli_flag: str
+    help_text: str
+    base_class: type[BaseModule]
+
+    @property
+    def doc(self) -> str:
+        return inspect.cleandoc(self.base_class.__doc__ or "")
+
+
+@dataclass
+class GeneralGroupInfo:
+    title: str
+    description: str
+    config_section: str
+    group: argparse._ArgumentGroup
+
+
+@dataclass
+class GeneralActionInfo:
+    action: argparse.Action
+    group: argparse._ArgumentGroup
+    group_title: str
+    config_section: str
+
+
+def _extract_groups(
+    parser: argparse.ArgumentParser,
+    skip: set[str | None],
+) -> list[GeneralGroupInfo]:
+    """Extract visible argument groups from a parser, excluding standard/skipped groups."""
+    groups: list[GeneralGroupInfo] = []
+    for g in parser._action_groups:  # pylint: disable=protected-access
+        if g.title in skip:
+            continue
+        visible = [
+            a
+            for a in g._group_actions  # pylint: disable=protected-access
+            if a.dest is not argparse.SUPPRESS and a.help != argparse.SUPPRESS
+        ]
+        if not visible:
+            continue
+        cfg_section = ""
+        add_arg = getattr(g, "add_argument", None)
+        if add_arg is not None and hasattr(add_arg, "config_section"):
+            cfg_section = add_arg.config_section or ""
+        groups.append(
+            GeneralGroupInfo(
+                title=g.title or "(unnamed)",
+                description=g.description or "",
+                config_section=cfg_section,
+                group=g,
+            )
+        )
+    return groups
+
+
 @functools.cache
-def _plugin_types() -> list[tuple[type[BaseModule], str, str]]:
-    """Return (base_class, cli_flag, type_label) triples, derived from SSHServerModules."""
+def _server_info() -> tuple[list[PluginTypeInfo], list[GeneralGroupInfo]]:
+    """Return plugin type info and general argument groups from all SSH-MITM parsers."""
+    standard_groups = {"positional arguments", "optional arguments", "options", None}
+
+    # Main parser: provides the [SSH-MITM] config section
+    main_parser = _create_main_parser()
+    general_groups = _extract_groups(main_parser, standard_groups)
+
+    # Server command parser: provides [SSH-Server-Modules] and [SSH-Server-Options]
     mp = ModuleParser(prog="sshmitm")
     sub = mp.add_subparsers()
     cmd = SSHServerModules("server", sub)
     cmd.register_arguments()
 
-    return [
-        (baseclass, action.option_strings[0], _class_to_label(baseclass.__name__))
+    plugin_types = [
+        PluginTypeInfo(
+            type_label=_class_to_label(baseclass.__name__),
+            cli_flag=action.option_strings[0],
+            help_text=action.help or "",
+            base_class=baseclass,
+        )
         for action, baseclass in cmd.parser._extra_modules  # pylint: disable=protected-access
         if action.option_strings
     ]
+
+    # Include all server groups, including plugin_group (SSH-Server-Modules)
+    general_groups += _extract_groups(cmd.parser, standard_groups)
+
+    return plugin_types, general_groups
 
 
 # ---------------------------------------------------------------------------
@@ -435,6 +511,7 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             self._default_cfg: ConfigParser | None = None
             self._user_cfg: ConfigParser | None = None
             self._config_path: str | None = None
+            self._general_cfg_section: str | None = None
 
         def watch__top_lines(self, value: int) -> None:
             self.query_one("#top-section").styles.height = value
@@ -457,7 +534,6 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
                         Horizontal(id="args-split"),
                     ):
                         with Vertical(id="groups-sidebar"):
-                            yield Label(" Arguments ", id="groups-sidebar-title")
                             yield Tree("", id="groups-tree")
                         with VerticalScroll(id="cli-scroll"):
                             yield Markdown("", id="md-cli")
@@ -484,6 +560,7 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             config_path: str | None,
         ) -> None:
             self._plugin = plugin
+            self._general_cfg_section = None
             self._default_cfg = default_cfg
             self._user_cfg = user_cfg
             self._config_path = config_path
@@ -513,17 +590,138 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
                     if first is None:
                         first = (node, group, action)
 
-            self._fill_config_tab()
+            self._fill_config_tab_for_section(plugin.config_section)
 
             if first is not None:
                 node, group, action = first
                 groups_tree.move_cursor(node)
                 await self._show_action(action, group)
 
-        def _fill_config_tab(self) -> None:
-            if self._plugin is None:
-                return
-            section = self._plugin.config_section
+        async def show_plugin_type(self, type_info: PluginTypeInfo) -> None:
+            """Show info about a plugin type category."""
+            self._plugin = None
+            self._general_cfg_section = None
+
+            self.query_one("#placeholder").display = False
+            self.query_one("#plugin-view").display = True
+
+            lines = [
+                f"[bold cyan]{type_info.type_label}[/bold cyan]\n",
+                f"[dim]CLI Parameter[/dim]  [yellow]{type_info.cli_flag}[/yellow]",
+                "",
+            ]
+            self.query_one("#sec-info", Static).update("\n".join(lines))
+
+            parts: list[str] = []
+            if type_info.help_text:
+                parts.append(type_info.help_text)
+            if type_info.doc:
+                parts.append(type_info.doc)
+            await self.query_one("#sec-doc", Markdown).update("\n\n---\n\n".join(parts))
+
+            groups_tree = self.query_one("#groups-tree", Tree)
+            groups_tree.clear()
+            await self.query_one("#md-cli", Markdown).update(
+                "*Select a plugin from the list to view its parameters.*"
+            )
+
+            tbl = self.query_one("#tbl-config", DataTable)
+            tbl.clear(columns=True)
+            self.query_one("#cfg-header", Static).update("")
+
+        async def show_general_group(
+            self,
+            group_info: GeneralGroupInfo,
+            default_cfg: ConfigParser,
+            user_cfg: ConfigParser | None,
+            config_path: str | None,
+        ) -> None:
+            """Show info about a general server argument group."""
+            self._plugin = None
+            self._general_cfg_section = group_info.config_section
+            self._default_cfg = default_cfg
+            self._user_cfg = user_cfg
+            self._config_path = config_path
+
+            self.query_one("#placeholder").display = False
+            self.query_one("#plugin-view").display = True
+
+            lines = [
+                f"[bold cyan]{group_info.title}[/bold cyan]\n",
+                f"[dim]Config Section[/dim]  [cyan]{group_info.config_section}[/cyan]",
+                "",
+            ]
+            self.query_one("#sec-info", Static).update("\n".join(lines))
+            await self.query_one("#sec-doc", Markdown).update(group_info.description)
+
+            groups_tree = self.query_one("#groups-tree", Tree)
+            groups_tree.clear()
+            branch = groups_tree.root.add(
+                group_info.title or "(unnamed)", data=group_info.group, expand=True
+            )
+            first: tuple[Any, argparse.Action] | None = None
+            for action in _visible_actions(group_info.group):
+                node = branch.add_leaf(_flag_str(action), data=action)
+                if first is None:
+                    first = (node, action)
+
+            self._fill_config_tab_for_section(group_info.config_section)
+
+            if first is not None:
+                node, action = first
+                groups_tree.move_cursor(node)
+                await self._show_action(action, group_info.group)
+            else:
+                await self.query_one("#md-cli", Markdown).update(
+                    _group_markdown(group_info.group)
+                )
+                self.query_one("#cli-scroll").scroll_home(animate=False)
+
+        async def show_general_action(
+            self,
+            action_info: GeneralActionInfo,
+            default_cfg: ConfigParser,
+            user_cfg: ConfigParser | None,
+            config_path: str | None,
+        ) -> None:
+            """Show detail for a general server argument."""
+            self._plugin = None
+            self._general_cfg_section = action_info.config_section
+            self._default_cfg = default_cfg
+            self._user_cfg = user_cfg
+            self._config_path = config_path
+
+            self.query_one("#placeholder").display = False
+            self.query_one("#plugin-view").display = True
+
+            lines = [
+                f"[bold cyan]{action_info.group_title}[/bold cyan]\n",
+                f"[dim]Config Section[/dim]  [cyan]{action_info.config_section}[/cyan]",
+                "",
+            ]
+            self.query_one("#sec-info", Static).update("\n".join(lines))
+            await self.query_one("#sec-doc", Markdown).update("")
+
+            groups_tree = self.query_one("#groups-tree", Tree)
+            groups_tree.clear()
+            branch = groups_tree.root.add(
+                action_info.group_title or "(unnamed)",
+                data=action_info.group,
+                expand=True,
+            )
+            target_node = None
+            for action in _visible_actions(action_info.group):
+                node = branch.add_leaf(_flag_str(action), data=action)
+                if action is action_info.action:
+                    target_node = node
+
+            self._fill_config_tab_for_section(action_info.config_section)
+
+            if target_node is not None:
+                groups_tree.move_cursor(target_node)
+            await self._show_action(action_info.action, action_info.group)
+
+        def _fill_config_tab_for_section(self, section: str) -> None:
             cfg_items = _cfg_items(self._default_cfg, section)
             user_items = _cfg_items(self._user_cfg, section)
             all_keys = sorted(set(cfg_items) | set(user_items))
@@ -550,10 +748,20 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             action: argparse.Action,
             group: argparse._ArgumentGroup | None = None,
         ) -> None:
-            if self._plugin is None:
+            # Resolve config section: from group, then plugin, then stored general section
+            config_section: str | None = None
+            add_arg = getattr(group, "add_argument", None) if group else None
+            if add_arg is not None and hasattr(add_arg, "config_section"):
+                config_section = add_arg.config_section
+            if config_section is None and self._plugin is not None:
+                config_section = self._plugin.config_section
+            if config_section is None:
+                config_section = self._general_cfg_section
+            if config_section is None:
                 return
-            cfg_items = _cfg_items(self._default_cfg, self._plugin.config_section)
-            user_items = _cfg_items(self._user_cfg, self._plugin.config_section)
+
+            cfg_items = _cfg_items(self._default_cfg, config_section)
+            user_items = _cfg_items(self._user_cfg, config_section)
             config_label = (
                 os.path.basename(self._config_path) if self._config_path else None
             )
@@ -564,7 +772,7 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
                 user_items,
                 config_label,
                 group_title,
-                config_section=self._plugin.config_section,
+                config_section=config_section,
             )
             await self.query_one("#md-cli", Markdown).update(md)
             self.query_one("#cli-scroll").scroll_home(animate=False)
@@ -609,8 +817,6 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             Binding("]", "grow_desc", "Desc >"),
         ]
 
-        selected_plugin: reactive[PluginInfo | None] = reactive(None)
-
         def __init__(
             self,
             default_cfg: ConfigParser,
@@ -626,26 +832,40 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             yield Header()
             with Horizontal(id="main"):
                 with Vertical(id="sidebar"):
-                    yield Label(" SSH-MITM Plugins ", id="sidebar-title")
-                    yield Tree("Plugin Types", id="plugin-tree")
+                    yield Tree("SSH-MITM", id="plugin-tree")
                 yield DetailPane(id="detail")
             yield Footer()
 
         def on_mount(self) -> None:
             self._populate_tree()
-            self.query_one("#plugin-tree", Tree).focus()
+            tree = self.query_one("#plugin-tree", Tree)
+            tree.show_root = False
+            tree.focus()
 
         def _populate_tree(self) -> None:
             tree = self.query_one("#plugin-tree", Tree)
             tree.root.expand()
-            for base_class, cli_flag, type_label in _plugin_types():
+
+            plugin_types, general_groups = _server_info()
+
+            if general_groups:
+                server_branch = tree.root.add("Server Parameters", expand=True)
+                for group_info in general_groups:
+                    server_branch.add_leaf(group_info.title, data=group_info)
+
+            plugins_branch = tree.root.add("Plugins", expand=True)
+            for type_info in plugin_types:
                 eps = sorted(
-                    metadata.entry_points(group=f"sshmitm.{base_class.__name__}"),
+                    metadata.entry_points(
+                        group=f"sshmitm.{type_info.base_class.__name__}"
+                    ),
                     key=lambda ep: ep.name,
                 )
                 if not eps:
                     continue
-                branch = tree.root.add(type_label, expand=True)
+                branch = plugins_branch.add(
+                    type_info.type_label, data=type_info, expand=True
+                )
                 for ep in eps:
                     loaded = ep.load()
                     branch.add_leaf(
@@ -653,26 +873,30 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
                         data=PluginInfo(
                             name=ep.name,
                             ep_value=str(ep.value),
-                            type_label=type_label,
-                            cli_flag=cli_flag,
-                            base_class=base_class,
+                            type_label=type_info.type_label,
+                            cli_flag=type_info.cli_flag,
+                            base_class=type_info.base_class,
                             loaded_class=loaded,
                         ),
                     )
 
-        def on_tree_node_selected(
-            self, event: Tree.NodeSelected[PluginInfo | None]
-        ) -> None:
+        async def on_tree_node_selected(self, event: Tree.NodeSelected[Any]) -> None:
             info = event.node.data
+            detail = self.query_one(DetailPane)
             if isinstance(info, PluginInfo):
-                self.selected_plugin = info
-
-        async def watch_selected_plugin(self, plugin: PluginInfo | None) -> None:
-            if plugin is None:
-                return
-            await self.query_one(DetailPane).show(
-                plugin, self._default_cfg, self._user_cfg, self._config_path
-            )
+                await detail.show(
+                    info, self._default_cfg, self._user_cfg, self._config_path
+                )
+            elif isinstance(info, PluginTypeInfo):
+                await detail.show_plugin_type(info)
+            elif isinstance(info, GeneralGroupInfo):
+                await detail.show_general_group(
+                    info, self._default_cfg, self._user_cfg, self._config_path
+                )
+            elif isinstance(info, GeneralActionInfo):
+                await detail.show_general_action(
+                    info, self._default_cfg, self._user_cfg, self._config_path
+                )
 
         def action_focus_args(self) -> None:
             with contextlib.suppress(NoMatches):
