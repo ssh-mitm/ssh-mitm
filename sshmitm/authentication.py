@@ -255,7 +255,7 @@ class RemoteCredentials:
 
 
 class Authenticator(BaseModule):
-    """Options for remote authentication."""
+    """Specifies the authenticator module used for validating user credentials and managing authentication workflows."""
 
     REQUEST_AGENT_BREAKIN = False
     """

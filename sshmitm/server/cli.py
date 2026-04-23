@@ -27,55 +27,46 @@ class SSHServerModules(SubCommand):
         self.parser.add_module(
             "--ssh-interface",
             dest="ssh_interface",
-            help="Specifies the interface responsible for managing SSH terminal sessions, including shell interaction and command execution.",
             baseclass=SSHBaseForwarder,
         )
         self.parser.add_module(
             "--scp-interface",
             dest="scp_interface",
-            help="Defines the interface used for handling SCP (Secure Copy Protocol) file transfers, including uploads and downloads.",
             baseclass=SCPBaseForwarder,
         )
         self.parser.add_module(
             "--sftp-interface",
             dest="sftp_interface",
-            help="Sets the base interface for SFTP (SSH File Transfer Protocol) operations, such as file listing, uploads, and downloads.",
             baseclass=BaseSFTPServerInterface,
         )
         self.parser.add_module(
             "--sftp-handler",
             dest="sftp_handler",
-            help="Specifies the handler for SFTP operations, responsible for processing file transfer requests and managing file system interactions.",
             baseclass=SFTPHandlerBasePlugin,
         )
         self.parser.add_module(
             "--remote-port-forwarder",
             dest="server_tunnel_interface",
-            help="Configures the interface for managing server-side tunnel operations, such as remote port forwarding.",
             baseclass=RemotePortForwardingBaseForwarder,
         )
         self.parser.add_module(
             "--local-port-forwarder",
             dest="client_tunnel_interface",
-            help="Sets the interface for handling client-side tunnel operations, such as local port forwarding.",
             baseclass=LocalPortForwardingBaseForwarder,
         )
         self.parser.add_module(
             "--auth-interface",
             dest="auth_interface",
-            help="Defines the interface responsible for authentication processes, including credential validation and session initialization.",
             baseclass=BaseServerInterface,
         )
         self.parser.add_module(
             "--authenticator",
             dest="authenticator",
-            help="Specifies the authenticator module used for validating user credentials and managing authentication workflows.",
             baseclass=Authenticator,
         )
         self.parser.add_module(
             "--session-class",
             dest="session_class",
-            help="Sets the custom session class for SSH-MITM, controlling session behavior, logging, and interaction handling.",
             baseclass=BaseSession,
         )
 

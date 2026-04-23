@@ -7,6 +7,8 @@ from sshmitm.forwarders.base import BaseForwarder
 
 
 class SSHBaseForwarder(BaseForwarder):  # pylint: disable=abstract-method
+    """Specifies the interface responsible for managing SSH terminal sessions, including shell interaction and command execution."""
+
     @property
     def client_channel(self) -> paramiko.Channel | None:
         return self.session.ssh_channel

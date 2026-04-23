@@ -46,6 +46,7 @@ from textual.widgets import (
 )
 
 from sshmitm.cli import create_parser as _create_main_parser
+from sshmitm.logger import Colors
 from sshmitm.moduleparser import SubCommand
 from sshmitm.moduleparser.parser import (
     ModuleParser,
@@ -69,6 +70,55 @@ def _class_to_label(cls_name: str) -> str:
     name = cls_name.replace("Base", "")
     words = re.findall(r"[A-Z]+(?=[A-Z][a-z]|\d|\b)|[A-Z][a-z]+|\d+", name)
     return " ".join(words)
+
+
+def _help_module_section(text: str) -> str:
+    """Extract only the 'default module' and 'available modules' lines from help text."""
+    lines = text.split("\n")
+    result: list[str] = []
+    in_section = False
+    for line in lines:
+        if line.startswith("default module:") or line.strip() == "available modules:":
+            in_section = True
+        if in_section:
+            result.append(line)
+    return "\n".join(result)
+
+
+def _cli_help_to_markdown(text: str) -> str:
+    """Convert CLI-formatted module help text to Markdown."""
+    lines = text.split("\n")
+    out: list[str] = []
+    i = 0
+    while i < len(lines):
+        line = lines[i]
+        if line.startswith("default module:"):
+            module = line[len("default module:") :].strip()
+            if out and out[-1] != "":
+                out.append("")
+            out.append(f"**Default module:** `{module}`")
+        elif line.strip() == "available modules:":
+            if out and out[-1] != "":
+                out.append("")
+            out.append("**Available modules:**\n")
+            i += 1
+            while i < len(lines):
+                entry = lines[i]
+                stripped = entry.lstrip("\t").lstrip()
+                if not stripped.startswith("* "):
+                    break
+                content = stripped[2:]
+                if " -> " in content:
+                    name, desc = content.split(" -> ", 1)
+                    out.append(f"- **{name}**" + (f" — {desc}" if desc.strip() else ""))
+                else:
+                    out.append(f"- **{content}**")
+                i += 1
+            continue
+        else:
+            out.append(line)
+        i += 1
+    return "\n".join(out)
 
 
 @dataclass
@@ -111,7 +161,7 @@ def _extract_groups(
         visible = [
             a
             for a in g._group_actions  # pylint: disable=protected-access
-            if a.dest is not argparse.SUPPRESS and a.help != argparse.SUPPRESS
+            if a.dest is not argparse.SUPPRESS
         ]
         if not visible:
             continue
@@ -149,7 +199,11 @@ def _server_info() -> tuple[list[PluginTypeInfo], list[GeneralGroupInfo]]:
         PluginTypeInfo(
             type_label=_class_to_label(baseclass.__name__),
             cli_flag=action.option_strings[0],
-            help_text=action.help or "",
+            help_text=(
+                ""
+                if not action.help or action.help == argparse.SUPPRESS
+                else action.help
+            ),
             base_class=baseclass,
         )
         for action, baseclass in cmd.parser._extra_modules  # pylint: disable=protected-access
@@ -160,6 +214,28 @@ def _server_info() -> tuple[list[PluginTypeInfo], list[GeneralGroupInfo]]:
     general_groups += _extract_groups(cmd.parser, standard_groups)
 
     return plugin_types, general_groups
+
+
+@functools.cache
+def _ep_value_to_name() -> dict[str, str]:
+    """Build a reverse map: ep.value (module:class) -> ep.name for all sshmitm.* entry points."""
+    plugin_types, _ = _server_info()
+    result: dict[str, str] = {}
+    for type_info in plugin_types:
+        for ep in metadata.entry_points(group=f"sshmitm.{type_info.base_class.__name__}"):
+            result[ep.value] = ep.name
+    return result
+
+
+def _resolve_ep_name(val: Any) -> str:
+    """Return the entry point name for a class object or module:class string, if known."""
+    if isinstance(val, type):
+        key = f"{val.__module__}:{val.__name__}"
+    elif isinstance(val, str) and ":" in val:
+        key = val
+    else:
+        return str(val) if val is not None else ""
+    return _ep_value_to_name().get(key, key)
 
 
 # ---------------------------------------------------------------------------
@@ -287,11 +363,13 @@ _TCSS = (
 
 def _run_tui() -> None:  # noqa: C901, PLR0915
 
+    Colors.stylize_func = False
+
     def _visible_actions(group: argparse._ArgumentGroup) -> list[argparse.Action]:
         return [
             a
             for a in group._group_actions  # pylint: disable=protected-access
-            if a.dest is not argparse.SUPPRESS and a.help != argparse.SUPPRESS
+            if a.dest is not argparse.SUPPRESS
         ]
 
     def _flag_str(action: argparse.Action) -> str:
@@ -318,7 +396,9 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             return "bool"
         return "str"
 
-    def _fmt_cfg_val(val: str | None) -> str:
+    def _fmt_cfg_val(val: str | None, in_config: bool = True) -> str:
+        if not in_config:
+            return "*(not in config — can be added)*"
         if val is None:
             return "*(not set)*"
         if val == "":
@@ -343,9 +423,8 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             lines += [f"### {group_title}", ""]
         lines += [f"## {flags_md}", ""]
 
-        if action.help:
-            help_text = inspect.cleandoc(action.help)
-            help_text = re.sub(r"\n(?!\n)", "  \n", help_text)
+        if action.help and action.help != argparse.SUPPRESS:
+            help_text = _cli_help_to_markdown(inspect.cleandoc(action.help))
             lines += [help_text, ""]
 
         lines += [
@@ -379,7 +458,8 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
         lines.append(f"| **Config key** | `{action.dest}` |")
 
         ini_val = _cfg_get(cfg_items, action.dest)
-        lines.append(f"| **default.ini** | {_fmt_cfg_val(ini_val)} |")
+        ini_in_cfg = action.dest in cfg_items or action.dest.replace("_", "-") in cfg_items
+        lines.append(f"| **default.ini** | {_fmt_cfg_val(ini_val, ini_in_cfg)} |")
 
         if config_label is not None:
             user_val = _cfg_get(user_items, action.dest)
@@ -401,7 +481,13 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
         if actions:
             lines += ["| Flag | Description |", "|---|---|"]
             for action in actions:
-                lines.append(f"| `{_flag_str(action)}` | {action.help or ''} |")
+                raw = (
+                    ""
+                    if not action.help or action.help == argparse.SUPPRESS
+                    else action.help
+                )
+                help_str = raw.split("\n")[0] if raw else ""
+                lines.append(f"| `{_flag_str(action)}` | {help_str} |")
         lines.append("")
         return "\n".join(lines)
 
@@ -522,10 +608,12 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             self.query_one("#sec-info", Static).update("\n".join(lines))
 
             parts: list[str] = []
-            if type_info.help_text:
-                parts.append(re.sub(r"\n(?!\n)", "  \n", type_info.help_text))
             if type_info.doc:
                 parts.append(type_info.doc)
+            if type_info.help_text:
+                module_section = _help_module_section(type_info.help_text)
+                if module_section:
+                    parts.append(_cli_help_to_markdown(module_section))
             await self.query_one("#sec-doc", Markdown).update("\n\n---\n\n".join(parts))
 
             groups_tree = self.query_one("#groups-tree", Tree)
@@ -640,18 +728,29 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
         ) -> None:
             cfg_items = _cfg_items(self._default_cfg, section)
             user_items = _cfg_items(self._user_cfg, section)
-            all_keys = sorted(set(cfg_items) | set(user_items))
             has_user = self._user_cfg is not None
 
+            default_has_section = (
+                self._default_cfg is not None and self._default_cfg.has_section(section)
+            )
+            user_has_section = (
+                self._user_cfg is not None and self._user_cfg.has_section(section)
+            )
+
             action_map: dict[str, argparse.Action] = {}
+            action_dash_keys: set[str] = set()
             if actions:
                 for a in actions:
                     action_map[a.dest] = a
                     action_map[a.dest.replace("_", "-")] = a
+                    action_dash_keys.add(a.dest.replace("_", "-"))
 
-            self.query_one("#cfg-header", Static).update(
-                f"[bold cyan]\\[{section}][/bold cyan]"
-            )
+            all_keys = sorted(set(cfg_items) | set(user_items) | action_dash_keys)
+
+            header = f"[bold cyan]\\[{section}][/bold cyan]"
+            if not default_has_section:
+                header += "  [yellow]⚠ section not in default.ini — can be added[/yellow]"
+            self.query_one("#cfg-header", Static).update(header)
 
             tbl = self.query_one("#tbl-config", DataTable)
             tbl.clear(columns=True)
@@ -659,18 +758,35 @@ def _run_tui() -> None:  # noqa: C901, PLR0915
             cols: list[str] = ["Key"]
             if has_actions:
                 cols.append("Type")
+                cols.append("Default")
             cols.append("default.ini")
             if has_user:
                 cols.append(os.path.basename(self._config_path or "config"))
             tbl.add_columns(*cols)
             for key in all_keys:
-                row: list[str] = [key]
+                act = action_map.get(key) if has_actions else None
+                no_cli_arg = has_actions and act is None
+                key_cell = f"[yellow]⚠ {key}[/yellow]" if no_cli_arg else key
+                row: list[str] = [key_cell]
                 if has_actions:
-                    act = action_map.get(key)
                     row.append(_type_label(act) if act is not None else "")
-                row.append(cfg_items.get(key, ""))
+                    if act is not None:
+                        code_default = getattr(act, "_code_default", None)
+                        if code_default is None or code_default is argparse.SUPPRESS:
+                            row.append("")
+                        else:
+                            row.append(f"[bold]{_resolve_ep_name(code_default)}[/bold]")
+                    else:
+                        row.append("")
+                if not default_has_section or key not in cfg_items:
+                    row.append("[dim italic]⚠ not in config[/dim italic]")
+                else:
+                    row.append(_resolve_ep_name(cfg_items[key]))
                 if has_user:
-                    row.append(user_items.get(key, ""))
+                    if not user_has_section or key not in user_items:
+                        row.append("")
+                    else:
+                        row.append(_resolve_ep_name(user_items[key]))
                 tbl.add_row(*row)
 
         async def _show_action(

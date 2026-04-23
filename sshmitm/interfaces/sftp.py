@@ -15,6 +15,8 @@ if TYPE_CHECKING:
 
 
 class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):
+    """Sets the base interface for SFTP (SSH File Transfer Protocol) operations, such as file listing, uploads, and downloads."""
+
     def __init__(self, serverinterface: BaseServerInterface) -> None:
         super().__init__(serverinterface)
         self.session = serverinterface.session

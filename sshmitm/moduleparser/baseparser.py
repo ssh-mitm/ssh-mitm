@@ -63,7 +63,9 @@ class AddArgumentMethod:
                 kwargs["default"] = self.parser.ARGCONF.getboolean(
                     self.config_section, arg_dest
                 )
-        return self._add_argument(*args, **kwargs)
+        action = self._add_argument(*args, **kwargs)
+        action._code_default = default_value  # type: ignore[attr-defined]
+        return action
 
 
 class BaseModuleArgumentParser(argparse.ArgumentParser):

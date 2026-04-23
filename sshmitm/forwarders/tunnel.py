@@ -98,7 +98,7 @@ class TunnelForwarder(threading.Thread):
 
 
 class LocalPortForwardingBaseForwarder(BaseModule):
-    pass
+    """Sets the interface for handling client-side tunnel operations, such as local port forwarding."""
 
 
 class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwarder):
@@ -156,7 +156,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
 
 
 class RemotePortForwardingBaseForwarder(BaseModule):
-    pass
+    """Configures the interface for managing server-side tunnel operations, such as remote port forwarding."""
 
 
 class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):

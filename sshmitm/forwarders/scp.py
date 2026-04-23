@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class SCPBaseForwarder(BaseForwarder):
+    """Defines the interface used for handling SCP (Secure Copy Protocol) file transfers, including uploads and downloads."""
+
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session)
         self.client_exit_code_received = False

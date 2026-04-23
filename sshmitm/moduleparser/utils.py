@@ -57,7 +57,9 @@ def set_module_kwargs(
         if default_value is loaded_class:
             default_name = entry_point.name
         entry_point_desc = (
-            "" if not loaded_class.__doc__ else loaded_class.__doc__.split("\n")[0]
+            ""
+            if not loaded_class.__doc__
+            else loaded_class.__doc__.strip().split("\n")[0]
         )
         if entry_point_desc:
             entry_point_description = f"\t* {Colors.stylize(entry_point.name, fg('blue'))} -> {entry_point_desc}"
@@ -67,6 +69,9 @@ def set_module_kwargs(
             )
         descriptions.append(entry_point_description)
 
+    if not kwargs.get("help") and entry_point_class.__doc__:
+        kwargs["help"] = entry_point_class.__doc__.strip().split("\n")[0]
+
     kwargs["choices"] = sorted(choices)
     if len(choices) > 1:
         kwargs["help"] = kwargs.get("help") or ""
@@ -75,6 +80,4 @@ def set_module_kwargs(
                 "help"
             ] += f"\ndefault module: {Colors.stylize(default_name, fg('blue') + attr('bold'))}"
         kwargs["help"] += "\navailable modules:\n{}".format("\n".join(descriptions))
-    else:
-        kwargs["help"] = argparse.SUPPRESS
     return kwargs

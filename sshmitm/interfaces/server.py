@@ -26,6 +26,8 @@ _VERSION = 3
 
 
 class BaseServerInterface(paramiko.ServerInterface, BaseModule):
+    """Defines the interface responsible for authentication processes, including credential validation and session initialization."""
+
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__()
         self.session: sshmitm.session.Session = session

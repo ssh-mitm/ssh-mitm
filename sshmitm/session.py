@@ -55,11 +55,7 @@ if TYPE_CHECKING:
 
 
 class BaseSession(BaseModule):
-    """
-    The `BaseSession` class serves as a base for session management in the system.
-
-    This class should be subclassed to provide custom session management functionality.
-    """
+    """Sets the custom session class for SSH-MITM, controlling session behavior, logging, and interaction handling."""
 
     def __init__(self) -> None:
         super().__init__()

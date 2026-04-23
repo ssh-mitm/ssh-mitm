@@ -16,6 +16,8 @@ if TYPE_CHECKING:
 
 
 class SFTPHandlerBasePlugin(BaseModule):
+    """Specifies the handler for SFTP operations, responsible for processing file transfer requests and managing file system interactions."""
+
     def __init__(self, sftp: "SFTPBaseHandle", filename: str) -> None:
         super().__init__()
         self.filename: str = filename

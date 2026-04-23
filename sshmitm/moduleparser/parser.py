@@ -199,7 +199,7 @@ class ModuleParser(
                 and self.ARGCONF.has_option(self.config_section, arg_dest)
             ):
                 default_value = self.ARGCONF.get(self.config_section, arg_dest)
-                if self.ARGCONF.has_section(default_value):
+                if ":" in default_value:
                     part_module, part_class = default_value.rsplit(":", 1)
                     module = import_module(part_module)
                     kwargs["default"] = getattr(module, part_class)
