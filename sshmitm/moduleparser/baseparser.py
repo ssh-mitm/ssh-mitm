@@ -67,7 +67,7 @@ class AddArgumentMethod:
                     self.config_section, arg_dest
                 )
         action = self._add_argument(*args, **kwargs)
-        action._code_default = default_value  # type: ignore[attr-defined]
+        action.default_arg_code = default_value  # type: ignore[attr-defined]
         return action
 
 

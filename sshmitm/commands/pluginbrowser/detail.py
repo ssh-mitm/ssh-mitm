@@ -327,11 +327,15 @@ class DetailPane(Widget):
         if tctx.has_actions:
             row.append(type_label(act) if act is not None else "")
             if act is not None:
-                code_default = getattr(act, "_code_default", _UNSET)
+                code_default = getattr(act, "default_arg_code", _UNSET)
                 if code_default is _UNSET or code_default is argparse.SUPPRESS:
                     row.append("[dim]✗[/dim]")
                 else:
-                    resolved = server_info.resolve_ep_name(code_default) if code_default is not None else ""
+                    resolved = (
+                        server_info.resolve_ep_name(code_default)
+                        if code_default is not None
+                        else ""
+                    )
                     row.append(f"✓ {resolved}" if resolved else "✓")
             else:
                 row.append("")

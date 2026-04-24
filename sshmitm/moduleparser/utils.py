@@ -40,7 +40,9 @@ def set_module_kwargs(
     entry_point_class: type["BaseModule"], **kwargs: Any
 ) -> dict[str, Any]:
     entry_points = sorted(
-        metadata.entry_points(group=f"{entry_point_class.entry_point_prefix}.{entry_point_class.__name__}"),
+        metadata.entry_points(
+            group=f"{entry_point_class.entry_point_prefix}.{entry_point_class.__name__}"
+        ),
         key=lambda x: x.name,
     )
     if not entry_points:

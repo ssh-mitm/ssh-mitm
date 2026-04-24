@@ -11,7 +11,16 @@ from rich.text import Text
 from textual.app import App, ComposeResult
 from textual.binding import Binding
 from textual.containers import Horizontal, Vertical
-from textual.widgets import DataTable, Footer, Header, Input, Select, TabbedContent, TabPane, Tree
+from textual.widgets import (
+    DataTable,
+    Footer,
+    Header,
+    Input,
+    Select,
+    TabbedContent,
+    TabPane,
+    Tree,
+)
 
 from sshmitm.commands.pluginbrowser.config import (
     get_config_path,
@@ -77,7 +86,11 @@ class PluginBrowserApp(App[None]):
                 with Vertical(id="overview-layout"):
                     with Horizontal(id="filter-bar"):
                         yield Select(
-                            [("All", "all"), ("Active", "active"), ("Inactive", "inactive")],
+                            [
+                                ("All", "all"),
+                                ("Active", "active"),
+                                ("Inactive", "inactive"),
+                            ],
                             value="all",
                             id="status-filter",
                             allow_blank=False,
@@ -119,7 +132,9 @@ class PluginBrowserApp(App[None]):
         plugins_branch = tree.root.add("Plugins", expand=True)
         for type_info in server_info.plugin_types:
             eps = sorted(
-                metadata.entry_points(group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"),
+                metadata.entry_points(
+                    group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"
+                ),
                 key=lambda ep: ep.name,
             )
             if not eps:
@@ -152,7 +167,9 @@ class PluginBrowserApp(App[None]):
 
         for type_info in server_info.plugin_types:
             eps = sorted(
-                metadata.entry_points(group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"),
+                metadata.entry_points(
+                    group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"
+                ),
                 key=lambda ep: ep.name,
             )
             if not eps:
@@ -164,13 +181,15 @@ class PluginBrowserApp(App[None]):
                 doc = inspect.cleandoc(loaded.__doc__ or "")
                 first_line = doc.splitlines()[0] if doc else ""
                 active_cell: str | Text = Text("✓", style="bold") if is_active else ""
-                self._all_plugin_rows.append((
-                    type_info.type_label,
-                    ep.name,
-                    active_cell,
-                    str(ep.value),
-                    first_line,
-                ))
+                self._all_plugin_rows.append(
+                    (
+                        type_info.type_label,
+                        ep.name,
+                        active_cell,
+                        str(ep.value),
+                        first_line,
+                    )
+                )
 
         self._apply_filter("", "all")
 

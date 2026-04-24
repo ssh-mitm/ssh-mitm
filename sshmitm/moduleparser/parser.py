@@ -226,10 +226,10 @@ class ModuleParser(
         action = self.plugin_group.add_argument(
             *args, **set_module_kwargs(baseclass, **kwargs)
         )
-        # _code_default must only reflect an explicit default= in code, not a
+        # default_arg_code must only reflect an explicit default= in code, not a
         # value loaded from config — reset it when no code default was given.
         if not code_default:
-            action._code_default = _UNSET  # type: ignore[attr-defined]
+            action.default_arg_code = _UNSET  # type: ignore[attr-defined]
         self._extra_modules.append((action, baseclass))
         logging.debug("Baseclass: %s", baseclass)
 
