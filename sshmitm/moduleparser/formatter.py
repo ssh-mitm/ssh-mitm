@@ -5,7 +5,7 @@ from typing import Any
 
 from colored.colored import attr, fg
 
-from sshmitm.logger import Colors
+from sshmitm.moduleparser.colors import Colors
 
 
 class ModuleFormatter(argparse.HelpFormatter):

@@ -40,7 +40,7 @@ from paramiko.ssh_exception import ChannelException
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import ProxyNetconfServer, ProxySFTPServer
 from sshmitm.logger import THREAD_DATA, Colors
-from sshmitm.moduleparser import BaseModule
+from sshmitm.moduleparser import SSHMITMBaseModule
 from sshmitm.plugins.session import key_negotiation
 
 if TYPE_CHECKING:
@@ -54,7 +54,7 @@ if TYPE_CHECKING:
     from sshmitm.server import SSHProxyServer  # noqa: F401
 
 
-class BaseSession(BaseModule):
+class BaseSession(SSHMITMBaseModule):
     """Sets the custom session class for SSH-MITM, controlling session behavior, logging, and interaction handling."""
 
     def __init__(self) -> None:

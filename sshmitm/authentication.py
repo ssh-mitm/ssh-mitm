@@ -14,7 +14,7 @@ from paramiko import PKey
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.exceptions import MissingHostException
 from sshmitm.logger import Colors
-from sshmitm.moduleparser import BaseModule
+from sshmitm.moduleparser import SSHMITMBaseModule
 from sshmitm.utils import SSHPubKey
 
 if TYPE_CHECKING:
@@ -254,7 +254,7 @@ class RemoteCredentials:
         raise paramiko.SSHException(msg)
 
 
-class Authenticator(BaseModule):
+class Authenticator(SSHMITMBaseModule):
     """Specifies the authenticator module used for validating user credentials and managing authentication workflows."""
 
     REQUEST_AGENT_BREAKIN = False

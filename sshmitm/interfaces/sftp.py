@@ -8,13 +8,13 @@ from paramiko.sftp_handle import SFTPHandle
 
 from sshmitm.exceptions import MissingClient
 from sshmitm.interfaces.server import BaseServerInterface
-from sshmitm.moduleparser import BaseModule
+from sshmitm.moduleparser import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     import os
 
 
-class BaseSFTPServerInterface(paramiko.SFTPServerInterface, BaseModule):
+class BaseSFTPServerInterface(paramiko.SFTPServerInterface, SSHMITMBaseModule):
     """Sets the base interface for SFTP (SSH File Transfer Protocol) operations, such as file listing, uploads, and downloads."""
 
     def __init__(self, serverinterface: BaseServerInterface) -> None:

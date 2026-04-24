@@ -4,14 +4,14 @@ from typing import TYPE_CHECKING
 import paramiko
 
 from sshmitm.exceptions import MissingClient
-from sshmitm.moduleparser import BaseModule
+from sshmitm.moduleparser import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     import sshmitm
     from sshmitm.session import Session
 
 
-class BaseForwarder(BaseModule):
+class BaseForwarder(SSHMITMBaseModule):
     """
     base class for all forwarders.
     """

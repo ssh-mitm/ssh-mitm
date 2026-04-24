@@ -119,7 +119,7 @@ class PluginBrowserApp(App[None]):
         plugins_branch = tree.root.add("Plugins", expand=True)
         for type_info in server_info.plugin_types:
             eps = sorted(
-                metadata.entry_points(group=f"sshmitm.{type_info.base_class.__name__}"),
+                metadata.entry_points(group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"),
                 key=lambda ep: ep.name,
             )
             if not eps:
@@ -152,7 +152,7 @@ class PluginBrowserApp(App[None]):
 
         for type_info in server_info.plugin_types:
             eps = sorted(
-                metadata.entry_points(group=f"sshmitm.{type_info.base_class.__name__}"),
+                metadata.entry_points(group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"),
                 key=lambda ep: ep.name,
             )
             if not eps:

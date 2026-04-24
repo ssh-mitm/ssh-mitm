@@ -27,7 +27,7 @@ import paramiko.hostkeys
 from paramiko.pkey import PKey
 
 from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
-from sshmitm.moduleparser import BaseModule
+from sshmitm.moduleparser import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     import sshmitm
@@ -46,7 +46,7 @@ class AuthenticationMethod(Enum):
     AGENT = "agent"
 
 
-class BaseSSHClient(BaseModule):
+class BaseSSHClient(SSHMITMBaseModule):
     """ "
     The base class for an SSH client module.
     """

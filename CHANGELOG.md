@@ -32,6 +32,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `moduleparser`: the entry-point group prefix (`sshmitm`) is no longer hardcoded
+  - `BaseModule` now declares `entry_point_prefix: ClassVar[str | None] = None`; a `BaseModuleMeta` metaclass raises `TypeError` at class-definition time when a subclass forgets to set it
+  - `SSHMITMBaseModule(BaseModule)` introduced as the SSH-MITM-specific base class with `entry_point_prefix = "sshmitm"`; all built-in base classes (`BaseSession`, `BaseForwarder`, `Authenticator`, …) now inherit from it
+  - `ModuleParser` accepts a new `entry_point_prefix` keyword argument (default `"sshmitm"`) for the subcommand entry-point group
+  - Plugin Browser and `serverinfo` read the prefix dynamically from `base_class.entry_point_prefix`
 - Removed SSH extension "check-file", which was announced by Paramiko – [draft-ietf-secsh-filexfer-extensions-00 §3](https://datatracker.ietf.org/doc/html/draft-ietf-secsh-filexfer-extensions-00#section-3)
 - update paramiko requirements to 4.0
 - removed support for DSS keys

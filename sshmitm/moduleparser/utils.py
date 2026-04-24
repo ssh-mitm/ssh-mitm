@@ -4,7 +4,7 @@ from typing import TYPE_CHECKING, Any
 
 from colored.colored import attr, fg
 
-from sshmitm.logger import Colors
+from sshmitm.moduleparser.colors import Colors
 from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
@@ -26,7 +26,7 @@ def load_module(entry_point_class: type["BaseModule"]) -> type["argparse.Action"
             del option_string
             if values:
                 for entry_point in metadata.entry_points(
-                    group=f"sshmitm.{entry_point_class.__name__}"
+                    group=f"{entry_point_class.entry_point_prefix}.{entry_point_class.__name__}"
                 ):
                     if values in (entry_point.name, entry_point.module):
                         values = [entry_point.load()]
@@ -40,7 +40,7 @@ def set_module_kwargs(
     entry_point_class: type["BaseModule"], **kwargs: Any
 ) -> dict[str, Any]:
     entry_points = sorted(
-        metadata.entry_points(group=f"sshmitm.{entry_point_class.__name__}"),
+        metadata.entry_points(group=f"{entry_point_class.entry_point_prefix}.{entry_point_class.__name__}"),
         key=lambda x: x.name,
     )
     if not entry_points:
@@ -62,10 +62,10 @@ def set_module_kwargs(
             else loaded_class.__doc__.strip().split("\n")[0]
         )
         if entry_point_desc:
-            entry_point_description = f"\t* {Colors.stylize(entry_point.name, fg('blue'))} -> {entry_point_desc}"
+            entry_point_description = f"  * {Colors.stylize(entry_point.name, fg('blue'))} -> {entry_point_desc}"
         else:
             entry_point_description = (
-                f"\t* {Colors.stylize(entry_point.name, fg('blue'))}"
+                f"  * {Colors.stylize(entry_point.name, fg('blue'))}"
             )
         descriptions.append(entry_point_description)
 

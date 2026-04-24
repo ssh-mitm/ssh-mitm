@@ -7,7 +7,7 @@ import paramiko
 from paramiko.sftp_attr import SFTPAttributes
 
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
-from sshmitm.moduleparser import BaseModule
+from sshmitm.moduleparser import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     from _typeshed import ReadableBuffer
@@ -15,7 +15,7 @@ if TYPE_CHECKING:
     import sshmitm
 
 
-class SFTPHandlerBasePlugin(BaseModule):
+class SFTPHandlerBasePlugin(SSHMITMBaseModule):
     """Specifies the handler for SFTP operations, responsible for processing file transfer requests and managing file system interactions."""
 
     def __init__(self, sftp: "SFTPBaseHandle", filename: str) -> None:

@@ -52,9 +52,14 @@ class ModuleParser(
     CONFIG_LOADED = False
 
     def __init__(
-        self, *args: Any, config: Optional["ConfigParser"] = None, **kwargs: Any
+        self,
+        *args: Any,
+        config: Optional["ConfigParser"] = None,
+        entry_point_prefix: str = "sshmitm",
+        **kwargs: Any,
     ) -> None:  # pylint: disable=too-many-arguments
         kwargs["formatter_class"] = ModuleFormatter
+        self._entry_point_prefix = entry_point_prefix
         super().__init__(*args, add_help=False, config=config, **kwargs)
         self.__kwargs = kwargs
         self._extra_modules: list[tuple[argparse.Action, type]] = []
@@ -90,7 +95,7 @@ class ModuleParser(
             self.subcommand.required = True
 
         for entry_point in metadata.entry_points(
-            group=f"sshmitm.{SubCommand.__name__}"
+            group=f"{self._entry_point_prefix}.{SubCommand.__name__}"
         ):
             if entry_point.name in self._registered_subcommands:
                 continue

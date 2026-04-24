@@ -72,7 +72,7 @@ class ServerInfo:
         result: dict[str, str] = {}
         for type_info in self.plugin_types:
             for ep in metadata.entry_points(
-                group=f"sshmitm.{type_info.base_class.__name__}"
+                group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"
             ):
                 result[ep.value] = ep.name
         return result

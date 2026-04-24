@@ -1,7 +1,7 @@
 import argparse
 import inspect
 import logging
-from abc import ABC, abstractmethod
+from abc import ABC, ABCMeta, abstractmethod
 from collections.abc import Sequence
 from typing import (
     TYPE_CHECKING,
@@ -19,7 +19,26 @@ if TYPE_CHECKING:
     from sshmitm.moduleparser import ModuleParser
 
 
-class BaseModule(ABC):  # noqa: B024
+class BaseModuleMeta(ABCMeta):
+    def __new__(
+        mcs,
+        name: str,
+        bases: tuple[type, ...],
+        namespace: dict[str, Any],
+        **kwargs: Any,
+    ) -> "BaseModuleMeta":
+        cls = super().__new__(mcs, name, bases, namespace, **kwargs)
+        if any(isinstance(b, BaseModuleMeta) for b in bases):
+            if cls.entry_point_prefix is None:  # type: ignore[attr-defined]
+                raise TypeError(
+                    f"Class '{name}' must define 'entry_point_prefix'. "
+                    f"Inherit from a base that sets it, or set it directly on the class."
+                )
+        return cls
+
+
+class BaseModule(metaclass=BaseModuleMeta):  # noqa: B024
+    entry_point_prefix: ClassVar[str | None] = None
     _parser: BaseModuleArgumentParser | None = None
     _modules: list[tuple[argparse.Action, Any]] | None = None
     _argument_groups: ClassVar[dict[str, argparse._ArgumentGroup]] = {}
@@ -119,11 +138,17 @@ class BaseModule(ABC):  # noqa: B024
         name: str, entry_point_class: type["BaseModule"]
     ) -> type["BaseModule"] | None:
         for entry_point in metadata.entry_points(
-            group=f"sshmitm.{entry_point_class.__name__}"
+            group=f"{entry_point_class.entry_point_prefix}.{entry_point_class.__name__}"
         ):
             if name in (entry_point.name, entry_point.module):
                 return cast("type[BaseModule]", entry_point.load())
         return None
+
+
+class SSHMITMBaseModule(BaseModule):  # noqa: B024
+    """Base class for all SSH-MITM plugin modules."""
+
+    entry_point_prefix: ClassVar[str] = "sshmitm"
 
 
 class SubCommand(ABC):

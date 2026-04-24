@@ -10,7 +10,7 @@ from paramiko.sftp import CMD_INIT, CMD_VERSION, SFTPError
 
 from sshmitm.clients.netconf import NetconfClient
 from sshmitm.clients.sftp import SFTPClient
-from sshmitm.moduleparser import BaseModule
+from sshmitm.moduleparser import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     import sshmitm
@@ -25,7 +25,7 @@ if TYPE_CHECKING:
 _VERSION = 3
 
 
-class BaseServerInterface(paramiko.ServerInterface, BaseModule):
+class BaseServerInterface(paramiko.ServerInterface, SSHMITMBaseModule):
     """Defines the interface responsible for authentication processes, including credential validation and session initialization."""
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
