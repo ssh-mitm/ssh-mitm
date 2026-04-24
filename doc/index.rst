@@ -70,9 +70,8 @@ Features
 Quick Start
 ===========
 
-SSH-MITM sits between a client and its SSH server, intercepting the connection transparently.
-The client connects to SSH-MITM instead of directly to the target — SSH-MITM forwards the
-connection while giving the auditor full visibility and control:
+Placed between a client and its SSH server, SSH-MITM intercepts the connection transparently —
+forwarding it to the target while giving the auditor full visibility and control:
 
 .. image:: _static/ssh-mitm-setup.svg
     :class: dark-light
