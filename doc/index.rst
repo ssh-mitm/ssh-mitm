@@ -70,9 +70,9 @@ Features
 Quick Start
 ===========
 
-SSH-MITM acts as an intercepting proxy between a client and its SSH server. The client connects
-to SSH-MITM instead of directly to the target — SSH-MITM forwards the connection while giving
-the auditor full visibility and control:
+SSH-MITM sits between a client and its SSH server, intercepting the connection transparently.
+The client connects to SSH-MITM instead of directly to the target — SSH-MITM forwards the
+connection while giving the auditor full visibility and control:
 
 .. image:: _static/ssh-mitm-setup.svg
     :class: dark-light
@@ -90,8 +90,8 @@ No installation required. Download the AppImage and you are ready to go:
 
 For other installation options (pip, Flatpak, Snap) see the :doc:`installation guide <get_started/installation>`.
 
-2. Start the proxy
-------------------
+2. Start SSH-MITM
+-----------------
 
 Point SSH-MITM at your target host — use a system you are authorized to test:
 
@@ -102,11 +102,11 @@ Point SSH-MITM at your target host — use a system you are authorized to test:
 3. Route a client connection
 -----------------------------
 
-Have the SSH client connect through the proxy on port 10022:
+Have the SSH client connect through SSH-MITM on port 10022:
 
 .. code-block:: none
 
-    $ ssh -p 10022 user@proxy-host
+    $ ssh -p 10022 user@mitm-host
 
 SSH-MITM intercepts the session and logs the credentials immediately:
 

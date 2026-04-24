@@ -14,11 +14,11 @@
         font-family="ui-monospace,SFMono-Regular,Menlo,monospace"
         font-size="14" fill="#e2e8f0">SSH Client</text>
 
-  <!-- SSH-MITM Proxy (highlighted) -->
+  <!-- SSH-MITM (highlighted) -->
   <rect x="283" y="82" width="204" height="86" rx="8" fill="#0f3460" stroke="#3b82f6" stroke-width="2"/>
   <text x="385" y="112" text-anchor="middle"
         font-family="ui-monospace,SFMono-Regular,Menlo,monospace"
-        font-size="15" font-weight="bold" fill="#93c5fd">SSH-MITM Proxy</text>
+        font-size="15" font-weight="bold" fill="#93c5fd">SSH-MITM</text>
   <text x="385" y="133" text-anchor="middle"
         font-family="ui-monospace,SFMono-Regular,Menlo,monospace"
         font-size="12" fill="#7dd3fc">intercepts · logs · mirrors</text>
@@ -44,18 +44,18 @@
         font-family="ui-monospace,SFMono-Regular,Menlo,monospace"
         font-size="11" fill="#4ade80">mirror shell · logs</text>
 
-  <!-- Arrow: Client → Proxy -->
+  <!-- Arrow: Client → SSH-MITM -->
   <line x1="181" y1="123" x2="281" y2="123"
         stroke="#64748b" stroke-width="2" marker-end="url(#arr)"/>
 
-  <!-- Arrow: Proxy → Target -->
+  <!-- Arrow: SSH-MITM → Target -->
   <line x1="488" y1="123" x2="588" y2="123"
         stroke="#64748b" stroke-width="2" marker-end="url(#arr)"/>
   <text x="538" y="113" text-anchor="middle"
         font-family="ui-monospace,SFMono-Regular,Menlo,monospace"
         font-size="10" fill="#94a3b8">forwarded</text>
 
-  <!-- Arrow: Proxy ↓ Auditor (dashed) -->
+  <!-- Arrow: SSH-MITM ↓ Auditor (dashed) -->
   <line x1="385" y1="169" x2="385" y2="216"
         stroke="#94a3b8" stroke-width="1.5" stroke-dasharray="5,4"
         marker-end="url(#arr-dash)"/>

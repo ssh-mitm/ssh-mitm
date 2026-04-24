@@ -3,7 +3,7 @@
   <a href="https://github.com/ssh-mitm/ssh-mitm">
     <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://docs.ssh-mitm.at/_images/intro.png" >
   </a>
-  <p align="center">An interactive SSH proxy for authorized security audits.<br>Intercept sessions, monitor live traffic, inject commands, and manipulate file transfers — all in real time.</p>
+  <p align="center">An interactive SSH interception tool for authorized security audits.<br>Intercept sessions, monitor live traffic, inject commands, and manipulate file transfers — all in real time.</p>
   <p align="center">
    <a href="https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage"><img height='56' alt='Download as an AppImage' src='https://docs.appimage.org/_images/download-appimage-banner.svg'/></a>
    &nbsp;&nbsp;&nbsp;
@@ -32,9 +32,9 @@ Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
 
 ## Quick Start
 
-SSH-MITM acts as an intercepting proxy between a client and its SSH server. The client connects
-to SSH-MITM instead of directly to the target — SSH-MITM forwards the connection while giving
-the auditor full visibility and control:
+SSH-MITM sits between a client and its SSH server, intercepting the connection transparently.
+The client connects to SSH-MITM instead of directly to the target — SSH-MITM forwards the
+connection while giving the auditor full visibility and control:
 
 <p align="center">
   <img alt="SSH-MITM setup" src="https://docs.ssh-mitm.at/_images/ssh-mitm-setup.svg" width="90%">
@@ -51,7 +51,7 @@ chmod +x ssh-mitm-x86_64.AppImage
 
 For other installation options (pip, Flatpak, Snap) see the [installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
 
-### 2. Start the proxy
+### 2. Start SSH-MITM
 
 Point SSH-MITM at your target host — use a system you are authorized to test:
 
@@ -61,10 +61,10 @@ Point SSH-MITM at your target host — use a system you are authorized to test:
 
 ### 3. Route a client connection
 
-Have the SSH client connect through the proxy on port 10022:
+Have the SSH client connect through SSH-MITM on port 10022:
 
 ```bash
-ssh -p 10022 user@proxy-host
+ssh -p 10022 user@mitm-host
 ```
 
 SSH-MITM intercepts the session and logs the credentials immediately:
@@ -136,7 +136,7 @@ ssh-mitm server --enable-trivial-auth
 ```
 
 The attack only applies when public-key authentication is available — password authentication is
-not affected and continues to work normally through the proxy.
+not affected and continues to work normally.
 
 <p align="center">
   <b>Talk at DeepSec 2021 — full explanation of the attack:</b><br/>
