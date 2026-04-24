@@ -10,7 +10,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Added
 
 - added `ssh-mitm plugins` subcommand to inspect and browse available plugins
-  - `ssh-mitm plugins show` lists all registered plugins grouped by type (tree view)
+  - `ssh-mitm plugins show` opens an interactive terminal UI (Plugin Browser) to explore all available plugins, their descriptions, and configuration options
+  - Plugin Browser includes a two-tab interface: tree/detail view and a filterable overview table of all plugins
+- added Plugin Browser documentation page (`get_started/plugin_browser`)
+- added SSH-MITM setup diagram to README and documentation index
+- improved README for security students and professional auditors: restructured Quick Start with 4-step flow, feature table with documentation links, rewritten FIDO2 section
 - added plugin development documentation under `doc/develop/plugins.rst`
 - added example check_file plugin to send files to ClamAV
 - added option to use ssh private keys for remote authentication

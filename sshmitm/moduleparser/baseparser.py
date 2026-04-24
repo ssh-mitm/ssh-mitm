@@ -6,6 +6,9 @@ from typing import TYPE_CHECKING, Any, Optional
 if TYPE_CHECKING:
     from configparser import ConfigParser
 
+_UNSET = object()
+"""Sentinel: no ``default=`` was passed to ``add_argument`` in code."""
+
 
 class AddArgumentMethod:
     def __init__(
@@ -31,7 +34,7 @@ class AddArgumentMethod:
         return dest_1 or dest_2
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        default_value = kwargs.get("default")
+        default_value = kwargs["default"] if "default" in kwargs else _UNSET
         arg_dest = self._get_dest(*args, **kwargs)
         arg_action = kwargs.get("action", "store")
 

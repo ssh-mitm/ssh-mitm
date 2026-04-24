@@ -73,11 +73,10 @@ def set_module_kwargs(
         kwargs["help"] = entry_point_class.__doc__.strip().split("\n")[0]
 
     kwargs["choices"] = sorted(choices)
-    if len(choices) > 1:
-        kwargs["help"] = kwargs.get("help") or ""
-        if default_name:
-            kwargs[
-                "help"
-            ] += f"\ndefault module: {Colors.stylize(default_name, fg('blue') + attr('bold'))}"
-        kwargs["help"] += "\navailable modules:\n{}".format("\n".join(descriptions))
+    kwargs["help"] = kwargs.get("help") or ""
+    if default_name:
+        kwargs[
+            "help"
+        ] += f"\ndefault module: {Colors.stylize(default_name, fg('blue') + attr('bold'))}"
+    kwargs["help"] += "\navailable modules:\n{}".format("\n".join(descriptions))
     return kwargs

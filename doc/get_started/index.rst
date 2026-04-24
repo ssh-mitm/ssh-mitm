@@ -21,6 +21,7 @@ and plugin support for customization.
    :maxdepth: 1
 
    installation
+   plugin_browser
    configuration
    terminal_session
    file_transfer

@@ -34,7 +34,7 @@ from typing import (
 
 import argcomplete
 
-from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
+from sshmitm.moduleparser.baseparser import _UNSET, BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import ModuleError
 from sshmitm.moduleparser.formatter import ModuleFormatter
 from sshmitm.moduleparser.modules import BaseModule, SubCommand
@@ -183,11 +183,11 @@ class ModuleParser(
     def add_module(self, *args: Any, **kwargs: Any) -> None:
         # remove "baseclass" from arguments
         baseclass = kwargs.pop("baseclass", BaseModule)
-        default_value = kwargs.get("default")
-        if default_value:
-            if isinstance(default_value, str):
+        code_default = kwargs.get("default")
+        if code_default:
+            if isinstance(code_default, str):
                 kwargs["default"] = BaseModule.load_from_entrypoint(
-                    default_value, baseclass
+                    code_default, baseclass
                 )
         else:
             arg_dest = self.add_argument._get_dest(  # type: ignore[attr-defined] # pylint:disable=protected-access
@@ -198,14 +198,14 @@ class ModuleParser(
                 and self.ARGCONF
                 and self.ARGCONF.has_option(self.config_section, arg_dest)
             ):
-                default_value = self.ARGCONF.get(self.config_section, arg_dest)
-                if ":" in default_value:
-                    part_module, part_class = default_value.rsplit(":", 1)
+                cfg_default = self.ARGCONF.get(self.config_section, arg_dest)
+                if ":" in cfg_default:
+                    part_module, part_class = cfg_default.rsplit(":", 1)
                     module = import_module(part_module)
                     kwargs["default"] = getattr(module, part_class)
                 else:
                     kwargs["default"] = BaseModule.load_from_entrypoint(
-                        default_value, baseclass
+                        cfg_default, baseclass
                     )
 
         if not inspect.isclass(baseclass) or not issubclass(baseclass, BaseModule):
@@ -221,6 +221,10 @@ class ModuleParser(
         action = self.plugin_group.add_argument(
             *args, **set_module_kwargs(baseclass, **kwargs)
         )
+        # _code_default must only reflect an explicit default= in code, not a
+        # value loaded from config — reset it when no code default was given.
+        if not code_default:
+            action._code_default = _UNSET  # type: ignore[attr-defined]
         self._extra_modules.append((action, baseclass))
         logging.debug("Baseclass: %s", baseclass)
 

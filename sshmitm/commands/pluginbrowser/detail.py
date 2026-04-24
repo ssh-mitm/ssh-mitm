@@ -36,6 +36,7 @@ from sshmitm.commands.pluginbrowser.formatters import (
 )
 from sshmitm.commands.pluginbrowser.serverinfo import server_info
 from sshmitm.commands.pluginbrowser.widgets import PluginTree
+from sshmitm.moduleparser.baseparser import _UNSET
 from sshmitm.moduleparser.plugininfo import (
     GeneralActionInfo,
     GeneralGroupInfo,
@@ -326,13 +327,12 @@ class DetailPane(Widget):
         if tctx.has_actions:
             row.append(type_label(act) if act is not None else "")
             if act is not None:
-                code_default = getattr(act, "_code_default", None)
-                if code_default is None or code_default is argparse.SUPPRESS:
-                    row.append("")
+                code_default = getattr(act, "_code_default", _UNSET)
+                if code_default is _UNSET or code_default is argparse.SUPPRESS:
+                    row.append("[dim]✗[/dim]")
                 else:
-                    row.append(
-                        f"[bold]{server_info.resolve_ep_name(code_default)}[/bold]"
-                    )
+                    resolved = server_info.resolve_ep_name(code_default) if code_default is not None else ""
+                    row.append(f"✓ {resolved}" if resolved else "✓")
             else:
                 row.append("")
         if not tctx.default_has_section or key not in tctx.default_items:

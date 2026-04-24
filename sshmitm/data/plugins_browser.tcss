@@ -1,3 +1,39 @@
+#main-tabs {
+    height: 1fr;
+}
+
+#tab-browser {
+    padding: 0;
+    height: 1fr;
+}
+
+#tab-overview {
+    padding: 0;
+    height: 1fr;
+}
+
+#overview-layout {
+    height: 1fr;
+}
+
+#filter-bar {
+    height: 3;
+    margin: 1 1 0 1;
+}
+
+#filter-input {
+    width: 1fr;
+}
+
+#status-filter {
+    width: 22;
+}
+
+#all-plugins-table {
+    height: 1fr;
+    margin: 0 1 1 1;
+}
+
 #main {
     height: 1fr;
 }

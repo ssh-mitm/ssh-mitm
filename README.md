@@ -3,7 +3,7 @@
   <a href="https://github.com/ssh-mitm/ssh-mitm">
     <img alt="SSH-MITM intercepting password login" title="SSH-MITM" src="https://docs.ssh-mitm.at/_images/intro.png" >
   </a>
-  <p align="center">ssh man-in-the-middle (ssh-mitm) server for security audits supporting<br> <b>publickey authentication</b>, <b>session hijacking</b> and <b>file manipulation</b></p>
+  <p align="center">An interactive SSH proxy for authorized security audits.<br>Intercept sessions, monitor live traffic, inject commands, and manipulate file transfers — all in real time.</p>
   <p align="center">
    <a href="https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage"><img height='56' alt='Download as an AppImage' src='https://docs.appimage.org/_images/download-appimage-banner.svg'/></a>
    &nbsp;&nbsp;&nbsp;
@@ -30,159 +30,124 @@ Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
 
 ---
 
-## Quick Install
+## Quick Start
 
-### AppImage (recommended — no installation required)
+SSH-MITM acts as an intercepting proxy between a client and its SSH server. The client connects
+to SSH-MITM instead of directly to the target — SSH-MITM forwards the connection while giving
+the auditor full visibility and control:
+
+<p align="center">
+  <img alt="SSH-MITM setup" src="https://docs.ssh-mitm.at/_images/ssh-mitm-setup.svg" width="90%">
+</p>
+
+### 1. Install
+
+SSH-MITM requires no installation. Download the AppImage and you are ready to go:
 
 ```bash
 wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
 chmod +x ssh-mitm-x86_64.AppImage
+```
+
+For other installation options (pip, Flatpak, Snap) see the [installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
+
+### 2. Start the proxy
+
+Point SSH-MITM at your target host — use a system you are authorized to test:
+
+```bash
 ./ssh-mitm-x86_64.AppImage server --remote-host <target-host>
 ```
 
-For other installation options (pip, Flatpak, Snap) see the [Installation](#installation) section below.
+### 3. Route a client connection
 
----
+Have the SSH client connect through the proxy on port 10022:
 
-## Table of Contents
+```bash
+ssh -p 10022 user@proxy-host
+```
 
-- [Introduction](#introduction)
-- [Use Cases](#use-cases)
-- [Features](#features)
-- [Installation](#installation)
-- [Quickstart](#quickstart)
-- [Session hijacking](#session-hijacking)
-- [Phishing FIDO Tokens](#phishing-fido-tokens)
-- [Contributing](#contributing)
-- [Contact](#contact)
+SSH-MITM intercepts the session and logs the credentials immediately:
 
-## Introduction
+```
+INFO     Remote authentication succeeded
+    Remote Address: <target-host>:22
+    Username: user
+    Password: secret
+    Agent: no agent
+```
 
-**SSH-MITM** is a man-in-the-middle SSH server for security audits and malware analysis.
+<p align="center">
+  <img alt="SSH-MITM intercepting credentials" src="https://docs.ssh-mitm.at/_images/ssh-mitm-password.png" width="80%">
+</p>
 
-Password and **publickey authentication** are supported. SSH-MITM can detect if a user is able to log in with publickey authentication on the remote server, allowing it to accept the same key as the destination server. If publickey authentication is not possible, it falls back to password authentication.
+### 4. Attach to the live session
 
-When publickey authentication is possible, a forwarded agent is needed to log in to the remote server. If no agent is forwarded, SSH-MITM can redirect the session to a honeypot.
+For every intercepted connection, SSH-MITM opens a mirror shell on a local port:
 
-<p align="right">(<a href="#top">back to top</a>)</p>
+```
+INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
+```
 
-## Use Cases
+Connect to it from a separate terminal:
 
-- **Penetration testing** — audit SSH clients and servers in authorized engagements
-- **Security research** — analyze SSH client behavior and authentication flows
-- **Training environments** — demonstrate MITM attacks in controlled lab setups
-- **Malware analysis** — inspect SSH traffic from suspicious clients in isolated environments
+```bash
+ssh -p 34463 127.0.0.1
+```
 
-<p align="right">(<a href="#top">back to top</a>)</p>
+The mirror shell reflects the session in real time. The auditor can observe the user's activity
+and inject commands independently, without affecting the original connection.
 
-## Features
+## What SSH-MITM can do
 
 | Feature | Description |
 | ------- | ----------- |
-| Publickey authentication | Accepts the same key as the destination server; detects and falls back to password auth |
-| FIDO2 token phishing | Intercepts hardware token authentication via the trivial authentication attack ([OpenSSH info](https://www.openssh.com/agent-restrict.html)) |
-| Session hijacking | Mirror and interact with live SSH sessions in real time |
-| File interception | Store and replace files during SCP/SFTP transfers |
-| Port forwarding | TCP and dynamic forwarding with SOCKS 4/5 support |
+| [Interactive session monitoring](https://docs.ssh-mitm.at/get_started/terminal_session.html) | Attach to any intercepted session via a mirror shell — observe and inject commands in real time |
+| [File transfer manipulation](https://docs.ssh-mitm.at/get_started/file_transfer.html) | Intercept SCP/SFTP transfers, store copies, or replace files on the fly |
+| [Port forwarding interception](https://docs.ssh-mitm.at/get_started/portforwarding.html) | Intercept TCP tunnels and dynamic SOCKS 4/5 forwarding |
+| [FIDO2 token phishing](https://docs.ssh-mitm.at/user_guide/trivialauth.html) | Intercept hardware token authentication via the trivial auth attack ([OpenSSH info](https://www.openssh.com/agent-restrict.html)) |
+| [Authentication interception](https://docs.ssh-mitm.at/user_guide/authentication.html) | Capture passwords; accept the same public key as the target server and fall back to password auth automatically |
 | MOSH interception | Intercept MOSH connections |
-| Client auditing | Check connecting clients against known vulnerabilities |
-| Plugin support | Extend functionality with custom plugins |
+| [Client auditing](https://docs.ssh-mitm.at/vulnerabilities/index.html) | Identify known vulnerabilities in connecting SSH clients |
+| [Plugin support](https://docs.ssh-mitm.at/get_started/plugin_browser.html) | Extend and customize all interception behavior with plugins |
 
-<p align="right">(<a href="#top">back to top</a>)</p>
+## Use Cases
 
-## Installation
+- **Penetration testing** — actively audit SSH clients and servers in authorized engagements; intercept, manipulate, and replay sessions
+- **Security research** — analyze SSH client behavior, authentication flows, and protocol-level weaknesses interactively
+- **Training environments** — demonstrate MITM techniques and session hijacking in controlled lab setups
+- **Malware analysis** — monitor and interact with SSH sessions from suspicious clients in isolated environments
 
-### Requirements
+## The attack that started it all
 
-- Linux (x86_64)
-- Python 3.11 or newer (for pip installation)
+SSH-MITM was originally developed to investigate a fundamental weakness in how SSH clients handle
+hardware token authentication. The research uncovered that FIDO2 tokens — often used as a second
+factor — can be phished through a technique called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html),
+which was subsequently assigned [CVE-2021-36367](https://docs.ssh-mitm.at/CVE-2021-36367.html) and
+[CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html).
 
-### AppImage (recommended)
-
-No installation required — just download and run:
-
-```bash
-wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-chmod +x ssh-mitm-x86_64.AppImage
-```
-
-### Flatpak
-
-```bash
-flatpak install flathub at.ssh_mitm.server
-flatpak run at.ssh_mitm.server
-```
-
-### Snap
+The attack exploits the fact that SSH clients can be forced into a trivial authentication method —
+such as keyboard-interactive with no prompts — which effectively grants access without any real
+authentication. This completely bypasses hardware token protection, since the token is never
+challenged. SSH-MITM can simulate this against any client that does not explicitly reject it:
 
 ```bash
-sudo snap install ssh-mitm
+ssh-mitm server --enable-trivial-auth
 ```
 
-### pip (Python 3.11+)
-
-```bash
-pip install "ssh-mitm[production]"
-```
-
-For more details, see the [SSH-MITM installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-## Quickstart
-
-Start SSH-MITM and point it at your target host (replace `<target-host>` with the SSH server you want to audit):
-
-    ssh-mitm server --remote-host <target-host>
-
-SSH-MITM listens on port 10022 by default. Connect through the proxy:
-
-    ssh -p 10022 testuser@proxyserver
-
-You will see the intercepted credentials in the log output:
-
-    INFO     Remote authentication succeeded
-        Remote Address: 127.0.0.1:22
-        Username: testuser
-        Password: secret
-        Agent: no agent
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-## Session hijacking
-
-When a client connects, SSH-MITM starts a mirror shell that can be used for session hijacking:
-
-    INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
-
-Connect to the mirror shell with any SSH client:
-
-    ssh -p 34463 127.0.0.1
-
-Commands executed in either the original or the hijacked session will be visible in both.
-
-<p align="right">(<a href="#top">back to top</a>)</p>
-
-## Phishing FIDO Tokens
-
-SSH-MITM is able to phish FIDO2 tokens which can be used for two-factor authentication.
-
-The attack is called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html) ([CVE-2021-36367](https://docs.ssh-mitm.at/CVE-2021-36367.html), [CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html)) and can be enabled with the command line argument `--enable-trivial-auth`:
-
-  ssh-mitm server --enable-trivial-auth
-
-The attack is only performed when publickey login is possible, so password authentication continues to work normally.
+The attack only applies when public-key authentication is available — password authentication is
+not affected and continues to work normally through the proxy.
 
 <p align="center">
-  <b>Video explaining the phishing attack:</b><br/>
-  <i>Click to view video on vimeo.com</i><br/>
+  <b>Talk at DeepSec 2021 — full explanation of the attack:</b><br/>
+  <i>Click to view on vimeo.com</i><br/>
   <a href="https://vimeo.com/showcase/9059922/video/651517195">
   <img src="https://github.com/ssh-mitm/ssh-mitm/raw/master/doc/images/ds2021-video.png" alt="Click to view video on vimeo.com">
   </a>
 </p>
 
 <p align="center">
-  <b><a href="https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf">Download presentation slides</a></b>
+  <a href="https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf">Download presentation slides</a>
 </p>
 
 <p align="right">(<a href="#top">back to top</a>)</p>

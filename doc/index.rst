@@ -2,24 +2,12 @@
 SSH-MITM - ssh audits made simple
 =================================
 
-ssh man-in-the-middle (ssh-mitm) server for security audits supporting **publickey authentication**, **session hijacking** and **file manipulation**
-
 .. image:: _static/intro.png
     :class: dark-light
 
-Introduction
-============
-
-**SSH-MITM** is a man in the middle SSH Server for security audits and malware analysis.
-
-Password and publickey authentication are supported and SSH-MITM is able to detect, if a user is able to
-login with publickey authentication on the remote server. This allows SSH-MITM to accept the same key as
-the destination server. If publickey authentication is not possible, the authentication will fall
-back to password-authentication.
-
-When publickey authentication is possible, a forwarded agent is needed to login to the remote server.
-In cases, when no agent was forwarded, SSH-MITM can redirect the session to a honeypot.
-
+**SSH-MITM** is an open-source man-in-the-middle SSH server for security audits and malware analysis.
+It intercepts SSH sessions in real time — supporting password and public-key authentication,
+session hijacking, file transfer interception, and port forwarding — through a flexible plugin system.
 
 .. admonition:: :fas:`scale-balanced` Legal Notice
    :class: legal-notice
@@ -30,139 +18,129 @@ In cases, when no agent was forwarded, SSH-MITM can redirect the session to a ho
    See the :doc:`Legal Notice </get_started/legal>` for details.
 
 
-Installation
-============
+Features
+========
 
-This part of the documentation covers the installation of SSH-MITM.
-The first step to using any software package is getting it properly installed.
+.. grid:: 1 2 3 3
+   :gutter: 3
 
-To install SSH-MITM, simply run one of those commands in your terminal of choice:
+   .. grid-item-card:: :fas:`terminal` Session Hijacking
+      :link: get_started/terminal_session
+      :link-type: doc
 
-:fas:`cog` AppImage
--------------------
+      Mirror live SSH sessions and interact with them in real time.
+      Commands executed in either session appear in both.
 
-If you use the ``AppImage``, you can install it as:
+   .. grid-item-card:: :fas:`file-arrow-up` File Interception
+      :link: get_started/file_transfer
+      :link-type: doc
 
-.. code:: none
+      Intercept, store, or replace files during SCP and SFTP transfers
+      without interrupting the client.
+
+   .. grid-item-card:: :fas:`network-wired` Port Forwarding
+      :link: get_started/portforwarding
+      :link-type: doc
+
+      Intercept TCP tunnels and dynamic port forwarding with full
+      SOCKS 4/5 support.
+
+   .. grid-item-card:: :fas:`key` Authentication
+      :link: user_guide/authentication
+      :link-type: doc
+
+      Supports password and public-key authentication with automatic
+      fallback. Redirect sessions without a forwarded agent to a honeypot.
+
+   .. grid-item-card:: :fas:`shield-halved` FIDO2 Token Phishing
+      :link: user_guide/trivialauth
+      :link-type: doc
+
+      Intercept hardware token authentication via the trivial
+      authentication attack (CVE-2021-36367, CVE-2021-36368).
+
+   .. grid-item-card:: :fas:`puzzle-piece` Plugin Browser
+      :link: get_started/plugin_browser
+      :link-type: doc
+
+      Explore all available plugins and their configuration options
+      interactively in the terminal — without editing any files.
+
+
+Quick Start
+===========
+
+SSH-MITM acts as an intercepting proxy between a client and its SSH server. The client connects
+to SSH-MITM instead of directly to the target — SSH-MITM forwards the connection while giving
+the auditor full visibility and control:
+
+.. image:: _static/ssh-mitm-setup.svg
+    :class: dark-light
+    :alt: SSH-MITM setup diagram
+
+1. Install
+----------
+
+No installation required. Download the AppImage and you are ready to go:
+
+.. code-block:: none
 
     $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-    $ chmod +x ssh-mitm*.AppImage
+    $ chmod +x ssh-mitm-x86_64.AppImage
 
+For other installation options (pip, Flatpak, Snap) see the :doc:`installation guide <get_started/installation>`.
 
-:fab:`linux` Flatpak
---------------------
-
-Install SSH-MITM as Flatpak from Flathub:
-
-.. code-block:: none
-
-    # install Flatpak
-    $ flatpak install flathub at.ssh_mitm.server
-
-    # run SSH-MITM from Flatpak
-    $ flatpak run at.ssh_mitm.server
-
-
-:fab:`ubuntu` snap
+2. Start the proxy
 ------------------
 
-If you use ``snap``, you can install it with:
+Point SSH-MITM at your target host — use a system you are authorized to test:
 
 .. code-block:: none
 
-    $ sudo snap install ssh-mitm
+    $ ./ssh-mitm-x86_64.AppImage server --remote-host <target-host>
 
+3. Route a client connection
+-----------------------------
 
-:fab:`python` pip
-------------------
-
-If you use ``pip``, you can install it with:
-
-.. code-block:: none
-
-    $ python3 -m pip install "ssh-mitm[production]"
-
-
-For more installation methods, refer to the  :doc:`installation guide </get_started/installation>`.
-
-
-Start SSH-MITM
-==============
-
-Let’s get started with some simple examples.
-
-Starting an intercepting mitm-ssh server is very simple.
-
-All you have to do is run this command in your terminal of choice.
+Have the SSH client connect through the proxy on port 10022:
 
 .. code-block:: none
 
-    $ ssh-mitm server --remote-host 192.168.0.x
+    $ ssh -p 10022 user@proxy-host
 
-Now let's try to connect to the ssh-mitm server.
-The ssh-mitm server is listening on port 10022.
-
-.. code-block:: none
-
-    $ ssh -p 10022 testuser@proxyserver
-
-You will see the credentials in the log output.
-
+SSH-MITM intercepts the session and logs the credentials immediately:
 
 .. code-block:: none
     :class: no-copybutton
 
     INFO     Remote authentication succeeded
-        Remote Address: 192.168.0.x:22
-        Username: testuser
+        Remote Address: <target-host>:22
+        Username: user
         Password: secret
         Agent: no agent
 
+.. image:: _static/ssh-mitm-password.png
+    :class: dark-light
+    :alt: SSH-MITM intercepting credentials
 
-Hijack a SSH terminal session
-=============================
+4. Attach to the live session
+------------------------------
 
-SSH-MITM proxy server is able to hijack a ssh session and allows you to interact with it.
-
-Let's get started with hijacking the session.
-
-When a client connects, the ssh-mitm proxy server starts a new server, where you can connect with another ssh client.
-This server is used to hijack the session.
+For every intercepted connection, SSH-MITM opens a mirror shell on a local port:
 
 .. code-block:: none
     :class: no-copybutton
 
     INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
 
-To hijack the session, you can use your favorite ssh client. This connection does not require authentication.
+Connect to it from a separate terminal:
 
 .. code-block:: none
 
     $ ssh -p 34463 127.0.0.1
 
-After you are connected, your session will only be updated with new responses, but you are able to execute commands.
-
-Try to execute some commands in the hijacked session or in the original session.
-
-The output will be shown in both sessions.
-
-
-Publickey authentication
-========================
-
-SSH-MITM is able to verify, if a user is able to login with publickey authentication on the remote server.
-If publickey authentication is not possible, SSH-MITM falls back to password authentication.
-This step does not require a forwarded agent.
-
-For a full login on the remote server agent forwarding is still required. When no agent was forwarded,
-SSH-MITM can redirect the connection to a honeypot.
-
-.. code-block:: none
-
-    $ ssh-mitm server --enable-auth-fallback \
-      --fallback-host HONEYPOT \
-      --fallback-username HONEYPOT_USER \
-      --fallback-password HONEYPOT_PASSWORD
+The mirror shell reflects the session in real time. The auditor can observe the user's activity
+and inject commands independently, without affecting the original connection.
 
 
 .. toctree::
