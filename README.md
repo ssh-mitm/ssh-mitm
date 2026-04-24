@@ -122,8 +122,7 @@ and inject commands independently, without affecting the original connection.
 SSH-MITM was originally developed to investigate a fundamental weakness in how SSH clients handle
 hardware token authentication. The research uncovered that FIDO2 tokens — often used as a second
 factor — can be phished through a technique called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html),
-which was subsequently assigned [CVE-2021-36367](https://docs.ssh-mitm.at/CVE-2021-36367.html) and
-[CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html).
+which was subsequently assigned [CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html).
 
 The attack exploits the fact that SSH clients can be forced into a trivial authentication method —
 such as keyboard-interactive with no prompts — which effectively grants access without any real
