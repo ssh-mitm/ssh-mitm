@@ -5,6 +5,7 @@ from __future__ import annotations
 import contextlib
 import importlib.resources
 import inspect
+from importlib import metadata
 from typing import TYPE_CHECKING, Any
 
 from rich.text import Text
@@ -37,7 +38,6 @@ from sshmitm.moduleparser.plugininfo import (
     PluginInfo,
     PluginTypeInfo,
 )
-from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
     from configparser import ConfigParser

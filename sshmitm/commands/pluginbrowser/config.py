@@ -6,8 +6,7 @@ import argparse
 import os
 import sys
 from configparser import ConfigParser
-
-from sshmitm.utils import resources
+from importlib import resources
 
 
 def load_default_cfg() -> ConfigParser:

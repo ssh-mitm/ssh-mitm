@@ -4,6 +4,7 @@ from __future__ import annotations
 
 import argparse
 from functools import cached_property
+from importlib import metadata
 from typing import Any
 
 from sshmitm.cli import create_parser as _create_main_parser
@@ -15,7 +16,6 @@ from sshmitm.moduleparser.plugininfo import (
     extract_groups,
 )
 from sshmitm.server.cli import SSHServerModules
-from sshmitm.utils import metadata
 
 _STANDARD_GROUPS: set[str | None] = {
     "positional arguments",

@@ -1,11 +1,11 @@
 import argparse
 from collections.abc import Sequence
+from importlib import metadata
 from typing import TYPE_CHECKING, Any
 
 from colored.colored import attr, fg
 
 from sshmitm.moduleparser.colors import Colors
-from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser.modules import BaseModule

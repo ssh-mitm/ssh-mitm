@@ -24,7 +24,7 @@ import inspect
 import logging
 import os
 from collections.abc import Sequence
-from importlib import import_module
+from importlib import import_module, metadata
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -39,7 +39,6 @@ from sshmitm.moduleparser.exceptions import ModuleError
 from sshmitm.moduleparser.formatter import ModuleFormatter
 from sshmitm.moduleparser.modules import BaseModule, SubCommand
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
-from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
     from configparser import ConfigParser

@@ -1,5 +1,6 @@
 import logging
 import re
+from importlib import resources
 from typing import TYPE_CHECKING
 
 import yaml
@@ -11,7 +12,6 @@ from rich.markup import escape
 
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
-from sshmitm.utils import resources
 
 if TYPE_CHECKING:
     import sshmitm

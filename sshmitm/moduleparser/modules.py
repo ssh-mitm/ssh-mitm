@@ -3,6 +3,7 @@ import inspect
 import logging
 from abc import ABC, ABCMeta, abstractmethod
 from collections.abc import Sequence
+from importlib import metadata
 from typing import (
     TYPE_CHECKING,
     Any,
@@ -13,7 +14,6 @@ from typing import (
 from sshmitm.moduleparser.baseparser import BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import InvalidModuleArguments, ModuleError
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
-from sshmitm.utils import metadata
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser import ModuleParser
