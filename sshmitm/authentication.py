@@ -13,8 +13,8 @@ from paramiko import PKey
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
 from sshmitm.exceptions import MissingHostException
-from sshmitm.logger import Colors
 from sshmitm.moduleparser import SSHMITMBaseModule
+from sshmitm.moduleparser.colors import Colors
 from sshmitm.utils import SSHPubKey
 
 if TYPE_CHECKING:
@@ -867,6 +867,19 @@ class AuthenticatorRemote(Authenticator):
     def parser_arguments(cls) -> None:
         super().parser_arguments()
         cls.argument_group()
+
+    def get_auth_methods(
+        self, _host: str, _port: int, _username: str | None = None
+    ) -> list[str] | None:
+        return ["publickey"]
+
+    def auth_agent(self, _username: str, _host: str, _port: int) -> int:
+        return paramiko.common.AUTH_FAILED
+
+    def auth_password(
+        self, _username: str, _host: str, _port: int, _password: str
+    ) -> int:
+        return paramiko.common.AUTH_FAILED
 
     def auth_publickey(self, username: str, host: str, port: int, key: PKey) -> int:
         if key.can_sign():

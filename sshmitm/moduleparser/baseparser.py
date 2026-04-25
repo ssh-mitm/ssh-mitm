@@ -34,7 +34,7 @@ class AddArgumentMethod:
         return dest_1 or dest_2
 
     def __call__(self, *args: Any, **kwargs: Any) -> Any:
-        default_value = kwargs["default"] if "default" in kwargs else _UNSET
+        default_value = kwargs.get("default", _UNSET)
         arg_dest = self._get_dest(*args, **kwargs)
         arg_action = kwargs.get("action", "store")
 

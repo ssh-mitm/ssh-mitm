@@ -28,16 +28,16 @@ class BaseModuleMeta(ABCMeta):
         **kwargs: Any,
     ) -> "BaseModuleMeta":
         cls = super().__new__(mcs, name, bases, namespace, **kwargs)
-        if any(isinstance(b, BaseModuleMeta) for b in bases):
-            if cls.entry_point_prefix is None:  # type: ignore[attr-defined]
-                raise TypeError(
-                    f"Class '{name}' must define 'entry_point_prefix'. "
-                    f"Inherit from a base that sets it, or set it directly on the class."
-                )
+        if any(isinstance(b, BaseModuleMeta) for b in bases) and cls.entry_point_prefix is None:  # type: ignore[attr-defined]
+            msg = (
+                f"Class '{name}' must define 'entry_point_prefix'. "
+                f"Inherit from a base that sets it, or set it directly on the class."
+            )
+            raise TypeError(msg)
         return cls
 
 
-class BaseModule(metaclass=BaseModuleMeta):  # noqa: B024
+class BaseModule(metaclass=BaseModuleMeta):
     entry_point_prefix: ClassVar[str | None] = None
     _parser: BaseModuleArgumentParser | None = None
     _modules: list[tuple[argparse.Action, Any]] | None = None
@@ -91,7 +91,7 @@ class BaseModule(metaclass=BaseModuleMeta):  # noqa: B024
                 )
             )
 
-    @classmethod  # noqa: B027
+    @classmethod
     def parser_arguments(cls) -> None:
         pass
 
@@ -145,7 +145,7 @@ class BaseModule(metaclass=BaseModuleMeta):  # noqa: B024
         return None
 
 
-class SSHMITMBaseModule(BaseModule):  # noqa: B024
+class SSHMITMBaseModule(BaseModule):
     """Base class for all SSH-MITM plugin modules."""
 
     entry_point_prefix: ClassVar[str] = "sshmitm"

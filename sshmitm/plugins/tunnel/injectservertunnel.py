@@ -6,7 +6,7 @@ import paramiko
 from colored.colored import attr, fg
 
 from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
-from sshmitm.logger import Colors
+from sshmitm.moduleparser.colors import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 if TYPE_CHECKING:

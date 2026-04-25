@@ -39,8 +39,9 @@ from paramiko.ssh_exception import ChannelException
 
 from sshmitm.forwarders.agent import AgentProxy
 from sshmitm.interfaces.server import ProxyNetconfServer, ProxySFTPServer
-from sshmitm.logger import THREAD_DATA, Colors
+from sshmitm.logger import THREAD_DATA
 from sshmitm.moduleparser import SSHMITMBaseModule
+from sshmitm.moduleparser.colors import Colors
 from sshmitm.plugins.session import key_negotiation
 
 if TYPE_CHECKING:

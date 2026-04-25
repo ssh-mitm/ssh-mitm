@@ -7,7 +7,7 @@ from typing import cast
 from colored.colored import attr, fg
 from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
-from sshmitm.logger import Colors
+from sshmitm.moduleparser.colors import Colors
 from sshmitm.session import Session
 from sshmitm.utils import format_hex
 

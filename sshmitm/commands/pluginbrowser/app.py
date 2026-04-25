@@ -30,7 +30,7 @@ from sshmitm.commands.pluginbrowser.config import (
 from sshmitm.commands.pluginbrowser.detail import DetailPane
 from sshmitm.commands.pluginbrowser.serverinfo import server_info
 from sshmitm.commands.pluginbrowser.widgets import PluginTree
-from sshmitm.logger import Colors
+from sshmitm.moduleparser.colors import Colors
 from sshmitm.moduleparser.plugininfo import (
     GeneralActionInfo,
     GeneralGroupInfo,
@@ -77,30 +77,31 @@ class PluginBrowserApp(App[None]):
     def compose(self) -> ComposeResult:
         yield Header()
         with TabbedContent(id="main-tabs"):
-            with TabPane("Browser", id="tab-browser"):
-                with Horizontal(id="main"):
-                    with Vertical(id="sidebar"):
-                        yield PluginTree("SSH-MITM", id="plugin-tree")
-                    yield DetailPane(id="detail")
-            with TabPane("All Plugins", id="tab-overview"):
-                with Vertical(id="overview-layout"):
-                    with Horizontal(id="filter-bar"):
-                        yield Select(
-                            [
-                                ("All", "all"),
-                                ("Active", "active"),
-                                ("Inactive", "inactive"),
-                            ],
-                            value="all",
-                            id="status-filter",
-                            allow_blank=False,
-                        )
-                        yield Input(placeholder="Filter plugins…", id="filter-input")
-                    yield DataTable(
-                        id="all-plugins-table",
-                        zebra_stripes=True,
-                        cursor_type="row",
+            with TabPane("Browser", id="tab-browser"), Horizontal(id="main"):
+                with Vertical(id="sidebar"):
+                    yield PluginTree("SSH-MITM", id="plugin-tree")
+                yield DetailPane(id="detail")
+            with (
+                TabPane("All Plugins", id="tab-overview"),
+                Vertical(id="overview-layout"),
+            ):
+                with Horizontal(id="filter-bar"):
+                    yield Select(
+                        [
+                            ("All", "all"),
+                            ("Active", "active"),
+                            ("Inactive", "inactive"),
+                        ],
+                        value="all",
+                        id="status-filter",
+                        allow_blank=False,
                     )
+                    yield Input(placeholder="Filter plugins…", id="filter-input")
+                yield DataTable(
+                    id="all-plugins-table",
+                    zebra_stripes=True,
+                    cursor_type="row",
+                )
         yield Footer()
 
     def on_mount(self) -> None:

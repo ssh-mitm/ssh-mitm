@@ -26,7 +26,7 @@ from sshmitm.forwarders.tunnel import (
 )
 from sshmitm.interfaces.server import BaseServerInterface, ServerInterface
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
-from sshmitm.logger import Colors
+from sshmitm.moduleparser.colors import Colors
 from sshmitm.multisocket import create_server_sock
 from sshmitm.session import Session
 from sshmitm.utils import SSHPubKey
