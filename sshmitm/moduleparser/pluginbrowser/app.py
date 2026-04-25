@@ -1,12 +1,14 @@
-"""SSH-MITM Plugin Browser Textual application."""
+"""Plugin Browser Textual application."""
 
 from __future__ import annotations
 
 import contextlib
+import dataclasses
 import importlib.resources
 import inspect
+from configparser import ConfigParser
 from importlib import metadata
-from typing import TYPE_CHECKING, Any
+from typing import Any
 
 from rich.text import Text
 from textual.app import App, ComposeResult
@@ -23,15 +25,14 @@ from textual.widgets import (
     Tree,
 )
 
-from sshmitm.commands.pluginbrowser.config import (
+from sshmitm.moduleparser.colors import Colors
+from sshmitm.moduleparser.pluginbrowser.config import (
     get_config_path,
-    load_default_cfg,
     load_user_cfg,
 )
-from sshmitm.commands.pluginbrowser.detail import DetailPane
-from sshmitm.commands.pluginbrowser.serverinfo import server_info
-from sshmitm.commands.pluginbrowser.widgets import PluginTree
-from sshmitm.moduleparser.colors import Colors
+from sshmitm.moduleparser.pluginbrowser.detail import DetailPane
+from sshmitm.moduleparser.pluginbrowser.registry import plugin_registry
+from sshmitm.moduleparser.pluginbrowser.widgets import PluginTree
 from sshmitm.moduleparser.plugininfo import (
     GeneralActionInfo,
     GeneralGroupInfo,
@@ -39,20 +40,25 @@ from sshmitm.moduleparser.plugininfo import (
     PluginTypeInfo,
 )
 
-if TYPE_CHECKING:
-    from configparser import ConfigParser
-
 _TCSS = (
-    importlib.resources.files("sshmitm")
-    .joinpath("data/plugins_browser.tcss")
+    importlib.resources.files("sshmitm.moduleparser.pluginbrowser")
+    .joinpath("plugins_browser.tcss")
     .read_text(encoding="utf-8")
 )
 
 
-class PluginBrowserApp(App[None]):
-    """SSH-MITM Plugin Browser"""
+@dataclasses.dataclass
+class BrowserConfig:
+    """Display and behaviour options for the plugin browser."""
 
-    TITLE = "SSH-MITM Plugin Browser"
+    title: str = "Plugin Browser"
+    tree_root_label: str = "Plugins"
+    active_config_section: str | None = None
+
+
+class PluginBrowserApp(App[None]):
+    """Plugin Browser"""
+
     CSS = _TCSS
     BINDINGS = [  # noqa: RUF012
         Binding("q", "quit", "Quit"),
@@ -67,11 +73,13 @@ class PluginBrowserApp(App[None]):
         default_cfg: ConfigParser,
         user_cfg: ConfigParser | None,
         config_path: str | None,
+        browser_config: BrowserConfig | None = None,
     ) -> None:
         super().__init__()
         self._default_cfg = default_cfg
         self._user_cfg = user_cfg
         self._config_path = config_path
+        self._browser_config = browser_config or BrowserConfig()
         self._all_plugin_rows: list[tuple[str, str, str | Text, str, str]] = []
 
     def compose(self) -> ComposeResult:
@@ -79,7 +87,9 @@ class PluginBrowserApp(App[None]):
         with TabbedContent(id="main-tabs"):
             with TabPane("Browser", id="tab-browser"), Horizontal(id="main"):
                 with Vertical(id="sidebar"):
-                    yield PluginTree("SSH-MITM", id="plugin-tree")
+                    yield PluginTree(
+                        self._browser_config.tree_root_label, id="plugin-tree"
+                    )
                 yield DetailPane(id="detail")
             with (
                 TabPane("All Plugins", id="tab-overview"),
@@ -105,6 +115,7 @@ class PluginBrowserApp(App[None]):
         yield Footer()
 
     def on_mount(self) -> None:
+        self.title = self._browser_config.title
         self.theme = "gruvbox"
         self._populate_tree()
         self._populate_overview_table()
@@ -113,8 +124,10 @@ class PluginBrowserApp(App[None]):
         tree.focus()
 
     def _active_ep_value(self, cli_flag: str) -> str | None:
+        section = self._browser_config.active_config_section
+        if section is None:
+            return None
         key = cli_flag.lstrip("-")
-        section = "SSH-Server-Modules"
         if self._user_cfg and self._user_cfg.has_option(section, key):
             return self._user_cfg.get(section, key)
         if self._default_cfg.has_option(section, key):
@@ -125,13 +138,13 @@ class PluginBrowserApp(App[None]):
         tree = self.query_one("#plugin-tree", PluginTree)
         tree.root.expand()
 
-        if server_info.general_groups:
+        if plugin_registry.general_groups:
             server_branch = tree.root.add("Server Parameters", expand=True)
-            for group_info in server_info.general_groups:
+            for group_info in plugin_registry.general_groups:
                 server_branch.add_leaf(group_info.title, data=group_info)
 
         plugins_branch = tree.root.add("Plugins", expand=True)
-        for type_info in server_info.plugin_types:
+        for type_info in plugin_registry.plugin_types:
             eps = sorted(
                 metadata.entry_points(
                     group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"
@@ -166,7 +179,7 @@ class PluginBrowserApp(App[None]):
         tbl = self.query_one("#all-plugins-table", DataTable)
         tbl.add_columns("Category", "EP-Name", "Active", "Class", "Description")
 
-        for type_info in server_info.plugin_types:
+        for type_info in plugin_registry.plugin_types:
             eps = sorted(
                 metadata.entry_points(
                     group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"
@@ -256,10 +269,23 @@ class PluginBrowserApp(App[None]):
             self.query_one(DetailPane).adjust_split(3)
 
 
-def run_browser() -> None:
+def run_browser(
+    title: str = "Plugin Browser",
+    tree_root_label: str = "Plugins",
+    active_config_section: str | None = None,
+    default_cfg: ConfigParser | None = None,
+) -> None:
     """Launch the plugin browser TUI."""
     Colors.stylize_func = False
-    default_cfg = load_default_cfg()
     config_path = get_config_path()
     user_cfg = load_user_cfg(config_path) if config_path else None
-    PluginBrowserApp(default_cfg, user_cfg, config_path).run()
+    PluginBrowserApp(
+        default_cfg=default_cfg if default_cfg is not None else ConfigParser(),
+        user_cfg=user_cfg,
+        config_path=config_path,
+        browser_config=BrowserConfig(
+            title=title,
+            tree_root_label=tree_root_label,
+            active_config_section=active_config_section,
+        ),
+    ).run()

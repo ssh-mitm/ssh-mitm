@@ -24,8 +24,9 @@ from textual.widgets import (
     Tree,
 )
 
-from sshmitm.commands.pluginbrowser.config import cfg_items
-from sshmitm.commands.pluginbrowser.formatters import (
+from sshmitm.moduleparser.baseparser import _UNSET
+from sshmitm.moduleparser.pluginbrowser.config import cfg_items
+from sshmitm.moduleparser.pluginbrowser.formatters import (
     ActionRenderContext,
     action_markdown,
     cli_help_to_markdown,
@@ -34,9 +35,8 @@ from sshmitm.commands.pluginbrowser.formatters import (
     help_module_section,
     type_label,
 )
-from sshmitm.commands.pluginbrowser.serverinfo import server_info
-from sshmitm.commands.pluginbrowser.widgets import PluginTree
-from sshmitm.moduleparser.baseparser import _UNSET
+from sshmitm.moduleparser.pluginbrowser.registry import plugin_registry
+from sshmitm.moduleparser.pluginbrowser.widgets import PluginTree
 from sshmitm.moduleparser.plugininfo import (
     GeneralActionInfo,
     GeneralGroupInfo,
@@ -332,7 +332,7 @@ class DetailPane(Widget):
                     row.append("[dim]✗[/dim]")
                 else:
                     resolved = (
-                        server_info.resolve_ep_name(code_default)
+                        plugin_registry.resolve_ep_name(code_default)
                         if code_default is not None
                         else ""
                     )
@@ -342,12 +342,12 @@ class DetailPane(Widget):
         if not tctx.default_has_section or key not in tctx.default_items:
             row.append("[dim italic]⚠ not in config[/dim italic]")
         else:
-            row.append(server_info.resolve_ep_name(tctx.default_items[key]))
+            row.append(plugin_registry.resolve_ep_name(tctx.default_items[key]))
         if tctx.has_user:
             if not tctx.user_has_section or key not in tctx.user_items:
                 row.append("")
             else:
-                row.append(server_info.resolve_ep_name(tctx.user_items[key]))
+                row.append(plugin_registry.resolve_ep_name(tctx.user_items[key]))
         return row
 
     def _fill_config_tab(

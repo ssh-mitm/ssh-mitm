@@ -2,6 +2,6 @@
 
 from __future__ import annotations
 
-from sshmitm.commands.pluginbrowser.app import run_browser
+from sshmitm.moduleparser.pluginbrowser.app import run_browser
 
 __all__ = ["run_browser"]

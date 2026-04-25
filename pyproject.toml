@@ -101,6 +101,7 @@ include = [
     "requirements.in",
     "sshmitm/**/*.py",
     "sshmitm/data/*.*",
+    "sshmitm/moduleparser/pluginbrowser/*.tcss",
 ]
 
 [tool.hatch.envs.lint]

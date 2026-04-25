@@ -1,0 +1,124 @@
+#main-tabs {
+    height: 1fr;
+}
+
+#tab-browser {
+    padding: 0;
+    height: 1fr;
+}
+
+#tab-overview {
+    padding: 0;
+    height: 1fr;
+}
+
+#overview-layout {
+    height: 1fr;
+}
+
+#filter-bar {
+    height: 3;
+    margin: 1 1 0 1;
+}
+
+#filter-input {
+    width: 1fr;
+}
+
+#status-filter {
+    width: 22;
+}
+
+#all-plugins-table {
+    height: 1fr;
+    margin: 0 1 1 1;
+}
+
+#main {
+    height: 1fr;
+}
+
+#sidebar {
+    width: 30;
+    min-width: 22;
+    border-right: solid $primary-darken-2;
+    background: $surface;
+}
+
+#plugin-tree {
+    height: 1fr;
+    scrollbar-size: 1 1;
+}
+
+#detail {
+    width: 1fr;
+    height: 1fr;
+    background: $panel;
+    layout: vertical;
+}
+
+#placeholder {
+    height: auto;
+    padding: 2;
+    color: $text-muted;
+}
+
+#plugin-view {
+    height: 1fr;
+}
+
+#top-section {
+    height: 20;
+    border-bottom: solid $primary-darken-2;
+}
+
+#sec-info {
+    height: auto;
+    padding: 1 2 0 2;
+}
+
+#sec-doc {
+    height: auto;
+    padding: 0 2 1 2;
+}
+
+#tabs {
+    height: 1fr;
+}
+
+#args-split {
+    height: 1fr;
+}
+
+#groups-sidebar {
+    width: 35;
+    min-width: 22;
+    border-right: solid $primary-darken-2;
+    background: $surface;
+}
+
+#groups-tree {
+    height: 1fr;
+    scrollbar-size: 1 1;
+}
+
+#cli-scroll {
+    width: 1fr;
+    height: 1fr;
+    padding: 1 2;
+}
+
+#cfg-scroll {
+    width: 1fr;
+    height: 1fr;
+}
+
+#cfg-header {
+    height: auto;
+    padding: 1 2 0 2;
+}
+
+#tbl-config {
+    height: auto;
+    margin: 1 2;
+}

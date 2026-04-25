@@ -6,13 +6,11 @@ import argparse
 import os
 import sys
 from configparser import ConfigParser
-from importlib import resources
 
 
-def load_default_cfg() -> ConfigParser:
+def load_cfg_from_path(path: str) -> ConfigParser:
     cfg = ConfigParser()
-    conf = resources.files("sshmitm") / "data/default.ini"
-    cfg.read_string(conf.read_text())
+    cfg.read(os.path.expanduser(path))
     return cfg
 
 
@@ -25,9 +23,7 @@ def get_config_path() -> str | None:
 
 
 def load_user_cfg(path: str) -> ConfigParser:
-    cfg = ConfigParser()
-    cfg.read(os.path.expanduser(path))
-    return cfg
+    return load_cfg_from_path(path)
 
 
 def cfg_items(cfg: ConfigParser | None, section: str) -> dict[str, str]:
