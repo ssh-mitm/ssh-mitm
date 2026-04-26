@@ -9,8 +9,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- added `ssh-mitm plugins` subcommand to inspect and browse available plugins
-  - `ssh-mitm plugins show` opens an interactive terminal UI (Plugin Browser) to explore all available plugins, their descriptions, and configuration options
+- added `ssh-mitm server --plugins` flag to inspect and browse available plugins
+  - `ssh-mitm server --plugins` opens an interactive terminal UI (Plugin Browser) to explore all available plugins, their descriptions, and configuration options
   - Plugin Browser includes a two-tab interface: tree/detail view and a filterable overview table of all plugins
 - added Plugin Browser documentation page (`get_started/plugin_browser`)
 - added SSH-MITM setup diagram to README and documentation index

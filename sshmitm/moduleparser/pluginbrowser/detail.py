@@ -35,7 +35,6 @@ from sshmitm.moduleparser.pluginbrowser.formatters import (
     help_module_section,
     type_label,
 )
-from sshmitm.moduleparser.pluginbrowser.registry import plugin_registry
 from sshmitm.moduleparser.pluginbrowser.widgets import PluginTree
 from sshmitm.moduleparser.plugininfo import (
     GeneralActionInfo,
@@ -46,6 +45,7 @@ from sshmitm.moduleparser.plugininfo import (
 )
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
     from configparser import ConfigParser
 
     from textual.app import ComposeResult
@@ -68,8 +68,15 @@ class DetailPane(Widget):
 
     _top_lines: reactive[int] = reactive(20)
 
-    def __init__(self, *args: Any, **kwargs: Any) -> None:
+    def __init__(
+        self, *args: Any, resolver: Callable[[Any], str] | None = None, **kwargs: Any
+    ) -> None:
         super().__init__(*args, **kwargs)
+        self._resolver: Callable[[Any], str] = (
+            resolver
+            if resolver is not None
+            else (lambda x: str(x) if x is not None else "")
+        )
         self._plugin: PluginInfo | None = None
         self._default_cfg: ConfigParser | None = None
         self._user_cfg: ConfigParser | None = None
@@ -332,9 +339,7 @@ class DetailPane(Widget):
                     row.append("[dim]✗[/dim]")
                 else:
                     resolved = (
-                        plugin_registry.resolve_ep_name(code_default)
-                        if code_default is not None
-                        else ""
+                        self._resolver(code_default) if code_default is not None else ""
                     )
                     row.append(f"✓ {resolved}" if resolved else "✓")
             else:
@@ -342,12 +347,12 @@ class DetailPane(Widget):
         if not tctx.default_has_section or key not in tctx.default_items:
             row.append("[dim italic]⚠ not in config[/dim italic]")
         else:
-            row.append(plugin_registry.resolve_ep_name(tctx.default_items[key]))
+            row.append(self._resolver(tctx.default_items[key]))
         if tctx.has_user:
             if not tctx.user_has_section or key not in tctx.user_items:
                 row.append("")
             else:
-                row.append(plugin_registry.resolve_ep_name(tctx.user_items[key]))
+                row.append(self._resolver(tctx.user_items[key]))
         return row
 
     def _fill_config_tab(

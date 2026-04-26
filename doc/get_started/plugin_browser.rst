@@ -17,14 +17,14 @@ Launch the Plugin Browser with:
 
 .. code-block:: none
 
-    $ ssh-mitm plugins show
+    $ ssh-mitm server --plugins
 
 To also display the values from your own configuration file alongside the defaults, pass it via
 ``--config``:
 
 .. code-block:: none
 
-    $ ssh-mitm plugins show --config myconfig.ini
+    $ ssh-mitm server --plugins --config myconfig.ini
 
 When a configuration file is provided, the Plugin Browser adds an extra column in the
 *Config Section* tab that shows the values from that file next to the built-in defaults —

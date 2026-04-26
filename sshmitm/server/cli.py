@@ -122,6 +122,10 @@ class SSHServerModules(SubCommand):
             help="Sets a custom SSH server banner presented to clients during the initial connection. Default: ``SSH-2.0-SSHMITM_<version>``.",
         )
 
+        if self.module_parser is not None:
+            self.parser.register_extra_parser(self.module_parser)
+        self.parser.add_browser_argument("--plugins")
+
     def execute(self, args: argparse.Namespace) -> None:
         if args.request_agent_breakin:
             args.authenticator.REQUEST_AGENT_BREAKIN = True

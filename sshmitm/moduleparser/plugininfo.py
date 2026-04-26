@@ -11,8 +11,8 @@ from typing import TYPE_CHECKING
 if TYPE_CHECKING:
     from sshmitm.moduleparser.modules import BaseModule
 
-_SKIP_GROUPS: frozenset[str] = frozenset(
-    {"positional arguments", "optional arguments", "options"}
+_SKIP_GROUPS: frozenset[str | None] = frozenset(
+    {"positional arguments", "optional arguments", "options", None}
 )
 
 
@@ -25,7 +25,7 @@ def class_to_label(cls_name: str) -> str:
 
 def extract_groups(
     parser: argparse.ArgumentParser,
-    skip: set[str | None],
+    skip: frozenset[str | None] | set[str | None] = _SKIP_GROUPS,
 ) -> list[GeneralGroupInfo]:
     """Return visible argument groups from *parser*, excluding *skip* titles."""
     groups: list[GeneralGroupInfo] = []

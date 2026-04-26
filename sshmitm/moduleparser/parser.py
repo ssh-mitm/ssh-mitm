@@ -38,6 +38,14 @@ from sshmitm.moduleparser.baseparser import _UNSET, BaseModuleArgumentParser
 from sshmitm.moduleparser.exceptions import ModuleError
 from sshmitm.moduleparser.formatter import ModuleFormatter
 from sshmitm.moduleparser.modules import BaseModule, SubCommand
+from sshmitm.moduleparser.pluginbrowser import run_browser
+from sshmitm.moduleparser.plugininfo import (
+    _SKIP_GROUPS,
+    GeneralGroupInfo,
+    PluginTypeInfo,
+    class_to_label,
+    extract_groups,
+)
 from sshmitm.moduleparser.utils import load_module, set_module_kwargs
 
 if TYPE_CHECKING:
@@ -61,7 +69,9 @@ class ModuleParser(
         self._entry_point_prefix = entry_point_prefix
         super().__init__(*args, add_help=False, config=config, **kwargs)
         self.__kwargs = kwargs
-        self._extra_modules: list[tuple[argparse.Action, type]] = []
+        self._extra_modules: list[tuple[argparse.Action, type[BaseModule]]] = []
+        self._extra_arg_parsers: list[argparse.ArgumentParser] = []
+        self._ep_value_to_name: dict[str, str] | None = None
         self._module_parsers: set[argparse.ArgumentParser] = {self}
         self.plugin_group = self.add_argument_group(self.config_section)
         self.subcommand: argparse.Action | None = None
@@ -99,7 +109,7 @@ class ModuleParser(
             if entry_point.name in self._registered_subcommands:
                 continue
             subcommand_cls = cast("type[SubCommand]", entry_point.load())
-            subcommand = subcommand_cls(entry_point.name, self.subcommand)  # type: ignore[arg-type]
+            subcommand = subcommand_cls(entry_point.name, self.subcommand, module_parser=self)  # type: ignore[arg-type]
             subcommand.register_arguments()
             self._registered_subcommands[entry_point.name] = subcommand
 
@@ -250,3 +260,72 @@ class ModuleParser(
     ) -> tuple[argparse.Namespace, list[str]]:
         parser = self._create_parser(args=args, namespace=namespace)
         return parser.parse_known_args(args, namespace)
+
+    @property
+    def plugin_types(self) -> list[PluginTypeInfo]:
+        return [
+            PluginTypeInfo(
+                type_label=class_to_label(baseclass.__name__),
+                cli_flag=action.option_strings[0],
+                help_text=(
+                    ""
+                    if not action.help or action.help == argparse.SUPPRESS
+                    else action.help
+                ),
+                base_class=baseclass,
+            )
+            for action, baseclass in self._extra_modules
+            if action.option_strings
+        ]
+
+    def register_extra_parser(self, parser: argparse.ArgumentParser) -> None:
+        if parser not in self._extra_arg_parsers:
+            self._extra_arg_parsers.append(parser)
+
+    @property
+    def general_groups(self) -> list[GeneralGroupInfo]:
+        groups = extract_groups(self, _SKIP_GROUPS)
+        for parser in self._extra_arg_parsers:
+            groups += extract_groups(parser, _SKIP_GROUPS)
+        return groups
+
+    def open_browser(self) -> None:
+        run_browser(self)
+
+    def add_browser_argument(self, *args: str) -> None:
+        mp = self
+
+        class _BrowserAction(argparse.Action):
+            def __call__(
+                self,
+                parser: argparse.ArgumentParser,
+                namespace: argparse.Namespace,
+                values: str | Sequence[Any] | None,
+                option_string: str | None = None,
+            ) -> None:
+                del namespace
+                del values
+                del option_string
+                mp.open_browser()
+                parser.exit()
+
+        self.add_argument(
+            *args, nargs=0, action=_BrowserAction, help="open plugin browser"
+        )
+
+    def resolve_ep_name(self, val: Any) -> str:
+        if self._ep_value_to_name is None:
+            result: dict[str, str] = {}
+            for _, baseclass in self._extra_modules:
+                for ep in metadata.entry_points(
+                    group=f"{baseclass.entry_point_prefix}.{baseclass.__name__}"
+                ):
+                    result[ep.value] = ep.name
+            self._ep_value_to_name = result
+        if isinstance(val, type):
+            key = f"{val.__module__}:{val.__name__}"
+        elif isinstance(val, str) and ":" in val:
+            key = val
+        else:
+            return str(val) if val is not None else ""
+        return self._ep_value_to_name.get(key, key)

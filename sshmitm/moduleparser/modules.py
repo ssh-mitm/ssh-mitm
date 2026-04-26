@@ -147,8 +147,12 @@ class BaseModule(metaclass=BaseModuleMeta):
 
 class SubCommand(ABC):
     def __init__(
-        self, name: str, subcommand: "argparse._SubParsersAction[ModuleParser]"
+        self,
+        name: str,
+        subcommand: "argparse._SubParsersAction[ModuleParser]",
+        module_parser: "ModuleParser | None" = None,
     ) -> None:
+        self.module_parser = module_parser
         self.parser = subcommand.add_parser(
             name,
             allow_abbrev=False,

@@ -6,6 +6,17 @@ import argparse
 import os
 import sys
 from configparser import ConfigParser
+from dataclasses import dataclass, field
+
+
+@dataclass
+class BrowserConfig:
+    default_cfg: ConfigParser = field(default_factory=ConfigParser)
+    user_cfg: ConfigParser | None = None
+    config_path: str | None = None
+    active_config_section: str | None = None
+    title: str = "Plugin Browser"
+    tree_root_label: str = "Plugins"
 
 
 def load_cfg_from_path(path: str) -> ConfigParser:
