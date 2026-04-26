@@ -6,8 +6,8 @@ from typing import TYPE_CHECKING
 import paramiko
 from paramiko.sftp_attr import SFTPAttributes
 
+from sshmitm.core.modules import SSHMITMBaseModule
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
-from sshmitm.moduleparser import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     from _typeshed import ReadableBuffer

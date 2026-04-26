@@ -12,8 +12,8 @@ from colored.colored import attr, fg
 from paramiko import PKey
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
+from sshmitm.core.modules import SSHMITMBaseModule
 from sshmitm.exceptions import MissingHostException
-from sshmitm.moduleparser import SSHMITMBaseModule
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.utils import SSHPubKey
 

@@ -10,7 +10,7 @@ from paramiko.sftp import CMD_INIT, CMD_VERSION, SFTPError
 
 from sshmitm.clients.netconf import NetconfClient
 from sshmitm.clients.sftp import SFTPClient
-from sshmitm.moduleparser import SSHMITMBaseModule
+from sshmitm.core.modules import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     import sshmitm

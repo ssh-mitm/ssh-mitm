@@ -6,9 +6,9 @@ from paramiko.sftp import SFTP_NO_SUCH_FILE
 from paramiko.sftp_attr import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 
+from sshmitm.core.modules import SSHMITMBaseModule
 from sshmitm.exceptions import MissingClient
 from sshmitm.interfaces.server import BaseServerInterface
-from sshmitm.moduleparser import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     import os

@@ -145,12 +145,6 @@ class BaseModule(metaclass=BaseModuleMeta):
         return None
 
 
-class SSHMITMBaseModule(BaseModule):
-    """Base class for all SSH-MITM plugin modules."""
-
-    entry_point_prefix: ClassVar[str] = "sshmitm"
-
-
 class SubCommand(ABC):
     def __init__(
         self, name: str, subcommand: "argparse._SubParsersAction[ModuleParser]"

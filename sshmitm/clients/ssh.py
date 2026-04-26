@@ -26,8 +26,8 @@ import paramiko
 import paramiko.hostkeys
 from paramiko.pkey import PKey
 
+from sshmitm.core.modules import SSHMITMBaseModule
 from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
-from sshmitm.moduleparser import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     import sshmitm
