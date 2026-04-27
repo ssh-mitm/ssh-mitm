@@ -76,7 +76,7 @@ class ModuleParser(
         self.plugin_group = self.add_argument_group(self.config_section)
         self.subcommand: argparse.Action | None = None
         self._registered_subcommands: dict[str, SubCommand] = {}
-        self._module_parser: Optional["ModuleParser"] = None
+        self._module_parser: ModuleParser | None = None
         self.add_config_arg()
 
     def add_config_arg(self) -> None:

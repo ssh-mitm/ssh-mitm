@@ -129,7 +129,7 @@ class PluginBrowserApp(App[None]):
             return self._default_cfg.get(section, key)
         return None
 
-    def _populate_parser_into_branch(self, branch: Any, parser: "ModuleParser") -> None:
+    def _populate_parser_into_branch(self, branch: Any, parser: ModuleParser) -> None:
         general_groups = parser.general_groups
         if general_groups:
             params_branch = branch.add("Parameters", expand=True)
@@ -185,7 +185,7 @@ class PluginBrowserApp(App[None]):
             self._populate_parser_into_branch(tree.root, self._parser)
 
     def _populate_parser_into_table(
-        self, parser: "ModuleParser", category_prefix: str = ""
+        self, parser: ModuleParser, category_prefix: str = ""
     ) -> None:
         config_section = parser.config_section
         for type_info in parser.plugin_types:
