@@ -76,6 +76,7 @@ class ModuleParser(
         self.plugin_group = self.add_argument_group(self.config_section)
         self.subcommand: argparse.Action | None = None
         self._registered_subcommands: dict[str, SubCommand] = {}
+        self._module_parser: Optional["ModuleParser"] = None
         self.add_config_arg()
 
     def add_config_arg(self) -> None:
@@ -110,6 +111,8 @@ class ModuleParser(
                 continue
             subcommand_cls = cast("type[SubCommand]", entry_point.load())
             subcommand = subcommand_cls(entry_point.name, self.subcommand, module_parser=self)  # type: ignore[arg-type]
+            if isinstance(subcommand.parser, ModuleParser):
+                subcommand.parser._module_parser = self
             subcommand.register_arguments()
             self._registered_subcommands[entry_point.name] = subcommand
 
@@ -262,6 +265,14 @@ class ModuleParser(
         return parser.parse_known_args(args, namespace)
 
     @property
+    def subcommand_parsers(self) -> dict[str, "ModuleParser"]:
+        return {
+            name: subcmd.parser
+            for name, subcmd in self._registered_subcommands.items()
+            if isinstance(subcmd.parser, ModuleParser)
+        }
+
+    @property
     def plugin_types(self) -> list[PluginTypeInfo]:
         return [
             PluginTypeInfo(
@@ -293,7 +304,7 @@ class ModuleParser(
         run_browser(self)
 
     def add_browser_argument(self, *args: str) -> None:
-        mp = self
+        mp = self._module_parser if self._module_parser is not None else self
 
         class _BrowserAction(argparse.Action):
             def __call__(
@@ -316,7 +327,10 @@ class ModuleParser(
     def resolve_ep_name(self, val: Any) -> str:
         if self._ep_value_to_name is None:
             result: dict[str, str] = {}
-            for _, baseclass in self._extra_modules:
+            all_extra_modules = list(self._extra_modules)
+            for sub_parser in self.subcommand_parsers.values():
+                all_extra_modules.extend(sub_parser._extra_modules)
+            for _, baseclass in all_extra_modules:
                 for ep in metadata.entry_points(
                     group=f"{baseclass.entry_point_prefix}.{baseclass.__name__}"
                 ):

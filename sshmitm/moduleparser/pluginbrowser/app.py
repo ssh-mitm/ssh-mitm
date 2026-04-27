@@ -112,8 +112,8 @@ class PluginBrowserApp(App[None]):
         tree.show_root = False
         tree.focus()
 
-    def _active_ep_value(self, cli_flag: str) -> str | None:
-        section = self._active_config_section
+    def _active_ep_value(self, cli_flag: str, config_section: str | None = None) -> str | None:
+        section = config_section if config_section is not None else self._active_config_section
         if section is None:
             return None
         key = cli_flag.lstrip("-")
@@ -123,18 +123,19 @@ class PluginBrowserApp(App[None]):
             return self._default_cfg.get(section, key)
         return None
 
-    def _populate_tree(self) -> None:
-        tree = self.query_one("#plugin-tree", PluginTree)
-        tree.root.expand()
-
-        general_groups = self._parser.general_groups
+    def _populate_parser_into_branch(self, branch: Any, parser: "ModuleParser") -> None:
+        general_groups = parser.general_groups
         if general_groups:
-            server_branch = tree.root.add("Server Parameters", expand=True)
+            params_branch = branch.add("Parameters", expand=True)
             for group_info in general_groups:
-                server_branch.add_leaf(group_info.title, data=group_info)
+                params_branch.add_leaf(group_info.title, data=group_info)
 
-        plugins_branch = tree.root.add("Plugins", expand=True)
-        for type_info in self._parser.plugin_types:
+        plugin_types = parser.plugin_types
+        if not plugin_types:
+            return
+        plugins_branch = branch.add("Plugins", expand=True)
+        config_section = parser.config_section
+        for type_info in plugin_types:
             eps = sorted(
                 metadata.entry_points(
                     group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"
@@ -143,17 +144,15 @@ class PluginBrowserApp(App[None]):
             )
             if not eps:
                 continue
-            branch = plugins_branch.add(
-                type_info.type_label, data=type_info, expand=True
-            )
-            active_value = self._active_ep_value(type_info.cli_flag)
+            type_branch = plugins_branch.add(type_info.type_label, data=type_info, expand=True)
+            active_value = self._active_ep_value(type_info.cli_flag, config_section)
             for ep in eps:
                 loaded = ep.load()
                 is_active = str(ep.value) == active_value
                 label: str | Text = (
                     Text(f"» {ep.name}", style="bold") if is_active else ep.name
                 )
-                branch.add_leaf(
+                type_branch.add_leaf(
                     label,
                     data=PluginInfo(
                         name=ep.name,
@@ -165,11 +164,21 @@ class PluginBrowserApp(App[None]):
                     ),
                 )
 
-    def _populate_overview_table(self) -> None:
-        tbl = self.query_one("#all-plugins-table", DataTable)
-        tbl.add_columns("Category", "EP-Name", "Active", "Class", "Description")
+    def _populate_tree(self) -> None:
+        tree = self.query_one("#plugin-tree", PluginTree)
+        tree.root.expand()
 
-        for type_info in self._parser.plugin_types:
+        subcommand_parsers = self._parser.subcommand_parsers
+        if subcommand_parsers:
+            for cmd_name, sub_parser in subcommand_parsers.items():
+                cmd_branch = tree.root.add(cmd_name.capitalize(), expand=True)
+                self._populate_parser_into_branch(cmd_branch, sub_parser)
+        else:
+            self._populate_parser_into_branch(tree.root, self._parser)
+
+    def _populate_parser_into_table(self, parser: "ModuleParser", category_prefix: str = "") -> None:
+        config_section = parser.config_section
+        for type_info in parser.plugin_types:
             eps = sorted(
                 metadata.entry_points(
                     group=f"{type_info.base_class.entry_point_prefix}.{type_info.base_class.__name__}"
@@ -178,7 +187,8 @@ class PluginBrowserApp(App[None]):
             )
             if not eps:
                 continue
-            active_value = self._active_ep_value(type_info.cli_flag)
+            active_value = self._active_ep_value(type_info.cli_flag, config_section)
+            category = f"{category_prefix}{type_info.type_label}" if category_prefix else type_info.type_label
             for ep in eps:
                 loaded = ep.load()
                 is_active = str(ep.value) == active_value
@@ -187,13 +197,24 @@ class PluginBrowserApp(App[None]):
                 active_cell: str | Text = Text("✓", style="bold") if is_active else ""
                 self._all_plugin_rows.append(
                     (
-                        type_info.type_label,
+                        category,
                         ep.name,
                         active_cell,
                         str(ep.value),
                         first_line,
                     )
                 )
+
+    def _populate_overview_table(self) -> None:
+        tbl = self.query_one("#all-plugins-table", DataTable)
+        tbl.add_columns("Category", "EP-Name", "Active", "Class", "Description")
+
+        subcommand_parsers = self._parser.subcommand_parsers
+        if subcommand_parsers:
+            for cmd_name, sub_parser in subcommand_parsers.items():
+                self._populate_parser_into_table(sub_parser, f"{cmd_name}: ")
+        else:
+            self._populate_parser_into_table(self._parser)
 
         self._apply_filter("", "all")
 
