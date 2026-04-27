@@ -112,7 +112,7 @@ class ModuleParser(
             subcommand_cls = cast("type[SubCommand]", entry_point.load())
             subcommand = subcommand_cls(entry_point.name, self.subcommand, module_parser=self)  # type: ignore[arg-type]
             if isinstance(subcommand.parser, ModuleParser):
-                subcommand.parser._module_parser = self
+                subcommand.parser.set_parent_parser(self)
             subcommand.register_arguments()
             self._registered_subcommands[entry_point.name] = subcommand
 
@@ -264,6 +264,13 @@ class ModuleParser(
         parser = self._create_parser(args=args, namespace=namespace)
         return parser.parse_known_args(args, namespace)
 
+    def set_parent_parser(self, parser: "ModuleParser") -> None:
+        self._module_parser = parser
+
+    @property
+    def extra_modules(self) -> list[tuple[argparse.Action, type[BaseModule]]]:
+        return self._extra_modules
+
     @property
     def subcommand_parsers(self) -> dict[str, "ModuleParser"]:
         return {
@@ -329,7 +336,7 @@ class ModuleParser(
             result: dict[str, str] = {}
             all_extra_modules = list(self._extra_modules)
             for sub_parser in self.subcommand_parsers.values():
-                all_extra_modules.extend(sub_parser._extra_modules)
+                all_extra_modules.extend(sub_parser.extra_modules)
             for _, baseclass in all_extra_modules:
                 for ep in metadata.entry_points(
                     group=f"{baseclass.entry_point_prefix}.{baseclass.__name__}"

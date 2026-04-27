@@ -112,8 +112,14 @@ class PluginBrowserApp(App[None]):
         tree.show_root = False
         tree.focus()
 
-    def _active_ep_value(self, cli_flag: str, config_section: str | None = None) -> str | None:
-        section = config_section if config_section is not None else self._active_config_section
+    def _active_ep_value(
+        self, cli_flag: str, config_section: str | None = None
+    ) -> str | None:
+        section = (
+            config_section
+            if config_section is not None
+            else self._active_config_section
+        )
         if section is None:
             return None
         key = cli_flag.lstrip("-")
@@ -144,7 +150,9 @@ class PluginBrowserApp(App[None]):
             )
             if not eps:
                 continue
-            type_branch = plugins_branch.add(type_info.type_label, data=type_info, expand=True)
+            type_branch = plugins_branch.add(
+                type_info.type_label, data=type_info, expand=True
+            )
             active_value = self._active_ep_value(type_info.cli_flag, config_section)
             for ep in eps:
                 loaded = ep.load()
@@ -176,7 +184,9 @@ class PluginBrowserApp(App[None]):
         else:
             self._populate_parser_into_branch(tree.root, self._parser)
 
-    def _populate_parser_into_table(self, parser: "ModuleParser", category_prefix: str = "") -> None:
+    def _populate_parser_into_table(
+        self, parser: "ModuleParser", category_prefix: str = ""
+    ) -> None:
         config_section = parser.config_section
         for type_info in parser.plugin_types:
             eps = sorted(
@@ -188,7 +198,11 @@ class PluginBrowserApp(App[None]):
             if not eps:
                 continue
             active_value = self._active_ep_value(type_info.cli_flag, config_section)
-            category = f"{category_prefix}{type_info.type_label}" if category_prefix else type_info.type_label
+            category = (
+                f"{category_prefix}{type_info.type_label}"
+                if category_prefix
+                else type_info.type_label
+            )
             for ep in eps:
                 loaded = ep.load()
                 is_active = str(ep.value) == active_value
