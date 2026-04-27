@@ -1,15 +1,169 @@
 import base64
+import contextlib
 import logging
 import socket
 import threading
+import zlib
+from collections import defaultdict
 from typing import cast
 
 from colored.colored import attr, fg
 from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
+from sshmitm.data.mosh import hostinput_pb2, transportinstruction_pb2, userinput_pb2
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.session import Session
 from sshmitm.utils import format_hex
+
+
+class MonitorServer:
+    """
+    TCP server that streams raw MOSH server output to connected clients (e.g. netcat).
+
+    Each connected client receives the host bytes exactly as the MOSH server sends them,
+    including ANSI/VT100 escape sequences. Multiple clients can connect simultaneously.
+
+    :param listen_port: TCP port to listen on (0 = random free port)
+    :param listen_ip: IP to bind to (default '127.0.0.1')
+    """
+
+    def __init__(self, listen_port: int = 0, listen_ip: str = "127.0.0.1") -> None:
+        self._clients: list[socket.socket] = []
+        self._lock = threading.Lock()
+        self._server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+        self._server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+        self._server.bind((listen_ip, listen_port))
+        self._server.listen(5)
+
+    def get_port(self) -> int:
+        return cast("int", self._server.getsockname()[1])
+
+    def start(self) -> None:
+        t = threading.Thread(target=self._accept_loop, daemon=True)
+        t.start()
+
+    def _accept_loop(self) -> None:
+        while True:
+            try:
+                client, addr = self._server.accept()
+                logging.info("MOSH monitor: client connected from %s", addr)
+                with self._lock:
+                    self._clients.append(client)
+            except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+                break
+
+    def send(self, data: bytes) -> None:
+        """Broadcast data to all connected clients, removing any that have disconnected."""
+        with self._lock:
+            dead: list[socket.socket] = []
+            for client in self._clients:
+                try:
+                    client.sendall(data)
+                except OSError:
+                    dead.append(client)
+            for c in dead:
+                self._clients.remove(c)
+                with contextlib.suppress(OSError):
+                    c.close()
+
+
+def _decode_client_diff(diff: bytes) -> tuple[list[str], bytes | None]:
+    lines: list[str] = []
+    key_chunks: list[bytes] = []
+    msg = userinput_pb2.UserMessage()
+    msg.ParseFromString(diff)
+    for instr in msg.instruction:
+        if instr.HasExtension(userinput_pb2.keystroke):
+            ks = instr.Extensions[userinput_pb2.keystroke]
+            key_chunks.append(ks.keys)
+            lines.append(f"  Keystroke: {ks.keys.decode('utf-8', errors='replace')!r}")
+        if instr.HasExtension(userinput_pb2.resize):
+            rs = instr.Extensions[userinput_pb2.resize]
+            lines.append(f"  Resize: {rs.width}x{rs.height}")
+    keystroke_bytes = b"".join(key_chunks) if key_chunks else None
+    return lines, keystroke_bytes
+
+
+def _decode_host_diff(diff: bytes) -> tuple[list[str], bytes | None]:
+    lines: list[str] = []
+    raw_chunks: list[bytes] = []
+    msg = hostinput_pb2.HostMessage()
+    msg.ParseFromString(diff)
+    for instr in msg.instruction:
+        if instr.HasExtension(hostinput_pb2.hostbytes):
+            hb = instr.Extensions[hostinput_pb2.hostbytes]
+            raw_chunks.append(hb.hoststring)
+            lines.append(
+                f"  HostOutput: {hb.hoststring.decode('utf-8', errors='replace')!r}"
+            )
+        if instr.HasExtension(hostinput_pb2.resize):
+            rs = instr.Extensions[hostinput_pb2.resize]
+            lines.append(f"  Resize: {rs.width}x{rs.height}")
+        if instr.HasExtension(hostinput_pb2.echoack):
+            ea = instr.Extensions[hostinput_pb2.echoack]
+            lines.append(f"  EchoAck: {ea.echo_ack_num}")
+    host_output = b"".join(raw_chunks) if raw_chunks else None
+    return lines, host_output
+
+
+def _decode_diff(
+    diff: bytes, is_client: bool
+) -> tuple[list[str], bytes | None, bytes | None]:
+    """
+    Parse a MOSH diff blob.
+
+    Returns (log_lines, host_output, keystroke_bytes):
+    - host_output: concatenated raw HostBytes for the monitor (server→client only)
+    - keystroke_bytes: concatenated keystroke bytes sent by the client (client→server only)
+    """
+    lines: list[str] = []
+    host_output: bytes | None = None
+    keystroke_bytes: bytes | None = None
+    try:
+        if is_client:
+            lines, keystroke_bytes = _decode_client_diff(diff)
+        else:
+            lines, host_output = _decode_host_diff(diff)
+    except Exception as exc:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+        lines.append(f"  [diff parse error: {exc}]")
+    return lines, host_output, keystroke_bytes
+
+
+def _decode_transport_instruction(
+    payload: bytes, is_client: bool
+) -> tuple[list[str], bytes | None, bytes | None, int, int]:
+    """
+    Decompress and parse a reassembled MOSH transport payload.
+
+    Returns (log_lines, host_output, keystroke_bytes, old_num, new_num).
+    old_num and new_num are used by the caller to show only sequential diffs,
+    preventing duplicate output from MOSH retransmits that span already-shown states.
+    """
+    lines: list[str] = []
+    host_output: bytes | None = None
+    keystroke_bytes: bytes | None = None
+    old_num: int = -1
+    new_num: int = -1
+    try:
+        if payload[:2] in (b"\x78\x9c", b"\x78\xda", b"\x78\x01"):
+            payload = zlib.decompress(payload)
+        instr = transportinstruction_pb2.Instruction()
+        instr.ParseFromString(payload)
+        old_num = instr.old_num
+        new_num = instr.new_num
+        lines.append(
+            f"  proto_version={instr.protocol_version}"
+            f"  old={instr.old_num}  new={instr.new_num}"
+            f"  ack={instr.ack_num}  throwaway={instr.throwaway_num}"
+        )
+        if instr.diff:
+            diff_lines, host_output, keystroke_bytes = _decode_diff(
+                instr.diff, is_client
+            )
+            lines += diff_lines
+    except Exception as exc:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+        lines.append(f"  [Protobuf parse error: {exc}]")
+    return lines, host_output, keystroke_bytes, old_num, new_num
 
 
 class UdpProxy:
@@ -24,6 +178,9 @@ class UdpProxy:
     :param listen_ip: IP to bind the proxy server (default '')
     :param listen_port: Port number to bind the proxy server (default 0)
     :param buf_size: buffer size for incoming data (default 1024)
+    :param monitor_port: TCP port for the netcat monitor socket (0 = random, None = disabled)
+    :param log_heartbeats: log packets that carry no terminal data (default False)
+    :param show_debug: show low-level hex dump fields in log output (default False)
     """
 
     def __init__(  # pylint: disable=too-many-arguments
@@ -34,6 +191,9 @@ class UdpProxy:
         listen_ip: str = "",
         listen_port: int = 0,
         buf_size: int = 1024,
+        monitor_port: int | None = 0,
+        log_heartbeats: bool = False,
+        show_debug: bool = False,
     ) -> None:
         self.key = base64.b64decode(key + "==")
         self.listen_ip = listen_ip
@@ -44,6 +204,35 @@ class UdpProxy:
         self.pair_list: list[list[tuple[str, int]]] = []
         self.socket = socket.socket(socket.AF_INET, socket.SOCK_DGRAM)
         self.socket.bind((self.listen_ip, self.listen_port))
+        # Key: (src_addr, fragment_id_int) → {fragment_num: payload_bytes}
+        self._fragments: dict[tuple[tuple[str, int], int], dict[int, bytes]] = (
+            defaultdict(dict)
+        )
+
+        self.show_debug = show_debug
+        self._monitor: MonitorServer | None = None
+        if monitor_port is not None:
+            self._monitor = MonitorServer(listen_port=monitor_port)
+            self._monitor.start()
+            port = self._monitor.get_port()
+            logging.info(
+                "%s MOSH monitor on port %s - stream terminal output with: %s",
+                Colors.emoji("information"),
+                Colors.stylize(port, fg("light_blue") + attr("bold")),
+                Colors.stylize(f"nc 127.0.0.1 {port}", fg("light_blue") + attr("bold")),
+            )
+        # Tracks keystroke bytes sent by the client so their terminal echo can be
+        # stripped from HostBytes before forwarding to the monitor.
+        self._keystroke_buf = bytearray()
+        self._keystroke_lock = threading.Lock()
+        # Highest server new_num seen — used to skip already-processed diffs.
+        self._server_max_new_num: int = -1
+        # Track the last old_num and how many HostBytes we already sent from it,
+        # so that a later diff from the same old_num (e.g. with EchoAck added or
+        # with extra content like a vim screen) can skip the already-shown prefix.
+        self._last_server_old_num: int = -1
+        self._last_server_host_len: int = 0
+        self.log_heartbeats = log_heartbeats
 
     def get_bind_port(self) -> int:
         """
@@ -78,6 +267,67 @@ class UdpProxy:
         self.pair_list.append([addr, destination_addr])
         return destination_addr
 
+    def _add_keystrokes(self, keys: bytes) -> None:
+        with self._keystroke_lock:
+            self._keystroke_buf.extend(keys)
+
+    def _filter_keystrokes(self, host_bytes: bytes) -> bytes:
+        """Remove echoed keystrokes from host output before sending to the monitor.
+
+        The pty echoes every keystroke byte-for-byte, with the only common
+        transformation being \\r → \\r\\n (carriage-return gets a newline added).
+        We strip matching bytes from the front of the keystroke buffer; any mismatch
+        stops the scan so that actual server output is left untouched.
+        """
+        with self._keystroke_lock:
+            if not self._keystroke_buf:
+                return host_bytes
+            data = bytearray(host_bytes)
+            k = 0  # position in keystroke buffer
+            i = 0  # position in data
+            while i < len(data) and k < len(self._keystroke_buf):
+                expected = self._keystroke_buf[k]
+                if data[i] == expected:
+                    del data[i]
+                    k += 1
+                elif expected == ord("\r") and data[i : i + 2] == b"\r\n":
+                    # \r keystroke is echoed as \r\n by the pty
+                    del data[i]
+                    del data[i]
+                    k += 1
+                else:
+                    break
+            del self._keystroke_buf[:k]
+            return bytes(data)
+
+    def _is_client(self, addr: tuple[str, int]) -> bool:
+        """Return True if addr is a client (not the MOSH server)."""
+        return all(addr != pair[1] for pair in self.pair_list)
+
+    def _handle_fragment(
+        self,
+        src_addr: tuple[str, int],
+        fragment_id: bytes,
+        final_fragment: bytes,
+        payload: bytes,
+    ) -> bytes | None:
+        """Reassemble MOSH fragments. Returns the complete payload when all fragments arrived."""
+        frag_id = int.from_bytes(fragment_id, "big")
+        frag_num_raw = int.from_bytes(final_fragment, "big")
+        is_final = bool(frag_num_raw & 0x8000)
+        frag_num = frag_num_raw & 0x7FFF
+
+        key = (src_addr, frag_id)
+        self._fragments[key][frag_num] = payload
+
+        if is_final:
+            frags = self._fragments[key]
+            if all(i in frags for i in range(frag_num + 1)):
+                assembled = b"".join(frags[i] for i in range(frag_num + 1))
+                del self._fragments[key]
+                return assembled
+        return None
+
     def receive(self, buff_size: int) -> None:
         """
         Receive incoming messages, decrypt and log the data, and forward it to the target server.
@@ -100,17 +350,60 @@ class UdpProxy:
             final_fragment_bool = final_fragment.hex() == "8000"
             payload = dec_message[14:]
 
-            data_to_print = [
-                f"{Colors.stylize('MOSH Data', attr('bold'))}",
-                f"from->to: {addr} -> {destination_addr}",
-                f"timestamp (ms): {int.from_bytes(timestamp, 'big')} (0x{timestamp.hex()})",
-                f"timestamp_reply (ms): {int.from_bytes(timestamp_reply, 'big')} (0x{timestamp_reply.hex()})",
-                f"fragment_id: 0x{fragment_id.hex()}",
-                f"final_fragment:  {final_fragment_bool} (0x{final_fragment.hex()})",
-                f"Payload:\n{format_hex(payload)}",
-                "-" * 89,
-            ]
-            logging.info("\n".join(data_to_print))
+            assembled = self._handle_fragment(
+                addr, fragment_id, final_fragment, payload
+            )
+            is_heartbeat = False
+            if assembled is not None:
+                is_client = self._is_client(addr)
+                direction = "Client→Server" if is_client else "Server→Client"
+                proto_lines, host_output, keystroke_bytes, old_num, new_num = (
+                    _decode_transport_instruction(assembled, is_client)
+                )
+                # A heartbeat carries no terminal data — only timing/ack fields.
+                is_heartbeat = host_output is None and keystroke_bytes is None
+                if keystroke_bytes:
+                    self._add_keystrokes(keystroke_bytes)
+                if (
+                    host_output is not None
+                    and self._monitor is not None
+                    and new_num > self._server_max_new_num
+                ):
+                    host_bytes = cast("bytes", host_output)  # type: ignore[redundant-cast]
+                    # The server often sends two diffs from the same old_num:
+                    # first without EchoAck, then with EchoAck (and sometimes
+                    # with extra content, e.g. a vim screen after pressing Enter).
+                    # Skip the bytes we already sent from this old_num so we
+                    # only forward the genuinely new suffix.
+                    bytes_to_skip = (
+                        self._last_server_host_len
+                        if old_num == self._last_server_old_num
+                        else 0
+                    )
+                    output = host_bytes[  # pylint: disable=unsubscriptable-object
+                        bytes_to_skip:
+                    ]
+                    self._server_max_new_num = new_num
+                    self._last_server_old_num = old_num
+                    self._last_server_host_len = len(host_bytes)
+                    if output:
+                        self._monitor.send(self._filter_keystrokes(output))
+
+            if self.show_debug and (not is_heartbeat or self.log_heartbeats):
+                data_to_print = [
+                    f"{Colors.stylize('MOSH Data', attr('bold'))}",
+                    f"from->to: {addr} -> {destination_addr}",
+                    f"timestamp (ms): {int.from_bytes(timestamp, 'big')} (0x{timestamp.hex()})",
+                    f"timestamp_reply (ms): {int.from_bytes(timestamp_reply, 'big')} (0x{timestamp_reply.hex()})",
+                    f"fragment_id: 0x{fragment_id.hex()}",
+                    f"final_fragment:  {final_fragment_bool} (0x{final_fragment.hex()})",
+                    f"Payload:\n{format_hex(payload)}",
+                ]
+                if assembled is not None:
+                    data_to_print.append(f"Protobuf ({direction}):")
+                    data_to_print += proto_lines
+                data_to_print.append("-" * 89)
+                logging.info("\n".join(data_to_print))
 
             self.socket.sendto(data, destination_addr)
 
@@ -162,7 +455,11 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                 )
                 mosh_port = mosh_proxy.get_bind_port()
                 mosh_proxy.start()
-                logging.info("started mosh proxy with  %s", mosh_port)
+                logging.info(
+                    "%s MOSH proxy started on port %s - the SSH connection will close, but MOSH remains active",
+                    Colors.emoji("information"),
+                    Colors.stylize(mosh_port, fg("light_blue") + attr("bold")),
+                )
                 return f"MOSH CONNECT {mosh_port} {mosh_connect_parts[3]}".encode()
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error starting mosh proxy")

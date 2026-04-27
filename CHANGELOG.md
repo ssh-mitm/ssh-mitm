@@ -9,6 +9,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- added MOSH monitor (PoC) to intercept and stream MOSH terminal output via TCP (connect with `nc`)
+  - `show_debug` option to control hex/protobuf debug output (disabled by default)
+  - info message on proxy start that SSH connection will close but MOSH remains active
 - added `ssh-mitm server --plugins` flag to inspect and browse available plugins
   - `ssh-mitm server --plugins` opens an interactive terminal UI (Plugin Browser) to explore all available plugins, their descriptions, and configuration options
   - Plugin Browser includes a two-tab interface: tree/detail view and a filterable overview table of all plugins

@@ -171,6 +171,13 @@ disable = [
     "too-many-statements",
 ]
 
+[tool.pylint.TYPECHECK]
+ignored-modules = [
+    "sshmitm.data.mosh.hostinput_pb2",
+    "sshmitm.data.mosh.transportinstruction_pb2",
+    "sshmitm.data.mosh.userinput_pb2",
+]
+
 [tool.pylint.MASTER]
 load-plugins = "pylint.extensions.docparams"
 
@@ -210,6 +217,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "sshmitm/workarounds/monkeypatch.py" = ["ALL"]
 "sshmitm/workarounds/transport.py" = ["ALL"]
+"sshmitm/data/mosh/*_pb2.py" = ["ALL"]
 
 [tool.bumpversion]
 commit = false
