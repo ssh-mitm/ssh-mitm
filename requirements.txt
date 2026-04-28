@@ -10,7 +10,7 @@ argcomplete==3.6.3
     # via -r requirements.in
 bcrypt==5.0.0
     # via paramiko
-certifi==2026.2.25
+certifi==2026.4.22
     # via requests
 cffi==2.0.0
     # via
@@ -20,9 +20,9 @@ charset-normalizer==3.4.7
     # via requests
 colored==2.3.2
     # via -r requirements.in
-cryptography==46.0.7
+cryptography==47.0.0
     # via paramiko
-idna==3.11
+idna==3.13
     # via requests
 invoke==3.0.3
     # via paramiko
@@ -37,12 +37,14 @@ mdit-py-plugins==0.5.0
     # via textual
 mdurl==0.1.2
     # via markdown-it-py
-packaging==26.1
+packaging==26.2
     # via -r requirements.in
 paramiko==4.0.0
     # via -r requirements.in
 platformdirs==4.9.6
     # via textual
+protobuf==7.34.1
+    # via -r requirements.in
 pycparser==3.0
     # via cffi
 pygments==2.20.0
@@ -51,6 +53,8 @@ pygments==2.20.0
     #   textual
 pynacl==1.6.2
     # via paramiko
+pyte==0.8.2
+    # via -r requirements.in
 python-json-logger==4.1.0
     # via -r requirements.in
 pytz==2026.1.post1
@@ -71,5 +75,7 @@ uc-micro-py==2.0.0
     # via linkify-it-py
 urllib3==2.6.3
     # via requests
+wcwidth==0.6.0
+    # via pyte
 wrapt==2.1.2
     # via -r requirements.in

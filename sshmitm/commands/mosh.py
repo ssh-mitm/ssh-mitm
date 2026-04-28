@@ -11,13 +11,24 @@ import pyte
 
 from sshmitm.moduleparser import SubCommand
 
-
 # pyte named colors → ANSI 256-palette index
 _NAMED: dict[str, int] = {
-    "black": 0, "red": 1, "green": 2, "yellow": 3,
-    "blue": 4, "magenta": 5, "cyan": 6, "white": 7,
-    "bright_black": 8, "bright_red": 9, "bright_green": 10, "bright_yellow": 11,
-    "bright_blue": 12, "bright_magenta": 13, "bright_cyan": 14, "bright_white": 15,
+    "black": 0,
+    "red": 1,
+    "green": 2,
+    "yellow": 3,
+    "blue": 4,
+    "magenta": 5,
+    "cyan": 6,
+    "white": 7,
+    "bright_black": 8,
+    "bright_red": 9,
+    "bright_green": 10,
+    "bright_yellow": 11,
+    "bright_blue": 12,
+    "bright_magenta": 13,
+    "bright_cyan": 14,
+    "bright_white": 15,
 }
 
 
@@ -45,21 +56,36 @@ def _render_line(screen: pyte.Screen, y: int) -> str:
 
     for x in range(screen.columns):
         char = line[x]
-        state = (char.fg, char.bg, char.bold, char.italics,
-                 char.underscore, char.strikethrough, char.reverse)
+        state = (
+            char.fg,
+            char.bg,
+            char.bold,
+            char.italics,
+            char.underscore,
+            char.strikethrough,
+            char.reverse,
+        )
         if state != (pfg, pbg, pbold, pital, punder, pstrike, prev):
             attrs: list[str] = []
-            if char.bold:          attrs.append("1")
-            if char.italics:       attrs.append("3")
-            if char.underscore:    attrs.append("4")
-            if char.strikethrough: attrs.append("9")
-            if char.reverse:       attrs.append("7")
+            if char.bold:
+                attrs.append("1")
+            if char.italics:
+                attrs.append("3")
+            if char.underscore:
+                attrs.append("4")
+            if char.strikethrough:
+                attrs.append("9")
+            if char.reverse:
+                attrs.append("7")
             reset = "\x1b[0;" + ";".join(attrs) + "m" if attrs else "\x1b[0m"
             parts.append(reset + _color(char.fg, False) + _color(char.bg, True))
             pfg, pbg = char.fg, char.bg
             pbold, pital, punder, pstrike, prev = (
-                char.bold, char.italics, char.underscore,
-                char.strikethrough, char.reverse,
+                char.bold,
+                char.italics,
+                char.underscore,
+                char.strikethrough,
+                char.reverse,
             )
         parts.append(char.data or " ")
 
@@ -105,6 +131,8 @@ def _run_client(host: str, port: int) -> None:
 
     def on_resize(signum: object = None, frame: object = None) -> None:
         nonlocal cols, rows
+        del signum
+        del frame
         cols, rows = shutil.get_terminal_size()
         screen.resize(rows, cols)
         out.write(_full_render(screen))

@@ -400,7 +400,7 @@ class UdpProxy:
         while True:
             try:
                 self.receive(self.buf_size)
-            except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+            except Exception:  # pylint: disable=broad-exception-caught
                 logging.exception("Error receiving MOSH packet")
 
 
