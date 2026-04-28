@@ -206,6 +206,40 @@ Intercepting MOSH sessions
 SSH-MITM intercepts MOSH sessions automatically when the client starts a Mosh
 connection through the proxy.  No additional server-side configuration is required.
 
+Quick start
+-----------
+
+.. code-block:: none
+
+    # Terminal 1 — start the proxy (listens on port 10022 by default)
+    $ ssh-mitm server --remote-host <target-host>
+
+    # Terminal 2 — connect through the proxy with mosh
+    $ mosh --ssh="ssh -p 10022" user@<proxy-host>
+
+    # The proxy logs the shared secret and the monitor port, e.g.:
+    #   INFO  ℹ MOSH monitor on port 41409 - view intercepted session with: ssh-mitm mosh client 127.0.0.1 41409
+
+    # Terminal 3 — attach a live viewer
+    $ ssh-mitm mosh client 127.0.0.1 41409
+
+If you changed ``--listen-port`` on the proxy, adjust the ``-p`` argument in the
+``mosh --ssh`` call accordingly.
+
+What is intercepted
+-------------------
+
+Once the MOSH handshake completes, SSH-MITM has the shared AES-128 session key and
+decrypts every UDP packet in both directions:
+
+* **Server → Client** (``HostMessage`` / ``HostBytes``): the raw VT100/ANSI terminal
+  bytes produced by the server.  These are forwarded in real time to the monitor and
+  rendered by the built-in viewer.
+* **Client → Server** (``UserMessage`` / ``Keystroke``): the raw bytes typed by the
+  user.  The proxy decodes and has access to these keystrokes, but the current
+  implementation does not forward them to the live viewer — they are available as a
+  basis for plugin development.
+
 The monitor port streams the decrypted terminal output of the session.  Any number of
 viewers can connect, and a viewer that connects after the session has already started
 receives the full history immediately.
@@ -236,6 +270,15 @@ The viewer behaviour:
 * Only rows that changed since the last render are redrawn (**dirty-line rendering**),
   minimising flickering.
 
+.. note::
+
+    The viewer shows the **server's authoritative terminal state**, reconstructed
+    from ``HostBytes`` packets only.  It does not receive the client-side speculative
+    local echo that the real Mosh user sees while waiting for server confirmation.
+    During fast typing there can therefore be a brief visual difference between what
+    the target user currently sees and what the viewer displays; both converge once
+    the server sends its next ``HostBytes`` update acknowledging the keystrokes.
+
 Terminal size
 -------------
 
@@ -247,6 +290,23 @@ screen.
 Note that the intercepted MOSH session runs at its own fixed terminal size on the
 server.  The viewer cannot change that size, so if your local terminal is larger the
 extra rows and columns remain empty, and if it is smaller some content may be clipped.
+
+Known limitations of the terminal emulator
+------------------------------------------
+
+The viewer uses `pyte <https://pyte.readthedocs.io>`_, a pure-Python VT100/ANSI
+terminal emulator.  pyte handles the vast majority of real-world terminal output but
+has known gaps:
+
+* **Scrollback buffer**: only the current visible screen is rendered; scrollback
+  history is not replayed or displayed.
+* **256-colour and True Colour**: 256-colour (``xterm-256color``) is supported; 24-bit
+  True Colour sequences (``CSI 38;2;r;g;b m``) may be silently dropped or
+  approximated.
+* **Mouse reporting**: SGR mouse-tracking escape sequences are not handled.
+  The viewer itself cannot forward mouse events to the session.
+* **Uncommon escape sequences**: sixel graphics, ``DECCRA``, ``REP``, and similar
+  less-common sequences are ignored or only partially handled.
 
 
 Security properties relevant for auditors
