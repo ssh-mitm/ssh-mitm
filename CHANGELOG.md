@@ -9,9 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- added MOSH monitor (PoC) to intercept and stream MOSH terminal output via TCP (connect with `nc`)
+- added MOSH interception with full terminal emulator monitor
+  - `ssh-mitm mosh client <host> <port>` subcommand: pyte-based VT100/ANSI terminal emulator viewer with cbreak mode (no echo), alternate screen buffer, SIGWINCH handling, and dirty-line rendering
+  - `MonitorServer` buffers the complete session history and replays it to clients connecting after the session has started; multiple simultaneous viewers supported
+  - protocol-level packet filtering: only `HostBytes` packets are forwarded to the monitor; `EchoAck`-only and heartbeat packets are suppressed
   - `show_debug` option to control hex/protobuf debug output (disabled by default)
-  - info message on proxy start that SSH connection will close but MOSH remains active
+  - fixed fragment reassembly to correctly handle out-of-order UDP delivery
+  - fixed `buf_size` raised to 65535 to prevent truncation of large MOSH packets
+  - added user guide documentation covering SSP protocol internals, all packet types, wire format, and a security properties section for auditors
 - added `ssh-mitm server --plugins` flag to inspect and browse available plugins
   - `ssh-mitm server --plugins` opens an interactive terminal UI (Plugin Browser) to explore all available plugins, their descriptions, and configuration options
   - Plugin Browser includes a two-tab interface: tree/detail view and a filterable overview table of all plugins

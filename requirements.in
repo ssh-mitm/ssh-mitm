@@ -3,6 +3,8 @@ argcomplete
 colored
 packaging
 paramiko>=4.0,<4.1
+protobuf
+pyte
 python-json-logger
 pytz
 pyyaml

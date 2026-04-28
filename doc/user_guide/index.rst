@@ -46,3 +46,4 @@ Contents
    trivialauth
    transparent
    advanced-usage
+   mosh

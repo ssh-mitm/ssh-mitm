@@ -20,8 +20,9 @@ class MonitorServer:
     """
     TCP server that streams raw MOSH server output to connected clients (e.g. netcat).
 
-    Each connected client receives the host bytes exactly as the MOSH server sends them,
-    including ANSI/VT100 escape sequences. Multiple clients can connect simultaneously.
+    All host bytes are buffered from the start of the session. Clients connecting
+    later receive the full history first, then live updates. Multiple clients can
+    connect simultaneously.
 
     :param listen_port: TCP port to listen on (0 = random free port)
     :param listen_ip: IP to bind to (default '127.0.0.1')
@@ -30,6 +31,7 @@ class MonitorServer:
     def __init__(self, listen_port: int = 0, listen_ip: str = "127.0.0.1") -> None:
         self._clients: list[socket.socket] = []
         self._lock = threading.Lock()
+        self._buffer = bytearray()
         self._server = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self._server.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
         self._server.bind((listen_ip, listen_port))
@@ -48,13 +50,21 @@ class MonitorServer:
                 client, addr = self._server.accept()
                 logging.info("MOSH monitor: client connected from %s", addr)
                 with self._lock:
+                    if self._buffer:
+                        try:
+                            client.sendall(bytes(self._buffer))
+                        except OSError:
+                            with contextlib.suppress(OSError):
+                                client.close()
+                            continue
                     self._clients.append(client)
             except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
                 break
 
     def send(self, data: bytes) -> None:
-        """Broadcast data to all connected clients, removing any that have disconnected."""
+        """Broadcast data to all connected clients and buffer for late-connecting clients."""
         with self._lock:
+            self._buffer.extend(data)
             dead: list[socket.socket] = []
             for client in self._clients:
                 try:
@@ -77,7 +87,7 @@ def _decode_client_diff(diff: bytes) -> tuple[list[str], bytes | None]:
             ks = instr.Extensions[userinput_pb2.keystroke]
             key_chunks.append(ks.keys)
             lines.append(f"  Keystroke: {ks.keys.decode('utf-8', errors='replace')!r}")
-        if instr.HasExtension(userinput_pb2.resize):
+        elif instr.HasExtension(userinput_pb2.resize):
             rs = instr.Extensions[userinput_pb2.resize]
             lines.append(f"  Resize: {rs.width}x{rs.height}")
     keystroke_bytes = b"".join(key_chunks) if key_chunks else None
@@ -96,10 +106,10 @@ def _decode_host_diff(diff: bytes) -> tuple[list[str], bytes | None]:
             lines.append(
                 f"  HostOutput: {hb.hoststring.decode('utf-8', errors='replace')!r}"
             )
-        if instr.HasExtension(hostinput_pb2.resize):
+        elif instr.HasExtension(hostinput_pb2.resize):
             rs = instr.Extensions[hostinput_pb2.resize]
             lines.append(f"  Resize: {rs.width}x{rs.height}")
-        if instr.HasExtension(hostinput_pb2.echoack):
+        elif instr.HasExtension(hostinput_pb2.echoack):
             ea = instr.Extensions[hostinput_pb2.echoack]
             lines.append(f"  EchoAck: {ea.echo_ack_num}")
     host_output = b"".join(raw_chunks) if raw_chunks else None
@@ -177,7 +187,7 @@ class UdpProxy:
     :param target_port: Port number of target server
     :param listen_ip: IP to bind the proxy server (default '')
     :param listen_port: Port number to bind the proxy server (default 0)
-    :param buf_size: buffer size for incoming data (default 1024)
+    :param buf_size: buffer size for incoming UDP datagrams (default 65535, the maximum UDP payload size)
     :param monitor_port: TCP port for the netcat monitor socket (0 = random, None = disabled)
     :param log_heartbeats: log packets that carry no terminal data (default False)
     :param show_debug: show low-level hex dump fields in log output (default False)
@@ -190,7 +200,7 @@ class UdpProxy:
         target_port: int,
         listen_ip: str = "",
         listen_port: int = 0,
-        buf_size: int = 1024,
+        buf_size: int = 65535,
         monitor_port: int | None = 0,
         log_heartbeats: bool = False,
         show_debug: bool = False,
@@ -208,6 +218,9 @@ class UdpProxy:
         self._fragments: dict[tuple[tuple[str, int], int], dict[int, bytes]] = (
             defaultdict(dict)
         )
+        # Highest fragment number of the final fragment per reassembly key,
+        # needed to detect late-arriving non-final fragments after the final arrived.
+        self._fragment_finals: dict[tuple[tuple[str, int], int], int] = {}
 
         self.show_debug = show_debug
         self._monitor: MonitorServer | None = None
@@ -216,20 +229,20 @@ class UdpProxy:
             self._monitor.start()
             port = self._monitor.get_port()
             logging.info(
-                "%s MOSH monitor on port %s - stream terminal output with: %s",
+                "%s MOSH monitor on port %s - view intercepted session with: %s",
                 Colors.emoji("information"),
                 Colors.stylize(port, fg("light_blue") + attr("bold")),
-                Colors.stylize(f"nc 127.0.0.1 {port}", fg("light_blue") + attr("bold")),
+                Colors.stylize(
+                    f"ssh-mitm mosh client 127.0.0.1 {port}",
+                    fg("light_blue") + attr("bold"),
+                ),
             )
-        # Tracks keystroke bytes sent by the client so their terminal echo can be
-        # stripped from HostBytes before forwarding to the monitor.
-        self._keystroke_buf = bytearray()
-        self._keystroke_lock = threading.Lock()
         # Highest server new_num seen — used to skip already-processed diffs.
         self._server_max_new_num: int = -1
         # Track the last old_num and how many HostBytes we already sent from it,
         # so that a later diff from the same old_num (e.g. with EchoAck added or
-        # with extra content like a vim screen) can skip the already-shown prefix.
+        # with extra content like a vim screen after pressing Enter) can skip the
+        # already-shown prefix.
         self._last_server_old_num: int = -1
         self._last_server_host_len: int = 0
         self.log_heartbeats = log_heartbeats
@@ -267,39 +280,6 @@ class UdpProxy:
         self.pair_list.append([addr, destination_addr])
         return destination_addr
 
-    def _add_keystrokes(self, keys: bytes) -> None:
-        with self._keystroke_lock:
-            self._keystroke_buf.extend(keys)
-
-    def _filter_keystrokes(self, host_bytes: bytes) -> bytes:
-        """Remove echoed keystrokes from host output before sending to the monitor.
-
-        The pty echoes every keystroke byte-for-byte, with the only common
-        transformation being \\r → \\r\\n (carriage-return gets a newline added).
-        We strip matching bytes from the front of the keystroke buffer; any mismatch
-        stops the scan so that actual server output is left untouched.
-        """
-        with self._keystroke_lock:
-            if not self._keystroke_buf:
-                return host_bytes
-            data = bytearray(host_bytes)
-            k = 0  # position in keystroke buffer
-            i = 0  # position in data
-            while i < len(data) and k < len(self._keystroke_buf):
-                expected = self._keystroke_buf[k]
-                if data[i] == expected:
-                    del data[i]
-                    k += 1
-                elif expected == ord("\r") and data[i : i + 2] == b"\r\n":
-                    # \r keystroke is echoed as \r\n by the pty
-                    del data[i]
-                    del data[i]
-                    k += 1
-                else:
-                    break
-            del self._keystroke_buf[:k]
-            return bytes(data)
-
     def _is_client(self, addr: tuple[str, int]) -> bool:
         """Return True if addr is a client (not the MOSH server)."""
         return all(addr != pair[1] for pair in self.pair_list)
@@ -321,10 +301,17 @@ class UdpProxy:
         self._fragments[key][frag_num] = payload
 
         if is_final:
+            self._fragment_finals[key] = frag_num
+
+        # Attempt reassembly whenever we know the final fragment number,
+        # even if this packet is not the final one (handles out-of-order delivery).
+        final_num = self._fragment_finals.get(key)
+        if final_num is not None:
             frags = self._fragments[key]
-            if all(i in frags for i in range(frag_num + 1)):
-                assembled = b"".join(frags[i] for i in range(frag_num + 1))
+            if all(i in frags for i in range(final_num + 1)):
+                assembled = b"".join(frags[i] for i in range(final_num + 1))
                 del self._fragments[key]
+                del self._fragment_finals[key]
                 return assembled
         return None
 
@@ -347,7 +334,7 @@ class UdpProxy:
             timestamp_reply = dec_message[2:4]
             fragment_id = dec_message[4:12]
             final_fragment = dec_message[12:14]
-            final_fragment_bool = final_fragment.hex() == "8000"
+            final_fragment_bool = bool(int.from_bytes(final_fragment, "big") & 0x8000)
             payload = dec_message[14:]
 
             assembled = self._handle_fragment(
@@ -360,10 +347,9 @@ class UdpProxy:
                 proto_lines, host_output, keystroke_bytes, old_num, new_num = (
                     _decode_transport_instruction(assembled, is_client)
                 )
-                # A heartbeat carries no terminal data — only timing/ack fields.
+                # Packets with no HostBytes and no Keystrokes carry only timing/ack
+                # metadata (heartbeats or EchoAck-only). Nothing to forward to the monitor.
                 is_heartbeat = host_output is None and keystroke_bytes is None
-                if keystroke_bytes:
-                    self._add_keystrokes(keystroke_bytes)
                 if (
                     host_output is not None
                     and self._monitor is not None
@@ -387,7 +373,7 @@ class UdpProxy:
                     self._last_server_old_num = old_num
                     self._last_server_host_len = len(host_bytes)
                     if output:
-                        self._monitor.send(self._filter_keystrokes(output))
+                        self._monitor.send(output)
 
             if self.show_debug and (not is_heartbeat or self.log_heartbeats):
                 data_to_print = [
@@ -412,7 +398,10 @@ class UdpProxy:
         Start a separate thread to receive incoming messages.
         """
         while True:
-            self.receive(self.buf_size)
+            try:
+                self.receive(self.buf_size)
+            except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+                logging.exception("Error receiving MOSH packet")
 
 
 def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
@@ -450,7 +439,7 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                     listen_port=(
                         0
                         if session.remote_address[0] == "127.0.0.1"
-                        else cast("int", mosh_connect_parts[2])
+                        else int(mosh_connect_parts[2])
                     ),
                 )
                 mosh_port = mosh_proxy.get_bind_port()
