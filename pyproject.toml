@@ -49,7 +49,7 @@ ssh-mitm-askpass = "sshmitm.tools.askpass:main"
 server = "sshmitm.server.cli:SSHServerModules"
 audit = "sshmitm.audit.cli:Audit"
 check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
-mosh = "sshmitm.commands.mosh:Mosh"
+mosh = "sshmitm.apps.mosh.client:Mosh"
 
 [project.entry-points."sshmitm.BaseSession"]
 base = "sshmitm.session:Session"
@@ -101,6 +101,7 @@ include = [
     "requirements.in",
     "sshmitm/**/*.py",
     "sshmitm/data/*.*",
+    "sshmitm/apps/mosh/*.*",
     "sshmitm/moduleparser/pluginbrowser/*.tcss",
 ]
 
@@ -174,9 +175,9 @@ disable = [
 
 [tool.pylint.TYPECHECK]
 ignored-modules = [
-    "sshmitm.data.mosh.hostinput_pb2",
-    "sshmitm.data.mosh.transportinstruction_pb2",
-    "sshmitm.data.mosh.userinput_pb2",
+    "sshmitm.apps.mosh.hostinput_pb2",
+    "sshmitm.apps.mosh.transportinstruction_pb2",
+    "sshmitm.apps.mosh.userinput_pb2",
 ]
 
 [tool.pylint.MASTER]
@@ -218,7 +219,7 @@ ignore = [
 [tool.ruff.lint.per-file-ignores]
 "sshmitm/workarounds/monkeypatch.py" = ["ALL"]
 "sshmitm/workarounds/transport.py" = ["ALL"]
-"sshmitm/data/mosh/*_pb2.py" = ["ALL"]
+"sshmitm/apps/mosh/*_pb2.py" = ["ALL"]
 
 [tool.bumpversion]
 commit = false

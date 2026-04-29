@@ -10,7 +10,7 @@ from typing import cast
 from colored.colored import attr, fg
 from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
-from sshmitm.data.mosh import hostinput_pb2, transportinstruction_pb2, userinput_pb2
+from sshmitm.apps.mosh import hostinput_pb2, transportinstruction_pb2, userinput_pb2
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.session import Session
 from sshmitm.utils import format_hex
