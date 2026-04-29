@@ -86,6 +86,9 @@ inject = "sshmitm.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardi
 [project.entry-points."sshmitm.LocalPortForwardingBaseForwarder"]
 socks = "sshmitm.plugins.tunnel.socks:SOCKSTunnelForwarder"
 
+[project.entry-points."sshmitm.exec_handlers"]
+mosh = "sshmitm.apps.mosh.forwarder:MoshForwarder"
+
 [tool.hatch.version]
 path = "sshmitm/__init__.py"
 

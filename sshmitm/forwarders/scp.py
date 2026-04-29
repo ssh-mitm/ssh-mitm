@@ -2,21 +2,74 @@ import logging
 import re
 import time
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from dataclasses import dataclass
+from typing import TYPE_CHECKING, Any, ClassVar
 
 import paramiko
 from paramiko.common import cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_REQUEST
 from paramiko.message import Message
 
-from sshmitm.apps.mosh import handle_mosh
 from sshmitm.forwarders.base import BaseForwarder
 
 if TYPE_CHECKING:
     import sshmitm
 
 
+@dataclass
+class ExecHandlerEntry:
+    """Registry entry for a command-prefix-based exec handler."""
+
+    handler: type[Any]
+    disable_pty: bool = False
+    disable_ssh: bool = False
+
+
 class SCPBaseForwarder(BaseForwarder):
     """Defines the interface used for handling SCP (Secure Copy Protocol) file transfers, including uploads and downloads."""
+
+    _exec_handlers: ClassVar[dict[bytes, ExecHandlerEntry]] = {}
+    _handlers_loaded: ClassVar[bool] = False
+
+    @classmethod
+    def register_exec_handler(
+        cls,
+        prefix: bytes,
+        handler: type[Any],
+        *,
+        disable_pty: bool = False,
+        disable_ssh: bool = False,
+    ) -> None:
+        cls._exec_handlers[prefix] = ExecHandlerEntry(
+            handler=handler,
+            disable_pty=disable_pty,
+            disable_ssh=disable_ssh,
+        )
+
+    @classmethod
+    def get_exec_handler(cls, command: bytes) -> ExecHandlerEntry | None:
+        cls._ensure_handlers_loaded()
+        for prefix, entry in cls._exec_handlers.items():
+            if command.startswith(prefix):
+                return entry
+        return None
+
+    @classmethod
+    def _ensure_handlers_loaded(cls) -> None:
+        if cls._handlers_loaded:
+            return
+        cls._handlers_loaded = True
+        cls.load_exec_handlers()
+
+    @classmethod
+    def load_exec_handlers(cls) -> None:
+        """Load exec handlers registered via the 'sshmitm.exec_handlers' entry point group."""
+        try:
+            from importlib.metadata import entry_points  # noqa: PLC0415
+
+            for ep in entry_points(group="sshmitm.exec_handlers"):
+                ep.load()
+        except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+            logging.exception("Failed to load exec handlers")
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session)
@@ -38,7 +91,11 @@ class SCPBaseForwarder(BaseForwarder):
         logging.info("got remote command: %s", command)
         return command
 
-    def forward(self) -> None:  # noqa: C901,PLR0915
+    @property
+    def _forwarded_command(self) -> bytes:
+        return self.session.scp_command
+
+    def forward(self) -> None:  # noqa: C901
         # pylint: disable=protected-access
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
@@ -67,10 +124,9 @@ class SCPBaseForwarder(BaseForwarder):
                 while not self._closed(self.server_channel):
                     time.sleep(1)
 
-        elif self.session.scp_command.decode("utf8").startswith("mosh-server"):
-            while not self._closed(self.server_channel):
-                time.sleep(1)
+        self._run_traffic_loop()
 
+    def _run_traffic_loop(self) -> None:  # noqa: C901,PLR0912,PLR0915
         try:
             while self.session.running:
                 if self.client_channel is None:
@@ -107,7 +163,7 @@ class SCPBaseForwarder(BaseForwarder):
                     self.close_session_with_status(self.client_channel, status)
                     logging.info(
                         "remote command '%s' exited with code: %s",
-                        self.session.scp_command.decode("utf-8"),
+                        self._forwarded_command.decode("utf-8"),
                         status,
                     )
                     time.sleep(0.1)
@@ -264,6 +320,4 @@ class SCPForwarder(SCPBaseForwarder):
     def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
         if self.session.scp_command.startswith(b"scp"):
             return self.handle_scp(traffic)
-        if self.session.scp_command.startswith(b"mosh-server"):
-            return handle_mosh(self.session, traffic, isclient)
         return self.process_command_data(self.session.scp_command, traffic, isclient)

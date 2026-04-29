@@ -356,7 +356,15 @@ class SSHProxyServer:
                             self.ssh_interface(session).forward()
                         elif session.scp_requested and self.scp_interface:
                             session.scp_requested = False
-                            scp_interface = self.scp_interface(session)
+                            handler_entry = SCPBaseForwarder.get_exec_handler(
+                                session.scp_command
+                            )
+                            interface_class = (
+                                handler_entry.handler
+                                if handler_entry is not None
+                                else self.scp_interface
+                            )
+                            scp_interface = interface_class(session)
                             thread = threading.Thread(target=scp_interface.forward)
                             thread.start()
                         elif session.netconf_requested and self.netconf_interface:

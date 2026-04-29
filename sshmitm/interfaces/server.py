@@ -11,6 +11,7 @@ from paramiko.sftp import CMD_INIT, CMD_VERSION, SFTPError
 from sshmitm.clients.netconf import NetconfClient
 from sshmitm.clients.sftp import SFTPClient
 from sshmitm.core.modules import SSHMITMBaseModule
+from sshmitm.forwarders.scp import SCPBaseForwarder
 
 if TYPE_CHECKING:
     import sshmitm
@@ -143,15 +144,14 @@ class ServerInterface(BaseServerInterface):
             return True
 
         if not self.args.disable_ssh:
-            # we can use the scp forwarder for command executions
             logging.info("got ssh command: %s", command.decode("utf8"))
 
-            # check if client want's to execute mosh-server
-            # disable the requested shell and the pty to prevent
-            # intercepting the wrong shell
-            if command.startswith(b"mosh-server"):
-                self.session.ssh_requested = False
-                self.session.ssh_pty_kwargs = None
+            handler_entry = SCPBaseForwarder.get_exec_handler(command)
+            if handler_entry is not None:
+                if handler_entry.disable_ssh:
+                    self.session.ssh_requested = False
+                if handler_entry.disable_pty:
+                    self.session.ssh_pty_kwargs = None
 
             self.session.scp_requested = True
             self.session.scp_command = command
