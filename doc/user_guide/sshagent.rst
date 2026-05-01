@@ -3,112 +3,232 @@
 
 .. _sshagent-quickstart:
 
-Quickstart: Interacting with a Forwarded Agent
------------------------------------------------
+Quickstart
+----------
 
-When a client connects to SSH-MITM with agent forwarding enabled, SSH-MITM
-can expose the client's forwarded agent as a local Unix socket.  This allows
-tools like ``ssh-add`` and ``ssh`` to interact with the client's agent
-directly from the SSH-MITM host.
+SSH-MITM can expose a client's forwarded SSH agent as a local Unix socket,
+giving auditors direct access to the agent without touching the client.
 
-**Start SSH-MITM with agent interaction and socket exposure:**
+**Start SSH-MITM with agent socket exposure:**
 
 .. code-block:: bash
 
-    ssh-mitm server \
-        --ssh-interface sshmitm.plugins.agent.agentinteract.AgentInteractForwarder \
-        --agent-expose-socket
+    ssh-mitm server --expose-agent-socket
 
-Once a client connects with agent forwarding (``ssh -A``), SSH-MITM prints
-ready-to-use commands to the log:
+When a client connects with agent forwarding enabled (``ssh -A``), SSH-MITM
+prints ready-to-use commands to the log:
 
 .. code-block:: none
     :class: no-copybutton
 
-    ℹ <session-id> - agent socket ready, interact with client's agent:
+    ℹ <session-id> - agent socket ready - docs: https://docs.ssh-mitm.at/user_guide/sshagent.html
     ℹ <session-id> - ssh-add:  SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh-add -l
     ℹ <session-id> - ssh:      SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh user@host
 
-Copy the printed commands directly from the log to list keys, add or remove
-keys, or open a new SSH connection authenticated via the client's agent:
+Copy any line directly from the log and run it.  The ``SSH_AUTH_SOCK``
+variable is all that is needed — every standard agent client (``ssh-add``,
+``ssh``, ``git``, …) honours it.
+
+.. note::
+
+    Agent forwarding works for interactive SSH sessions, but also for
+    ``scp`` and ``sftp`` when the client uses **OpenSSH 8.4 or later**.
+    SSH-MITM intercepts the agent regardless of which protocol the client uses.
+
+
+Auditing the Forwarded Agent
+-----------------------------
+
+This section walks through a complete agent audit using ``ssh-add`` with the
+``SSH_AUTH_SOCK`` printed by SSH-MITM.  All commands run on the SSH-MITM host.
+
+Set the variable once for the current shell to avoid repeating it:
 
 .. code-block:: bash
 
-    # list keys currently held by the client's agent
-    SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh-add -l
+    export SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent
 
-    # inject a local key into the client's agent
-    SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh-add /path/to/key
 
-    # connect to another host using the client's agent
-    SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh user@host
+Listing keys
+~~~~~~~~~~~~
+
+Show which keys the client currently holds:
+
+.. code-block:: bash
+
+    ssh-add -l          # fingerprints (short)
+    ssh-add -L          # full public keys (useful for further analysis)
+
+A client that connects with ``ForwardAgent yes`` but no keys loaded will show
+``The agent has no identities.``
+
+
+Adding a key
+~~~~~~~~~~~~
+
+Load an additional private key into the client's agent — for example a key
+from the SSH-MITM host that should be tested against other systems:
+
+.. code-block:: bash
+
+    ssh-add /path/to/private_key
+
+The key is now available for authentication in the client's agent for the
+duration of the session.
+
+
+Removing keys
+~~~~~~~~~~~~~
+
+Remove a single key (pass the corresponding public key file or private key):
+
+.. code-block:: bash
+
+    ssh-add -d /path/to/private_key
+
+Remove all keys at once:
+
+.. code-block:: bash
+
+    ssh-add -D
 
 .. warning::
 
-    These capabilities are available to any privileged user on the SSH-MITM
-    host as long as the session is active.  Use only on systems you own or
-    have explicit authorisation to test.
+    Removing keys from a client's agent is immediately visible to the client
+    if they run ``ssh-add -l`` themselves.  Use this only in authorised audits.
 
 
-Background
-----------
+Locking and unlocking the agent
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
-There are several ways in which SSH keys can be managed locally. One of the most common use cases is to store a key in the file system. SSH clients are able to read them from specific directories. For example, an RSA key may be stored as .ssh/id_rsa in the user's home directory.
+An SSH agent can be locked with a password so that no operations are possible
+until it is unlocked again.  This is useful for testing whether automated
+processes depend on an always-unlocked agent.
 
-To protect these keys from unauthorized access after theft or loss, it is recommended to store them encrypted. For this purpose it is necessary to enter a password.
+Lock the agent:
 
-The SSH Agent can be used to manage these keys. The password input, for decrypting is only necessary once during loading into the SSH Agent. All further cryptographic operations are then performed without the need to enter a password.
+.. code-block:: bash
 
-For the communication between SSH Agent and SSH Client a Unix socket is created and stored in a new subdirectory in /tmp. Because of this design, any user with appropriate privileges, such as the root user, is able to access and use this Unix socket.
+    ssh-add -x          # prompts for a lock password
 
-For this reason, it is important that privileged users are trusted or that their accounts are not compromised.
+Unlock the agent:
 
-To protect against misuse, a key can be secured with SSH-Askpass or a FIDO2 key. In both cases, user confirmation is required.
+.. code-block:: bash
 
-The big advantage of a FIDO2 key is that the confirmation is done via a separate hardware and cannot be compromised by a malware infected machine. SSH-Askpass is a software solution that can be bypassed by malware or an attacker who controls the victim's desktop.
+    ssh-add -X          # prompts for the same password
 
-For this reason, the use of a FIDO2 key is recommended over the use of SSH-Askpass.
+.. note::
+
+    Most agents reject an empty lock password.  The client's ``ssh`` process
+    will fail with ``sign_and_send_pubkey: signing failed for RSA`` (or similar)
+    while the agent is locked.
+
+
+Authenticating against other hosts
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
+
+Use the client's agent to open an SSH connection to any host the client's
+keys grant access to:
+
+.. code-block:: bash
+
+    ssh -A user@target-host
+
+This lets an auditor verify which systems are reachable with the intercepted
+agent — a key question in lateral-movement assessments.
+
+
+Background: What is an SSH Agent?
+-----------------------------------
+
+There are several ways in which SSH keys can be managed locally. One of the
+most common use cases is to store a key in the file system. SSH clients are
+able to read them from specific directories. For example, an RSA key may be
+stored as ``.ssh/id_rsa`` in the user's home directory.
+
+To protect these keys from unauthorized access after theft or loss, it is
+recommended to store them encrypted. For this purpose it is necessary to
+enter a password.
+
+The SSH Agent can be used to manage these keys. The password input, for
+decrypting, is only necessary once during loading into the SSH Agent. All
+further cryptographic operations are then performed without the need to enter
+a password.
+
+For the communication between SSH Agent and SSH Client a Unix socket is
+created and stored in a new subdirectory in ``/tmp``. Because of this design,
+any user with appropriate privileges, such as the root user, is able to access
+and use this Unix socket.
+
+For this reason, it is important that privileged users are trusted or that
+their accounts are not compromised.
+
+To protect against misuse, a key can be secured with SSH-Askpass or a FIDO2
+key. In both cases, user confirmation is required.
+
+The big advantage of a FIDO2 key is that the confirmation is done via
+separate hardware and cannot be compromised by a malware-infected machine.
+SSH-Askpass is a software solution that can be bypassed by malware or an
+attacker who controls the victim's desktop.
+
+For this reason, the use of a FIDO2 key is recommended over the use of
+SSH-Askpass.
 
 
 SSH Agent Forwarding
---------------------
+---------------------
 
-Many SSH clients offer the possibility to pass a local agent to a remote server. The corresponding protocol was defined in draft-ietf-secsh-agent-00. The corresponding draft was already defined in 2001 and almost all SSH clients support it.
+Many SSH clients offer the possibility to pass a local agent to a remote
+server. The corresponding protocol was defined in
+``draft-ietf-secsh-agent-00``. The corresponding draft was already defined in
+2001 and almost all SSH clients support it.
 
-A passed SSH agent can then be used to login to another server.
+A passed SSH agent can then be used to log in to another server.
 
-The advantage is that no sensitive data, such as private SSH keys, need to be stored permanently on the remote servers, but a secure login using Publickey authentication is still possible.
+The advantage is that no sensitive data, such as private SSH keys, need to be
+stored permanently on the remote servers, but a secure login using public-key
+authentication is still possible.
 
-In most cases, agent forwarding is only supported for a shell connection. Agent forwarding is theoretically also possible for file transfers using SCP and SFTP, but most programs do not support this feature.
+In most cases, agent forwarding is only supported for a shell connection.
+Agent forwarding is theoretically also possible for file transfers using SCP
+and SFTP, but most programs do not support this feature.  OpenSSH added agent
+forwarding to ``scp`` and ``sftp`` in **version 8.4** in order to support
+remote-to-remote file operations without copying through the local host.
 
-OpenSSH has implemented agent forwarding with version 8.4 for the client programs scp and sftp as well, in order to not have to copy these files via the local host for remote to remote file operations.
+However, SSH Agent Forwarding is associated with a security risk. This is
+because privileged users can access and abuse the forwarded agent sockets.
 
-However, SSH Agent Forwarding is associated with a security risk. This is because privileged users can access and abuse the forwarded agent sockets.
+For this reason, agent forwarding should not be used. However, there are use
+cases where working without agent forwarding is more costly. One possibility
+is working on a development server. From this server, it is often necessary
+to access a Git server to synchronize changes. Without a forwarded agent,
+custom keys would have to be created to access the Git server. These, in
+turn, could be stolen and thus abused if the server were compromised.
 
-For this reason, agent forwarding should not be used.
+In order to make it as difficult as possible to misuse the leaked keys, it is
+necessary to protect them with a FIDO2 token or SSH-Askpass. In the case of
+a passed-through agent, both solutions have a comparable level of security.
 
-However, there are use cases where working without agent forwarding, is more costly. One possibility is working on a development server. From this server, it is often necessary to access a Git server to synchronize changes. Without a forwarded agent, custom keys would have to be created to access the Git server. These, in turn, could be stolen and thus abused if the server were compromised.
-
-There is a tutorial on Github (https://docs.github.com/en/developers/overview/using-ssh-agent-forwarding) that describes how to configure OpenSSH to pass an agent through to a remote server.
-
-However, it does not address the risk that a leaked agent is a potential security risk. The only warning is that the configuration must only be done for a specific host, otherwise the agent will be passed through to all servers you connect to.
-In order to make it as difficult as possible to misuse the leaked keys, it is necessary to protect them with a FIDO2 token or SSH-Askpass. In the case of a passed-through agent, both solutions have a comparable level of security.
-
-Nevertheless, the use of FIDO2 keys is recommended because a vulnerability in the client could eventually leak them. An example of this was the experimental support for roaming in OpenSSH 5.4. This feature should make it possible for a client to resume an unexpectedly terminated connection. Although the OpenSSH server did not support roaming, roaming was enabled in the client by default.
-
-The roaming implementation had two vulnerabilities that allowed an attacker to access sensitive information such as private keys under certain circumstances.
+Nevertheless, the use of FIDO2 keys is recommended because a vulnerability in
+the client could eventually leak them.
 
 .. warning::
 
-    SSH Agent Forwarding should not be used. The reason is that it can prevent a lot of security risks. Agent forwarding often makes it easier to work with multiple servers. However, for most use cases there are ways to accomplish the same tasks without agent forwarding.
+    SSH Agent Forwarding should not be used. It can prevent a lot of security
+    risks. Agent forwarding often makes it easier to work with multiple
+    servers. However, for most use cases there are ways to accomplish the same
+    tasks without agent forwarding.
 
-    If agent forwarding is still required, an FIDO2 token should be used. If this is not possible, e.g. because the server does not support the required algorithms, SSH-Askpass can also be used.
+    If agent forwarding is still required, an FIDO2 token should be used. If
+    this is not possible, SSH-Askpass can also be used.
+
 
 Security considerations
-"""""""""""""""""""""""
+""""""""""""""""""""""""
 
-Using ssh agent forwarding comes with some security risks and should not be used
-when the integrity of a machine is not trusted. (https://tools.ietf.org/html/draft-ietf-secsh-agent-02)
+Using ssh agent forwarding comes with some security risks and should not be
+used when the integrity of a machine is not trusted.
+(https://tools.ietf.org/html/draft-ietf-secsh-agent-02)
 
 .. code-block:: none
     :class: no-copybutton
@@ -148,38 +268,39 @@ when the integrity of a machine is not trusted. (https://tools.ietf.org/html/dra
     considered unwise.
 
 
-
-SSH-MITM - abusing a forwarded ssh-agent
-----------------------------------------
+SSH-MITM — abusing a forwarded SSH agent
+------------------------------------------
 
 SSH-MITM supports agent forwarding, which allows a remote host to authenticate
 against another remote host.
 
-This is done by requesting the agent from the client and use
-it for remote authentication. By using this feature, it's possible
-to do a full man-in-the-middle attack when publickey authentication is used.
+This is done by requesting the agent from the client and using it for remote
+authentication. By using this feature, it is possible to do a full
+man-in-the-middle attack when public-key authentication is used.
 
-Since OpenSSH 8.4 the commands scp and sftp support agent forwarding.
+Since OpenSSH 8.4 the commands ``scp`` and ``sftp`` support agent forwarding.
 Older releases or other implementations do not support agent forwarding for
 file transfers.
 
 .. note::
 
-    Currently, SSH-MITM only uses the forwarded agent for remote authentication,
-    but does not allow to rewrite the ``SSH_AGENT_FORWARDING_NOTICE`` message.
+    Currently, SSH-MITM only uses the forwarded agent for remote
+    authentication, but does not allow rewriting the
+    ``SSH_AGENT_FORWARDING_NOTICE`` message.
 
-    If a client uses an agent which displays a warning when the client is accessed,
-    the original notice will be shown.
+    If a client uses an agent which displays a warning when the client is
+    accessed, the original notice will be shown.
 
 
 SSH-Agent Breaking
-""""""""""""""""""
+"""""""""""""""""""
 
 SSH-MITM can try to break in to the client and force agent forwarding.
 Most clients should ignore this breakin attempt or close the session.
 
-This feature allows an auditor to check if the client is resistant against agent breaking attempts.
+This feature allows an auditor to check if the client is resistant against
+agent breaking attempts.
 
 .. code-block:: bash
 
-    $ ssh-mitm --remote-host 192.168.0.x:PORT --request-agent-breakin
+    ssh-mitm server --request-agent-breakin

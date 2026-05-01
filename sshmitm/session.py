@@ -38,7 +38,7 @@ from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
 from sshmitm.core.modules import SSHMITMBaseModule
-from sshmitm.forwarders.agent import AgentProxy
+from sshmitm.forwarders.agent import AgentLocalSocket, AgentProxy
 from sshmitm.interfaces.server import ProxyNetconfServer, ProxySFTPServer
 from sshmitm.logger import THREAD_DATA
 from sshmitm.moduleparser.colors import Colors
@@ -257,6 +257,8 @@ class Session(BaseSession):
                         Colors.emoji("information"),
                         Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
                     )
+                    if self.proxyserver.expose_agent_socket:
+                        self._expose_agent_socket(requested_agent)
             except ChannelException:
                 logging.info(
                     "%s %s - ssh-agent breakin not successfull!",
@@ -266,6 +268,24 @@ class Session(BaseSession):
                 return False
         self.agent = requested_agent or self.agent
         return self.agent is not None
+
+    def _expose_agent_socket(self, agent: AgentProxy) -> None:
+        agent.local_socket = AgentLocalSocket(self.transport)
+        sock = agent.local_socket.socket_path
+        sid = Colors.stylize(self.sessionid, fg("light_blue") + attr("bold"))
+
+        def _cmd(suffix: str) -> str:
+            return Colors.stylize(
+                f"SSH_AUTH_SOCK={sock} {suffix}", fg("light_blue") + attr("bold")
+            )
+
+        logging.info(
+            "%s %s - agent socket ready - docs: https://docs.ssh-mitm.at/user_guide/sshagent.html",
+            Colors.emoji("information"),
+            sid,
+        )
+        logging.info("%s %s - ssh-add:  %s", Colors.emoji("information"), sid, _cmd("ssh-add -l"))
+        logging.info("%s %s - ssh:      %s", Colors.emoji("information"), sid, _cmd("ssh user@host"))
 
     def _start_channels(self) -> bool:
         self._request_agent()

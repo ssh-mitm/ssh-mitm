@@ -63,7 +63,6 @@ base = "sshmitm.interfaces.server:ServerInterface"
 
 [project.entry-points."sshmitm.SSHBaseForwarder"]
 mirrorshell = "sshmitm.plugins.ssh.mirrorshell:SSHMirrorForwarder"
-agentinteract = "sshmitm.plugins.agent.agentinteract:AgentInteractForwarder"
 
 [project.entry-points."sshmitm.SCPBaseForwarder"]
 debug_traffic = "sshmitm.plugins.scp.debug_traffic:SCPDebugForwarder"

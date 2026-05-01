@@ -116,6 +116,17 @@ class SSHServerModules(SubCommand):
             help="Enables SSH-MITM to request the SSH agent from the client, even if the client does not forward the agent. Can be used to attempt unauthorized access.",
         )
         parser_group.add_argument(
+            "--expose-agent-socket",
+            dest="expose_agent_socket",
+            action="store_true",
+            help=(
+                "Expose the client's forwarded SSH agent as a local Unix socket. "
+                "Prints ready-to-use SSH_AUTH_SOCK commands to the log. "
+                "Works for SSH, SCP, and SFTP sessions (OpenSSH 8.4+). "
+                "See https://docs.ssh-mitm.at/user_guide/sshagent.html"
+            ),
+        )
+        parser_group.add_argument(
             "--banner-name",
             dest="banner_name",
             default=f"SSHMITM_{ssh_mitm_version}",
@@ -146,6 +157,7 @@ class SSHServerModules(SubCommand):
             authenticator=args.authenticator,
             transparent=args.transparent,
             banner_name=args.banner_name,
+            expose_agent_socket=args.expose_agent_socket,
             debug=args.debug,
         )
         proxy.print_serverinfo(args.log_format == "json")

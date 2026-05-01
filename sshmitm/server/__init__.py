@@ -59,6 +59,7 @@ class SSHProxyServer:
         transparent: bool = False,
         session_class: type[Session] = Session,
         banner_name: str | None = None,
+        expose_agent_socket: bool = False,
         debug: bool = False,
     ) -> None:
         self._threads: list[threading.Thread] = []
@@ -94,6 +95,7 @@ class SSHProxyServer:
         self.transparent: bool = transparent
         self.session_class: type[Session] = session_class
         self.banner_name: str | None = banner_name
+        self.expose_agent_socket: bool = expose_agent_socket
         self.debug: bool = debug
 
         try:
