@@ -1,6 +1,58 @@
 :fas:`user-secret` SSH Agent
 ============================
 
+.. _sshagent-quickstart:
+
+Quickstart: Interacting with a Forwarded Agent
+-----------------------------------------------
+
+When a client connects to SSH-MITM with agent forwarding enabled, SSH-MITM
+can expose the client's forwarded agent as a local Unix socket.  This allows
+tools like ``ssh-add`` and ``ssh`` to interact with the client's agent
+directly from the SSH-MITM host.
+
+**Start SSH-MITM with agent interaction and socket exposure:**
+
+.. code-block:: bash
+
+    ssh-mitm server \
+        --ssh-interface sshmitm.plugins.agent.agentinteract.AgentInteractForwarder \
+        --agent-expose-socket
+
+Once a client connects with agent forwarding (``ssh -A``), SSH-MITM prints
+ready-to-use commands to the log:
+
+.. code-block:: none
+    :class: no-copybutton
+
+    ℹ <session-id> - agent socket ready, interact with client's agent:
+    ℹ <session-id> - ssh-add:  SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh-add -l
+    ℹ <session-id> - ssh:      SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh user@host
+
+Copy the printed commands directly from the log to list keys, add or remove
+keys, or open a new SSH connection authenticated via the client's agent:
+
+.. code-block:: bash
+
+    # list keys currently held by the client's agent
+    SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh-add -l
+
+    # inject a local key into the client's agent
+    SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh-add /path/to/key
+
+    # connect to another host using the client's agent
+    SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh user@host
+
+.. warning::
+
+    These capabilities are available to any privileged user on the SSH-MITM
+    host as long as the session is active.  Use only on systems you own or
+    have explicit authorisation to test.
+
+
+Background
+----------
+
 There are several ways in which SSH keys can be managed locally. One of the most common use cases is to store a key in the file system. SSH clients are able to read them from specific directories. For example, an RSA key may be stored as .ssh/id_rsa in the user's home directory.
 
 To protect these keys from unauthorized access after theft or loss, it is recommended to store them encrypted. For this purpose it is necessary to enter a password.
