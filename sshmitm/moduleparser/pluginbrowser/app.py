@@ -178,9 +178,8 @@ class PluginBrowserApp(App[None]):
 
         subcommand_parsers = self._parser.subcommand_parsers
         if subcommand_parsers:
-            for cmd_name, sub_parser in subcommand_parsers.items():
-                cmd_branch = tree.root.add(cmd_name.capitalize(), expand=True)
-                self._populate_parser_into_branch(cmd_branch, sub_parser)
+            sub_parser = subcommand_parsers.get("server") or next(iter(subcommand_parsers.values()))
+            self._populate_parser_into_branch(tree.root, sub_parser)
         else:
             self._populate_parser_into_branch(tree.root, self._parser)
 
@@ -225,8 +224,8 @@ class PluginBrowserApp(App[None]):
 
         subcommand_parsers = self._parser.subcommand_parsers
         if subcommand_parsers:
-            for cmd_name, sub_parser in subcommand_parsers.items():
-                self._populate_parser_into_table(sub_parser, f"{cmd_name}: ")
+            sub_parser = subcommand_parsers.get("server") or next(iter(subcommand_parsers.values()))
+            self._populate_parser_into_table(sub_parser)
         else:
             self._populate_parser_into_table(self._parser)
 
