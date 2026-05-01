@@ -285,6 +285,7 @@ class ModuleParser(
             PluginTypeInfo(
                 type_label=class_to_label(baseclass.__name__),
                 cli_flag=action.option_strings[0],
+                config_key=action.dest.replace("_", "-"),
                 help_text=(
                     ""
                     if not action.help or action.help == argparse.SUPPRESS

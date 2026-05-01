@@ -12,7 +12,7 @@ if TYPE_CHECKING:
     from sshmitm.moduleparser.modules import BaseModule
 
 _SKIP_GROUPS: frozenset[str | None] = frozenset(
-    {"positional arguments", "optional arguments", "options", None}
+    {"positional arguments", "optional arguments", "options", "Available commands", None}
 )
 
 
@@ -73,6 +73,7 @@ def visible_actions(group: argparse._ArgumentGroup) -> list[argparse.Action]:
 class PluginTypeInfo:
     type_label: str
     cli_flag: str
+    config_key: str
     help_text: str
     base_class: type[BaseModule]
 

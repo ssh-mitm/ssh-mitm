@@ -113,7 +113,7 @@ class PluginBrowserApp(App[None]):
         tree.focus()
 
     def _active_ep_value(
-        self, cli_flag: str, config_section: str | None = None
+        self, config_key: str, config_section: str | None = None
     ) -> str | None:
         section = (
             config_section
@@ -122,11 +122,10 @@ class PluginBrowserApp(App[None]):
         )
         if section is None:
             return None
-        key = cli_flag.lstrip("-")
-        if self._user_cfg and self._user_cfg.has_option(section, key):
-            return self._user_cfg.get(section, key)
-        if self._default_cfg.has_option(section, key):
-            return self._default_cfg.get(section, key)
+        if self._user_cfg and self._user_cfg.has_option(section, config_key):
+            return self._user_cfg.get(section, config_key)
+        if self._default_cfg.has_option(section, config_key):
+            return self._default_cfg.get(section, config_key)
         return None
 
     def _populate_parser_into_branch(self, branch: Any, parser: ModuleParser) -> None:
@@ -153,7 +152,7 @@ class PluginBrowserApp(App[None]):
             type_branch = plugins_branch.add(
                 type_info.type_label, data=type_info, expand=True
             )
-            active_value = self._active_ep_value(type_info.cli_flag, config_section)
+            active_value = self._active_ep_value(type_info.config_key, config_section)
             for ep in eps:
                 loaded = ep.load()
                 is_active = str(ep.value) == active_value
@@ -178,7 +177,9 @@ class PluginBrowserApp(App[None]):
 
         subcommand_parsers = self._parser.subcommand_parsers
         if subcommand_parsers:
-            sub_parser = subcommand_parsers.get("server") or next(iter(subcommand_parsers.values()))
+            sub_parser = subcommand_parsers.get("server") or next(
+                iter(subcommand_parsers.values())
+            )
             self._populate_parser_into_branch(tree.root, sub_parser)
         else:
             self._populate_parser_into_branch(tree.root, self._parser)
@@ -196,7 +197,7 @@ class PluginBrowserApp(App[None]):
             )
             if not eps:
                 continue
-            active_value = self._active_ep_value(type_info.cli_flag, config_section)
+            active_value = self._active_ep_value(type_info.config_key, config_section)
             category = (
                 f"{category_prefix}{type_info.type_label}"
                 if category_prefix
@@ -224,7 +225,9 @@ class PluginBrowserApp(App[None]):
 
         subcommand_parsers = self._parser.subcommand_parsers
         if subcommand_parsers:
-            sub_parser = subcommand_parsers.get("server") or next(iter(subcommand_parsers.values()))
+            sub_parser = subcommand_parsers.get("server") or next(
+                iter(subcommand_parsers.values())
+            )
             self._populate_parser_into_table(sub_parser)
         else:
             self._populate_parser_into_table(self._parser)
