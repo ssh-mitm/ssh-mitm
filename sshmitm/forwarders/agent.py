@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import select
@@ -7,7 +8,6 @@ import threading
 import time
 import uuid
 
-import paramiko.agent
 from paramiko.agent import Agent, AgentClientProxy, AgentKey, AgentServerProxy
 from paramiko.channel import Channel
 from paramiko.transport import Transport
@@ -111,11 +111,7 @@ class AgentLocalSocket:
 
     def close(self) -> None:
         self._running = False
-        try:
+        with contextlib.suppress(OSError):
             self._server.close()
-        except OSError:
-            pass
-        try:
+        with contextlib.suppress(OSError):
             os.unlink(self.socket_path)
-        except OSError:
-            pass

@@ -1,13 +1,9 @@
 import time
-from typing import TYPE_CHECKING
 
 import paramiko
 
 from sshmitm.apps.mosh.proxy import handle_mosh
 from sshmitm.forwarders.scp import SCPBaseForwarder
-
-if TYPE_CHECKING:
-    import sshmitm
 
 
 class MoshForwarder(SCPBaseForwarder):

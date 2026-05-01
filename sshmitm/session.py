@@ -284,8 +284,15 @@ class Session(BaseSession):
             Colors.emoji("information"),
             sid,
         )
-        logging.info("%s %s - ssh-add:  %s", Colors.emoji("information"), sid, _cmd("ssh-add -l"))
-        logging.info("%s %s - ssh:      %s", Colors.emoji("information"), sid, _cmd("ssh user@host"))
+        logging.info(
+            "%s %s - ssh-add:  %s", Colors.emoji("information"), sid, _cmd("ssh-add -l")
+        )
+        logging.info(
+            "%s %s - ssh:      %s",
+            Colors.emoji("information"),
+            sid,
+            _cmd("ssh user@host"),
+        )
 
     def _start_channels(self) -> bool:
         self._request_agent()

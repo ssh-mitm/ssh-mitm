@@ -68,7 +68,7 @@ class SCPBaseForwarder(BaseForwarder):
 
             for ep in entry_points(group="sshmitm.exec_handlers"):
                 ep.load()
-        except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Failed to load exec handlers")
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
@@ -95,7 +95,7 @@ class SCPBaseForwarder(BaseForwarder):
     def _forwarded_command(self) -> bytes:
         return self.session.scp_command
 
-    def forward(self) -> None:  # noqa: C901
+    def forward(self) -> None:
         # pylint: disable=protected-access
         if self.session.ssh_pty_kwargs is not None:
             self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
@@ -106,27 +106,26 @@ class SCPBaseForwarder(BaseForwarder):
         self.server_channel.exec_command(self.session.scp_command)  # nosec
 
         # Wait for SCP remote to remote auth, command exec and copy to finish
-        if self.session.scp_command.decode("utf8").startswith("scp"):
-            if (
-                self.session.scp_command.find(b" -t ") == -1
-                and self.session.scp_command.find(b" -f ") == -1
-            ):
-                if self.client_channel is not None:
-                    logging.debug(
-                        "[chan %d] Initiating SCP remote to remote",
+        if self.session.scp_command.decode("utf8").startswith("scp") and (
+            self.session.scp_command.find(b" -t ") == -1
+            and self.session.scp_command.find(b" -f ") == -1
+        ):
+            if self.client_channel is not None:
+                logging.debug(
+                    "[chan %d] Initiating SCP remote to remote",
+                    self.client_channel.get_id(),
+                )
+                if self.session.agent is None:
+                    logging.warning(
+                        "[chan %d] SCP remote to remote needs a forwarded agent",
                         self.client_channel.get_id(),
                     )
-                    if self.session.agent is None:
-                        logging.warning(
-                            "[chan %d] SCP remote to remote needs a forwarded agent",
-                            self.client_channel.get_id(),
-                        )
-                while not self._closed(self.server_channel):
-                    time.sleep(1)
+            while not self._closed(self.server_channel):
+                time.sleep(1)
 
         self._run_traffic_loop()
 
-    def _run_traffic_loop(self) -> None:  # noqa: C901,PLR0912,PLR0915
+    def _run_traffic_loop(self) -> None:  # noqa: C901, PLR0915
         try:
             while self.session.running:
                 if self.client_channel is None:
