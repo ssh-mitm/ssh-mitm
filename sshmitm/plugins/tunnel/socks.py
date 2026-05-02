@@ -7,7 +7,6 @@ import paramiko
 from colored.colored import attr, fg
 
 from sshmitm.forwarders.tunnel import (
-    BaseClientTunnelHandler,
     LocalPortForwardingForwarder,
     TunnelForwarder,
 )
@@ -20,7 +19,7 @@ if TYPE_CHECKING:
     import sshmitm
 
 
-class ClientTunnelHandler(BaseClientTunnelHandler):
+class ClientTunnelHandler:
     """
     Similar to the RemotePortForwardingForwarder
     """
@@ -31,7 +30,8 @@ class ClientTunnelHandler(BaseClientTunnelHandler):
         username: str | None = None,
         password: str | None = None,
     ) -> None:
-        super().__init__(session)
+        self.session = session
+        self.session.register_session_thread()
         self.username = username
         self.password = password
 

@@ -92,35 +92,6 @@ Known limitations and bugs
     adds unnecessary per-message latency and wastes CPU in a polling loop
     instead of blocking on the channel.
 
-**Plugin hooks are not wired up**
-    ``handle_traffic()`` and ``handle_error()`` are inherited from
-    ``SCPBaseForwarder`` but are never called in the forwarding loop. Subclass
-    overrides have no effect — traffic is forwarded unmodified regardless.
-
-**Inheritance from SCPBaseForwarder is semantically wrong**
-    NETCONF and SCP are unrelated protocols. Inheriting from
-    ``SCPBaseForwarder`` pulls in SCP-specific methods (``handle_scp()``,
-    ``handle_command()``, ``process_response()``, …) that make no sense here
-    and make the class hierarchy misleading. The base class should eventually
-    be ``BaseForwarder`` directly.
-
-**UTF-8 decode without error handling**
-    The server response is decoded as UTF-8 unconditionally before logging
-    (``buf.decode("utf-8")``). Binary payloads or non-UTF-8 XML encodings
-    will raise ``UnicodeDecodeError`` and terminate the forwarder thread.
-
-**Double EOF shutdown**
-    ``shutdown_write()`` is called on EOF both before the main loop and inside
-    the loop. There is no guard against issuing the shutdown twice on an
-    already-closed channel.
-
-**Dead exec_command path**
-    ``check_channel_exec_request()`` in ``interfaces/server.py`` contains a
-    branch that sets ``session.netconf_command`` when ``netconf_requested`` is
-    already ``True``, but exec-based invocations are never routed to this
-    forwarder. The branch is dead code. Per RFC 6242 NETCONF must be invoked
-    as an SSH subsystem, not via exec.
-
 **No capability negotiation interception**
     The ``<hello>`` exchange where client and server negotiate capabilities
     (including the framing version) passes through unexamined. The MITM
@@ -135,19 +106,29 @@ Known limitations and bugs
 
 import logging
 import time
+from typing import TYPE_CHECKING
 
 import paramiko
 
-from sshmitm.forwarders.scp import SCPBaseForwarder
+from sshmitm.forwarders.exec import ExecForwarder
+
+if TYPE_CHECKING:
+    import sshmitm
 
 
-class NetconfBaseForwarder(SCPBaseForwarder):
+class NetconfBaseForwarder(ExecForwarder):
+    """Base class for NETCONF SSH-subsystem forwarders."""
+
     # RFC 4742 end-of-message delimiter; RFC 6242 chunked framing is not supported.
     __netconf_terminator = b"]]>]]>"
 
     @property
     def client_channel(self) -> paramiko.Channel | None:
         return self.session.netconf_channel
+
+    @property
+    def _forwarded_command(self) -> bytes:
+        return self.session.netconf_command
 
     def read_netconf_data(self, chan: paramiko.Channel, responses: int = 1) -> bytes:
         # WARNING: busy-loop with 50 ms sleep; no timeout; hangs on chunked framing.
@@ -158,7 +139,6 @@ class NetconfBaseForwarder(SCPBaseForwarder):
             response = chan.recv(self.BUF_LEN)
             response_buf += response
             responses -= response.count(self.__netconf_terminator)
-
         return response_buf
 
 
@@ -196,19 +176,18 @@ class NetconfForwarder(NetconfBaseForwarder):
                 if self.client_channel.recv_ready():
                     buf = self.read_netconf_data(self.client_channel)
                     self.session.netconf_command = buf
-                    # NOTE: handle_traffic() is intentionally NOT called here — the hook
-                    # is inherited from SCPBaseForwarder but was never wired up.
+                    buf = self.handle_client_data(buf)
                     self.sendall(self.server_channel, buf, self.server_channel.send)
 
                 if self.server_channel.recv_ready():
                     buf = self.read_netconf_data(self.server_channel)
                     # NOTE: decode may raise UnicodeDecodeError on non-UTF-8 payloads.
                     logging.info(
-                        "received response: %s [isclient=%s] [command=%s]",
+                        "received response: %s [command=%s]",
                         buf.decode("utf-8"),
-                        False,
                         self.session.netconf_command,
                     )
+                    buf = self.handle_server_data(buf)
                     self.sendall(self.client_channel, buf, self.client_channel.send)
 
                 if self.client_channel.recv_stderr_ready():
@@ -240,8 +219,8 @@ class NetconfForwarder(NetconfBaseForwarder):
                     break
                 if self.client_channel.exit_status_ready():
                     logging.debug("Exit from client ready")
-                    status = self.client_channel.recv_exit_status()
                     self.client_exit_code_received = True
+                    self.client_channel.recv_exit_status()
                     self.close_session(self.client_channel)
                     break
 

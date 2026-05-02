@@ -72,6 +72,9 @@ store_file = "sshmitm.plugins.scp.store_file:SCPStorageForwarder"
 replace-command = "sshmitm.plugins.scp.rewrite_command:SCPRewriteCommand"
 CVE-2022-29154 = "sshmitm.plugins.scp.cve202229154:CVE202229154"
 
+[project.entry-points."sshmitm.NetconfBaseForwarder"]
+base = "sshmitm.forwarders.netconf:NetconfForwarder"
+
 [project.entry-points."sshmitm.BaseSFTPServerInterface"]
 base = "sshmitm.interfaces.sftp:SFTPProxyServerInterface"
 
@@ -86,7 +89,7 @@ inject = "sshmitm.plugins.tunnel.injectservertunnel:InjectableRemotePortForwardi
 [project.entry-points."sshmitm.LocalPortForwardingBaseForwarder"]
 socks = "sshmitm.plugins.tunnel.socks:SOCKSTunnelForwarder"
 
-[project.entry-points."sshmitm.exec_handlers"]
+[project.entry-points."sshmitm.ExecHandler"]
 mosh = "sshmitm.apps.mosh.forwarder:MoshForwarder"
 
 [tool.hatch.version]

@@ -2,6 +2,7 @@ import argparse
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator
+from sshmitm.forwarders.netconf import NetconfBaseForwarder
 from sshmitm.forwarders.scp import SCPBaseForwarder
 from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin
 from sshmitm.forwarders.ssh import SSHBaseForwarder
@@ -24,6 +25,11 @@ class SSHServerModules(SubCommand):
         return "SSH-Server-Modules"
 
     def register_arguments(self) -> None:
+        self.parser.add_module(
+            "--netconf-interface",
+            dest="netconf_interface",
+            baseclass=NetconfBaseForwarder,
+        )
         self.parser.add_module(
             "--ssh-interface",
             dest="ssh_interface",
@@ -149,6 +155,7 @@ class SSHServerModules(SubCommand):
             key_length=args.host_key_length,
             ssh_interface=args.ssh_interface,
             scp_interface=args.scp_interface,
+            netconf_interface=args.netconf_interface,
             sftp_interface=args.sftp_interface,
             sftp_handler=args.sftp_handler,
             server_tunnel_interface=args.server_tunnel_interface,

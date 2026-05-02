@@ -23,6 +23,10 @@ class SFTPHandlerBasePlugin(SSHMITMBaseModule):
         self.filename: str = filename
         self.sftp: SFTPBaseHandle = sftp
 
+    @property
+    def session(self) -> "sshmitm.session.Session":
+        return self.sftp.session
+
     @classmethod
     def get_interface(cls) -> type[BaseSFTPServerInterface] | None:
         return None

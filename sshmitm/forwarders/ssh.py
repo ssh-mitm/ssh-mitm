@@ -66,13 +66,13 @@ class SSHForwarder(SSHBaseForwarder):
     def forward_stdin(self) -> None:
         if self.client_channel is not None and self.client_channel.recv_ready():
             buf: bytes = self.client_channel.recv(self.BUF_LEN)
-            buf = self.stdin(buf)
+            buf = self.handle_client_data(buf)
             self.server_channel.sendall(buf)
 
     def forward_stdout(self) -> None:
         if self.server_channel.recv_ready():
             buf: bytes = self.server_channel.recv(self.BUF_LEN)
-            buf = self.stdout(buf)
+            buf = self.handle_server_data(buf)
             if self.client_channel is not None:
                 self.client_channel.sendall(buf)
 
@@ -82,15 +82,15 @@ class SSHForwarder(SSHBaseForwarder):
     def forward_stderr(self) -> None:
         if self.server_channel.recv_stderr_ready():
             buf: bytes = self.server_channel.recv_stderr(self.BUF_LEN)
-            buf = self.stderr(buf)
+            buf = self.handle_server_error(buf)
             if self.client_channel is not None:
                 self.client_channel.sendall_stderr(buf)
 
-    def stdin(self, text: bytes) -> bytes:
-        return text
+    def handle_client_data(self, data: bytes) -> bytes:
+        return data
 
-    def stdout(self, text: bytes) -> bytes:
-        return text
+    def handle_server_data(self, data: bytes) -> bytes:
+        return data
 
-    def stderr(self, text: bytes) -> bytes:
-        return text
+    def handle_server_error(self, data: bytes) -> bytes:
+        return data

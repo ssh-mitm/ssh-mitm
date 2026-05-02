@@ -15,12 +15,6 @@ if TYPE_CHECKING:
     from sshmitm.session import Session  # noqa: F401
 
 
-class BaseClientTunnelHandler:
-    def __init__(self, session: "sshmitm.session.Session") -> None:
-        self.session = session
-        self.session.register_session_thread()
-
-
 class TunnelForwarder(threading.Thread):
     def __init__(
         self,
@@ -55,14 +49,14 @@ class TunnelForwarder(threading.Thread):
 
             if self.local_ch in socklist_read:
                 data = self.local_ch.recv(chunk_size)
-                data = self.handle_data_from_local(data)
+                data = self.handle_client_data(data)
                 if len(data) == 0:
                     break
                 self.remote_ch.send(data)
 
             if self.remote_ch in socklist_read:
                 data = self.remote_ch.recv(chunk_size)
-                data = self.handle_data_from_remote(data)
+                data = self.handle_server_data(data)
                 if len(data) == 0:
                     break
                 self.local_ch.send(data)
@@ -70,10 +64,10 @@ class TunnelForwarder(threading.Thread):
     def handle_data(self, data: bytes) -> bytes:
         return data
 
-    def handle_data_from_remote(self, data: bytes) -> bytes:
+    def handle_server_data(self, data: bytes) -> bytes:
         return self.handle_data(data)
 
-    def handle_data_from_local(self, data: bytes) -> bytes:
+    def handle_client_data(self, data: bytes) -> bytes:
         return self.handle_data(data)
 
     def close(self) -> None:

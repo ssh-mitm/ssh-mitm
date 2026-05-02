@@ -249,32 +249,27 @@ class SSHMirrorForwarder(SSHForwarder):
         if self.sessionlog:
             self.sessionlog.close()
 
-    def stdin(self, text: bytes) -> bytes:
-        # write the buffer to the log file
+    def handle_client_data(self, data: bytes) -> bytes:
         if self.sessionlog:
-            self.sessionlog.stdin(text)
-        return text
+            self.sessionlog.stdin(data)
+        return data
 
-    def stdout(self, text: bytes) -> bytes:
-        # write the buffer to the log file
+    def handle_server_data(self, data: bytes) -> bytes:
         if self.sessionlog:
-            self.sessionlog.stdout(text)
-        # send buffer to connected injection server
+            self.sessionlog.stdout(data)
         if (
             self.inject_server is not None
             and self.inject_server.injector_channel is not None
         ):
-            self.inject_server.injector_channel.sendall(text)
-        return text
+            self.inject_server.injector_channel.sendall(data)
+        return data
 
-    def stderr(self, text: bytes) -> bytes:
-        # write the buffer to the log file
+    def handle_server_error(self, data: bytes) -> bytes:
         if self.sessionlog:
-            self.sessionlog.stderr(text)
-        # send buffer to connected injection server
+            self.sessionlog.stderr(data)
         if (
             self.inject_server is not None
             and self.inject_server.injector_channel is not None
         ):
-            self.inject_server.injector_channel.sendall(text)
-        return text
+            self.inject_server.injector_channel.sendall(data)
+        return data

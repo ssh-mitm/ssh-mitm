@@ -3,10 +3,11 @@ import time
 import paramiko
 
 from sshmitm.apps.mosh.proxy import handle_mosh
+from sshmitm.forwarders.exec import ExecForwarder
 from sshmitm.forwarders.scp import SCPBaseForwarder
 
 
-class MoshForwarder(SCPBaseForwarder):
+class MoshForwarder(ExecForwarder):
     """Forwarder for MOSH (Mobile Shell) sessions.
 
     Executes the mosh-server command, waits for the MOSH CONNECT handshake
@@ -22,8 +23,11 @@ class MoshForwarder(SCPBaseForwarder):
     def _forwarded_command(self) -> bytes:
         return self.session.scp_command
 
-    def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
-        return handle_mosh(self.session, traffic, isclient)
+    def handle_client_data(self, traffic: bytes) -> bytes:
+        return handle_mosh(self.session, traffic, True)
+
+    def handle_server_data(self, traffic: bytes) -> bytes:
+        return handle_mosh(self.session, traffic, False)
 
     def forward(self) -> None:
         self.server_channel.exec_command(self.session.scp_command)  # nosec

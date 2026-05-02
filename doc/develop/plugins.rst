@@ -2,29 +2,133 @@
 =======================================
 
 SSH-MITM is built around a modular plugin system. Every major component —
-session handling, authentication, SSH/SCP/SFTP forwarding, port forwarding —
-is a replaceable plugin. This guide explains how to write your own.
+session handling, authentication, SSH/SCP/SFTP forwarding, NETCONF, and port
+forwarding — is a replaceable plugin. This guide explains the architecture and
+shows how to write your own plugins.
 
 .. contents:: Contents
    :local:
    :depth: 2
 
 
+Class Diagram
+-------------
+
+The diagram below shows the complete plugin class hierarchy. Every plugin class
+ultimately inherits from ``SSHMITMBaseModule``, which provides argument
+parsing, entry-point discovery, and configuration-file support.
+
+.. mermaid::
+
+   classDiagram
+       direction TB
+
+       class BaseModule {
+           +parser_arguments()$
+           +argument_group()$
+           +args
+       }
+       class SSHMITMBaseModule {
+           +entry_point_prefix = "sshmitm"
+       }
+       class BaseForwarder {
+           +session
+       }
+       class ExecForwarder {
+           +handle_client_data(data)
+           +handle_server_data(data)
+           +handle_error(data)
+           +close_session(channel)
+       }
+       class SCPBaseForwarder {
+           +rewrite_scp_command(command)
+           +register_exec_handler()$
+       }
+       class SCPForwarder
+       class NetconfBaseForwarder
+       class NetconfForwarder
+       class SSHBaseForwarder {
+           +handle_client_data(data)
+           +handle_server_data(data)
+           +handle_server_error(data)
+       }
+       class SSHForwarder
+       class SSHMirrorForwarder
+       class SFTPHandlerBasePlugin {
+           +handle_data(data, offset, length)
+           +close()
+       }
+       class SFTPHandlerPlugin
+       class BaseSFTPServerInterface
+       class SFTPProxyServerInterface
+       class LocalPortForwardingBaseForwarder {
+           +setup(session)$
+       }
+       class LocalPortForwardingForwarder
+       class SOCKSTunnelForwarder
+       class RemotePortForwardingBaseForwarder
+       class RemotePortForwardingForwarder
+       class InjectableRemotePortForwardingForwarder
+       class Authenticator {
+           +get_auth_methods()
+           +authenticate()
+       }
+       class AuthenticatorPassThrough
+       class AuthenticatorRemote
+       class BaseServerInterface
+       class ServerInterface
+       class BaseSession
+       class Session
+       class MoshForwarder
+
+       BaseModule <|-- SSHMITMBaseModule
+       SSHMITMBaseModule <|-- BaseForwarder
+       BaseForwarder <|-- ExecForwarder
+       BaseForwarder <|-- SSHBaseForwarder
+       ExecForwarder <|-- SCPBaseForwarder
+       SCPBaseForwarder <|-- SCPForwarder
+       ExecForwarder <|-- NetconfBaseForwarder
+       NetconfBaseForwarder <|-- NetconfForwarder
+       ExecForwarder <|-- MoshForwarder
+       SSHBaseForwarder <|-- SSHForwarder
+       SSHForwarder <|-- SSHMirrorForwarder
+       SSHMITMBaseModule <|-- SFTPHandlerBasePlugin
+       SFTPHandlerBasePlugin <|-- SFTPHandlerPlugin
+       SSHMITMBaseModule <|-- BaseSFTPServerInterface
+       BaseSFTPServerInterface <|-- SFTPProxyServerInterface
+       SSHMITMBaseModule <|-- LocalPortForwardingBaseForwarder
+       LocalPortForwardingBaseForwarder <|-- LocalPortForwardingForwarder
+       LocalPortForwardingForwarder <|-- SOCKSTunnelForwarder
+       SSHMITMBaseModule <|-- RemotePortForwardingBaseForwarder
+       RemotePortForwardingBaseForwarder <|-- RemotePortForwardingForwarder
+       RemotePortForwardingForwarder <|-- InjectableRemotePortForwardingForwarder
+       SSHMITMBaseModule <|-- Authenticator
+       Authenticator <|-- AuthenticatorPassThrough
+       Authenticator <|-- AuthenticatorRemote
+       SSHMITMBaseModule <|-- BaseServerInterface
+       BaseServerInterface <|-- ServerInterface
+       SSHMITMBaseModule <|-- BaseSession
+       BaseSession <|-- Session
+
+
 Architecture Overview
 ---------------------
 
-All plugins inherit from ``BaseModule`` (``sshmitm.moduleparser.modules.BaseModule``).
-The base class provides:
+All plugins inherit from ``SSHMITMBaseModule``
+(``sshmitm.core.modules.SSHMITMBaseModule``), which itself extends ``BaseModule``
+from the module parser. The base class provides:
 
-- **Argument parsing** — ``parser_arguments()`` registers CLI flags; ``self.args``
-  exposes the parsed values at runtime.
+- **Argument parsing** — ``parser_arguments()`` registers CLI flags;
+  ``self.args`` exposes the parsed values at runtime.
 - **Entry-point discovery** — SSH-MITM finds plugins by scanning
   ``[project.entry-points."sshmitm.<BaseClassName>"]`` groups registered in
   ``pyproject.toml``.
+- **Configuration file support** — every CLI argument can alternatively be set
+  in an INI file; the section name is derived from the fully-qualified class name.
 - **Instantiation** — the server passes a ``Session`` (or equivalent context
   object) to each plugin's ``__init__``.
 
-A minimal plugin therefore looks like this:
+A minimal plugin looks like this:
 
 .. code-block:: python
 
@@ -59,36 +163,44 @@ The key (``my-plugin``) is the name used on the command line:
 
     ssh-mitm server --ssh-interface my-plugin
 
-After adding the entry point, reinstall your package (``pip install -e .``) so
-the entry point is registered.
+After adding the entry point, reinstall your package so the entry point is
+registered:
+
+.. code-block:: bash
+
+    $ pip install /path/to/your/plugin/
 
 The entry-point group must match the **base class name** of the plugin type you
 are extending:
 
 .. list-table::
    :header-rows: 1
-   :widths: 40 60
+   :widths: 45 55
 
    * - Entry-point group
      - Plugin type
    * - ``sshmitm.SSHBaseForwarder``
-     - SSH terminal session forwarder
+     - SSH terminal session forwarder (``--ssh-interface``)
    * - ``sshmitm.SCPBaseForwarder``
-     - SCP file-transfer forwarder
+     - SCP file-transfer forwarder (``--scp-interface``)
+   * - ``sshmitm.NetconfBaseForwarder``
+     - NETCONF subsystem forwarder (``--netconf-interface``)
    * - ``sshmitm.SFTPHandlerBasePlugin``
-     - SFTP file-transfer handler
+     - SFTP file-transfer handler (``--sftp-handler``)
    * - ``sshmitm.BaseSFTPServerInterface``
-     - SFTP server interface
+     - SFTP server interface (``--sftp-interface``)
    * - ``sshmitm.LocalPortForwardingBaseForwarder``
-     - Local port-forwarding handler
+     - Local port-forwarding handler — ``ssh -L`` (``--local-port-forwarder``)
    * - ``sshmitm.RemotePortForwardingBaseForwarder``
-     - Remote port-forwarding handler
+     - Remote port-forwarding handler — ``ssh -R`` (``--remote-port-forwarder``)
    * - ``sshmitm.Authenticator``
-     - Authentication handler
+     - Authentication handler (``--authenticator``)
    * - ``sshmitm.BaseServerInterface``
-     - SSH server interface
+     - SSH server interface (``--auth-interface``)
    * - ``sshmitm.BaseSession``
-     - Session handler
+     - Session handler (``--session-class``)
+   * - ``sshmitm.ExecHandler``
+     - Exec command handler (e.g. Mosh); registered via ``SCPBaseForwarder``
 
 
 Plugin Types
@@ -101,26 +213,39 @@ SSH Forwarder Plugins
 
 **CLI argument:** ``--ssh-interface``
 
+**Entry-point group:** ``sshmitm.SSHBaseForwarder``
+
 SSH forwarder plugins intercept the interactive terminal session between the
-SSH client and the remote server. Override the stream methods to read or
-modify the data in-flight.
+SSH client and the remote server. Override the stream hooks to read or modify
+data in-flight.
+
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class SSHBaseForwarder["SSHBaseForwarder\n«base»"]
+       class SSHForwarder["SSHForwarder\n«default»"]
+       class SSHMirrorForwarder["SSHMirrorForwarder\n«built-in plugin»"]
+
+       SSHBaseForwarder <|-- SSHForwarder
+       SSHForwarder <|-- SSHMirrorForwarder
 
 .. list-table::
    :header-rows: 1
-   :widths: 30 70
+   :widths: 45 55
 
    * - Method
      - Purpose
-   * - ``stdin(text: bytes) -> bytes``
+   * - ``handle_client_data(data: bytes) -> bytes``
      - Data typed by the user (client → server). Return the bytes to forward.
-   * - ``stdout(text: bytes) -> bytes``
+   * - ``handle_server_data(data: bytes) -> bytes``
      - Output from the remote server (server → client). Return the bytes to forward.
-   * - ``stderr(text: bytes) -> bytes``
+   * - ``handle_server_error(data: bytes) -> bytes``
      - Error output from the remote server. Return the bytes to forward.
    * - ``close_session(channel)``
      - Called when the session closes. Clean up resources here.
 
-**Example — log all terminal output:**
+**Example — log all terminal output to a file:**
 
 .. code-block:: python
 
@@ -143,9 +268,9 @@ modify the data in-flight.
             super().__init__(session)
             self._log = open(self.args.log_file, "ab")  # noqa: SIM115
 
-        def stdout(self, text: bytes) -> bytes:
-            self._log.write(text)
-            return text
+        def handle_server_data(self, data: bytes) -> bytes:
+            self._log.write(data)
+            return data
 
         def close_session(self, channel) -> None:
             super().close_session(channel)
@@ -172,25 +297,48 @@ SCP Forwarder Plugins
 
 **CLI argument:** ``--scp-interface``
 
+**Entry-point group:** ``sshmitm.SCPBaseForwarder``
+
 SCP forwarder plugins intercept Secure Copy (SCP) file transfers. The SCP
 protocol wraps file metadata and content in a simple byte stream; the base
 class parses it and exposes higher-level hooks.
 
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class ExecForwarder["ExecForwarder"]
+       class SCPBaseForwarder["SCPBaseForwarder\n«base»"]
+       class SCPForwarder["SCPForwarder\n«default»"]
+       class SCPDebugForwarder["SCPDebugForwarder\n«built-in»"]
+       class SCPInjectFile["SCPInjectFile\n«built-in»"]
+       class SCPReplaceFile["SCPReplaceFile\n«built-in»"]
+       class SCPStorageForwarder["SCPStorageForwarder\n«built-in»"]
+       class SCPRewriteCommand["SCPRewriteCommand\n«built-in»"]
+       class CVE202229154["CVE202229154\n«built-in»"]
+
+       ExecForwarder <|-- SCPBaseForwarder
+       SCPBaseForwarder <|-- SCPForwarder
+       SCPForwarder <|-- SCPDebugForwarder
+       SCPForwarder <|-- SCPInjectFile
+       SCPForwarder <|-- SCPReplaceFile
+       SCPForwarder <|-- SCPStorageForwarder
+       SCPForwarder <|-- SCPRewriteCommand
+       SCPForwarder <|-- CVE202229154
+
 .. list-table::
    :header-rows: 1
-   :widths: 35 65
+   :widths: 45 55
 
    * - Method
      - Purpose
-   * - ``handle_traffic(traffic: bytes, isclient: bool) -> bytes``
-     - Raw bytes in either direction. ``isclient=True`` means client → server.
-   * - ``handle_command(traffic: bytes) -> bytes``
-     - Called for SCP control commands (file name, size, permissions).
-   * - ``process_data(traffic: bytes) -> bytes``
-     - Called for the actual file content bytes.
+   * - ``handle_client_data(data: bytes) -> bytes``
+     - Raw bytes from the client (client → server). Return the bytes to forward.
+   * - ``handle_server_data(data: bytes) -> bytes``
+     - Raw bytes from the server (server → client). Return the bytes to forward.
    * - ``rewrite_scp_command(command: str) -> str``
      - Modify the SCP shell command before it is executed on the server.
-   * - ``handle_error(traffic: bytes) -> bytes``
+   * - ``handle_error(data: bytes) -> bytes``
      - Called when the remote side sends an error response.
 
 Useful attributes set by the base class after the first control command:
@@ -210,11 +358,15 @@ Useful attributes set by the base class after the first control command:
     class SCPDebugForwarder(SCPForwarder):
         """Prints SCP traffic as a hexdump"""
 
-        def handle_traffic(self, traffic: bytes, isclient: bool) -> bytes:
-            direction = "client → server" if isclient else "server → client"
-            print(f"[SCP] {direction}:")
-            print(format_hex(traffic))
-            return traffic
+        def handle_client_data(self, data: bytes) -> bytes:
+            print("[SCP] client → server:")
+            print(format_hex(data))
+            return super().handle_client_data(data)
+
+        def handle_server_data(self, data: bytes) -> bytes:
+            print("[SCP] server → client:")
+            print(format_hex(data))
+            return super().handle_server_data(data)
 
 **Registration:**
 
@@ -230,6 +382,82 @@ Useful attributes set by the base class after the first control command:
     ssh-mitm server --scp-interface debug
 
 
+Netconf Forwarder Plugins
+^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Base class:** ``sshmitm.forwarders.netconf.NetconfForwarder``
+
+**CLI argument:** ``--netconf-interface``
+
+**Entry-point group:** ``sshmitm.NetconfBaseForwarder``
+
+NETCONF (RFC 6241) is an XML-based network management protocol that runs as an
+SSH subsystem (``ssh -s netconf``). It is widely used to configure routers,
+switches, and other network devices from vendors such as Cisco, Juniper, and
+Nokia.
+
+NETCONF forwarder plugins intercept the XML RPCs exchanged between the
+management client and the target network device. Override the stream hooks to
+inspect or modify the NETCONF messages in-flight.
+
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class ExecForwarder["ExecForwarder"]
+       class NetconfBaseForwarder["NetconfBaseForwarder\n«base»"]
+       class NetconfForwarder["NetconfForwarder\n«default»"]
+
+       ExecForwarder <|-- NetconfBaseForwarder
+       NetconfBaseForwarder <|-- NetconfForwarder
+
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Method
+     - Purpose
+   * - ``handle_client_data(data: bytes) -> bytes``
+     - NETCONF RPC from the client (client → device). Return the bytes to forward.
+   * - ``handle_server_data(data: bytes) -> bytes``
+     - NETCONF response from the device (device → client). Return the bytes to forward.
+   * - ``handle_error(data: bytes) -> bytes``
+     - Called when the remote side sends an error response.
+   * - ``close_session(channel)``
+     - Called when the NETCONF session closes.
+
+**Example — log all NETCONF RPC messages:**
+
+.. code-block:: python
+
+    import logging
+    from sshmitm.forwarders.netconf import NetconfForwarder
+
+    class LoggingNetconfForwarder(NetconfForwarder):
+        """Logs all NETCONF RPC traffic"""
+
+        def handle_client_data(self, data: bytes) -> bytes:
+            logging.info("[NETCONF] client→device: %s", data.decode(errors="replace"))
+            return super().handle_client_data(data)
+
+        def handle_server_data(self, data: bytes) -> bytes:
+            logging.info("[NETCONF] device→client: %s", data.decode(errors="replace"))
+            return super().handle_server_data(data)
+
+**Registration:**
+
+.. code-block:: toml
+
+    [project.entry-points."sshmitm.NetconfBaseForwarder"]
+    logging = "mypkg.netconf_log:LoggingNetconfForwarder"
+
+**Usage:**
+
+.. code-block:: bash
+
+    ssh-mitm server --netconf-interface logging
+
+
 SFTP Handler Plugins
 ^^^^^^^^^^^^^^^^^^^^
 
@@ -237,9 +465,26 @@ SFTP Handler Plugins
 
 **CLI argument:** ``--sftp-handler``
 
+**Entry-point group:** ``sshmitm.SFTPHandlerBasePlugin``
+
 SFTP handler plugins are instantiated **per file transfer**. The plugin
 receives every chunk of file data as it passes through and can inspect,
 modify, or store it.
+
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class SFTPHandlerBasePlugin["SFTPHandlerBasePlugin\n«base»"]
+       class SFTPHandlerPlugin["SFTPHandlerPlugin\n«default»"]
+       class SFTPHandlerStoragePlugin["SFTPHandlerStoragePlugin\n«built-in»"]
+       class SFTPProxyReplaceHandler["SFTPProxyReplaceHandler\n«built-in»"]
+       class SFTPHandlerCheckFilePlugin["SFTPHandlerCheckFilePlugin\n«built-in»"]
+
+       SFTPHandlerBasePlugin <|-- SFTPHandlerPlugin
+       SFTPHandlerPlugin <|-- SFTPHandlerStoragePlugin
+       SFTPHandlerPlugin <|-- SFTPProxyReplaceHandler
+       SFTPHandlerPlugin <|-- SFTPHandlerCheckFilePlugin
 
 .. list-table::
    :header-rows: 1
@@ -257,8 +502,8 @@ modify, or store it.
 
 The plugin's ``__init__`` receives:
 
-- ``sftp`` — the ``SFTPBaseHandle`` for the current file, which carries a
-  reference to the ``Session`` via ``sftp.session``.
+- ``sftp`` — the ``SFTPBaseHandle`` for the current file; ``sftp.session``
+  gives access to the active ``Session``.
 - ``filename`` — the remote file path being transferred.
 
 **Example — store every transferred file:**
@@ -344,11 +589,27 @@ Local Port Forwarding Plugins
 
 **Base class:** ``sshmitm.forwarders.tunnel.LocalPortForwardingForwarder``
 
-**CLI argument:** ``--tunnel-client-interface``
+**CLI argument:** ``--local-port-forwarder``
+
+**Entry-point group:** ``sshmitm.LocalPortForwardingBaseForwarder``
 
 Local port forwarding plugins handle connections that the SSH client opens
-towards the server (``ssh -L``). The plugin runs as a TCP server that accepts
-connections from the client side and decides where to forward them.
+towards the server (``ssh -L``). ``LocalPortForwardingForwarder`` uses multiple
+inheritance — it combines ``TunnelForwarder`` (a bidirectional threading
+forwarder) with the plugin base class.
+
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class TunnelForwarder["TunnelForwarder\n(threading.Thread)"]
+       class LocalPortForwardingBaseForwarder["LocalPortForwardingBaseForwarder\n«base»"]
+       class LocalPortForwardingForwarder["LocalPortForwardingForwarder\n«default»"]
+       class SOCKSTunnelForwarder["SOCKSTunnelForwarder\n«built-in plugin»"]
+
+       TunnelForwarder <|-- LocalPortForwardingForwarder
+       LocalPortForwardingBaseForwarder <|-- LocalPortForwardingForwarder
+       LocalPortForwardingForwarder <|-- SOCKSTunnelForwarder
 
 The most important hook is the class-level ``setup()`` method, which is called
 once when a session is established, before any connections arrive. Use it to
@@ -401,7 +662,7 @@ start background threads or TCP listeners.
 
 .. code-block:: bash
 
-    ssh-mitm server --tunnel-client-interface my-tunnel
+    ssh-mitm server --local-port-forwarder my-tunnel
 
 
 Remote Port Forwarding Plugins
@@ -409,11 +670,24 @@ Remote Port Forwarding Plugins
 
 **Base class:** ``sshmitm.forwarders.tunnel.RemotePortForwardingForwarder``
 
-**CLI argument:** ``--tunnel-server-interface``
+**CLI argument:** ``--remote-port-forwarder``
 
-Remote port forwarding plugins handle connections that the SSH server side
-opens back to the client (``ssh -R``). The structure mirrors the local
+**Entry-point group:** ``sshmitm.RemotePortForwardingBaseForwarder``
+
+Remote port forwarding plugins handle connections that the SSH server opens
+back towards the client (``ssh -R``). The structure mirrors the local
 forwarding plugin above.
+
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class RemotePortForwardingBaseForwarder["RemotePortForwardingBaseForwarder\n«base»"]
+       class RemotePortForwardingForwarder["RemotePortForwardingForwarder\n«default»"]
+       class InjectableRemotePortForwardingForwarder["InjectableRemotePortForwardingForwarder\n«built-in plugin»"]
+
+       RemotePortForwardingBaseForwarder <|-- RemotePortForwardingForwarder
+       RemotePortForwardingForwarder <|-- InjectableRemotePortForwardingForwarder
 
 **Registration:**
 
@@ -421,6 +695,12 @@ forwarding plugin above.
 
     [project.entry-points."sshmitm.RemotePortForwardingBaseForwarder"]
     my-remote = "mypkg.remote_tunnel:MyRemoteTunnelPlugin"
+
+**Usage:**
+
+.. code-block:: bash
+
+    ssh-mitm server --remote-port-forwarder my-remote
 
 
 Authenticator Plugins
@@ -430,12 +710,25 @@ Authenticator Plugins
 
 **CLI argument:** ``--authenticator``
 
+**Entry-point group:** ``sshmitm.Authenticator``
+
 Authenticator plugins control how SSH-MITM validates client credentials and
 how it connects to the upstream server. The default implementation performs a
 transparent pass-through: it replays the client's credentials against the real
 server and accepts if the server accepts.
 
-Key attributes available in the ``__init__`` (after calling ``super().__init__``):
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class Authenticator["Authenticator\n«base»"]
+       class AuthenticatorPassThrough["AuthenticatorPassThrough\n«default»"]
+       class AuthenticatorRemote["AuthenticatorRemote\n«built-in»"]
+
+       Authenticator <|-- AuthenticatorPassThrough
+       Authenticator <|-- AuthenticatorRemote
+
+Key attributes available in ``__init__`` (after calling ``super().__init__``):
 
 - ``self.session`` — the current ``Session`` instance.
 - ``self.REQUEST_AGENT_BREAKIN`` — set to ``True`` to request SSH agent
@@ -493,11 +786,22 @@ Server Interface Plugins
 
 **Base class:** ``sshmitm.interfaces.server.ServerInterface``
 
-**CLI argument:** ``--server-interface``
+**CLI argument:** ``--auth-interface``
+
+**Entry-point group:** ``sshmitm.BaseServerInterface``
 
 The server interface is the Paramiko ``ServerInterface`` that SSH-MITM
 presents to connecting clients. Override its methods to change which channel
-types and requests are accepted.
+types and authentication methods are accepted.
+
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class BaseServerInterface["BaseServerInterface\n«base»"]
+       class ServerInterface["ServerInterface\n«default»"]
+
+       BaseServerInterface <|-- ServerInterface
 
 Common methods to override:
 
@@ -527,7 +831,7 @@ Common methods to override:
 
 .. code-block:: bash
 
-    ssh-mitm server --server-interface my-interface
+    ssh-mitm server --auth-interface my-interface
 
 
 Session Plugins
@@ -537,14 +841,25 @@ Session Plugins
 
 **CLI argument:** ``--session-class``
 
+**Entry-point group:** ``sshmitm.BaseSession``
+
 Session plugins wrap the entire lifecycle of a single SSH connection. Subclass
 ``Session`` to add state or hooks that span all the other plugin types for a
 given connection.
 
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class BaseSession["BaseSession\n«base»"]
+       class Session["Session\n«default»"]
+
+       BaseSession <|-- Session
+
 Because the ``Session`` class is large, it is usually better to hook into the
 more targeted plugin types above. Only use a custom session class when you
-need to track state across multiple sub-protocols (SSH + SFTP + SCP) at the
-same time.
+need to track state across multiple sub-protocols (SSH + SFTP + SCP)
+simultaneously.
 
 **Registration:**
 
@@ -552,6 +867,49 @@ same time.
 
     [project.entry-points."sshmitm.BaseSession"]
     my-session = "mypkg.session:MySession"
+
+**Usage:**
+
+.. code-block:: bash
+
+    ssh-mitm server --session-class my-session
+
+
+Exec Handler Plugins
+^^^^^^^^^^^^^^^^^^^^
+
+**Entry-point group:** ``sshmitm.ExecHandler``
+
+Exec handlers extend ``ExecForwarder`` directly and are dispatched for
+specific SSH exec commands. SSH-MITM matches the command byte prefix against
+registered handlers via ``SCPBaseForwarder.register_exec_handler()``.
+
+The built-in example is ``MoshForwarder``, which intercepts Mosh server launch
+commands:
+
+.. code-block:: python
+
+    from sshmitm.forwarders.exec import ExecForwarder
+    from sshmitm.forwarders.scp import SCPBaseForwarder
+
+    class MyExecHandler(ExecForwarder):
+
+        def handle_client_data(self, data: bytes) -> bytes:
+            # inspect or modify data sent to the exec'd process
+            return data
+
+        def handle_server_data(self, data: bytes) -> bytes:
+            # inspect or modify output from the exec'd process
+            return data
+
+    SCPBaseForwarder.register_exec_handler(b"my-command", MyExecHandler)
+
+**Registration:**
+
+.. code-block:: toml
+
+    [project.entry-points."sshmitm.ExecHandler"]
+    my-handler = "mypkg.exec_handler:MyExecHandler"
 
 
 Adding CLI Arguments
@@ -564,7 +922,7 @@ Every plugin can expose its own command-line flags by implementing the
 
     @classmethod
     def parser_arguments(cls) -> None:
-        group = cls.argument_group()                    # argument group named after the class
+        group = cls.argument_group()        # argument group named after the class
         group.add_argument(
             "--my-flag",
             dest="my_flag",
