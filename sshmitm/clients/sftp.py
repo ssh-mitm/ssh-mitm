@@ -331,6 +331,6 @@ class SFTPClient(SSHClient):
             return paramiko.sftp.SFTP_FAILURE
         if not self.running:
             self._sftp.close()
-            if self.session.sftp_channel is not None:
-                self.session.sftp_channel.close()
+            if self.session.sftp.channel is not None:
+                self.session.sftp.channel.close()
         return paramiko.sftp.SFTP_OK

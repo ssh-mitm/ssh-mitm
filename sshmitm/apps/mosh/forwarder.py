@@ -21,7 +21,7 @@ class MoshForwarder(ExecForwarder):
 
     @property
     def _forwarded_command(self) -> bytes:
-        return self.session.scp_command
+        return self.session.scp.command
 
     def handle_client_data(self, traffic: bytes) -> bytes:
         return handle_mosh(self.session, traffic, True)
@@ -30,7 +30,7 @@ class MoshForwarder(ExecForwarder):
         return handle_mosh(self.session, traffic, False)
 
     def forward(self) -> None:
-        self.server_channel.exec_command(self.session.scp_command)  # nosec
+        self.server_channel.exec_command(self.session.scp.command)  # nosec
         while not self._closed(self.server_channel):
             time.sleep(1)
         self._run_traffic_loop()

@@ -41,10 +41,10 @@ class SSHForwarder(SSHBaseForwarder):
         time.sleep(0.1)
 
         # store the remote channel to the ssh server in the current session
-        self.session.ssh_remote_channel = self.server_channel
+        self.session.ssh.remote_channel = self.server_channel
 
-        if self.session.ssh_pty_kwargs:
-            self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
+        if self.session.ssh.pty_kwargs:
+            self.server_channel.get_pty(**self.session.ssh.pty_kwargs)
         self.server_channel.invoke_shell()
 
         try:

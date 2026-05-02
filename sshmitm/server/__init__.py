@@ -376,13 +376,13 @@ class SSHProxyServer:
                 if session.start():
                     while session.running:
                         time.sleep(0.1)
-                        if session.ssh_requested and self.ssh_interface:
-                            session.ssh_requested = False
+                        if session.ssh.requested and self.ssh_interface:
+                            session.ssh.requested = False
                             self.ssh_interface(session).forward()
-                        elif session.scp_requested and self.scp_interface:
-                            session.scp_requested = False
+                        elif session.scp.requested and self.scp_interface:
+                            session.scp.requested = False
                             handler_entry = SCPBaseForwarder.get_exec_handler(
-                                session.scp_command
+                                session.scp.command
                             )
                             interface_class = (
                                 handler_entry.handler
@@ -392,8 +392,8 @@ class SSHProxyServer:
                             scp_interface = interface_class(session)
                             thread = threading.Thread(target=scp_interface.forward)
                             thread.start()
-                        elif session.netconf_requested and self.netconf_interface:
-                            session.netconf_requested = False
+                        elif session.netconf.requested and self.netconf_interface:
+                            session.netconf.requested = False
                             netconf_interface = self.netconf_interface(session)
                             thread = threading.Thread(target=netconf_interface.forward)
                             thread.start()

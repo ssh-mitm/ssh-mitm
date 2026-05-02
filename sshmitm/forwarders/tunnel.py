@@ -119,10 +119,10 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
             self.origin,
             self.destination,
         )
-        if self.session.ssh_client is None or self.session.ssh_client.transport is None:
+        if self.session.ssh.client is None or self.session.ssh.client.transport is None:
             msg = "No SSH client!"
             raise ValueError(msg)
-        remote_ch = self.session.ssh_client.transport.open_channel(
+        remote_ch = self.session.ssh.client.transport.open_channel(
             "direct-tcpip", self.destination, self.origin
         )
         super().__init__(None, remote_ch)

@@ -378,8 +378,8 @@ class Authenticator(SSHMITMBaseModule):
                 username=self.args.auth_username or username,
                 password=self.args.auth_password or password,
                 key=key,
-                host=self.args.remote_host or self.session.socket_remote_address[0],
-                port=self.args.remote_port or self.session.socket_remote_address[1],
+                host=self.args.remote_host or self.session.remote.socket_address[0],
+                port=self.args.remote_port or self.session.remote.socket_address[1],
             )
         return RemoteCredentials(
             username=self.args.auth_username or username,
@@ -419,49 +419,49 @@ class Authenticator(SSHMITMBaseModule):
         :return: integer representing authentication success or failure.
         """
         if store_credentials:
-            self.session.username_provided = username
-            self.session.password_provided = password
+            self.session.auth.username_provided = username
+            self.session.auth.password_provided = password
         if username:
             remote_credentials: RemoteCredentials = self.get_remote_host_credentials(
                 username, password, key
             )
-            self.session.username = remote_credentials.username
-            self.session.password = remote_credentials.password
-            self.session.remote_key = remote_credentials.key
-            self.session.remote_address = (
+            self.session.auth.username = remote_credentials.username
+            self.session.auth.password = remote_credentials.password
+            self.session.auth.remote_key = remote_credentials.key
+            self.session.remote.address = (
                 remote_credentials.host,
                 remote_credentials.port,
             )
-        if key and not self.session.remote_key:
-            self.session.remote_key = key
+        if key and not self.session.auth.remote_key:
+            self.session.auth.remote_key = key
 
         if (
-            self.session.remote_address[0] is None
-            or self.session.remote_address[1] is None
+            self.session.remote.address[0] is None
+            or self.session.remote.address[1] is None
         ):
             logging.error("no remote host")
             return paramiko.common.AUTH_FAILED
 
         try:
-            if self.session.agent:
+            if self.session.auth.agent:
                 return self.auth_agent(
-                    self.session.username,
-                    self.session.remote_address[0],
-                    self.session.remote_address[1],
+                    self.session.auth.username,
+                    self.session.remote.address[0],
+                    self.session.remote.address[1],
                 )
-            if self.session.password:
+            if self.session.auth.password:
                 return self.auth_password(
-                    self.session.username,
-                    self.session.remote_address[0],
-                    self.session.remote_address[1],
-                    self.session.password,
+                    self.session.auth.username,
+                    self.session.remote.address[0],
+                    self.session.remote.address[1],
+                    self.session.auth.password,
                 )
-            if self.session.remote_key:
+            if self.session.auth.remote_key:
                 return self.auth_publickey(
-                    self.session.username,
-                    self.session.remote_address[0],
-                    self.session.remote_address[1],
-                    self.session.remote_key,
+                    self.session.auth.username,
+                    self.session.remote.address[0],
+                    self.session.remote.address[1],
+                    self.session.auth.remote_key,
                 )
         except MissingHostException:
             logging.error("no remote host")
@@ -499,7 +499,7 @@ class Authenticator(SSHMITMBaseModule):
         If authentication against the honeypot fails, it logs an error message.
         """
         if not self.args.fallback_host:
-            if self.session.agent:
+            if self.session.auth.agent:
                 logging.error(
                     "\n".join(
                         [
@@ -579,8 +579,8 @@ class Authenticator(SSHMITMBaseModule):
             raise MissingHostException
 
         auth_status = paramiko.common.AUTH_FAILED
-        with self.session.ssh_client_created:
-            self.session.ssh_client = SSHClient(
+        with self.session.ssh.client_created:
+            self.session.ssh.client = SSHClient(
                 host,
                 port,
                 method,
@@ -594,8 +594,8 @@ class Authenticator(SSHMITMBaseModule):
             self.pre_auth_action()
             try:
                 if (
-                    self.session.ssh_client is not None
-                    and self.session.ssh_client.connect()
+                    self.session.ssh.client is not None
+                    and self.session.ssh.client.connect()
                 ):
                     auth_status = paramiko.common.AUTH_SUCCESSFUL
             except paramiko.SSHException:
@@ -607,8 +607,8 @@ class Authenticator(SSHMITMBaseModule):
                 return paramiko.common.AUTH_FAILED
             if run_post_auth:
                 self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
-            self.session.ssh_client_auth_finished = True
-            self.session.ssh_client_created.notify_all()
+            self.session.ssh.client_auth_finished = True
+            self.session.ssh.client_created.notify_all()
         return auth_status
 
     def pre_auth_action(self) -> None:
@@ -768,10 +768,10 @@ class AuthenticatorPassThrough(Authenticator):
             pubkeyfile_path = None
 
             keys_parsed: list[SSHPubKey] = []
-            if self.session.agent is None:
+            if self.session.auth.agent is None:
                 return keys_parsed
 
-            keys = self.session.agent.get_keys()
+            keys = self.session.auth.agent.get_keys()
             keys_parsed.extend(SSHPubKey(key) for key in keys)
 
             if self.session.session_log_dir:
@@ -805,36 +805,36 @@ class AuthenticatorPassThrough(Authenticator):
         else:
             logmessage.append(Colors.stylize("Remote authentication failed", fg("red")))
 
-        if self.session.ssh_client is not None:
+        if self.session.ssh.client is not None:
             logmessage.append(
-                f"\tRemote Address: {self.session.ssh_client.host}:{self.session.ssh_client.port}"
+                f"\tRemote Address: {self.session.ssh.client.host}:{self.session.ssh.client.port}"
             )
-            logmessage.append(f"\tUsername: {self.session.username_provided}")
+            logmessage.append(f"\tUsername: {self.session.auth.username_provided}")
 
-        if self.session.password_provided:
+        if self.session.auth.password_provided:
             display_password = None
             if not self.args.auth_hide_credentials:
-                display_password = self.session.password_provided
+                display_password = self.session.auth.password_provided
             logmessage.append(
                 f"\tPassword: {display_password or Colors.stylize('*******', fg('dark_gray'))}"
             )
 
         if (
-            self.session.accepted_key is not None
-            and self.session.remote_key != self.session.accepted_key
+            self.session.auth.accepted_key is not None
+            and self.session.auth.remote_key != self.session.auth.accepted_key
         ):
             logmessage.append(
                 "\tAccepted-Publickey: "
-                f"{self.session.accepted_key.get_name()} {self.session.accepted_key.fingerprint} {self.session.accepted_key.get_bits()}bits"
+                f"{self.session.auth.accepted_key.get_name()} {self.session.auth.accepted_key.fingerprint} {self.session.auth.accepted_key.get_bits()}bits"
             )
 
-        if self.session.remote_key is not None:
+        if self.session.auth.remote_key is not None:
             logmessage.append(
-                f"\tRemote-Publickey: {self.session.remote_key.get_name()} {self.session.remote_key.fingerprint} {self.session.remote_key.get_bits()}bits"
+                f"\tRemote-Publickey: {self.session.auth.remote_key.get_name()} {self.session.auth.remote_key.fingerprint} {self.session.auth.remote_key.get_bits()}bits"
             )
 
         ssh_keys = None
-        if self.session.agent:
+        if self.session.auth.agent:
             ssh_keys = get_agent_pubkeys()
 
         logmessage.append(

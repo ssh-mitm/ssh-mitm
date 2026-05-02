@@ -27,6 +27,7 @@ import logging
 import os
 import socket
 import threading
+from dataclasses import dataclass, field
 from threading import Condition
 from types import TracebackType
 from typing import TYPE_CHECKING, Any, Self, cast
@@ -51,6 +52,56 @@ if TYPE_CHECKING:
     from sshmitm.forwarders.agent import AgentLocalSocket, AgentProxy
     from sshmitm.interfaces.server import BaseServerInterface
     from sshmitm.server import SSHProxyServer  # noqa: F401
+
+
+@dataclass
+class SSHState:
+    requested: bool = False
+    client: "sshmitm.clients.ssh.SSHClient | None" = field(default=None)
+    client_auth_finished: bool = False
+    client_created: Condition = field(default_factory=Condition)
+    pty_kwargs: dict[str, Any] | None = None
+    remote_channel: paramiko.Channel | None = None
+
+
+@dataclass
+class SCPState:
+    requested: bool = False
+    command: bytes = b""
+
+
+@dataclass
+class SFTPState:
+    requested: bool = False
+    channel: paramiko.Channel | None = None
+    client: "sshmitm.clients.sftp.SFTPClient | None" = field(default=None)
+    client_ready: threading.Event = field(default_factory=threading.Event)
+
+
+@dataclass
+class NetconfState:
+    requested: bool = False
+    command: bytes = b""
+    client: "sshmitm.clients.netconf.NetconfClient | None" = field(default=None)
+    client_ready: threading.Event = field(default_factory=threading.Event)
+
+
+@dataclass
+class AuthState:
+    username: str = ""
+    username_provided: str | None = None
+    password: str | None = None
+    password_provided: str | None = None
+    remote_key: "PKey | None" = field(default=None)
+    accepted_key: "PKey | None" = field(default=None)
+    agent: "AgentProxy | None" = field(default=None)
+
+
+@dataclass
+class RemoteState:
+    socket_address: "tuple[str, int] | tuple[str, int, int, int]"
+    address: tuple[str | None, int | None] = field(default_factory=lambda: (None, None))
+    address_reachable: bool = True
 
 
 class BaseSession(SSHMITMBaseModule):
@@ -126,43 +177,13 @@ class Session(BaseSession):
 
         self.agent_requested: threading.Event = threading.Event()
 
-        # SSH shell / command state
-        self.ssh_requested: bool = False
-        # ssh_channel → property backed by _active_channels["ssh"]
-        self.ssh_client: sshmitm.clients.ssh.SSHClient | None = None
-        self.ssh_client_auth_finished: bool = False
-        self.ssh_client_created: Condition = Condition()
-        self.ssh_pty_kwargs: dict[str, Any] | None = None
-        self.ssh_remote_channel: paramiko.Channel | None = None
+        self.ssh = SSHState()
+        self.scp = SCPState()
+        self.sftp = SFTPState()
+        self.netconf = NetconfState()
 
-        # SCP / exec state
-        self.scp_requested: bool = False
-        # scp_channel → property backed by _active_channels["scp"]
-        self.scp_command: bytes = b""
-
-        # NETCONF state
-        self.netconf_requested: bool = False
-        # netconf_channel → property backed by _active_channels["netconf"]
-        self.netconf_command: bytes = b""
-        self.netconf_client: sshmitm.clients.netconf.NetconfClient | None = None
-        self.netconf_client_ready = threading.Event()
-
-        # SFTP state
-        self.sftp_requested: bool = False
-        self.sftp_channel: paramiko.Channel | None = None
-        self.sftp_client: sshmitm.clients.sftp.SFTPClient | None = None
-        self.sftp_client_ready = threading.Event()
-
-        self.username: str = ""
-        self.username_provided: str | None = None
-        self.password: str | None = None
-        self.password_provided: str | None = None
-        self.socket_remote_address = remoteaddr
-        self.remote_address: tuple[str | None, int | None] = (None, None)
-        self.remote_address_reachable: bool = True
-        self.remote_key: PKey | None = None
-        self.accepted_key: PKey | None = None
-        self.agent: AgentProxy | None = None
+        self.auth = AuthState()
+        self.remote = RemoteState(socket_address=remoteaddr)
         self.authenticator: sshmitm.authentication.Authenticator = authenticator(self)
 
         self.env_requests: dict[bytes, bytes] = {}
@@ -252,7 +273,7 @@ class Session(BaseSession):
 
     def _request_agent(self) -> bool:
         requested_agent = None
-        if self.agent is None or self.authenticator.REQUEST_AGENT_BREAKIN:
+        if self.auth.agent is None or self.authenticator.REQUEST_AGENT_BREAKIN:
             try:
                 if (
                     self.agent_requested.wait(1)
@@ -273,8 +294,8 @@ class Session(BaseSession):
                     Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
                 )
                 return False
-        self.agent = requested_agent or self.agent
-        return self.agent is not None
+        self.auth.agent = requested_agent or self.auth.agent
+        return self.auth.agent is not None
 
     def _expose_agent_socket(self, agent: "AgentProxy") -> None:
         agent.local_socket = self.proxyserver.create_agent_local_socket(self.transport)
@@ -305,18 +326,18 @@ class Session(BaseSession):
         self._request_agent()
 
         # create client or master channel
-        if self.ssh_client:
-            self.sftp_client_ready.set()
-            self.netconf_client_ready.set()
+        if self.ssh.client:
+            self.sftp.client_ready.set()
+            self.netconf.client_ready.set()
             return True
 
         # Connect method start
-        if not self.agent:
-            if self.username_provided is None:
+        if not self.auth.agent:
+            if self.auth.username_provided is None:
                 logging.error("No username provided during login!")
                 return False
             return (
-                self.authenticator.auth_fallback(self.username_provided)
+                self.authenticator.auth_fallback(self.auth.username_provided)
                 == paramiko.common.AUTH_SUCCESSFUL
             )
 
@@ -324,11 +345,11 @@ class Session(BaseSession):
             self.authenticator.authenticate(store_credentials=False)
             != paramiko.common.AUTH_SUCCESSFUL
         ):
-            if self.username_provided is None:
+            if self.auth.username_provided is None:
                 logging.error("No username provided during login!")
                 return False
             if (
-                self.authenticator.auth_fallback(self.username_provided)
+                self.authenticator.auth_fallback(self.auth.username_provided)
                 == paramiko.common.AUTH_SUCCESSFUL
             ):
                 return True
@@ -337,16 +358,16 @@ class Session(BaseSession):
 
         # Connect method end
         if (
-            not self.scp_requested
-            and not self.ssh_requested
-            and not self.sftp_requested
-            and not self.netconf_requested
+            not self.scp.requested
+            and not self.ssh.requested
+            and not self.sftp.requested
+            and not self.netconf.requested
         ) and self.transport.is_active():
             self.transport.close()
             return False
 
-        self.sftp_client_ready.set()
-        self.netconf_client_ready.set()
+        self.sftp.client_ready.set()
+        self.netconf.client_ready.set()
         return True
 
     def start(self) -> bool:
@@ -396,13 +417,13 @@ class Session(BaseSession):
         """
         Close the session and release the underlying resources.
         """
-        if self.agent:
-            self.agent.close()
+        if self.auth.agent:
+            self.auth.agent.close()
             logging.debug("(%s) session agent cleaned up", self)
-        if self.ssh_client:
+        if self.ssh.client:
             logging.debug("(%s) closing ssh client to remote", self)
-            if self.ssh_client.transport:
-                self.ssh_client.transport.close()
+            if self.ssh.client.transport:
+                self.ssh.client.transport.close()
             # With graceful exit the completion_event can be polled to wait, well ..., for completion
             # it can also only be a graceful exit if the ssh client has already been established
             if self.transport.completion_event is not None and (

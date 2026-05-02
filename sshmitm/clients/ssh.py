@@ -87,7 +87,7 @@ class SSHClient(BaseSSHClient):
         self.method: AuthenticationMethod = method
         self.user: str = user
         self.password: str | None = password
-        self.agent: AgentProxy | None = self.session.agent
+        self.agent: AgentProxy | None = self.session.auth.agent
         self.key: PKey | None = key
         self.transport: paramiko.Transport | None = None
         self.connected: bool = False

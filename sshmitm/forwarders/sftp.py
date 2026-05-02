@@ -93,10 +93,10 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
             # O_RDONLY (== 0)
             fstr = "rb"
 
-        if self.session.sftp_client is None:
+        if self.session.sftp.client is None:
             logging.error("%s - no sftp client", self.session)
             return paramiko.sftp.SFTP_FAILURE
-        self.remote_file = self.session.sftp_client.open(self.filename, fstr)
+        self.remote_file = self.session.sftp.client.open(self.filename, fstr)
 
         # writeonly
         if fstr in ("wb", "ab"):

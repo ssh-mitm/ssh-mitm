@@ -21,14 +21,14 @@ class BaseForwarder(SSHMITMBaseModule):
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__()
-        if session.ssh_client is None or session.ssh_client.transport is None:
+        if session.ssh.client is None or session.ssh.client.transport is None:
             msg = "session.ssh_client is None"
             raise MissingClient(msg)
         self.server_channel: paramiko.Channel = (
-            session.ssh_client.transport.open_session()
+            session.ssh.client.transport.open_session()
         )
-        if session.agent is not None:
-            session.agent.forward_agent(self.server_channel)
+        if session.auth.agent is not None:
+            session.auth.agent.forward_agent(self.server_channel)
         self.session: Session = session
         self.session.register_session_thread()
 

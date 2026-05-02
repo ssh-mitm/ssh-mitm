@@ -41,7 +41,7 @@ class ClientTunnelHandler:
         client: socket.socket | paramiko.Channel,
         addr: tuple[str, int] | None,
     ) -> None:
-        if self.session.ssh_client is None or self.session.ssh_client.transport is None:
+        if self.session.ssh.client is None or self.session.ssh.client.transport is None:
             return
         destination: tuple[str, int] | None = None
         socksconnection: Socks4Server | Socks5Server | None = None
@@ -68,7 +68,7 @@ class ClientTunnelHandler:
             logging.debug(
                 "Injecting direct-tcpip channel (%s -> %s) to client", addr, destination
             )
-            remote_ch = self.session.ssh_client.transport.open_channel(
+            remote_ch = self.session.ssh.client.transport.open_channel(
                 "direct-tcpip", destination, addr
             )
             TunnelForwarder(client, remote_ch)

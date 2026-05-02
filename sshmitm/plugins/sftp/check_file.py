@@ -79,9 +79,9 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
                 "open from check_file with: path=%s flags=%s attr=%s", path, flags, attr
             )
             try:
-                self.session.sftp_client_ready.wait()
-                if self.session.sftp_client is None:
-                    msg = "self.session.sftp_client is None!"
+                self.session.sftp.client_ready.wait()
+                if self.session.sftp.client is None:
+                    msg = "self.session.sftp.client is None!"
                     raise MissingClient(msg)
 
                 sftp_handler = self.session.proxyserver.sftp_handler
@@ -92,7 +92,7 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
 
                 if not flags & (os.O_WRONLY | os.O_RDWR):
                     # Download: load remote file into buffer and check before serving
-                    remote_file = self.session.sftp_client.open(path, "rb")
+                    remote_file = self.session.sftp.client.open(path, "rb")
                     fobj.buffer = io.BytesIO(remote_file.read())
                     remote_file.close()
                     fobj.readfile = fobj.buffer

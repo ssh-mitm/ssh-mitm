@@ -74,7 +74,7 @@ class SCPBaseForwarder(ExecForwarder):
 
     @property
     def _forwarded_command(self) -> bytes:
-        return self.session.scp_command
+        return self.session.scp.command
 
     def rewrite_scp_command(self, command: str) -> str:
         logging.info("got remote command: %s", command)
@@ -82,25 +82,25 @@ class SCPBaseForwarder(ExecForwarder):
 
     def forward(self) -> None:
         # pylint: disable=protected-access
-        if self.session.ssh_pty_kwargs is not None:
-            self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
+        if self.session.ssh.pty_kwargs is not None:
+            self.server_channel.get_pty(**self.session.ssh.pty_kwargs)
 
-        self.session.scp_command = self.rewrite_scp_command(
-            self.session.scp_command.decode("utf8")
+        self.session.scp.command = self.rewrite_scp_command(
+            self.session.scp.command.decode("utf8")
         ).encode()
-        self.server_channel.exec_command(self.session.scp_command)  # nosec
+        self.server_channel.exec_command(self.session.scp.command)  # nosec
 
         # Wait for SCP remote to remote auth, command exec and copy to finish
-        if self.session.scp_command.decode("utf8").startswith("scp") and (
-            self.session.scp_command.find(b" -t ") == -1
-            and self.session.scp_command.find(b" -f ") == -1
+        if self.session.scp.command.decode("utf8").startswith("scp") and (
+            self.session.scp.command.find(b" -t ") == -1
+            and self.session.scp.command.find(b" -f ") == -1
         ):
             if self.client_channel is not None:
                 logging.debug(
                     "[chan %d] Initiating SCP remote to remote",
                     self.client_channel.get_id(),
                 )
-                if self.session.agent is None:
+                if self.session.auth.agent is None:
                     logging.warning(
                         "[chan %d] SCP remote to remote needs a forwarded agent",
                         self.client_channel.get_id(),
@@ -180,11 +180,11 @@ class SCPForwarder(SCPBaseForwarder):
         return traffic
 
     def handle_client_data(self, traffic: bytes) -> bytes:
-        if self.session.scp_command.startswith(b"scp"):
+        if self.session.scp.command.startswith(b"scp"):
             return self.handle_scp(traffic)
-        return self.process_command_data(self.session.scp_command, traffic, True)
+        return self.process_command_data(self.session.scp.command, traffic, True)
 
     def handle_server_data(self, traffic: bytes) -> bytes:
-        if self.session.scp_command.startswith(b"scp"):
+        if self.session.scp.command.startswith(b"scp"):
             return self.handle_scp(traffic)
-        return self.process_command_data(self.session.scp_command, traffic, False)
+        return self.process_command_data(self.session.scp.command, traffic, False)

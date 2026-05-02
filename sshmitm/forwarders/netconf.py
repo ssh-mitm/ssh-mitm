@@ -128,7 +128,7 @@ class NetconfBaseForwarder(ExecForwarder):
 
     @property
     def _forwarded_command(self) -> bytes:
-        return self.session.netconf_command
+        return self.session.netconf.command
 
     def read_netconf_data(self, chan: paramiko.Channel, responses: int = 1) -> bytes:
         # WARNING: busy-loop with 50 ms sleep; no timeout; hangs on chunked framing.
@@ -152,8 +152,8 @@ class NetconfForwarder(NetconfBaseForwarder):
     def forward(self) -> None:  # noqa: C901,PLR0915
 
         # pylint: disable=protected-access
-        if self.session.ssh_pty_kwargs is not None:
-            self.server_channel.get_pty(**self.session.ssh_pty_kwargs)
+        if self.session.ssh.pty_kwargs is not None:
+            self.server_channel.get_pty(**self.session.ssh.pty_kwargs)
 
         # Guard against EOF that arrived before the loop starts.
         # NOTE: shutdown_write() may be called again inside the loop — no guard exists.
@@ -175,7 +175,7 @@ class NetconfForwarder(NetconfBaseForwarder):
 
                 if self.client_channel.recv_ready():
                     buf = self.read_netconf_data(self.client_channel)
-                    self.session.netconf_command = buf
+                    self.session.netconf.command = buf
                     buf = self.handle_client_data(buf)
                     self.sendall(self.server_channel, buf, self.server_channel.send)
 
@@ -185,7 +185,7 @@ class NetconfForwarder(NetconfBaseForwarder):
                     logging.info(
                         "received response: %s [command=%s]",
                         buf.decode("utf-8"),
-                        self.session.netconf_command,
+                        self.session.netconf.command,
                     )
                     buf = self.handle_server_data(buf)
                     self.sendall(self.client_channel, buf, self.client_channel.send)
@@ -212,7 +212,7 @@ class NetconfForwarder(NetconfBaseForwarder):
                     self.close_session_with_status(self.client_channel, status)
                     logging.info(
                         "remote netconf command '%s' exited with code: %s",
-                        self.session.netconf_command.decode("utf-8"),
+                        self.session.netconf.command.decode("utf-8"),
                         status,
                     )
                     time.sleep(0.1)

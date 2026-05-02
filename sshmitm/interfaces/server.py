@@ -132,14 +132,14 @@ class ServerInterface(BaseServerInterface):
             return False
         if command.decode("utf8").startswith("scp"):
             logging.debug("got scp command: %s", command.decode("utf8"))
-            self.session.scp_requested = True
-            self.session.scp_command = command
+            self.session.scp.requested = True
+            self.session.scp.command = command
             self.session.scp_channel = channel
             return True
-        if self.session.netconf_requested:
+        if self.session.netconf.requested:
             logging.debug("got netconf command: %s", command.decode("utf8"))
-            self.session.netconf_requested = True
-            self.session.netconf_command = command
+            self.session.netconf.requested = True
+            self.session.netconf.command = command
             self.session.netconf_channel = channel
             return True
 
@@ -149,12 +149,12 @@ class ServerInterface(BaseServerInterface):
             handler_entry = SCPBaseForwarder.get_exec_handler(command)
             if handler_entry is not None:
                 if handler_entry.disable_ssh:
-                    self.session.ssh_requested = False
+                    self.session.ssh.requested = False
                 if handler_entry.disable_pty:
-                    self.session.ssh_pty_kwargs = None
+                    self.session.ssh.pty_kwargs = None
 
-            self.session.scp_requested = True
-            self.session.scp_command = command
+            self.session.scp.requested = True
+            self.session.scp.command = command
             self.session.scp_channel = channel
             return True
         logging.warning("ssh command not allowed!")
@@ -168,7 +168,7 @@ class ServerInterface(BaseServerInterface):
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
         logging.debug("check_channel_shell_request: channel=%s", channel)
         if not self.args.disable_ssh:
-            self.session.ssh_requested = True
+            self.session.ssh.requested = True
             self.session.ssh_channel = channel
             return True
         return False
@@ -194,8 +194,8 @@ class ServerInterface(BaseServerInterface):
             modes,
         )
         if not self.args.disable_ssh:
-            self.session.ssh_requested = True
-            self.session.ssh_pty_kwargs = {
+            self.session.ssh.requested = True
+            self.session.ssh.pty_kwargs = {
                 "term": term,
                 "width": width,
                 "height": height,
@@ -224,7 +224,7 @@ class ServerInterface(BaseServerInterface):
                         "Remote auth-methods: %s", str(self.possible_auth_methods)
                     )
                 except paramiko.ssh_exception.SSHException as ex:
-                    self.session.remote_address_reachable = False
+                    self.session.remote.address_reachable = False
                     logging.error(ex)
                     return "publickey"
         logging.debug("get_allowed_auths: username=%s", username)
@@ -260,12 +260,12 @@ class ServerInterface(BaseServerInterface):
             "check_auth_interactive: username=%s, submethods=%s", username, submethods
         )
         is_trivial_auth = (
-            self.args.enable_trivial_auth and self.session.accepted_key is not None
+            self.args.enable_trivial_auth and self.session.auth.accepted_key is not None
         )
         logging.debug("trivial authentication possible")
         if not self.args.enable_keyboard_interactive_auth and not is_trivial_auth:
             return paramiko.common.AUTH_FAILED
-        self.session.username = username
+        self.session.auth.username = username
         auth_interactive_query = paramiko.server.InteractiveQuery()
         if not self.args.disable_keyboard_interactive_prompts and not is_trivial_auth:
             auth_interactive_query.add_prompt("Password (kb-interactive): ", False)
@@ -276,15 +276,15 @@ class ServerInterface(BaseServerInterface):
     ) -> int | paramiko.server.InteractiveQuery:
         logging.debug("check_auth_interactive_response: responses=%s", responses)
         is_trivial_auth = (
-            self.args.enable_trivial_auth and self.session.accepted_key is not None
+            self.args.enable_trivial_auth and self.session.auth.accepted_key is not None
         )
         if self.args.disable_keyboard_interactive_prompts or is_trivial_auth:
-            self.session.authenticator.authenticate(self.session.username, key=None)
+            self.session.authenticator.authenticate(self.session.auth.username, key=None)
             return paramiko.common.AUTH_SUCCESSFUL
         if not responses:
             return paramiko.common.AUTH_FAILED
         return self.session.authenticator.authenticate(
-            self.session.username, password=responses[0]
+            self.session.auth.username, password=responses[0]
         )
 
     def check_auth_publickey(self, username: str, key: PKey) -> int:
@@ -313,15 +313,15 @@ class ServerInterface(BaseServerInterface):
                     "ignoring argument --disallow-publickey-auth, first key still accepted"
                 )
             self.session.authenticator.authenticate(username, key=None)
-            self.session.accepted_key = key
+            self.session.auth.accepted_key = key
             return paramiko.common.AUTH_SUCCESSFUL
-        if not self.session.remote_address_reachable:
+        if not self.session.remote.address_reachable:
             return paramiko.common.AUTH_FAILED
 
         auth_result: int = self.session.authenticator.authenticate(username, key=key)
         if auth_result == paramiko.common.AUTH_SUCCESSFUL:
-            self.session.accepted_key = key
-        if self.session.accepted_key is not None and self.args.enable_trivial_auth:
+            self.session.auth.accepted_key = key
+        if self.session.auth.accepted_key is not None and self.args.enable_trivial_auth:
             logging.debug("found valid key for trivial authentication")
             return paramiko.common.AUTH_FAILED
         if self.args.disallow_publickey_auth:
@@ -335,7 +335,7 @@ class ServerInterface(BaseServerInterface):
         if self.args.disable_password_auth:
             logging.warning("Password login attempt, but password auth was disabled!")
             return paramiko.common.AUTH_FAILED
-        if not self.session.remote_address_reachable:
+        if not self.session.remote.address_reachable:
             return paramiko.common.AUTH_FAILED
         return self.session.authenticator.authenticate(username, password=password)
 
@@ -362,10 +362,10 @@ class ServerInterface(BaseServerInterface):
             "check_channel_subsystem_request: channel=%s, name=%s", channel, name
         )
         if name.lower() == "sftp":
-            self.session.sftp_requested = True
-            self.session.sftp_channel = channel
+            self.session.sftp.requested = True
+            self.session.sftp.channel = channel
         elif name.lower() == "netconf":
-            self.session.netconf_requested = True
+            self.session.netconf.requested = True
             self.session.netconf_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 
@@ -378,16 +378,16 @@ class ServerInterface(BaseServerInterface):
         If it can't be opened, we just return false.
         """
         logging.debug("check_port_forward_request: address=%s, port=%s", address, port)
-        if self.session.ssh_client is None:
+        if self.session.ssh.client is None:
             logging.debug("check_port_forward_request: session.ssh_client is None")
             return False
-        if self.session.ssh_client.transport is None:
+        if self.session.ssh.client.transport is None:
             logging.debug(
                 "check_port_forward_request: session.ssh_client.transport is None"
             )
             return False
         try:
-            return self.session.ssh_client.transport.request_port_forward(
+            return self.session.ssh.client.transport.request_port_forward(
                 address,
                 port,
                 self.session.proxyserver.server_tunnel_interface(
@@ -408,15 +408,15 @@ class ServerInterface(BaseServerInterface):
             username,
             extra={"username": username},
         )
-        if self.session.ssh_client is None:
+        if self.session.ssh.client is None:
             logging.debug("cancel_port_forward_request: session.ssh_client is None!")
             return
-        if self.session.ssh_client.transport is None:
+        if self.session.ssh.client.transport is None:
             logging.debug(
                 "cancel_port_forward_request: session.ssh_client.transport is None!"
             )
             return
-        self.session.ssh_client.transport.cancel_port_forward(address, port)
+        self.session.ssh.client.transport.cancel_port_forward(address, port)
 
     def check_channel_direct_tcpip_request(
         self, chanid: int, origin: tuple[str, int], destination: tuple[str, int]
@@ -457,10 +457,10 @@ class ServerInterface(BaseServerInterface):
             pixelwidth,
             pixelheight,
         )
-        if not self.session.ssh_remote_channel:
+        if not self.session.ssh.remote_channel:
             logging.error("session.ssh_remote_channel not initialized!")
             return False
-        self.session.ssh_remote_channel.resize_pty(
+        self.session.ssh.remote_channel.resize_pty(
             width, height, pixelwidth, pixelheight
         )
         return True
@@ -525,18 +525,18 @@ class ProxySFTPServer(paramiko.SFTPServer):
     def start_subsystem(
         self, name: str, transport: paramiko.Transport, channel: paramiko.Channel
     ) -> None:
-        with self.session.ssh_client_created:
-            self.session.ssh_client_created.wait_for(
-                lambda: self.session.ssh_client_auth_finished
+        with self.session.ssh.client_created:
+            self.session.ssh.client_created.wait_for(
+                lambda: self.session.ssh.client_auth_finished
             )
             try:
-                self.session.sftp_client = SFTPClient.from_client(
-                    self.session.ssh_client
+                self.session.sftp.client = SFTPClient.from_client(
+                    self.session.ssh.client
                 )
-                if not self.session.sftp_client:
+                if not self.session.sftp.client:
                     logging.error("no sftp client available")
                     return
-                self.session.sftp_client.subsystem_count += 1
+                self.session.sftp.client.subsystem_count += 1
                 super().start_subsystem(name, transport, channel)
             except Exception:  # pylint: disable=broad-exception-caught # noqa: BLE001
                 logging.error("failed to start sftp subsystem - closing subsystem")
@@ -544,10 +544,10 @@ class ProxySFTPServer(paramiko.SFTPServer):
     def finish_subsystem(self) -> None:
         self.channel.shutdown_write()
         self.channel.send_exit_status(0)
-        if not self.session.sftp_client:
+        if not self.session.sftp.client:
             return
-        self.session.sftp_client.subsystem_count -= 1
-        self.session.sftp_client.close()
+        self.session.sftp.client.subsystem_count -= 1
+        self.session.sftp.client.close()
         super().finish_subsystem()
 
 
@@ -576,22 +576,22 @@ class ProxyNetconfServer(paramiko.SubsystemHandler):
     def start_subsystem(
         self, name: str, transport: paramiko.Transport, channel: paramiko.Channel
     ) -> None:
-        with self.session.ssh_client_created:
-            self.session.ssh_client_created.wait_for(
-                lambda: self.session.ssh_client_auth_finished
+        with self.session.ssh.client_created:
+            self.session.ssh.client_created.wait_for(
+                lambda: self.session.ssh.client_auth_finished
             )
-            self.session.netconf_client = NetconfClient.from_client(
-                self.session.ssh_client
+            self.session.netconf.client = NetconfClient.from_client(
+                self.session.ssh.client
             )
-            if not self.session.netconf_client:
+            if not self.session.netconf.client:
                 logging.error("no netconf client available")
                 return
-            self.session.netconf_client.subsystem_count += 1
+            self.session.netconf.client.subsystem_count += 1
             super().start_subsystem(name, transport, channel)
 
     def finish_subsystem(self) -> None:
         super().finish_subsystem()
-        if not self.session.netconf_client:
+        if not self.session.netconf.client:
             return
-        self.session.netconf_client.subsystem_count -= 1
-        self.session.netconf_client.close()
+        self.session.netconf.client.subsystem_count -= 1
+        self.session.netconf.client.close()

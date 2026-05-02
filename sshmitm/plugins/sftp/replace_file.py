@@ -13,12 +13,12 @@ class SFTPProxyReplaceHandler(SFTPHandlerPlugin):
 
     class SFTPInterface(SFTPProxyServerInterface):
         def lstat(self, path: str) -> SFTPAttributes | int:
-            self.session.sftp_client_ready.wait()
+            self.session.sftp.client_ready.wait()
             args, _ = SFTPProxyReplaceHandler.parser().parse_known_args()
-            if self.session.sftp_client is None:
-                msg = "self.session.sftp_client is None!"
+            if self.session.sftp.client is None:
+                msg = "self.session.sftp.client is None!"
                 raise MissingClient(msg)
-            stat_remote = self.session.sftp_client.lstat(path)
+            stat_remote = self.session.sftp.client.lstat(path)
             if isinstance(stat_remote, int):
                 return stat_remote
             stat_replace = SFTPAttributes.from_stat(os.stat(args.sftp_replace_file))
