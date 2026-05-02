@@ -17,7 +17,7 @@ from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.console import sshconsole
 from sshmitm.exceptions import KeyGenerationError
-from sshmitm.forwarders.agent import AgentLocalSocket, AgentProxy
+from sshmitm.forwarders.agent import AgentBaseForwarder, AgentForwarder, AgentLocalSocket, AgentProxy
 from sshmitm.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
 from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
 from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
@@ -61,8 +61,8 @@ class SSHProxyServer:
         authenticator: type[Authenticator] = AuthenticatorPassThrough,
         transparent: bool = False,
         session_class: type[Session] = Session,
+        agent_forwarder: type[AgentBaseForwarder] = AgentForwarder,
         banner_name: str | None = None,
-        expose_agent_socket: bool = False,
         debug: bool = False,
     ) -> None:
         self._threads: list[threading.Thread] = []
@@ -97,8 +97,8 @@ class SSHProxyServer:
         self.authenticator: type[Authenticator] = authenticator
         self.transparent: bool = transparent
         self.session_class: type[Session] = session_class
+        self.agent_forwarder: type[AgentBaseForwarder] = agent_forwarder
         self.banner_name: str | None = banner_name
-        self.expose_agent_socket: bool = expose_agent_socket
         self.debug: bool = debug
 
         try:
@@ -290,6 +290,9 @@ class SSHProxyServer:
 
     def create_agent_local_socket(self, transport: Transport) -> AgentLocalSocket:
         return AgentLocalSocket(transport)
+
+    def create_agent_forwarder(self, session: Session) -> AgentBaseForwarder:
+        return self.agent_forwarder(session)
 
     def start(self) -> None:
         self._clean_environment()

@@ -36,7 +36,6 @@ from uuid import uuid4
 import paramiko
 from colored.colored import attr, fg
 from paramiko import Transport
-from paramiko.ssh_exception import ChannelException
 
 from sshmitm.core.modules import SSHMITMBaseModule
 from sshmitm.logger import THREAD_DATA
@@ -49,7 +48,7 @@ if TYPE_CHECKING:
     import sshmitm.clients.netconf
     import sshmitm.clients.sftp
     import sshmitm.clients.ssh
-    from sshmitm.forwarders.agent import AgentLocalSocket, AgentProxy
+    from sshmitm.forwarders.agent import AgentProxy
     from sshmitm.interfaces.server import BaseServerInterface
     from sshmitm.server import SSHProxyServer  # noqa: F401
 
@@ -271,59 +270,8 @@ class Session(BaseSession):
 
         return self._transport
 
-    def _request_agent(self) -> bool:
-        requested_agent = None
-        if self.auth.agent is None or self.authenticator.REQUEST_AGENT_BREAKIN:
-            try:
-                if (
-                    self.agent_requested.wait(1)
-                    or self.authenticator.REQUEST_AGENT_BREAKIN
-                ):
-                    requested_agent = self.proxyserver.create_agent_proxy(self.transport)
-                    logging.info(
-                        "%s %s - successfully requested ssh-agent",
-                        Colors.emoji("information"),
-                        Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
-                    )
-                    if self.proxyserver.expose_agent_socket:
-                        self._expose_agent_socket(requested_agent)
-            except ChannelException:
-                logging.info(
-                    "%s %s - ssh-agent breakin not successfull!",
-                    Colors.emoji("warning"),
-                    Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
-                )
-                return False
-        self.auth.agent = requested_agent or self.auth.agent
-        return self.auth.agent is not None
-
-    def _expose_agent_socket(self, agent: "AgentProxy") -> None:
-        agent.local_socket = self.proxyserver.create_agent_local_socket(self.transport)
-        sock = agent.local_socket.socket_path
-        sid = Colors.stylize(self.sessionid, fg("light_blue") + attr("bold"))
-
-        def _cmd(suffix: str) -> str:
-            return Colors.stylize(
-                f"SSH_AUTH_SOCK={sock} {suffix}", fg("light_blue") + attr("bold")
-            )
-
-        logging.info(
-            "%s %s - agent socket ready - docs: https://docs.ssh-mitm.at/user_guide/sshagent.html",
-            Colors.emoji("information"),
-            sid,
-        )
-        logging.info(
-            "%s %s - ssh-add:  %s", Colors.emoji("information"), sid, _cmd("ssh-add -l")
-        )
-        logging.info(
-            "%s %s - ssh:      %s",
-            Colors.emoji("information"),
-            sid,
-            _cmd("ssh user@host"),
-        )
-
     def _start_channels(self) -> bool:
-        self._request_agent()
+        self.auth.agent = self.proxyserver.create_agent_forwarder(self).request(self.auth.agent)
 
         # create client or master channel
         if self.ssh.client:

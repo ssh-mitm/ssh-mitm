@@ -51,6 +51,9 @@ audit = "sshmitm.audit.cli:Audit"
 check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
 mosh = "sshmitm.apps.mosh.client:Mosh"
 
+[project.entry-points."sshmitm.AgentBaseForwarder"]
+base = "sshmitm.forwarders.agent:AgentForwarder"
+
 [project.entry-points."sshmitm.BaseSession"]
 base = "sshmitm.session:Session"
 

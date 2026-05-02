@@ -257,11 +257,6 @@ class RemoteCredentials:
 class Authenticator(SSHMITMBaseModule):
     """Specifies the authenticator module used for validating user credentials and managing authentication workflows."""
 
-    REQUEST_AGENT_BREAKIN = False
-    """
-    This flag indicates if SSH-MITM should do a breakin to the client's ssh agent, even in cases where the agent is not forwarded.
-    """
-
     @classmethod
     def parser_arguments(cls) -> None:
         """

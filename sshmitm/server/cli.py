@@ -2,6 +2,7 @@ import argparse
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator
+from sshmitm.forwarders.agent import AgentBaseForwarder
 from sshmitm.forwarders.netconf import NetconfBaseForwarder
 from sshmitm.forwarders.scp import SCPBaseForwarder
 from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin
@@ -75,6 +76,11 @@ class SSHServerModules(SubCommand):
             dest="session_class",
             baseclass=BaseSession,
         )
+        self.parser.add_module(
+            "--agent-forwarder",
+            dest="agent_forwarder",
+            baseclass=AgentBaseForwarder,
+        )
 
         parser_group = self.parser.add_argument_group(
             "SSH-Server-Options",
@@ -116,23 +122,6 @@ class SSHServerModules(SubCommand):
             help="Sets the key length for the generated host key (applies to `dss` and `rsa` algorithms, default: `2048`).",
         )
         parser_group.add_argument(
-            "--request-agent-breakin",
-            dest="request_agent_breakin",
-            action="store_true",
-            help="Enables SSH-MITM to request the SSH agent from the client, even if the client does not forward the agent. Can be used to attempt unauthorized access.",
-        )
-        parser_group.add_argument(
-            "--expose-agent-socket",
-            dest="expose_agent_socket",
-            action="store_true",
-            help=(
-                "Expose the client's forwarded SSH agent as a local Unix socket. "
-                "Prints ready-to-use SSH_AUTH_SOCK commands to the log. "
-                "Works for SSH, SCP, and SFTP sessions (OpenSSH 8.4+). "
-                "See https://docs.ssh-mitm.at/user_guide/sshagent.html"
-            ),
-        )
-        parser_group.add_argument(
             "--banner-name",
             dest="banner_name",
             default=f"SSHMITM_{ssh_mitm_version}",
@@ -144,9 +133,6 @@ class SSHServerModules(SubCommand):
         self.parser.add_browser_argument("--plugins")
 
     def execute(self, args: argparse.Namespace) -> None:
-        if args.request_agent_breakin:
-            args.authenticator.REQUEST_AGENT_BREAKIN = True
-
         proxy = SSHProxyServer(
             args.listen_address,
             args.listen_port,
@@ -163,8 +149,8 @@ class SSHServerModules(SubCommand):
             authentication_interface=args.auth_interface,
             authenticator=args.authenticator,
             transparent=args.transparent,
+            agent_forwarder=args.agent_forwarder,
             banner_name=args.banner_name,
-            expose_agent_socket=args.expose_agent_socket,
             debug=args.debug,
         )
         proxy.print_serverinfo(args.log_format == "json")
