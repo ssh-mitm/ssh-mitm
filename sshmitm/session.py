@@ -38,11 +38,8 @@ from paramiko import Transport
 from paramiko.ssh_exception import ChannelException
 
 from sshmitm.core.modules import SSHMITMBaseModule
-from sshmitm.forwarders.agent import AgentLocalSocket, AgentProxy
-from sshmitm.interfaces.server import ProxyNetconfServer, ProxySFTPServer
 from sshmitm.logger import THREAD_DATA
 from sshmitm.moduleparser.colors import Colors
-from sshmitm.plugins.session import key_negotiation
 
 if TYPE_CHECKING:
     from paramiko.pkey import PKey
@@ -51,6 +48,7 @@ if TYPE_CHECKING:
     import sshmitm.clients.netconf
     import sshmitm.clients.sftp
     import sshmitm.clients.ssh
+    from sshmitm.forwarders.agent import AgentLocalSocket, AgentProxy
     from sshmitm.interfaces.server import BaseServerInterface
     from sshmitm.server import SSHProxyServer  # noqa: F401
 
@@ -116,6 +114,7 @@ class Session(BaseSession):
             Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
         )
         self._transport: paramiko.Transport | None = None
+        self._active_channels: dict[str, paramiko.Channel] = {}
 
         self.channel: paramiko.Channel | None = None
 
@@ -127,24 +126,28 @@ class Session(BaseSession):
 
         self.agent_requested: threading.Event = threading.Event()
 
+        # SSH shell / command state
         self.ssh_requested: bool = False
-        self.ssh_channel: paramiko.Channel | None = None
+        # ssh_channel → property backed by _active_channels["ssh"]
         self.ssh_client: sshmitm.clients.ssh.SSHClient | None = None
         self.ssh_client_auth_finished: bool = False
         self.ssh_client_created: Condition = Condition()
         self.ssh_pty_kwargs: dict[str, Any] | None = None
         self.ssh_remote_channel: paramiko.Channel | None = None
 
+        # SCP / exec state
         self.scp_requested: bool = False
-        self.scp_channel: paramiko.Channel | None = None
+        # scp_channel → property backed by _active_channels["scp"]
         self.scp_command: bytes = b""
 
+        # NETCONF state
         self.netconf_requested: bool = False
-        self.netconf_channel: paramiko.Channel | None = None
+        # netconf_channel → property backed by _active_channels["netconf"]
         self.netconf_command: bytes = b""
         self.netconf_client: sshmitm.clients.netconf.NetconfClient | None = None
         self.netconf_client_ready = threading.Event()
 
+        # SFTP state
         self.sftp_requested: bool = False
         self.sftp_channel: paramiko.Channel | None = None
         self.sftp_client: sshmitm.clients.sftp.SFTPClient | None = None
@@ -178,36 +181,49 @@ class Session(BaseSession):
         return os.path.join(session_log_dir, str(self.sessionid))
 
     @property
+    def ssh_channel(self) -> paramiko.Channel | None:
+        return self._active_channels.get("ssh")
+
+    @ssh_channel.setter
+    def ssh_channel(self, value: paramiko.Channel | None) -> None:
+        if value is None:
+            self._active_channels.pop("ssh", None)
+        else:
+            self._active_channels["ssh"] = value
+
+    @property
+    def scp_channel(self) -> paramiko.Channel | None:
+        return self._active_channels.get("scp")
+
+    @scp_channel.setter
+    def scp_channel(self, value: paramiko.Channel | None) -> None:
+        if value is None:
+            self._active_channels.pop("scp", None)
+        else:
+            self._active_channels["scp"] = value
+
+    @property
+    def netconf_channel(self) -> paramiko.Channel | None:
+        return self._active_channels.get("netconf")
+
+    @netconf_channel.setter
+    def netconf_channel(self, value: paramiko.Channel | None) -> None:
+        if value is None:
+            self._active_channels.pop("netconf", None)
+        else:
+            self._active_channels["netconf"] = value
+
+    @property
     def running(self) -> bool:
         """
         Returns the running state of the current session.
 
         :return: A boolean indicating whether the session is running or not
         """
-        session_channel_open: bool = True
-        ssh_channel_open: bool = False
-        scp_channel_open: bool = False
-        netconf_channel_open: bool = False
-
-        if self.channel is not None:
-            session_channel_open = not self.channel.closed
-        if self.ssh_channel is not None:
-            ssh_channel_open = not self.ssh_channel.closed
-        if self.scp_channel is not None:
-            scp_channel_open = (
-                not self.scp_channel.closed if self.scp_channel else False
-            )
-        if self.netconf_channel is not None:
-            netconf_channel_open = (
-                not self.netconf_channel.closed if self.netconf_channel else False
-            )
-        open_channel_exists = (
-            session_channel_open
-            or ssh_channel_open
-            or scp_channel_open
-            or netconf_channel_open
+        session_channel_open = self.channel is None or not self.channel.closed
+        open_channel_exists = session_channel_open or any(
+            not ch.closed for ch in self._active_channels.values()
         )
-
         return self.proxyserver.running and open_channel_exists and not self.closed
 
     @property
@@ -221,7 +237,7 @@ class Session(BaseSession):
             self._transport = Transport(self.client_socket)
             if self.banner_name:
                 self.transport.local_version = f"SSH-2.0-{self.banner_name}"
-            key_negotiation.handle_key_negotiation(self)
+            self.proxyserver.setup_transport_hooks(self)
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
                     msg = "ciphers must be a tuple"
@@ -230,16 +246,7 @@ class Session(BaseSession):
             host_key: PKey | None = self.proxyserver.host_key
             if host_key is not None:
                 self._transport.add_server_key(host_key)
-            # this will set the subsystemhandler to ProxySFTPServer and passes the arguments
-            self._transport.set_subsystem_handler(
-                name="sftp",
-                handler=ProxySFTPServer,
-                sftp_si=self.proxyserver.sftp_interface,
-                session=self,
-            )
-            self._transport.set_subsystem_handler(
-                "netconf", ProxyNetconfServer, self.proxyserver.netconf_interface, self
-            )
+            self.proxyserver.register_subsystem_handlers(self._transport, self)
 
         return self._transport
 
@@ -251,7 +258,7 @@ class Session(BaseSession):
                     self.agent_requested.wait(1)
                     or self.authenticator.REQUEST_AGENT_BREAKIN
                 ):
-                    requested_agent = AgentProxy(self.transport)
+                    requested_agent = self.proxyserver.create_agent_proxy(self.transport)
                     logging.info(
                         "%s %s - successfully requested ssh-agent",
                         Colors.emoji("information"),
@@ -269,8 +276,8 @@ class Session(BaseSession):
         self.agent = requested_agent or self.agent
         return self.agent is not None
 
-    def _expose_agent_socket(self, agent: AgentProxy) -> None:
-        agent.local_socket = AgentLocalSocket(self.transport)
+    def _expose_agent_socket(self, agent: "AgentProxy") -> None:
+        agent.local_socket = self.proxyserver.create_agent_local_socket(self.transport)
         sock = agent.local_socket.socket_path
         sid = Colors.stylize(self.sessionid, fg("light_blue") + attr("bold"))
 

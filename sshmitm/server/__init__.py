@@ -7,8 +7,9 @@ import time
 from binascii import hexlify
 from socket import socket
 
+import paramiko
 from colored import attr, fg
-from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey
+from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey, Transport
 from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
 
@@ -16,6 +17,7 @@ from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.console import sshconsole
 from sshmitm.exceptions import KeyGenerationError
+from sshmitm.forwarders.agent import AgentLocalSocket, AgentProxy
 from sshmitm.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
 from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
 from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
@@ -24,10 +26,11 @@ from sshmitm.forwarders.tunnel import (
     LocalPortForwardingForwarder,
     RemotePortForwardingForwarder,
 )
-from sshmitm.interfaces.server import BaseServerInterface, ServerInterface
+from sshmitm.interfaces.server import BaseServerInterface, ProxyNetconfServer, ProxySFTPServer, ServerInterface
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.multisocket import create_server_sock
+from sshmitm.plugins.session import key_negotiation
 from sshmitm.session import Session
 from sshmitm.utils import SSHPubKey
 
@@ -267,6 +270,26 @@ class SSHProxyServer:
             if env_var in os.environ:
                 del os.environ[env_var]
                 logging.debug("removed %s from environment", env_var)
+
+    def setup_transport_hooks(self, session: Session) -> None:
+        key_negotiation.handle_key_negotiation(session)
+
+    def register_subsystem_handlers(self, transport: Transport, session: Session) -> None:
+        transport.set_subsystem_handler(
+            name="sftp",
+            handler=ProxySFTPServer,
+            sftp_si=self.sftp_interface,
+            session=session,
+        )
+        transport.set_subsystem_handler(
+            "netconf", ProxyNetconfServer, self.netconf_interface, session
+        )
+
+    def create_agent_proxy(self, transport: Transport) -> AgentProxy:
+        return AgentProxy(transport)
+
+    def create_agent_local_socket(self, transport: Transport) -> AgentLocalSocket:
+        return AgentLocalSocket(transport)
 
     def start(self) -> None:
         self._clean_environment()
