@@ -7,7 +7,7 @@ from typing import TYPE_CHECKING
 
 import paramiko
 
-from sshmitm.core.modules import SSHMITMBaseModule
+from sshmitm.core.tunnel import LocalPortForwardingBaseForwarder, RemotePortForwardingBaseForwarder
 
 if TYPE_CHECKING:
     import sshmitm
@@ -91,10 +91,6 @@ class TunnelForwarder(threading.Thread):
             channel.lock.release()
 
 
-class LocalPortForwardingBaseForwarder(SSHMITMBaseModule):
-    """Sets the interface for handling client-side tunnel operations, such as local port forwarding."""
-
-
 class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwarder):
     """Handles tunnel forwarding when the client is requesting a tunnel connection
 
@@ -147,10 +143,6 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
     @classmethod
     def setup(cls, session: "sshmitm.session.Session") -> None:
         pass
-
-
-class RemotePortForwardingBaseForwarder(SSHMITMBaseModule):
-    """Configures the interface for managing server-side tunnel operations, such as remote port forwarding."""
 
 
 class RemotePortForwardingForwarder(RemotePortForwardingBaseForwarder):

@@ -15,7 +15,7 @@ from paramiko.channel import Channel
 from paramiko.ssh_exception import ChannelException
 from paramiko.transport import Transport
 
-from sshmitm.core.modules import SSHMITMBaseModule
+from sshmitm.core.agent import AgentBaseForwarder
 from sshmitm.moduleparser.colors import Colors
 
 if TYPE_CHECKING:
@@ -124,17 +124,6 @@ class AgentLocalSocket:
             self._server.close()
         with contextlib.suppress(OSError):
             os.unlink(self.socket_path)
-
-
-class AgentBaseForwarder(SSHMITMBaseModule):
-    """Specifies the interface for managing SSH agent forwarding and optional agent breakin."""
-
-    def __init__(self, session: "Session") -> None:
-        super().__init__()
-        self.session = session
-
-    def request(self, existing_agent: AgentProxy | None = None) -> AgentProxy | None:
-        raise NotImplementedError
 
 
 class AgentForwarder(AgentBaseForwarder):

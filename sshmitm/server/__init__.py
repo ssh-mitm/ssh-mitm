@@ -14,14 +14,16 @@ from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.console import sshconsole
-from sshmitm.exceptions import KeyGenerationError
-from sshmitm.forwarders.agent import AgentBaseForwarder, AgentForwarder, AgentLocalSocket, AgentProxy
-from sshmitm.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
-from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
-from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
-from sshmitm.forwarders.ssh import SSHBaseForwarder, SSHForwarder
+from sshmitm.core.agent import AgentBaseForwarder
+from sshmitm.core.authentication import Authenticator, AuthenticatorPassThrough
+from sshmitm.core.exceptions import KeyGenerationError
+from sshmitm.core.netconf import NetconfBaseForwarder
+from sshmitm.core.scp import SCPBaseForwarder, SCPForwarder
+from sshmitm.core.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
+from sshmitm.core.ssh import SSHBaseForwarder, SSHForwarder
+from sshmitm.forwarders.agent import AgentForwarder, AgentLocalSocket, AgentProxy
+from sshmitm.forwarders.netconf import NetconfForwarder
 from sshmitm.forwarders.tunnel import (
     LocalPortForwardingForwarder,
     RemotePortForwardingForwarder,

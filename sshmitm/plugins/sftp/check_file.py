@@ -10,8 +10,9 @@ import paramiko
 from paramiko import SFTPAttributes
 from paramiko.sftp_handle import SFTPHandle
 
-from sshmitm.exceptions import MissingClient
-from sshmitm.forwarders.sftp import SFTPBaseHandle, SFTPHandlerPlugin
+from sshmitm.core.exceptions import MissingClient
+from sshmitm.core.sftp import SFTPHandlerPlugin
+from sshmitm.forwarders.sftp import SFTPBaseHandle
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
 
 

@@ -19,7 +19,7 @@ import os
 import uuid
 from typing import TYPE_CHECKING
 
-from sshmitm.forwarders.scp import SCPForwarder
+from sshmitm.core.scp import SCPForwarder
 
 if TYPE_CHECKING:
     import sshmitm
