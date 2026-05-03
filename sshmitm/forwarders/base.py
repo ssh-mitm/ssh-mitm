@@ -3,8 +3,8 @@ from typing import TYPE_CHECKING
 
 import paramiko
 
-from sshmitm.core.modules import SSHMITMBaseModule
 from sshmitm.exceptions import MissingClient
+from sshmitm.modules import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     import sshmitm

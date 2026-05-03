@@ -10,8 +10,8 @@ from paramiko.sftp import CMD_INIT, CMD_VERSION, SFTPError
 
 from sshmitm.clients.netconf import NetconfClient
 from sshmitm.clients.sftp import SFTPClient
-from sshmitm.core.modules import SSHMITMBaseModule
-from sshmitm.forwarders.scp import SCPBaseForwarder
+from sshmitm.exec_handlers import ExecHandlerRegistry
+from sshmitm.modules import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     import sshmitm
@@ -162,7 +162,7 @@ class ServerInterface(BaseServerInterface):
         if not self.args.disable_ssh:
             logging.info("got ssh command: %s", command.decode("utf8"))
 
-            handler_entry = SCPBaseForwarder.get_exec_handler(
+            handler_entry = ExecHandlerRegistry.get_exec_handler(
                 command,
                 enabled=self.args.enabled_exec_handlers,
                 disabled=self.args.disabled_exec_handlers,

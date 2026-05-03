@@ -1,13 +1,13 @@
 import argparse
 
 from sshmitm import __version__ as ssh_mitm_version
-from sshmitm.core.agent import AgentBaseForwarder
-from sshmitm.core.authentication import Authenticator
-from sshmitm.core.netconf import NetconfBaseForwarder
-from sshmitm.core.scp import SCPBaseForwarder
-from sshmitm.core.sftp import SFTPHandlerBasePlugin
-from sshmitm.core.ssh import SSHBaseForwarder
-from sshmitm.core.tunnel import (
+from sshmitm.authentication import Authenticator
+from sshmitm.forwarders.agent import AgentBaseForwarder
+from sshmitm.forwarders.netconf import NetconfBaseForwarder
+from sshmitm.forwarders.scp import SCPBaseForwarder
+from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin
+from sshmitm.forwarders.ssh import SSHBaseForwarder
+from sshmitm.forwarders.tunnel import (
     LocalPortForwardingBaseForwarder,
     RemotePortForwardingBaseForwarder,
 )

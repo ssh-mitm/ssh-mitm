@@ -37,9 +37,9 @@ import paramiko
 from colored.colored import attr, fg
 from paramiko import Transport
 
-from sshmitm.core.modules import SSHMITMBaseModule
 from sshmitm.logger import THREAD_DATA
 from sshmitm.moduleparser.colors import Colors
+from sshmitm.modules import SSHMITMBaseModule
 
 if TYPE_CHECKING:
     from paramiko.pkey import PKey
@@ -68,9 +68,7 @@ class SSHState:
 class SCPState:
     requested: bool = False
     command: bytes = b""
-    handler_entry: "sshmitm.forwarders.scp.ExecHandlerEntry | None" = field(
-        default=None
-    )
+    handler_entry: "sshmitm.exec_handlers.ExecHandlerEntry | None" = field(default=None)
 
 
 @dataclass

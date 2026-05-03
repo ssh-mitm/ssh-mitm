@@ -27,7 +27,7 @@ process_data(data: bytes) -> bytes: Processes the SCP data and returns the modif
 import os
 from typing import TYPE_CHECKING
 
-from sshmitm.core.scp import SCPForwarder
+from sshmitm.forwarders.scp import SCPForwarder
 
 if TYPE_CHECKING:
     import sshmitm

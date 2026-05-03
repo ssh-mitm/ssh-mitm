@@ -9,7 +9,7 @@ from typing import TYPE_CHECKING
 import paramiko
 from colored.colored import attr, fg
 
-from sshmitm.core.ssh import SSHForwarder
+from sshmitm.forwarders.ssh import SSHForwarder
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.plugins.ssh.terminallogs import ScriptLogFormat, TerminalLogFormat
 

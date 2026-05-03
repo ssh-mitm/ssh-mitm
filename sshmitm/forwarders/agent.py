@@ -8,6 +8,7 @@ import threading
 import time
 import uuid
 from pathlib import Path
+from typing import TYPE_CHECKING
 
 from colored.colored import attr, fg
 from paramiko.agent import Agent, AgentClientProxy, AgentKey, AgentServerProxy
@@ -15,8 +16,24 @@ from paramiko.channel import Channel
 from paramiko.ssh_exception import ChannelException
 from paramiko.transport import Transport
 
-from sshmitm.core.agent import AgentBaseForwarder
 from sshmitm.moduleparser.colors import Colors
+from sshmitm.modules import SSHMITMBaseModule
+
+if TYPE_CHECKING:
+    from sshmitm.session import Session
+
+
+class AgentBaseForwarder(SSHMITMBaseModule):
+    """Specifies the interface for managing SSH agent forwarding and optional agent breakin."""
+
+    def __init__(self, session: "Session") -> None:
+        super().__init__()
+        self.session = session
+
+    def request(
+        self, existing_agent: "AgentProxy | None" = None
+    ) -> "AgentProxy | None":
+        raise NotImplementedError
 
 
 class AgentProxy:

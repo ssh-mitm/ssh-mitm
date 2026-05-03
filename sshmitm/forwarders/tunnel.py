@@ -7,10 +7,16 @@ from typing import TYPE_CHECKING
 
 import paramiko
 
-from sshmitm.core.tunnel import (
-    LocalPortForwardingBaseForwarder,
-    RemotePortForwardingBaseForwarder,
-)
+from sshmitm.modules import SSHMITMBaseModule
+
+
+class LocalPortForwardingBaseForwarder(SSHMITMBaseModule):
+    """Sets the interface for handling client-side tunnel operations, such as local port forwarding."""
+
+
+class RemotePortForwardingBaseForwarder(SSHMITMBaseModule):
+    """Configures the interface for managing server-side tunnel operations, such as remote port forwarding."""
+
 
 if TYPE_CHECKING:
     import sshmitm

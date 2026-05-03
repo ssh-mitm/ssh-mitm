@@ -164,7 +164,7 @@ class ExecHandlerBasePlugin(ExecForwarder, ABC):
     """Base class for exec handlers discovered via the sshmitm.ExecHandler entry point group.
 
     Subclasses declare their command prefix and optional flags as class attributes
-    instead of calling SCPBaseForwarder.register_exec_handler() manually.
+    instead of calling ExecHandlerRegistry.register_exec_handler() manually.
     """
 
     command_prefix: ClassVar[bytes] = b""

@@ -7,7 +7,8 @@ import paramiko
 import pytest
 
 from sshmitm.forwarders.exec import ExecHandlerBasePlugin
-from sshmitm.forwarders.scp import ExecHandlerEntry, SCPBaseForwarder
+from sshmitm.exec_handlers import ExecHandlerEntry
+from sshmitm.forwarders.scp import SCPBaseForwarder
 
 
 class _FakeHandler(ExecHandlerBasePlugin):
@@ -105,7 +106,7 @@ class TestExecHandlerBasePlugin:
 class TestRegisterExecHandler:
     def test_registers_with_explicit_name(self) -> None:
         SCPBaseForwarder.register_exec_handler(
-            b"fake-cmd", _FakeHandler, name="fake", disable_pty=True
+            b"fake-cmd", ExecHandlerEntry(handler=_FakeHandler, name="fake", disable_pty=True)
         )
         entry = SCPBaseForwarder._exec_handlers.get(b"fake-cmd")  # noqa: SLF001
         assert entry is not None
@@ -114,7 +115,7 @@ class TestRegisterExecHandler:
         assert entry.disable_ssh is False
 
     def test_falls_back_to_class_name_when_no_name_given(self) -> None:
-        SCPBaseForwarder.register_exec_handler(b"fake-cmd", _FakeHandler)
+        SCPBaseForwarder.register_exec_handler(b"fake-cmd", ExecHandlerEntry(handler=_FakeHandler))
         entry = SCPBaseForwarder._exec_handlers[b"fake-cmd"]  # noqa: SLF001
         assert entry.name == "_FakeHandler"
 
@@ -176,7 +177,7 @@ class TestLoadExecHandlers:
         SCPBaseForwarder._handlers_loaded = False  # noqa: SLF001
 
         with patch(
-            "sshmitm.core.scp.entry_points",
+            "sshmitm.exec_handlers.entry_points",
             return_value=[fake_ep],
         ):
             SCPBaseForwarder.load_exec_handlers()
@@ -199,7 +200,7 @@ class TestLoadExecHandlers:
         SCPBaseForwarder._handlers_loaded = False  # noqa: SLF001
 
         with patch(
-            "sshmitm.core.scp.entry_points",
+            "sshmitm.exec_handlers.entry_points",
             return_value=[fake_ep],
         ):
             SCPBaseForwarder.load_exec_handlers()
@@ -217,7 +218,7 @@ class TestLoadExecHandlers:
         long_ep.load.return_value = _LongPrefixHandler
 
         with patch(
-            "sshmitm.core.scp.entry_points",
+            "sshmitm.exec_handlers.entry_points",
             return_value=[short_ep, long_ep],
         ):
             SCPBaseForwarder.load_exec_handlers()
@@ -240,7 +241,7 @@ class TestLoadExecHandlers:
         SCPBaseForwarder._handlers_loaded = False  # noqa: SLF001
 
         with patch(
-            "sshmitm.core.scp.entry_points",
+            "sshmitm.exec_handlers.entry_points",
             return_value=[broken_ep, good_ep],
         ):
             SCPBaseForwarder.load_exec_handlers()
