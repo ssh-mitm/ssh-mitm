@@ -1,12 +1,15 @@
+import inspect
 import logging
 import re
 import time
+import warnings
 from dataclasses import dataclass
+from importlib.metadata import entry_points
 from typing import TYPE_CHECKING, Any, ClassVar
 
 import paramiko
 
-from sshmitm.forwarders.exec import ExecForwarder
+from sshmitm.forwarders.exec import ExecForwarder, ExecHandlerBasePlugin
 
 if TYPE_CHECKING:
     import sshmitm
@@ -17,6 +20,7 @@ class ExecHandlerEntry:
     """Registry entry for a command-prefix-based exec handler."""
 
     handler: type[Any]
+    name: str = ""
     disable_pty: bool = False
     disable_ssh: bool = False
 
@@ -33,21 +37,61 @@ class SCPBaseForwarder(ExecForwarder):
         prefix: bytes,
         handler: type[Any],
         *,
+        name: str = "",
         disable_pty: bool = False,
         disable_ssh: bool = False,
     ) -> None:
         cls._exec_handlers[prefix] = ExecHandlerEntry(
             handler=handler,
+            name=name or handler.__name__,
             disable_pty=disable_pty,
             disable_ssh=disable_ssh,
         )
 
+    @staticmethod
+    def _is_handler_allowed(
+        name: str,
+        enabled: list[str],
+        disabled: list[str],
+    ) -> bool:
+        enabled_all = "ALL" in enabled
+        enabled_none = "NONE" in enabled
+        disabled_all = "ALL" in disabled
+        disabled_none = "NONE" in disabled
+
+        if enabled_none:
+            return False
+
+        if enabled_all and disabled_all:
+            warnings.warn(
+                "enabled_exec_handlers=ALL and disabled_exec_handlers=ALL: no handlers will run",
+                stacklevel=3,
+            )
+            return False
+
+        if disabled_all:
+            return name in enabled
+
+        if enabled_all:
+            return disabled_none or name not in disabled
+
+        return name in enabled and (disabled_none or name not in disabled)
+
     @classmethod
-    def get_exec_handler(cls, command: bytes) -> ExecHandlerEntry | None:
+    def get_exec_handler(
+        cls,
+        command: bytes,
+        enabled: list[str] | None = None,
+        disabled: list[str] | None = None,
+    ) -> ExecHandlerEntry | None:
         cls._ensure_handlers_loaded()
+        _enabled = enabled if enabled is not None else ["ALL"]
+        _disabled = disabled if disabled is not None else ["NONE"]
         for prefix, entry in cls._exec_handlers.items():
             if command.startswith(prefix):
-                return entry
+                if cls._is_handler_allowed(entry.name, _enabled, _disabled):
+                    return entry
+                return None
         return None
 
     @classmethod
@@ -61,10 +105,18 @@ class SCPBaseForwarder(ExecForwarder):
     def load_exec_handlers(cls) -> None:
         """Load exec handlers registered via the 'sshmitm.ExecHandler' entry point group."""
         try:
-            from importlib.metadata import entry_points  # noqa: PLC0415
-
             for ep in entry_points(group="sshmitm.ExecHandler"):
-                ep.load()
+                try:
+                    handler_class = ep.load()
+                    if inspect.isclass(handler_class) and issubclass(handler_class, ExecHandlerBasePlugin):
+                        cls._exec_handlers[handler_class.command_prefix] = ExecHandlerEntry(
+                            handler=handler_class,
+                            name=ep.name,
+                            disable_pty=handler_class.disable_pty,
+                            disable_ssh=handler_class.disable_ssh,
+                        )
+                except Exception:  # pylint: disable=broad-exception-caught
+                    logging.exception("Failed to load exec handler %s", ep.name)
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Failed to load exec handlers")
 

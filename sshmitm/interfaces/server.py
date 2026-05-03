@@ -118,6 +118,22 @@ class ServerInterface(BaseServerInterface):
             action="store_true",
             help="Disables the lookup of supported authentication methods on the remote server during the authentication process.",
         )
+        plugin_group.add_argument(
+            "--enabled-exec-handlers",
+            dest="enabled_exec_handlers",
+            nargs="+",
+            default=["ALL"],
+            metavar="HANDLER",
+            help="Exec handlers to enable. Use ALL (default) to enable all, NONE to disable all, or a list of handler names.",
+        )
+        plugin_group.add_argument(
+            "--disabled-exec-handlers",
+            dest="disabled_exec_handlers",
+            nargs="+",
+            default=["NONE"],
+            metavar="HANDLER",
+            help="Exec handlers to disable. Use NONE (default) to disable none, ALL to disable all, or a list of handler names.",
+        )
 
     def check_channel_exec_request(
         self, channel: paramiko.Channel, command: bytes
@@ -146,13 +162,18 @@ class ServerInterface(BaseServerInterface):
         if not self.args.disable_ssh:
             logging.info("got ssh command: %s", command.decode("utf8"))
 
-            handler_entry = SCPBaseForwarder.get_exec_handler(command)
+            handler_entry = SCPBaseForwarder.get_exec_handler(
+                command,
+                enabled=self.args.enabled_exec_handlers,
+                disabled=self.args.disabled_exec_handlers,
+            )
             if handler_entry is not None:
                 if handler_entry.disable_ssh:
                     self.session.ssh.requested = False
                 if handler_entry.disable_pty:
                     self.session.ssh.pty_kwargs = None
 
+            self.session.scp.handler_entry = handler_entry
             self.session.scp.requested = True
             self.session.scp.command = command
             self.session.scp_channel = channel

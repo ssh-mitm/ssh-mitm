@@ -59,9 +59,15 @@ class AddArgumentMethod:
             and self.parser.ARGCONF.get(self.config_section, arg_dest)
         ):
             if arg_action in ("store", "store_const"):
-                kwargs["default"] = self.parser.ARGCONF.get(
-                    self.config_section, arg_dest
-                )
+                arg_nargs = kwargs.get("nargs")
+                if arg_nargs in ("+", "*") and hasattr(self.parser.ARGCONF, "getlist"):
+                    raw = self.parser.ARGCONF.getlist(self.config_section, arg_dest)
+                    if raw:
+                        kwargs["default"] = raw
+                else:
+                    kwargs["default"] = self.parser.ARGCONF.get(
+                        self.config_section, arg_dest
+                    )
             elif arg_action in ("store_true", "store_false"):
                 kwargs["default"] = self.parser.ARGCONF.getboolean(
                     self.config_section, arg_dest

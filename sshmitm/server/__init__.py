@@ -384,9 +384,7 @@ class SSHProxyServer:
                             self.ssh_interface(session).forward()
                         elif session.scp.requested and self.scp_interface:
                             session.scp.requested = False
-                            handler_entry = SCPBaseForwarder.get_exec_handler(
-                                session.scp.command
-                            )
+                            handler_entry = session.scp.handler_entry
                             interface_class = (
                                 handler_entry.handler
                                 if handler_entry is not None

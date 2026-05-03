@@ -37,6 +37,7 @@ from sshmitm.moduleparser.pluginbrowser.formatters import (
 )
 from sshmitm.moduleparser.pluginbrowser.widgets import PluginTree
 from sshmitm.moduleparser.plugininfo import (
+    ExecHandlerInfo,
     GeneralActionInfo,
     GeneralGroupInfo,
     PluginInfo,
@@ -173,6 +174,60 @@ class DetailPane(Widget):
         else:
             await self.query_one("#md-cli", Markdown).update(
                 "*This plugin has no configurable arguments.*"
+            )
+        self.query_one("#cli-scroll").scroll_home(animate=False)
+
+    async def show_exec_handler(
+        self,
+        info: ExecHandlerInfo,
+        default_cfg: ConfigParser,
+        user_cfg: ConfigParser | None,
+        config_path: str | None,
+    ) -> None:
+        self._plugin = None
+        self._general_cfg_section = None
+        self._default_cfg = default_cfg
+        self._user_cfg = user_cfg
+        self._config_path = config_path
+
+        status_style = "bold green" if info.enabled else "bold red"
+        status_text = "enabled" if info.enabled else "disabled"
+
+        self._set_visible()
+        self.query_one("#sec-info", Static).update(
+            "\n".join(
+                [
+                    f"[bold cyan]{info.name}[/bold cyan]\n",
+                    f"[dim]Type[/dim]            [bold white]{info.type_label}[/bold white]  [{status_style}]{status_text}[/{status_style}]",
+                    f"[dim]Command Prefix[/dim]  [yellow]{info.command_prefix.decode()}[/yellow]",
+                    f"[dim]Class[/dim]           [cyan]{info.ep_value}[/cyan]",
+                    "",
+                ]
+            )
+        )
+        await self.query_one("#sec-doc", Markdown).update(info.doc)
+
+        groups_tree = self.query_one("#groups-tree", Tree)
+        groups_tree.clear()
+        first: tuple[Any, argparse._ArgumentGroup, argparse.Action] | None = None
+        for group in info.argument_groups:
+            branch = groups_tree.root.add(
+                group.title or "(unnamed)", data=group, expand=True
+            )
+            for action in visible_actions(group):
+                node = branch.add_leaf(flag_str(action), data=action)
+                if first is None:
+                    first = (node, group, action)
+
+        self._fill_config_tab(info.config_section, info.actions)
+
+        if first is not None:
+            groups_tree.move_cursor(first[0])
+            overview = "\n".join(group_markdown(g) for g in info.argument_groups)
+            await self.query_one("#md-cli", Markdown).update(overview)
+        else:
+            await self.query_one("#md-cli", Markdown).update(
+                "*This exec handler has no configurable arguments.*"
             )
         self.query_one("#cli-scroll").scroll_home(animate=False)
 

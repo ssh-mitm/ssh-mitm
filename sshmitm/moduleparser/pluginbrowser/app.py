@@ -33,6 +33,7 @@ from sshmitm.moduleparser.pluginbrowser.config import (
 from sshmitm.moduleparser.pluginbrowser.detail import DetailPane
 from sshmitm.moduleparser.pluginbrowser.widgets import PluginTree
 from sshmitm.moduleparser.plugininfo import (
+    ExecHandlerInfo,
     GeneralActionInfo,
     GeneralGroupInfo,
     PluginInfo,
@@ -171,6 +172,66 @@ class PluginBrowserApp(App[None]):
                     ),
                 )
 
+    _SCP_CONFIG_SECTION = "sshmitm.interfaces.server:ServerInterface"
+
+    def _exec_handler_enabled_sets(self) -> tuple[list[str], list[str]]:
+        enabled_raw = self._active_ep_value("enabled_exec_handlers", self._SCP_CONFIG_SECTION) or "ALL"
+        disabled_raw = self._active_ep_value("disabled_exec_handlers", self._SCP_CONFIG_SECTION) or "NONE"
+        return enabled_raw.split(), disabled_raw.split()
+
+    def _is_exec_handler_enabled(self, name: str) -> bool:
+        from sshmitm.forwarders.scp import SCPBaseForwarder  # noqa: PLC0415
+
+        enabled, disabled = self._exec_handler_enabled_sets()
+        return SCPBaseForwarder._is_handler_allowed(name, enabled, disabled)  # pylint: disable=protected-access
+
+    def _populate_exec_handlers_into_branch(self, branch: Any) -> None:
+        eps = sorted(
+            metadata.entry_points(group="sshmitm.ExecHandler"),
+            key=lambda ep: ep.name,
+        )
+        if not eps:
+            return
+        exec_branch = branch.add("Exec Handlers", expand=True)
+        for ep in eps:
+            handler_class = ep.load()
+            is_enabled = self._is_exec_handler_enabled(ep.name)
+            label: str | Text = (
+                Text(f"✓ {ep.name}", style="bold green")
+                if is_enabled
+                else Text(f"✗ {ep.name}", style="dim red")
+            )
+            command_prefix = getattr(handler_class, "command_prefix", b"")
+            exec_branch.add_leaf(
+                label,
+                data=ExecHandlerInfo(
+                    name=ep.name,
+                    ep_value=str(ep.value),
+                    command_prefix=command_prefix,
+                    loaded_class=handler_class,
+                    enabled=is_enabled,
+                ),
+            )
+
+    def _populate_exec_handlers_into_table(self) -> None:
+        eps = sorted(
+            metadata.entry_points(group="sshmitm.ExecHandler"),
+            key=lambda ep: ep.name,
+        )
+        for ep in eps:
+            handler_class = ep.load()
+            is_enabled = self._is_exec_handler_enabled(ep.name)
+            doc = inspect.cleandoc(handler_class.__doc__ or "")
+            first_line = doc.splitlines()[0] if doc else ""
+            active_cell: str | Text = Text("✓", style="bold") if is_enabled else ""
+            self._all_plugin_rows.append((
+                "Exec Handler",
+                ep.name,
+                active_cell,
+                str(ep.value),
+                first_line,
+            ))
+
     def _populate_tree(self) -> None:
         tree = self.query_one("#plugin-tree", PluginTree)
         tree.root.expand()
@@ -183,6 +244,7 @@ class PluginBrowserApp(App[None]):
             self._populate_parser_into_branch(tree.root, sub_parser)
         else:
             self._populate_parser_into_branch(tree.root, self._parser)
+        self._populate_exec_handlers_into_branch(tree.root)
 
     def _populate_parser_into_table(
         self, parser: ModuleParser, category_prefix: str = ""
@@ -232,6 +294,7 @@ class PluginBrowserApp(App[None]):
         else:
             self._populate_parser_into_table(self._parser)
 
+        self._populate_exec_handlers_into_table()
         self._apply_filter("", "all")
 
     def _apply_filter(self, query: str, status: str) -> None:
@@ -264,7 +327,11 @@ class PluginBrowserApp(App[None]):
     async def on_tree_node_selected(self, event: Tree.NodeSelected[Any]) -> None:
         info = event.node.data
         detail = self.query_one(DetailPane)
-        if isinstance(info, PluginInfo):
+        if isinstance(info, ExecHandlerInfo):
+            await detail.show_exec_handler(
+                info, self._default_cfg, self._user_cfg, self._config_path
+            )
+        elif isinstance(info, PluginInfo):
             await detail.show(
                 info, self._default_cfg, self._user_cfg, self._config_path
             )

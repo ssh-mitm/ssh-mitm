@@ -2,7 +2,7 @@ import logging
 import time
 from abc import abstractmethod
 from collections.abc import Callable
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, ClassVar
 
 import paramiko
 from paramiko.common import cMSG_CHANNEL_CLOSE, cMSG_CHANNEL_REQUEST
@@ -158,3 +158,15 @@ class ExecForwarder(BaseForwarder):
 
         super().close_session(channel)
         logging.debug("[chan %d] closed", channel.get_id())
+
+
+class ExecHandlerBasePlugin(ExecForwarder):
+    """Base class for exec handlers discovered via the sshmitm.ExecHandler entry point group.
+
+    Subclasses declare their command prefix and optional flags as class attributes
+    instead of calling SCPBaseForwarder.register_exec_handler() manually.
+    """
+
+    command_prefix: ClassVar[bytes] = b""
+    disable_pty: ClassVar[bool] = False
+    disable_ssh: ClassVar[bool] = False

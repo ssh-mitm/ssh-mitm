@@ -1,19 +1,23 @@
 import time
+from typing import ClassVar
 
 import paramiko
 
 from sshmitm.apps.mosh.proxy import handle_mosh
-from sshmitm.forwarders.exec import ExecForwarder
-from sshmitm.forwarders.scp import SCPBaseForwarder
+from sshmitm.forwarders.exec import ExecHandlerBasePlugin
 
 
-class MoshForwarder(ExecForwarder):
+class MoshForwarder(ExecHandlerBasePlugin):
     """Forwarder for MOSH (Mobile Shell) sessions.
 
     Executes the mosh-server command, waits for the MOSH CONNECT handshake
     to complete (server channel closes after sending it), then reads the
     buffered response and rewrites the port to point at the UDP proxy.
     """
+
+    command_prefix: ClassVar[bytes] = b"mosh-server"
+    disable_pty: ClassVar[bool] = True
+    disable_ssh: ClassVar[bool] = True
 
     @property
     def client_channel(self) -> paramiko.Channel | None:
@@ -34,11 +38,3 @@ class MoshForwarder(ExecForwarder):
         while not self._closed(self.server_channel):
             time.sleep(1)
         self._run_traffic_loop()
-
-
-SCPBaseForwarder.register_exec_handler(
-    b"mosh-server",
-    MoshForwarder,
-    disable_pty=True,
-    disable_ssh=True,
-)

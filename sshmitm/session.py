@@ -48,6 +48,7 @@ if TYPE_CHECKING:
     import sshmitm.clients.netconf
     import sshmitm.clients.sftp
     import sshmitm.clients.ssh
+    import sshmitm.forwarders.scp
     from sshmitm.forwarders.agent import AgentProxy
     from sshmitm.interfaces.server import BaseServerInterface
     from sshmitm.server import SSHProxyServer  # noqa: F401
@@ -67,6 +68,7 @@ class SSHState:
 class SCPState:
     requested: bool = False
     command: bytes = b""
+    handler_entry: "sshmitm.forwarders.scp.ExecHandlerEntry | None" = field(default=None)
 
 
 @dataclass

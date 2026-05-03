@@ -99,6 +99,55 @@ class GeneralActionInfo:
 
 
 @dataclass
+class ExecHandlerInfo:
+    name: str
+    ep_value: str
+    command_prefix: bytes
+    loaded_class: type
+    enabled: bool
+
+    @property
+    def type_label(self) -> str:
+        return "Exec Handler"
+
+    @property
+    def doc(self) -> str:
+        return inspect.cleandoc(self.loaded_class.__doc__ or "")
+
+    @property
+    def config_section(self) -> str:
+        return f"{self.loaded_class.__module__}:{self.loaded_class.__name__}"
+
+    @property
+    def argument_groups(self) -> list[argparse._ArgumentGroup]:
+        try:
+            from sshmitm.moduleparser.modules import BaseModule  # noqa: PLC0415
+            if not issubclass(self.loaded_class, BaseModule):
+                return []
+            parser = self.loaded_class.parser()
+        except Exception:  # noqa: BLE001  # pylint: disable=broad-exception-caught
+            return []
+        return [
+            g
+            for g in parser._action_groups  # pylint: disable=protected-access
+            if g.title not in _SKIP_GROUPS
+            and any(
+                a.dest is not argparse.SUPPRESS and a.help != argparse.SUPPRESS
+                for a in g._group_actions  # pylint: disable=protected-access
+            )
+        ]
+
+    @property
+    def actions(self) -> list[argparse.Action]:
+        return [
+            a
+            for g in self.argument_groups
+            for a in g._group_actions  # pylint: disable=protected-access
+            if a.dest is not argparse.SUPPRESS and a.help != argparse.SUPPRESS
+        ]
+
+
+@dataclass
 class PluginInfo:
     name: str
     ep_value: str
