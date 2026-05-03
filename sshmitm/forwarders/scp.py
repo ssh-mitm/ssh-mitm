@@ -47,6 +47,7 @@ class SCPBaseForwarder(ExecForwarder):
             disable_pty=disable_pty,
             disable_ssh=disable_ssh,
         )
+        cls._exec_handlers = dict(sorted(cls._exec_handlers.items(), key=lambda item: len(item[0]), reverse=True))
 
     @staticmethod
     def _is_handler_allowed(
@@ -104,12 +105,13 @@ class SCPBaseForwarder(ExecForwarder):
     @classmethod
     def load_exec_handlers(cls) -> None:
         """Load exec handlers registered via the 'sshmitm.ExecHandler' entry point group."""
+        handlers: dict[bytes, ExecHandlerEntry] = {}
         try:
             for ep in entry_points(group="sshmitm.ExecHandler"):
                 try:
                     handler_class = ep.load()
                     if inspect.isclass(handler_class) and issubclass(handler_class, ExecHandlerBasePlugin):
-                        cls._exec_handlers[handler_class.command_prefix] = ExecHandlerEntry(
+                        handlers[handler_class.command_prefix] = ExecHandlerEntry(
                             handler=handler_class,
                             name=ep.name,
                             disable_pty=handler_class.disable_pty,
@@ -119,6 +121,7 @@ class SCPBaseForwarder(ExecForwarder):
                     logging.exception("Failed to load exec handler %s", ep.name)
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Failed to load exec handlers")
+        cls._exec_handlers = dict(sorted(handlers.items(), key=lambda item: len(item[0]), reverse=True))
 
     @property
     def client_channel(self) -> paramiko.Channel | None:

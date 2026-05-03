@@ -46,6 +46,40 @@ class _AnotherHandler(ExecHandlerBasePlugin):
         pass
 
 
+class _ShortPrefixHandler(ExecHandlerBasePlugin):
+    command_prefix: ClassVar[bytes] = b"scp"
+    disable_pty: ClassVar[bool] = False
+    disable_ssh: ClassVar[bool] = False
+
+    @property
+    def client_channel(self) -> paramiko.Channel | None:
+        return None
+
+    @property
+    def _forwarded_command(self) -> bytes:
+        return self.command_prefix
+
+    def forward(self) -> None:
+        pass
+
+
+class _LongPrefixHandler(ExecHandlerBasePlugin):
+    command_prefix: ClassVar[bytes] = b"scp -t"
+    disable_pty: ClassVar[bool] = False
+    disable_ssh: ClassVar[bool] = False
+
+    @property
+    def client_channel(self) -> paramiko.Channel | None:
+        return None
+
+    @property
+    def _forwarded_command(self) -> bytes:
+        return self.command_prefix
+
+    def forward(self) -> None:
+        pass
+
+
 @pytest.fixture(autouse=True)
 def clean_registry():
     """Isolate each test with a fresh handler registry."""
@@ -171,6 +205,27 @@ class TestLoadExecHandlers:
             SCPBaseForwarder.load_exec_handlers()
 
         assert b"fake-cmd" not in SCPBaseForwarder._exec_handlers  # noqa: SLF001
+
+    def test_longest_prefix_wins_when_loaded_short_first(self) -> None:
+        """Short prefix registered first must not shadow the longer, more specific one."""
+        short_ep = MagicMock()
+        short_ep.name = "short"
+        short_ep.load.return_value = _ShortPrefixHandler
+
+        long_ep = MagicMock()
+        long_ep.name = "long"
+        long_ep.load.return_value = _LongPrefixHandler
+
+        with patch(
+            "sshmitm.forwarders.scp.entry_points",
+            return_value=[short_ep, long_ep],
+        ):
+            SCPBaseForwarder.load_exec_handlers()
+        # _handlers_loaded stays True (set by fixture) so get_exec_handler
+        # won't re-trigger a load and overwrite our test state.
+        entry = SCPBaseForwarder.get_exec_handler(b"scp -t /file")
+        assert entry is not None
+        assert entry.handler is _LongPrefixHandler
 
     def test_load_failure_is_logged_and_continues(self, caplog) -> None:
         broken_ep = MagicMock()
