@@ -106,14 +106,8 @@ Known limitations and bugs
 
 import logging
 import time
-from typing import TYPE_CHECKING
-
-import paramiko
 
 from sshmitm.core.netconf import NetconfBaseForwarder
-
-if TYPE_CHECKING:
-    import sshmitm
 
 
 class NetconfForwarder(NetconfBaseForwarder):

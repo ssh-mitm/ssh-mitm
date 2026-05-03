@@ -6,6 +6,7 @@ import socket
 import sys
 import termios
 import tty
+from typing import Any
 
 import pyte
 
@@ -141,7 +142,7 @@ def _run_client(host: str, port: int) -> None:
     signal.signal(signal.SIGWINCH, on_resize)
 
     # cbreak: disables echo and line buffering, but keeps ISIG so Ctrl+C still works.
-    saved_tty: list | None = None
+    saved_tty: list[Any] | None = None
     if sys.stdin.isatty():
         saved_tty = termios.tcgetattr(sys.stdin)
         tty.setcbreak(sys.stdin)

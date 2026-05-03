@@ -7,7 +7,10 @@ from typing import TYPE_CHECKING
 
 import paramiko
 
-from sshmitm.core.tunnel import LocalPortForwardingBaseForwarder, RemotePortForwardingBaseForwarder
+from sshmitm.core.tunnel import (
+    LocalPortForwardingBaseForwarder,
+    RemotePortForwardingBaseForwarder,
+)
 
 if TYPE_CHECKING:
     import sshmitm
@@ -94,7 +97,7 @@ class TunnelForwarder(threading.Thread):
 class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwarder):
     """Handles tunnel forwarding when the client is requesting a tunnel connection
 
-    Then forward traffic between direct-tcpip channels connecting to local and to remote through the ssh-mitm
+    Then forward data between direct-tcpip channels connecting to local and to remote through the ssh-mitm
         - implements Proxyjump (-W / -J) feature, client side port forwarding (-L)
     """
 
@@ -133,7 +136,7 @@ class LocalPortForwardingForwarder(TunnelForwarder, LocalPortForwardingBaseForwa
             # stdin and stdout of that channel have to be forwarded over to the ssh-client direct-tcpip channel
             self.local_ch = self.session.channel
             logging.debug(
-                "Proxyjump: forwarding traffic through master channel [chanid %s]",
+                "Proxyjump: forwarding data through master channel [chanid %s]",
                 self.chanid,
             )
         if not self.local_ch:

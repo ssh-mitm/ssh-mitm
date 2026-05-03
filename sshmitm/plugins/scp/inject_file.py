@@ -60,10 +60,10 @@ class SCPInjectFile(SCPForwarder):
         self.inject_file_stat = os.stat(self.args.scp_inject_file)
         self.file_to_inject = None
 
-    def process_data(self, traffic: bytes) -> bytes:
-        if traffic == b"\x00":
+    def process_data(self, data: bytes) -> bytes:
+        if data == b"\x00":
             self.exploit()
-        return traffic
+        return data
 
     def exploit(self) -> None:
         """This method starts to exploit CVE-2019-6111 and CVE-2019-6110."""

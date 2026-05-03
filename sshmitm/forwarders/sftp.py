@@ -6,13 +6,13 @@ from typing import TYPE_CHECKING
 import paramiko
 from paramiko.sftp_attr import SFTPAttributes
 
-from sshmitm.core.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
 
 if TYPE_CHECKING:
     from _typeshed import ReadableBuffer
 
     import sshmitm
+    from sshmitm.core.sftp import SFTPHandlerBasePlugin
 
 
 class SFTPBaseHandle(paramiko.SFTPHandle):
@@ -20,7 +20,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         self,
         server_interface: BaseSFTPServerInterface,
         session: "sshmitm.session.Session",
-        plugin: type[SFTPHandlerBasePlugin],
+        plugin: "type[SFTPHandlerBasePlugin]",
         filename: str,
         open_flags: int,
         open_attr: SFTPAttributes,
@@ -33,7 +33,7 @@ class SFTPBaseHandle(paramiko.SFTPHandle):
         self.session = session
         self.session.register_session_thread()
         self.filename = filename
-        self.plugin = plugin(self, filename)
+        self.plugin: SFTPHandlerBasePlugin = plugin(self, filename)
         self.open_flags = open_flags
         self.open_attr = open_attr
 

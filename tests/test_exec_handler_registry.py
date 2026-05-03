@@ -176,7 +176,7 @@ class TestLoadExecHandlers:
         SCPBaseForwarder._handlers_loaded = False  # noqa: SLF001
 
         with patch(
-            "sshmitm.forwarders.scp.entry_points",
+            "sshmitm.core.scp.entry_points",
             return_value=[fake_ep],
         ):
             SCPBaseForwarder.load_exec_handlers()
@@ -199,7 +199,7 @@ class TestLoadExecHandlers:
         SCPBaseForwarder._handlers_loaded = False  # noqa: SLF001
 
         with patch(
-            "sshmitm.forwarders.scp.entry_points",
+            "sshmitm.core.scp.entry_points",
             return_value=[fake_ep],
         ):
             SCPBaseForwarder.load_exec_handlers()
@@ -217,7 +217,7 @@ class TestLoadExecHandlers:
         long_ep.load.return_value = _LongPrefixHandler
 
         with patch(
-            "sshmitm.forwarders.scp.entry_points",
+            "sshmitm.core.scp.entry_points",
             return_value=[short_ep, long_ep],
         ):
             SCPBaseForwarder.load_exec_handlers()
@@ -240,7 +240,7 @@ class TestLoadExecHandlers:
         SCPBaseForwarder._handlers_loaded = False  # noqa: SLF001
 
         with patch(
-            "sshmitm.forwarders.scp.entry_points",
+            "sshmitm.core.scp.entry_points",
             return_value=[broken_ep, good_ep],
         ):
             SCPBaseForwarder.load_exec_handlers()

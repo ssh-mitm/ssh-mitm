@@ -68,7 +68,9 @@ class SSHState:
 class SCPState:
     requested: bool = False
     command: bytes = b""
-    handler_entry: "sshmitm.forwarders.scp.ExecHandlerEntry | None" = field(default=None)
+    handler_entry: "sshmitm.forwarders.scp.ExecHandlerEntry | None" = field(
+        default=None
+    )
 
 
 @dataclass
@@ -273,7 +275,9 @@ class Session(BaseSession):
         return self._transport
 
     def _start_channels(self) -> bool:
-        self.auth.agent = self.proxyserver.create_agent_forwarder(self).request(self.auth.agent)
+        self.auth.agent = self.proxyserver.create_agent_forwarder(self).request(
+            self.auth.agent
+        )
 
         # create client or master channel
         if self.ssh.client:

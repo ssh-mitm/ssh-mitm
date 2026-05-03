@@ -123,16 +123,18 @@ dependencies = [
     "flake8",
     "mypy",
     "pylint",
+    "pytest",
     "ruff",
 ]
 
 [tool.hatch.envs.lint.scripts]
 check = [
-    "bandit -r sshmitm",
     "black --check sshmitm",
+    "pytest",
+    "bandit -r sshmitm",
+    "ruff check sshmitm",
     "flake8 sshmitm",
     "pylint sshmitm",
-    "ruff check sshmitm",
     "mypy sshmitm",
 ]
 

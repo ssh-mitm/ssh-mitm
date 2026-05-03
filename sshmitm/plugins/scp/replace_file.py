@@ -19,8 +19,8 @@ got_c_command (bool): Flag to keep track of if the 'C' command has been received
 Methods:
 parser_arguments(): Adds a required argument --scp-replace to the argument parser.
 init(session: sshmitm.session.Session): Initializes the SCPReplaceFile instance.
-handle_command(traffic: bytes) -> bytes: Handles the incoming SCP command and returns the modified SCP command.
-process_data(traffic: bytes) -> bytes: Processes the SCP data and returns the modified SCP data
+handle_command(data: bytes) -> bytes: Handles the incoming SCP command and returns the modified SCP command.
+process_data(data: bytes) -> bytes: Processes the SCP data and returns the modified SCP data
 (i.e.the replacement file).
 """
 
@@ -59,10 +59,10 @@ class SCPReplaceFile(SCPForwarder):
             self.args.scp_replace_file, "rb"
         )
 
-    def handle_command(self, traffic: bytes) -> bytes:
-        traffic = super().handle_command(traffic)
+    def handle_command(self, data: bytes) -> bytes:
+        data = super().handle_command(data)
         if not self.got_c_command:
-            return traffic
+            return data
 
         self.bytes_remaining = self.file_size = self.file_stat.st_size
         traffic_string = (
@@ -70,8 +70,8 @@ class SCPReplaceFile(SCPForwarder):
         )
         return traffic_string.encode("UTF-8")
 
-    def process_data(self, traffic: bytes) -> bytes:
-        del traffic
+    def process_data(self, data: bytes) -> bytes:
+        del data
         if not self.data_sent:
             self.data_sent = True
             data = self.file_to_send.read()

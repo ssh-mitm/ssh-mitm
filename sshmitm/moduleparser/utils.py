@@ -1,4 +1,5 @@
 import argparse
+import warnings
 from collections.abc import Sequence
 from importlib import metadata
 from typing import TYPE_CHECKING, Any
@@ -9,6 +10,39 @@ from sshmitm.moduleparser.colors import Colors
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser.modules import BaseModule
+
+
+def is_handler_allowed(
+    name: str,
+    enabled: list[str],
+    disabled: list[str],
+) -> bool:
+    """Return True if *name* passes the enabled/disabled filter lists.
+
+    Special tokens: ``ALL`` matches every name, ``NONE`` matches nothing.
+    """
+    enabled_all = "ALL" in enabled
+    enabled_none = "NONE" in enabled
+    disabled_all = "ALL" in disabled
+    disabled_none = "NONE" in disabled
+
+    if enabled_none:
+        return False
+
+    if enabled_all and disabled_all:
+        warnings.warn(
+            "enabled_exec_handlers=ALL and disabled_exec_handlers=ALL: no handlers will run",
+            stacklevel=3,
+        )
+        return False
+
+    if disabled_all:
+        return name in enabled
+
+    if enabled_all:
+        return disabled_none or name not in disabled
+
+    return name in enabled and (disabled_none or name not in disabled)
 
 
 def load_module(entry_point_class: type["BaseModule"]) -> type["argparse.Action"]:

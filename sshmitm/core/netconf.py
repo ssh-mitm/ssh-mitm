@@ -1,12 +1,8 @@
 import time
-from typing import TYPE_CHECKING
 
 import paramiko
 
 from sshmitm.forwarders.exec import ExecForwarder
-
-if TYPE_CHECKING:
-    import sshmitm
 
 
 class NetconfBaseForwarder(ExecForwarder):
@@ -32,3 +28,8 @@ class NetconfBaseForwarder(ExecForwarder):
             response_buf += response
             responses -= response.count(self.__netconf_terminator)
         return response_buf
+
+    def forward(self) -> None:
+        """Forwards data between the client and the server"""
+        msg = "Method forward is not used in Netconf Forwarder"
+        raise NotImplementedError(msg)

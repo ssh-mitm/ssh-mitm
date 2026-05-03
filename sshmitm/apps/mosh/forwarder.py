@@ -27,11 +27,11 @@ class MoshForwarder(ExecHandlerBasePlugin):
     def _forwarded_command(self) -> bytes:
         return self.session.scp.command
 
-    def handle_client_data(self, traffic: bytes) -> bytes:
-        return handle_mosh(self.session, traffic, True)
+    def handle_client_data(self, data: bytes) -> bytes:
+        return handle_mosh(self.session, data, True)
 
-    def handle_server_data(self, traffic: bytes) -> bytes:
-        return handle_mosh(self.session, traffic, False)
+    def handle_server_data(self, data: bytes) -> bytes:
+        return handle_mosh(self.session, data, False)
 
     def forward(self) -> None:
         self.server_channel.exec_command(self.session.scp.command)  # nosec

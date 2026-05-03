@@ -14,5 +14,7 @@ class AgentBaseForwarder(SSHMITMBaseModule):
         super().__init__()
         self.session = session
 
-    def request(self, existing_agent: "AgentProxy | None" = None) -> "AgentProxy | None":
+    def request(
+        self, existing_agent: "AgentProxy | None" = None
+    ) -> "AgentProxy | None":
         raise NotImplementedError

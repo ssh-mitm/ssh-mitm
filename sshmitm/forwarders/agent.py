@@ -7,7 +7,7 @@ import tempfile
 import threading
 import time
 import uuid
-from typing import TYPE_CHECKING
+from pathlib import Path
 
 from colored.colored import attr, fg
 from paramiko.agent import Agent, AgentClientProxy, AgentKey, AgentServerProxy
@@ -17,9 +17,6 @@ from paramiko.transport import Transport
 
 from sshmitm.core.agent import AgentBaseForwarder
 from sshmitm.moduleparser.colors import Colors
-
-if TYPE_CHECKING:
-    from sshmitm.session import Session
 
 
 class AgentProxy:
@@ -97,7 +94,7 @@ class AgentLocalSocket:
         try:
             agent_sock.connect(sock_path)
             self._bridge(client_sock, agent_sock)
-        except Exception:
+        except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
             logging.debug("agent local socket: connection error", exc_info=True)
         finally:
             agent_sock.close()
@@ -123,7 +120,7 @@ class AgentLocalSocket:
         with contextlib.suppress(OSError):
             self._server.close()
         with contextlib.suppress(OSError):
-            os.unlink(self.socket_path)
+            Path(self.socket_path).unlink()
 
 
 class AgentForwarder(AgentBaseForwarder):
@@ -155,11 +152,15 @@ class AgentForwarder(AgentBaseForwarder):
             return existing_agent
         try:
             if self.session.agent_requested.wait(1) or self.args.request_agent_breakin:
-                agent = self.session.proxyserver.create_agent_proxy(self.session.transport)
+                agent = self.session.proxyserver.create_agent_proxy(
+                    self.session.transport
+                )
                 logging.info(
                     "%s %s - successfully requested ssh-agent",
                     Colors.emoji("information"),
-                    Colors.stylize(self.session.sessionid, fg("light_blue") + attr("bold")),
+                    Colors.stylize(
+                        self.session.sessionid, fg("light_blue") + attr("bold")
+                    ),
                 )
                 if self.args.expose_agent_socket:
                     self._expose_socket(agent)
@@ -174,13 +175,17 @@ class AgentForwarder(AgentBaseForwarder):
         return existing_agent
 
     def _expose_socket(self, agent: AgentProxy) -> None:
-        agent.local_socket = self.session.proxyserver.create_agent_local_socket(self.session.transport)
+        agent.local_socket = self.session.proxyserver.create_agent_local_socket(
+            self.session.transport
+        )
         sock = agent.local_socket.socket_path
         sid = Colors.stylize(self.session.sessionid, fg("light_blue") + attr("bold"))
 
         def _cmd(suffix: str) -> str:
-            return Colors.stylize(
-                f"SSH_AUTH_SOCK={sock} {suffix}", fg("light_blue") + attr("bold")
+            return str(
+                Colors.stylize(
+                    f"SSH_AUTH_SOCK={sock} {suffix}", fg("light_blue") + attr("bold")
+                )
             )
 
         logging.info(

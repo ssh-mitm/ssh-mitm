@@ -1,11 +1,11 @@
 from typing import TYPE_CHECKING
 
 from sshmitm.core.modules import SSHMITMBaseModule
+from sshmitm.forwarders.sftp import SFTPBaseHandle
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface
 
 if TYPE_CHECKING:
     import sshmitm
-    from sshmitm.forwarders.sftp import SFTPBaseHandle
 
 
 class SFTPHandlerBasePlugin(SSHMITMBaseModule):
@@ -26,8 +26,6 @@ class SFTPHandlerBasePlugin(SSHMITMBaseModule):
 
     @classmethod
     def get_file_handle(cls) -> "type[SFTPBaseHandle]":
-        from sshmitm.forwarders.sftp import SFTPBaseHandle  # noqa: PLC0415
-
         return SFTPBaseHandle
 
     def close(self) -> None:

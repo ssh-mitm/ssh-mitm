@@ -7,7 +7,6 @@ import time
 from binascii import hexlify
 from socket import socket
 
-import paramiko
 from colored import attr, fg
 from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey, Transport
 from paramiko.ssh_exception import SSHException
@@ -28,7 +27,12 @@ from sshmitm.forwarders.tunnel import (
     LocalPortForwardingForwarder,
     RemotePortForwardingForwarder,
 )
-from sshmitm.interfaces.server import BaseServerInterface, ProxyNetconfServer, ProxySFTPServer, ServerInterface
+from sshmitm.interfaces.server import (
+    BaseServerInterface,
+    ProxyNetconfServer,
+    ProxySFTPServer,
+    ServerInterface,
+)
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.multisocket import create_server_sock
@@ -276,7 +280,9 @@ class SSHProxyServer:
     def setup_transport_hooks(self, session: Session) -> None:
         key_negotiation.handle_key_negotiation(session)
 
-    def register_subsystem_handlers(self, transport: Transport, session: Session) -> None:
+    def register_subsystem_handlers(
+        self, transport: Transport, session: Session
+    ) -> None:
         transport.set_subsystem_handler(
             name="sftp",
             handler=ProxySFTPServer,

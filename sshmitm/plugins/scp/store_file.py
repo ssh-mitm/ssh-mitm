@@ -54,41 +54,39 @@ class SCPStorageForwarder(SCPForwarder):
                 self.session.session_log_dir, "command"
             )
 
-    def process_data(self, traffic: bytes) -> bytes:
+    def process_data(self, data: bytes) -> bytes:
         if not self.args.store_scp_files or not self.scp_storage_dir:
-            return traffic
+            return data
         os.makedirs(self.scp_storage_dir, exist_ok=True)
         if self.file_id is None:
             self.file_id = str(uuid.uuid4())
         output_path = os.path.join(self.scp_storage_dir, self.file_id)
 
         # notwendig, da im letzten Datenpaket ein NULL-Byte angehängt wird
-        self.bytes_to_write = min(len(traffic), self.bytes_remaining)
+        self.bytes_to_write = min(len(data), self.bytes_remaining)
         self.bytes_remaining -= self.bytes_to_write
         with open(output_path, "a+b") as tmp_file:
-            tmp_file.write(traffic[: self.bytes_to_write])
+            tmp_file.write(data[: self.bytes_to_write])
 
         # Dateiende erreicht
         if self.file_name and self.bytes_remaining == 0:
             logging.info("file %s -> %s", self.file_name, self.file_id)
             self.file_id = None
-        return traffic
+        return data
 
-    def store_command_data(self, file_id: str, traffic: bytes, suffix: str) -> None:
+    def store_command_data(self, file_id: str, data: bytes, suffix: str) -> None:
         output_path = os.path.join(self.command_storage_dir, file_id + "." + suffix)
         with open(output_path, "a+b") as tmp_file:
-            tmp_file.write(traffic)
+            tmp_file.write(data)
 
     def process_command_data(
-        self, command: bytes, traffic: bytes, isclient: bool
+        self, command: bytes, data: bytes, isclient: bool
     ) -> bytes:
         if not self.args.store_command_data or not self.command_storage_dir:
-            return traffic
+            return data
         os.makedirs(self.command_storage_dir, exist_ok=True)
         if self.file_id is None:
             self.file_id = str(uuid.uuid4())
             self.store_command_data(self.file_id, command, "command")
-        self.store_command_data(
-            self.file_id, traffic, "client" if isclient else "server"
-        )
-        return traffic
+        self.store_command_data(self.file_id, data, "client" if isclient else "server")
+        return data

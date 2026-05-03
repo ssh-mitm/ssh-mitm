@@ -39,6 +39,7 @@ from sshmitm.moduleparser.plugininfo import (
     PluginInfo,
     PluginTypeInfo,
 )
+from sshmitm.moduleparser.utils import is_handler_allowed
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser.parser import ModuleParser
@@ -175,15 +176,19 @@ class PluginBrowserApp(App[None]):
     _SCP_CONFIG_SECTION = "sshmitm.interfaces.server:ServerInterface"
 
     def _exec_handler_enabled_sets(self) -> tuple[list[str], list[str]]:
-        enabled_raw = self._active_ep_value("enabled_exec_handlers", self._SCP_CONFIG_SECTION) or "ALL"
-        disabled_raw = self._active_ep_value("disabled_exec_handlers", self._SCP_CONFIG_SECTION) or "NONE"
+        enabled_raw = (
+            self._active_ep_value("enabled_exec_handlers", self._SCP_CONFIG_SECTION)
+            or "ALL"
+        )
+        disabled_raw = (
+            self._active_ep_value("disabled_exec_handlers", self._SCP_CONFIG_SECTION)
+            or "NONE"
+        )
         return enabled_raw.split(), disabled_raw.split()
 
     def _is_exec_handler_enabled(self, name: str) -> bool:
-        from sshmitm.forwarders.scp import SCPBaseForwarder  # noqa: PLC0415
-
         enabled, disabled = self._exec_handler_enabled_sets()
-        return SCPBaseForwarder._is_handler_allowed(name, enabled, disabled)  # pylint: disable=protected-access
+        return is_handler_allowed(name, enabled, disabled)
 
     def _populate_exec_handlers_into_branch(self, branch: Any) -> None:
         eps = sorted(
@@ -224,13 +229,15 @@ class PluginBrowserApp(App[None]):
             doc = inspect.cleandoc(handler_class.__doc__ or "")
             first_line = doc.splitlines()[0] if doc else ""
             active_cell: str | Text = Text("✓", style="bold") if is_enabled else ""
-            self._all_plugin_rows.append((
-                "Exec Handler",
-                ep.name,
-                active_cell,
-                str(ep.value),
-                first_line,
-            ))
+            self._all_plugin_rows.append(
+                (
+                    "Exec Handler",
+                    ep.name,
+                    active_cell,
+                    str(ep.value),
+                    first_line,
+                )
+            )
 
     def _populate_tree(self) -> None:
         tree = self.query_one("#plugin-tree", PluginTree)

@@ -1,5 +1,5 @@
 """
-Plugin for printing traffic as hexdump.
+Plugin for printing data as hexdump.
 
 The SCPDebugForwarder class extends the SCPForwarder class,
 and it implements the handle_client_data and handle_server_data methods to print
@@ -13,14 +13,14 @@ from sshmitm.utils import format_hex
 
 
 class SCPDebugForwarder(SCPForwarder):
-    """print traffic as hexdump"""
+    """print data as hexdump"""
 
-    def handle_client_data(self, traffic: bytes) -> bytes:
+    def handle_client_data(self, data: bytes) -> bytes:
         print("Client data:")
-        print(format_hex(traffic))
-        return super().handle_client_data(traffic)
+        print(format_hex(data))
+        return super().handle_client_data(data)
 
-    def handle_server_data(self, traffic: bytes) -> bytes:
+    def handle_server_data(self, data: bytes) -> bytes:
         print("Server data:")
-        print(format_hex(traffic))
-        return super().handle_server_data(traffic)
+        print(format_hex(data))
+        return super().handle_server_data(data)

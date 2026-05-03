@@ -6,13 +6,17 @@ import argparse
 import inspect
 import re
 from dataclasses import dataclass
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    from sshmitm.moduleparser.modules import BaseModule
+from sshmitm.moduleparser.modules import BaseModule
 
 _SKIP_GROUPS: frozenset[str | None] = frozenset(
-    {"positional arguments", "optional arguments", "options", "Available commands", None}
+    {
+        "positional arguments",
+        "optional arguments",
+        "options",
+        "Available commands",
+        None,
+    }
 )
 
 
@@ -121,7 +125,6 @@ class ExecHandlerInfo:
     @property
     def argument_groups(self) -> list[argparse._ArgumentGroup]:
         try:
-            from sshmitm.moduleparser.modules import BaseModule  # noqa: PLC0415
             if not issubclass(self.loaded_class, BaseModule):
                 return []
             parser = self.loaded_class.parser()

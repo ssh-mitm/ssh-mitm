@@ -300,7 +300,9 @@ class ServerInterface(BaseServerInterface):
             self.args.enable_trivial_auth and self.session.auth.accepted_key is not None
         )
         if self.args.disable_keyboard_interactive_prompts or is_trivial_auth:
-            self.session.authenticator.authenticate(self.session.auth.username, key=None)
+            self.session.authenticator.authenticate(
+                self.session.auth.username, key=None
+            )
             return paramiko.common.AUTH_SUCCESSFUL
         if not responses:
             return paramiko.common.AUTH_FAILED

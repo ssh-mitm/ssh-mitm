@@ -2,7 +2,6 @@ import inspect
 import logging
 import re
 import time
-import warnings
 from dataclasses import dataclass
 from importlib.metadata import entry_points
 from typing import TYPE_CHECKING, Any, ClassVar
@@ -10,6 +9,7 @@ from typing import TYPE_CHECKING, Any, ClassVar
 import paramiko
 
 from sshmitm.forwarders.exec import ExecForwarder, ExecHandlerBasePlugin
+from sshmitm.moduleparser.utils import is_handler_allowed
 
 if TYPE_CHECKING:
     import sshmitm
@@ -32,7 +32,7 @@ class SCPBaseForwarder(ExecForwarder):
     _handlers_loaded: ClassVar[bool] = False
 
     @classmethod
-    def register_exec_handler(
+    def register_exec_handler(  # pylint: disable=too-many-arguments
         cls,
         prefix: bytes,
         handler: type[Any],
@@ -47,36 +47,19 @@ class SCPBaseForwarder(ExecForwarder):
             disable_pty=disable_pty,
             disable_ssh=disable_ssh,
         )
-        cls._exec_handlers = dict(sorted(cls._exec_handlers.items(), key=lambda item: len(item[0]), reverse=True))
+        cls._exec_handlers = dict(
+            sorted(
+                cls._exec_handlers.items(), key=lambda item: len(item[0]), reverse=True
+            )
+        )
 
     @staticmethod
-    def _is_handler_allowed(
+    def is_handler_allowed(
         name: str,
         enabled: list[str],
         disabled: list[str],
     ) -> bool:
-        enabled_all = "ALL" in enabled
-        enabled_none = "NONE" in enabled
-        disabled_all = "ALL" in disabled
-        disabled_none = "NONE" in disabled
-
-        if enabled_none:
-            return False
-
-        if enabled_all and disabled_all:
-            warnings.warn(
-                "enabled_exec_handlers=ALL and disabled_exec_handlers=ALL: no handlers will run",
-                stacklevel=3,
-            )
-            return False
-
-        if disabled_all:
-            return name in enabled
-
-        if enabled_all:
-            return disabled_none or name not in disabled
-
-        return name in enabled and (disabled_none or name not in disabled)
+        return is_handler_allowed(name, enabled, disabled)
 
     @classmethod
     def get_exec_handler(
@@ -90,7 +73,7 @@ class SCPBaseForwarder(ExecForwarder):
         _disabled = disabled if disabled is not None else ["NONE"]
         for prefix, entry in cls._exec_handlers.items():
             if command.startswith(prefix):
-                if cls._is_handler_allowed(entry.name, _enabled, _disabled):
+                if cls.is_handler_allowed(entry.name, _enabled, _disabled):
                     return entry
                 return None
         return None
@@ -110,7 +93,9 @@ class SCPBaseForwarder(ExecForwarder):
             for ep in entry_points(group="sshmitm.ExecHandler"):
                 try:
                     handler_class = ep.load()
-                    if inspect.isclass(handler_class) and issubclass(handler_class, ExecHandlerBasePlugin):
+                    if inspect.isclass(handler_class) and issubclass(
+                        handler_class, ExecHandlerBasePlugin
+                    ):
                         handlers[handler_class.command_prefix] = ExecHandlerEntry(
                             handler=handler_class,
                             name=ep.name,
@@ -121,7 +106,9 @@ class SCPBaseForwarder(ExecForwarder):
                     logging.exception("Failed to load exec handler %s", ep.name)
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Failed to load exec handlers")
-        cls._exec_handlers = dict(sorted(handlers.items(), key=lambda item: len(item[0]), reverse=True))
+        cls._exec_handlers = dict(
+            sorted(handlers.items(), key=lambda item: len(item[0]), reverse=True)
+        )
 
     @property
     def client_channel(self) -> paramiko.Channel | None:
@@ -187,9 +174,9 @@ class SCPForwarder(SCPBaseForwarder):
 
         self.got_c_command = False
 
-    def handle_command(self, traffic: bytes) -> bytes:
+    def handle_command(self, data: bytes) -> bytes:
         self.got_c_command = False
-        command = traffic.decode("utf-8")
+        command = data.decode("utf-8")
 
         match_c_command = re.match(r"([CD])([0-7]{4})\s([0-9]+)\s(.*)\n", command)
         if not match_c_command:
@@ -201,7 +188,7 @@ class SCPForwarder(SCPBaseForwarder):
             )
             if match_t_command:
                 logging.debug("got command %s", command.strip())
-            return traffic
+            return data
 
         logging.debug("got command %s", command.strip())
         self.got_c_command = True
@@ -212,38 +199,38 @@ class SCPForwarder(SCPBaseForwarder):
         self.file_name = match_c_command[4]
 
         self.await_response = True
-        return traffic
+        return data
 
-    def process_data(self, traffic: bytes) -> bytes:
-        return traffic
+    def process_data(self, data: bytes) -> bytes:
+        return data
 
-    def process_response(self, traffic: bytes) -> bytes:
-        return traffic
+    def process_response(self, data: bytes) -> bytes:
+        return data
 
-    def handle_scp(self, traffic: bytes) -> bytes:
+    def handle_scp(self, data: bytes) -> bytes:
         if self.await_response:
             self.await_response = False
-            return self.process_response(traffic)
+            return self.process_response(data)
 
         if self.bytes_remaining == 0 and not self.got_c_command:
-            return self.handle_command(traffic)
+            return self.handle_command(data)
 
         self.got_c_command = False
-        return self.process_data(traffic)
+        return self.process_data(data)
 
     def process_command_data(
-        self, command: bytes, traffic: bytes, isclient: bool
+        self, command: bytes, data: bytes, isclient: bool
     ) -> bytes:
         del command
         del isclient
-        return traffic
+        return data
 
-    def handle_client_data(self, traffic: bytes) -> bytes:
+    def handle_client_data(self, data: bytes) -> bytes:
         if self.session.scp.command.startswith(b"scp"):
-            return self.handle_scp(traffic)
-        return self.process_command_data(self.session.scp.command, traffic, True)
+            return self.handle_scp(data)
+        return self.process_command_data(self.session.scp.command, data, True)
 
-    def handle_server_data(self, traffic: bytes) -> bytes:
+    def handle_server_data(self, data: bytes) -> bytes:
         if self.session.scp.command.startswith(b"scp"):
-            return self.handle_scp(traffic)
-        return self.process_command_data(self.session.scp.command, traffic, False)
+            return self.handle_scp(data)
+        return self.process_command_data(self.session.scp.command, data, False)

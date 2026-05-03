@@ -404,18 +404,18 @@ class UdpProxy:
                 logging.exception("Error receiving MOSH packet")
 
 
-def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
+def handle_mosh(session: Session, data: bytes, isclient: bool) -> bytes:
     """
-    Handle encrypted traffic from Mosh, a mobile shell that serves as a replacement for ssh.
+    Handle encrypted data from Mosh, a mobile shell that serves as a replacement for ssh.
 
     :param session: A Session object representing the Mosh connection.
-    :param traffic: Encrypted traffic from Mosh.
+    :param data: Encrypted data from Mosh.
     :param isclient: A boolean value indicating whether the current session is a client session.
-    :return: The processed traffic.
+    :return: The processed data.
     """
     if not isclient:
         try:
-            mosh_connect = traffic.decode("utf8")
+            mosh_connect = data.decode("utf8")
             logging.info(mosh_connect)
             mosh_connect_parts = mosh_connect.strip().split(" ")
             mosh_info = "\n".join(
@@ -435,7 +435,7 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                     key=mosh_connect_parts[3],
                     target_ip=session.remote.address[0],
                     target_port=int(mosh_connect_parts[2]),
-                    listen_ip="0.0.0.0",  # nosec # mosh server needs to listen on all addresses to intercept traffic
+                    listen_ip="0.0.0.0",  # nosec # mosh server needs to listen on all addresses to intercept data
                     listen_port=(
                         0
                         if session.remote.address[0] == "127.0.0.1"
@@ -452,4 +452,4 @@ def handle_mosh(session: Session, traffic: bytes, isclient: bool) -> bytes:
                 return f"MOSH CONNECT {mosh_port} {mosh_connect_parts[3]}".encode()
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error starting mosh proxy")
-    return traffic
+    return data

@@ -1,6 +1,6 @@
 import logging
 import time
-from abc import abstractmethod
+from abc import ABC, abstractmethod
 from collections.abc import Callable
 from typing import TYPE_CHECKING, ClassVar
 
@@ -17,7 +17,7 @@ if TYPE_CHECKING:
 class ExecForwarder(BaseForwarder):
     """Base class for all exec-command-based forwarders (SCP, NETCONF, Mosh, …).
 
-    Provides the bidirectional traffic loop, reliable sendall helper, and
+    Provides the bidirectional data loop, reliable sendall helper, and
     channel-teardown logic that all exec-style protocols share.  Subclasses
     must implement :attr:`client_channel`, :attr:`_forwarded_command`, and
     :meth:`forward`.
@@ -160,7 +160,7 @@ class ExecForwarder(BaseForwarder):
         logging.debug("[chan %d] closed", channel.get_id())
 
 
-class ExecHandlerBasePlugin(ExecForwarder):
+class ExecHandlerBasePlugin(ExecForwarder, ABC):
     """Base class for exec handlers discovered via the sshmitm.ExecHandler entry point group.
 
     Subclasses declare their command prefix and optional flags as class attributes

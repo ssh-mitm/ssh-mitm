@@ -1,4 +1,4 @@
-"""Tests for SCPBaseForwarder._is_handler_allowed() filter logic."""
+"""Tests for SCPBaseForwarder.is_handler_allowed() filter logic."""
 
 import warnings
 
@@ -6,7 +6,7 @@ import pytest
 
 from sshmitm.forwarders.scp import SCPBaseForwarder
 
-_allow = SCPBaseForwarder._is_handler_allowed  # noqa: SLF001
+_allow = SCPBaseForwarder.is_handler_allowed  # noqa: SLF001
 
 
 @pytest.mark.parametrize(

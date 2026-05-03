@@ -15,7 +15,7 @@ if TYPE_CHECKING:
 
 
 class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
-    """For each server port forwarding request open a local port to inject traffic into the port-forward
+    """For each server port forwarding request open a local port to inject data into the port-forward
 
     The Handler is still the same as the RemotePortForwardingForwarder, only a tcp server is added
 
