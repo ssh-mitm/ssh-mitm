@@ -4,7 +4,7 @@
 #
 #    pip-compile --output-file=requirements.txt
 #
-appimage==1.0.0
+appimage==2.0.0
     # via -r requirements.in
 argcomplete==3.6.3
     # via -r requirements.in

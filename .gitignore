@@ -145,3 +145,4 @@ doc/develop/api/
 .DirIcon
 squashfs-root
 .ruff_cache/
+CLAUDE.md

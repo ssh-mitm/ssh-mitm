@@ -148,12 +148,18 @@ build = [
     "sphinx-build doc build/html",
 ]
 
+[tool.appimage.build]
+extras = ["production"]
+python_date = "20260211"
+update_info = "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync"
+
 [tool.hatch.envs.appimage]
 detached = false
+dependencies = ["appimage>=2.0.0"]
 
 [tool.hatch.envs.appimage.scripts]
 build = [
-    "appimage/build.sh",
+    "python -m appimage.build",
 ]
 
 [tool.pytest.ini_options]
