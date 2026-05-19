@@ -22,7 +22,7 @@ colored==2.3.2
     # via -r requirements.in
 cryptography==47.0.0
     # via paramiko
-idna==3.13
+idna==3.15
     # via requests
 invoke==3.0.3
     # via paramiko
