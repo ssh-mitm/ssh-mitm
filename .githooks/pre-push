@@ -1,0 +1,6 @@
+#!/bin/bash
+branch=$(git symbolic-ref HEAD 2>/dev/null | sed 's|refs/heads/||')
+if [[ "$branch" == wip/* ]]; then
+    echo "Push von wip/-Branches ist gesperrt: $branch"
+    exit 1
+fi
