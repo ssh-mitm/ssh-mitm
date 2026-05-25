@@ -9,6 +9,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- banner passthrough: SSH-MITM now presents the remote server's SSH version
+  string to connecting clients instead of the default `SSH-2.0-SSHMITM_<version>` banner
+  - a single pre-connection (KEX only, no auth) is established to the upstream
+    server at session start to read the remote banner; the same transport is
+    then reused for the actual authentication — no extra connection entries on
+    the remote server
+  - `--banner-name` continues to work and takes precedence over passthrough
+  - falls back to `SSH-2.0-SSHMITM_<version>` if the upstream is unreachable
+    during session start
+  - new `Authenticator.get_preconnect_address()` method returns the upstream
+    address using the same logic as `get_remote_host_credentials()`, including
+    transparent-proxy mode
+  - `SSHClient` now accepts an optional `existing_transport` parameter;
+    `connect()` separates KEX (`start_client()`) from authentication
+    (`auth_password()` / `auth_publickey()`), reusing the pre-connected
+    transport when available
+
 - split `check_auth_publickey` into `check_auth_publickey_pk_lookup` (probe,
   `sig_attached=False`) and `check_auth_publickey_authenticate` (full auth with
   signature, `sig_attached=True`), mirroring the implementation in `ssh-mitm-core`

@@ -78,6 +78,7 @@ class SSHClient(BaseSSHClient):
         session: "sshmitm.session.Session",
         fingerprints: str | None = None,
         disable_fingerprint_warning: bool = False,
+        existing_transport: "paramiko.Transport | None" = None,
     ) -> None:
         super().__init__()
         self.session: sshmitm.session.Session = session
@@ -89,7 +90,7 @@ class SSHClient(BaseSSHClient):
         self.password: str | None = password
         self.agent: AgentProxy | None = self.session.auth.agent
         self.key: PKey | None = key
-        self.transport: paramiko.Transport | None = None
+        self.transport: paramiko.Transport | None = existing_transport
         self.connected: bool = False
         self.fingerprints: list[str] = [
             f.strip() for f in (fingerprints or "").split(",") if f.strip()
@@ -104,20 +105,20 @@ class SSHClient(BaseSSHClient):
         """
         message = None
 
-        self.transport = paramiko.Transport((self.host, self.port))
-        if self.CIPHERS:
-            if not isinstance(self.CIPHERS, tuple):
-                msg = "client ciphers must be a tuple"
-                raise ValueError(msg)
-            self.transport.get_security_options().ciphers = self.CIPHERS
+        if self.transport is None:
+            self.transport = paramiko.Transport((self.host, self.port))
+            if self.CIPHERS:
+                if not isinstance(self.CIPHERS, tuple):
+                    msg = "client ciphers must be a tuple"
+                    raise ValueError(msg)
+                self.transport.get_security_options().ciphers = self.CIPHERS
+            self.transport.start_client()
 
         try:
             if self.method is AuthenticationMethod.PASSWORD:
-                self.transport.connect(username=self.user, password=self.password)
+                self.transport.auth_password(self.user, self.password or "")
             elif self.method is AuthenticationMethod.PUBLICKEY:
-                self.transport.connect(
-                    username=self.user, password=self.password, pkey=self.key
-                )
+                self.transport.auth_publickey(self.user, self.key)
             elif self.method is AuthenticationMethod.AGENT:
                 if self.agent is not None:
                     keys = self.agent.get_keys()
@@ -125,9 +126,7 @@ class SSHClient(BaseSSHClient):
                         raise NoAgentKeys
                     for k in keys:
                         try:
-                            self.transport.connect(
-                                username=self.user, password=self.password, pkey=k
-                            )
+                            self.transport.auth_publickey(self.user, k)
                             logging.debug(
                                 "ssh-mitm connected to remote host with username=%s, key=%s %s %sbits",
                                 self.user,
@@ -137,9 +136,9 @@ class SSHClient(BaseSSHClient):
                             )
                             break
                         except paramiko.AuthenticationException:
-                            self.transport.close()
-                            self.transport = paramiko.Transport((self.host, self.port))
-
+                            pass
+                    else:
+                        raise NoAgentKeys
             else:
                 logging.error(
                     'authentication method "%s" not supported!', self.method.value

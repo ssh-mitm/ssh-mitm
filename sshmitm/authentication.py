@@ -355,6 +355,15 @@ class Authenticator(SSHMITMBaseModule):
         self.session = session
         self.session.register_session_thread()
 
+    def get_preconnect_address(self) -> tuple[str, int] | None:
+        if self.session.proxyserver.transparent:
+            host = self.args.remote_host or self.session.remote.socket_address[0]
+            port = self.args.remote_port or self.session.remote.socket_address[1]
+        else:
+            host = self.args.remote_host or "127.0.0.1"
+            port = self.args.remote_port or 22
+        return (str(host), int(port)) if host else None
+
     def get_remote_host_credentials(
         self, username: str, password: str | None = None, key: PKey | None = None
     ) -> RemoteCredentials:
@@ -575,6 +584,8 @@ class Authenticator(SSHMITMBaseModule):
 
         auth_status = paramiko.common.AUTH_FAILED
         with self.session.ssh.client_created:
+            upstream_transport = self.session._upstream_transport
+            self.session._upstream_transport = None
             self.session.ssh.client = SSHClient(
                 host,
                 port,
@@ -585,6 +596,7 @@ class Authenticator(SSHMITMBaseModule):
                 self.session,
                 self.args.remote_fingerprints,
                 self.args.disable_remote_fingerprint_warning,
+                existing_transport=upstream_transport,
             )
             self.pre_auth_action()
             try:

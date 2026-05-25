@@ -124,8 +124,8 @@ class SSHServerModules(SubCommand):
         parser_group.add_argument(
             "--banner-name",
             dest="banner_name",
-            default=f"SSHMITM_{ssh_mitm_version}",
-            help="Sets a custom SSH server banner presented to clients during the initial connection. Default: ``SSH-2.0-SSHMITM_<version>``.",
+            default=None,
+            help="Sets a custom SSH server banner presented to clients during the initial connection. If not set, the remote server's banner is passed through. Default: remote server banner or ``SSH-2.0-SSHMITM_<version>`` as fallback.",
         )
 
         if self.module_parser is not None:

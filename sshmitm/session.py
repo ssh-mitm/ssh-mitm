@@ -33,6 +33,8 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Self, cast
 from uuid import uuid4
 
+from sshmitm import __version__ as ssh_mitm_version
+
 import paramiko
 from colored.colored import attr, fg
 from paramiko import Transport
@@ -190,6 +192,8 @@ class Session(BaseSession):
         self.env_requests: dict[bytes, bytes] = {}
         self.session_log_dir: str | None = self.get_session_log_dir()
         self.banner_name = banner_name
+        self._upstream_transport: paramiko.Transport | None = None
+        self._upstream_remote_version: str | None = None
 
     def get_session_log_dir(self) -> str | None:
         """
@@ -248,6 +252,20 @@ class Session(BaseSession):
         )
         return self.proxyserver.running and open_channel_exists and not self.closed
 
+    def _preconnect_upstream(self) -> None:
+        addr = self.authenticator.get_preconnect_address()
+        if addr is None:
+            return
+        host, port = addr
+        try:
+            transport = paramiko.Transport((host, port))
+            transport.start_client()
+            self._upstream_transport = transport
+            self._upstream_remote_version = transport.remote_version
+            logging.debug("(%s) pre-connected to %s:%d for banner passthrough", self, host, port)
+        except Exception:  # pylint: disable=broad-exception-caught
+            logging.debug("(%s) banner passthrough failed for %s:%d", self, host, port)
+
     @property
     def transport(self) -> paramiko.Transport:
         """
@@ -258,7 +276,11 @@ class Session(BaseSession):
         if self._transport is None:
             self._transport = Transport(self.client_socket)
             if self.banner_name:
-                self.transport.local_version = f"SSH-2.0-{self.banner_name}"
+                self._transport.local_version = f"SSH-2.0-{self.banner_name}"
+            elif self._upstream_remote_version:
+                self._transport.local_version = self._upstream_remote_version
+            else:
+                self._transport.local_version = f"SSH-2.0-SSHMITM_{ssh_mitm_version}"
             self.proxyserver.setup_transport_hooks(self)
             if self.CIPHERS:
                 if not isinstance(self.CIPHERS, tuple):
@@ -327,6 +349,7 @@ class Session(BaseSession):
         Start the session and initialize the underlying transport.
         """
         self.register_session_thread()
+        self._preconnect_upstream()
         event = threading.Event()
         self.transport.start_server(
             event=event, server=self.proxyserver.authentication_interface(self)
