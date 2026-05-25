@@ -9,6 +9,34 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- split `check_auth_publickey` into `check_auth_publickey_pk_lookup` (probe,
+  `sig_attached=False`) and `check_auth_publickey_authenticate` (full auth with
+  signature, `sig_attached=True`), mirroring the implementation in `ssh-mitm-core`
+  - probe phase logs all offered keys as `saved-from-pk-lookup`
+  - signature phase logs the accepted key as `saved-from-auth-signature`
+  - RFC 4252: clients that skip the probe and send a signature directly are
+    handled correctly by `check_auth_publickey_authenticate`
+  - trivial auth (`--enable-trivial-auth`) continues to work: probe returns
+    `AUTH_FAILED` despite a valid key so the client falls back to
+    keyboard-interactive
+- added unit tests for the publickey authentication split (`tests/test_pubkey_auth.py`)
+  - `TestDispatcher`: routing via `sig_attached`
+  - `TestPkLookup`: all gate checks, key logging, remote probe, trivial auth
+  - `TestAuthenticate`: cache hit, `accept_first_publickey`, `disallow_publickey_auth`
+  - `TestRfc4252DirectSignature`: client skips probe and sends signature directly
+  - `TestEndToEnd`: real paramiko transport against an in-process mock SSH server
+  - `TestTrivialAuth`: `check_auth_interactive` / `check_auth_interactive_response`
+    including the full phishing flow
+- added integration tests for trivial auth (`tests/integration/`)
+  - OpenSSH subprocess as SSH client (`ssh -A`)
+  - in-process mock SSH target (paramiko) — no external OpenSSH server required
+  - `FakeAgent`: minimal SSH agent protocol server over a Unix socket, signing
+    with `paramiko.PKey.sign_ssh_data()` — no `ssh-agent` binary required
+  - verifies full three-way connection: client → ssh-mitm → mock target via
+    forwarded agent
+  - integration tests excluded from default `pytest` run;
+    run explicitly with `pytest tests/integration/`
+- added `tests/README.md` documenting test structure, architecture, and key management
 - added MOSH interception with full terminal emulator monitor
   - `ssh-mitm mosh client <host> <port>` subcommand: pyte-based VT100/ANSI terminal emulator viewer with cbreak mode (no echo), alternate screen buffer, SIGWINCH handling, and dirty-line rendering
   - `MonitorServer` buffers the complete session history and replays it to clients connecting after the session has started; multiple simultaneous viewers supported

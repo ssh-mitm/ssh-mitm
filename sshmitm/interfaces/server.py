@@ -1,3 +1,4 @@
+import inspect
 import logging
 import os
 import struct
@@ -311,21 +312,91 @@ class ServerInterface(BaseServerInterface):
         )
 
     def check_auth_publickey(self, username: str, key: PKey) -> int:
+        sig_attached: bool | None
+        current_frame = inspect.currentframe()
+        sig_attached = current_frame.f_back.f_locals.get("sig_attached")  # type: ignore[union-attr]
+
         logging.debug(
-            "check_auth_publickey: username=%s, key=%s %s %sbits",
+            "check_auth_publickey: username=%s, key=%s %s %sbits, sig_attached=%s",
+            username,
+            key.get_name(),
+            key.fingerprint,
+            key.get_bits(),
+            sig_attached,
+        )
+
+        if sig_attached is None:
+            raise paramiko.ssh_exception.AuthenticationException(
+                "Unable to get 'sig_attached' variable from Paramiko's "
+                "AuthHandler._parse_userauth_request. Paramiko version not compatible."
+            )
+
+        try:
+            if not sig_attached:
+                return self.check_auth_publickey_pk_lookup(username, key)
+            return self.check_auth_publickey_authenticate(username, key)
+        except Exception:
+            logging.exception("Error in check_auth_publickey")
+
+        return paramiko.common.AUTH_FAILED
+
+    def _log_publickey(self, key: PKey, comment: str) -> None:
+        if self.session.session_log_dir:
+            os.makedirs(self.session.session_log_dir, exist_ok=True)
+            pubkeyfile_path = os.path.join(self.session.session_log_dir, "publickeys")
+            with open(pubkeyfile_path, "a+", encoding="utf-8") as pubkeyfile:
+                pubkeyfile.write(f"{key.get_name()} {key.get_base64()} {comment}\n")
+
+    def check_auth_publickey_pk_lookup(self, username: str, key: PKey) -> int:
+        logging.debug(
+            "check_auth_publickey_pk_lookup: username=%s, key=%s %s %sbits",
             username,
             key.get_name(),
             key.fingerprint,
             key.get_bits(),
         )
 
-        if self.session.session_log_dir:
-            os.makedirs(self.session.session_log_dir, exist_ok=True)
-            pubkeyfile_path = os.path.join(self.session.session_log_dir, "publickeys")
-            with open(pubkeyfile_path, "a+", encoding="utf-8") as pubkeyfile:
-                pubkeyfile.write(
-                    f"{key.get_name()} {key.get_base64()} saved-from-auth-publickey\n"
-                )
+        # Log all keys the client advertises — most clients send all available keys
+        # during pk_lookup, so this captures the full key set.
+        self._log_publickey(key, "saved-from-pk-lookup")
+
+        if self.args.disable_pubkey_auth:
+            logging.debug("Publickey login attempt, but publickey auth was disabled!")
+            return paramiko.common.AUTH_FAILED
+        if self.args.accept_first_publickey:
+            logging.debug("host probing disabled - accepting first key")
+            return paramiko.common.AUTH_SUCCESSFUL
+        if not self.session.remote.address_reachable:
+            return paramiko.common.AUTH_FAILED
+
+        # Probe the remote server: does this key exist for this user?
+        # AuthenticatorPassThrough.auth_publickey stores the result in pubkey_auth_success
+        # so the authenticate phase can use the cached result without a second network round-trip.
+        auth_result: int = self.session.authenticator.authenticate(username, key=key)
+        if auth_result == paramiko.common.AUTH_SUCCESSFUL:
+            self.session.auth.accepted_key = key
+        if self.session.auth.accepted_key is not None and self.args.enable_trivial_auth:
+            logging.debug("found valid key for trivial authentication")
+            return paramiko.common.AUTH_FAILED
+        if self.args.disallow_publickey_auth:
+            return paramiko.common.AUTH_FAILED
+        return auth_result
+
+    def check_auth_publickey_authenticate(self, username: str, key: PKey) -> int:
+        logging.debug(
+            "check_auth_publickey_authenticate: username=%s, key=%s %s %sbits",
+            username,
+            key.get_name(),
+            key.fingerprint,
+            key.get_bits(),
+        )
+
+        # RFC 4252 permits clients to skip pk_lookup and send the signature directly.
+        # In that case this is the first (and only) time we see the key, so log it here.
+        # For the normal flow (pk_lookup ran first) the key is already in the log as
+        # "saved-from-pk-lookup" and we add a second entry marking it as the authenticated key.
+        self._log_publickey(key, "saved-from-auth-signature")
+
         if self.args.disable_pubkey_auth:
             logging.debug("Publickey login attempt, but publickey auth was disabled!")
             return paramiko.common.AUTH_FAILED
@@ -335,13 +406,16 @@ class ServerInterface(BaseServerInterface):
                 logging.debug(
                     "ignoring argument --disallow-publickey-auth, first key still accepted"
                 )
+            # Store credentials and set remote address; actual connection happens via agent later.
             self.session.authenticator.authenticate(username, key=None)
             self.session.auth.accepted_key = key
             return paramiko.common.AUTH_SUCCESSFUL
         if not self.session.remote.address_reachable:
             return paramiko.common.AUTH_FAILED
 
-        auth_result: int = self.session.authenticator.authenticate(username, key=key)
+        # Cache hit: AuthenticatorPassThrough.auth_publickey returns AUTH_SUCCESSFUL immediately
+        # because pubkey_auth_success was set during pk_lookup — no second network round-trip.
+        auth_result = self.session.authenticator.authenticate(username, key=key)
         if auth_result == paramiko.common.AUTH_SUCCESSFUL:
             self.session.auth.accepted_key = key
         if self.session.auth.accepted_key is not None and self.args.enable_trivial_auth:

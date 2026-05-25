@@ -164,6 +164,7 @@ build = [
 
 [tool.pytest.ini_options]
 testpaths = ["tests"]
+addopts = "--ignore=tests/integration"
 
 [tool.black]
 target-version = ["py311"]
