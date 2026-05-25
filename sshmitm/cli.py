@@ -38,13 +38,14 @@ import os
 import sys
 
 from paramiko import Transport
+from paramiko.auth_handler import AuthHandler
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.config import CONFIGFILE
 from sshmitm.logger import FailSaveLogStream, PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.moduleparser.colors import Colors
-from sshmitm.workarounds import monkeypatch, transport
+from sshmitm.workarounds import auth_handler, monkeypatch, transport
 
 
 def create_parser() -> ModuleParser:
@@ -118,6 +119,9 @@ def main() -> None:
         monkeypatch.patch_thread()
         Transport.run = transport.transport_run  # type: ignore[method-assign] # pylint: disable=protected-access
         Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore[attr-defined] # pylint: disable=protected-access
+        Transport._activate_outbound = transport.transport_activate_outbound  # type: ignore[attr-defined] # pylint: disable=protected-access
+        AuthHandler._parse_service_request = auth_handler.auth_handler_parse_service_request  # type: ignore[attr-defined] # pylint: disable=protected-access
+        AuthHandler._parse_userauth_request = auth_handler.auth_handler_parse_userauth_request  # type: ignore[attr-defined] # pylint: disable=protected-access
 
     if args.paramiko_log_level == "debug":
         logging.getLogger("paramiko").setLevel(logging.DEBUG)

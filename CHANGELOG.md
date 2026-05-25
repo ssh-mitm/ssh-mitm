@@ -9,6 +9,26 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- added support for `publickey-hostbound-v00@openssh.com` authentication
+  (OpenSSH 8.9+, `ssh-add -h` destination constraints)
+  - SSH-MITM now advertises `publickey-hostbound@openssh.com=0` in the first
+    `EXT_INFO` message so modern OpenSSH clients use the hostbound method
+    instead of falling back to standard `publickey`
+  - patched `AuthHandler._parse_userauth_request` reads the additional
+    `server_host_key_blob` field, verifies it against SSH-MITM's own host key,
+    reconstructs the extended signed blob, and validates the client signature
+  - two-phase flow (probe with `sig_attached=False`, then auth with
+    `sig_attached=True`) is fully supported
+  - patched `AuthHandler._parse_service_request` sends a second `EXT_INFO`
+    with refreshed `server-sig-algs` after `SSH_MSG_SERVICE_ACCEPT`, matching
+    OpenSSH server behaviour
+  - without this support, clients using `ssh-add -h` would fail to
+    authenticate at all (agent refuses to sign without a valid session-bind),
+    making the MITM immediately visible
+  - added documentation: `doc/user_guide/publickey-hostbound.rst` — technical
+    reference covering wire formats, session-bind mechanism, agent constraint
+    enforcement, and MITM implications with sequence diagrams
+
 - banner passthrough: SSH-MITM now presents the remote server's SSH version
   string to connecting clients instead of the default `SSH-2.0-SSHMITM_<version>` banner
   - a single pre-connection (KEX only, no auth) is established to the upstream

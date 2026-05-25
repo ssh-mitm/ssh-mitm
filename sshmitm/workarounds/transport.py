@@ -36,8 +36,11 @@ from paramiko.common import (
     MSG_IGNORE,
     MSG_DISCONNECT,
     MSG_DEBUG,
+    MSG_NEWKEYS,
     ERROR,
     WARNING,
+    cMSG_EXT_INFO,
+    cMSG_NEWKEYS,
     cMSG_UNIMPLEMENTED,
     MSG_UNIMPLEMENTED,
     MSG_NAMES,
@@ -100,6 +103,9 @@ def transport_send_kex_init(self):  # type: ignore[no-untyped-def]
         if "ext-info-c" not in kex_algos:
             kex_algos.append("ext-info-c")
 
+    if self.server_mode and "ext-info-s" not in kex_algos:
+        kex_algos.append("ext-info-s")
+
     # Similar to ext-info, but used in both server modes, so done outside
     # of above if/else.
     if self.advertise_strict_kex:
@@ -124,6 +130,82 @@ def transport_send_kex_init(self):  # type: ignore[no-untyped-def]
     # save a copy for later (needed to compute a hash)
     self.local_kex_init = self._latest_kex_init = m.asbytes()
     self._send_message(m)
+
+
+def transport_activate_outbound(self) -> None:  # type: ignore[no-untyped-def]
+    """
+    Patched _activate_outbound that adds publickey-hostbound@openssh.com
+    to the first EXT_INFO message. OpenSSH clients only accept this extension
+    in the first EXT_INFO (ext_info_received == 1).
+    """
+    m = Message()
+    m.add_byte(cMSG_NEWKEYS)
+    self._send_message(m)
+    if self.agreed_on_strict_kex:
+        self._log(DEBUG, "Resetting outbound seqno after NEWKEYS due to strict mode")
+        self.packetizer.reset_seqno_out()
+    info = self._cipher_info[self.local_cipher]
+    aead = info.get("is_aead", False)
+    block_size = info["block-size"]
+    key_size = info["key-size"]
+    iv_size = info.get("iv-size", block_size)
+    if self.server_mode:
+        iv_out = self._compute_key("B", iv_size)
+        key_out = self._compute_key("D", key_size)
+    else:
+        iv_out = self._compute_key("A", iv_size)
+        key_out = self._compute_key("C", key_size)
+    engine = self._get_engine(
+        name=self.local_cipher,
+        key=key_out,
+        iv=iv_out,
+        operation=self._ENCRYPT,
+        aead=aead,
+    )
+    etm = (not aead) and "etm@openssh.com" in self.local_mac
+    mac_size = self._mac_info[self.local_mac]["size"]
+    mac_engine = self._mac_info[self.local_mac]["class"]
+    if self.server_mode:
+        mac_key = self._compute_key("F", mac_engine().digest_size)
+    else:
+        mac_key = self._compute_key("E", mac_engine().digest_size)
+    sdctr = self.local_cipher.endswith("-ctr")
+    self.packetizer.set_outbound_cipher(
+        block_engine=engine,
+        block_size=block_size,
+        mac_engine=None if aead else mac_engine,
+        mac_size=16 if aead else mac_size,
+        mac_key=None if aead else mac_key,
+        sdctr=sdctr,
+        etm=etm,
+        aead=aead,
+        iv_out=iv_out if aead else None,
+    )
+    compress_out = self._compression_info[self.local_compression][0]
+    if compress_out is not None and (
+        self.local_compression != "zlib@openssh.com" or self.authenticated
+    ):
+        self._log(DEBUG, "Switching on outbound compression ...")
+        self.packetizer.set_outbound_compressor(compress_out())
+    if not self.packetizer.need_rekey():
+        self.in_kex = False
+    if (
+        self.server_mode
+        and self.server_sig_algs
+        and self._remote_ext_info == "ext-info-c"
+    ):
+        extensions = {
+            "server-sig-algs": ",".join(self.preferred_pubkeys),
+            "publickey-hostbound@openssh.com": "0",
+        }
+        ext_msg = Message()
+        ext_msg.add_byte(cMSG_EXT_INFO)
+        ext_msg.add_int(len(extensions))
+        for name, value in sorted(extensions.items()):
+            ext_msg.add_string(name)
+            ext_msg.add_string(value)
+        self._send_message(ext_msg)
+    self._expect_packet(MSG_NEWKEYS)
 
 
 def transport_run(self):  # type: ignore[no-untyped-def]

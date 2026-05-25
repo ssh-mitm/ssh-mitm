@@ -1,6 +1,5 @@
 import argparse
 
-from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator
 from sshmitm.forwarders.agent import AgentBaseForwarder
 from sshmitm.forwarders.netconf import NetconfBaseForwarder

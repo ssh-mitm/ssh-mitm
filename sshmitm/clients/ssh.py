@@ -118,7 +118,8 @@ class SSHClient(BaseSSHClient):
             if self.method is AuthenticationMethod.PASSWORD:
                 self.transport.auth_password(self.user, self.password or "")
             elif self.method is AuthenticationMethod.PUBLICKEY:
-                self.transport.auth_publickey(self.user, self.key)
+                if self.key is not None:
+                    self.transport.auth_publickey(self.user, self.key)
             elif self.method is AuthenticationMethod.AGENT:
                 if self.agent is not None:
                     keys = self.agent.get_keys()

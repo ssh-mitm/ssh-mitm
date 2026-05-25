@@ -43,6 +43,7 @@ Contents
    fingerprint
    authentication
    sshagent
+   publickey-hostbound
    trivialauth
    transparent
    advanced-usage

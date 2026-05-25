@@ -33,12 +33,11 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Self, cast
 from uuid import uuid4
 
-from sshmitm import __version__ as ssh_mitm_version
-
 import paramiko
 from colored.colored import attr, fg
 from paramiko import Transport
 
+from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.logger import THREAD_DATA
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.modules import SSHMITMBaseModule
@@ -262,8 +261,10 @@ class Session(BaseSession):
             transport.start_client()
             self._upstream_transport = transport
             self._upstream_remote_version = transport.remote_version
-            logging.debug("(%s) pre-connected to %s:%d for banner passthrough", self, host, port)
-        except Exception:  # pylint: disable=broad-exception-caught
+            logging.debug(
+                "(%s) pre-connected to %s:%d for banner passthrough", self, host, port
+            )
+        except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
             logging.debug("(%s) banner passthrough failed for %s:%d", self, host, port)
 
     @property

@@ -584,7 +584,11 @@ class Authenticator(SSHMITMBaseModule):
 
         auth_status = paramiko.common.AUTH_FAILED
         with self.session.ssh.client_created:
-            upstream_transport = self.session._upstream_transport
+            upstream_transport = (
+                # pylint: disable-next=protected-access
+                self.session._upstream_transport
+            )
+            # pylint: disable-next=protected-access
             self.session._upstream_transport = None
             self.session.ssh.client = SSHClient(
                 host,

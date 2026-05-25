@@ -42,7 +42,7 @@ class BaseServerInterface(paramiko.ServerInterface, SSHMITMBaseModule):
         self.possible_auth_methods: list[str] | None = None
 
 
-class ServerInterface(BaseServerInterface):
+class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-methods
     """SSH-MITM server implementation"""
 
     @classmethod
@@ -326,16 +326,17 @@ class ServerInterface(BaseServerInterface):
         )
 
         if sig_attached is None:
-            raise paramiko.ssh_exception.AuthenticationException(
+            msg = (
                 "Unable to get 'sig_attached' variable from Paramiko's "
                 "AuthHandler._parse_userauth_request. Paramiko version not compatible."
             )
+            raise paramiko.ssh_exception.AuthenticationException(msg)
 
         try:
             if not sig_attached:
                 return self.check_auth_publickey_pk_lookup(username, key)
             return self.check_auth_publickey_authenticate(username, key)
-        except Exception:
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error in check_auth_publickey")
 
         return paramiko.common.AUTH_FAILED
