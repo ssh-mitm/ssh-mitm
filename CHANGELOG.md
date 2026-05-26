@@ -9,138 +9,66 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- added support for `publickey-hostbound-v00@openssh.com` authentication
-  (OpenSSH 8.9+, `ssh-add -h` destination constraints)
-  - SSH-MITM now advertises `publickey-hostbound@openssh.com=0` in the first
-    `EXT_INFO` message so modern OpenSSH clients use the hostbound method
-    instead of falling back to standard `publickey`
-  - patched `AuthHandler._parse_userauth_request` reads the additional
-    `server_host_key_blob` field, verifies it against SSH-MITM's own host key,
-    reconstructs the extended signed blob, and validates the client signature
-  - two-phase flow (probe with `sig_attached=False`, then auth with
-    `sig_attached=True`) is fully supported
-  - patched `AuthHandler._parse_service_request` sends a second `EXT_INFO`
-    with refreshed `server-sig-algs` after `SSH_MSG_SERVICE_ACCEPT`, matching
-    OpenSSH server behaviour
-  - without this support, clients using `ssh-add -h` would fail to
-    authenticate at all (agent refuses to sign without a valid session-bind),
-    making the MITM immediately visible
-  - added documentation: `doc/user_guide/publickey-hostbound.rst` — technical
-    reference covering wire formats, session-bind mechanism, agent constraint
-    enforcement, and MITM implications with sequence diagrams
+- **FIDO2 / hardware security key interception**: SSH-MITM can now intercept
+  clients that use hardware tokens with destination constraints (`ssh-add -h`,
+  available since OpenSSH 8.9). Previously these sessions failed immediately,
+  making the interception visible to the user. Full documentation is available
+  in the user guide.
 
-- banner passthrough: SSH-MITM now presents the remote server's SSH version
-  string to connecting clients instead of the default `SSH-2.0-SSHMITM_<version>` banner
-  - a single pre-connection (KEX only, no auth) is established to the upstream
-    server at session start to read the remote banner; the same transport is
-    then reused for the actual authentication — no extra connection entries on
-    the remote server
-  - `--banner-name` continues to work and takes precedence over passthrough
-  - falls back to `SSH-2.0-SSHMITM_<version>` if the upstream is unreachable
-    during session start
-  - new `Authenticator.get_preconnect_address()` method returns the upstream
-    address using the same logic as `get_remote_host_credentials()`, including
-    transparent-proxy mode
-  - `SSHClient` now accepts an optional `existing_transport` parameter;
-    `connect()` separates KEX (`start_client()`) from authentication
-    (`auth_password()` / `auth_publickey()`), reusing the pre-connected
-    transport when available
+- **Server banner passthrough**: SSH-MITM now shows clients the real target
+  server's SSH version string instead of its own. The interception is therefore
+  no longer detectable by simply comparing the SSH banner. The `--banner-name`
+  option still works and takes precedence when set.
 
-- split `check_auth_publickey` into `check_auth_publickey_pk_lookup` (probe,
-  `sig_attached=False`) and `check_auth_publickey_authenticate` (full auth with
-  signature, `sig_attached=True`), mirroring the implementation in `ssh-mitm-core`
-  - probe phase logs all offered keys as `saved-from-pk-lookup`
-  - signature phase logs the accepted key as `saved-from-auth-signature`
-  - RFC 4252: clients that skip the probe and send a signature directly are
-    handled correctly by `check_auth_publickey_authenticate`
-  - trivial auth (`--enable-trivial-auth`) continues to work: probe returns
-    `AUTH_FAILED` despite a valid key so the client falls back to
-    keyboard-interactive
-- added unit tests for the publickey authentication split (`tests/test_pubkey_auth.py`)
-  - `TestDispatcher`: routing via `sig_attached`
-  - `TestPkLookup`: all gate checks, key logging, remote probe, trivial auth
-  - `TestAuthenticate`: cache hit, `accept_first_publickey`, `disallow_publickey_auth`
-  - `TestRfc4252DirectSignature`: client skips probe and sends signature directly
-  - `TestEndToEnd`: real paramiko transport against an in-process mock SSH server
-  - `TestTrivialAuth`: `check_auth_interactive` / `check_auth_interactive_response`
-    including the full phishing flow
-- added integration tests for trivial auth (`tests/integration/`)
-  - OpenSSH subprocess as SSH client (`ssh -A`)
-  - in-process mock SSH target (paramiko) — no external OpenSSH server required
-  - `FakeAgent`: minimal SSH agent protocol server over a Unix socket, signing
-    with `paramiko.PKey.sign_ssh_data()` — no `ssh-agent` binary required
-  - verifies full three-way connection: client → ssh-mitm → mock target via
-    forwarded agent
-  - integration tests excluded from default `pytest` run;
-    run explicitly with `pytest tests/integration/`
-- added `tests/README.md` documenting test structure, architecture, and key management
-- added MOSH interception with full terminal emulator monitor
-  - `ssh-mitm mosh client <host> <port>` subcommand: pyte-based VT100/ANSI terminal emulator viewer with cbreak mode (no echo), alternate screen buffer, SIGWINCH handling, and dirty-line rendering
-  - `MonitorServer` buffers the complete session history and replays it to clients connecting after the session has started; multiple simultaneous viewers supported
-  - protocol-level packet filtering: only `HostBytes` packets are forwarded to the monitor; `EchoAck`-only and heartbeat packets are suppressed
-  - `show_debug` option to control hex/protobuf debug output (disabled by default)
-  - fixed fragment reassembly to correctly handle out-of-order UDP delivery
-  - fixed `buf_size` raised to 65535 to prevent truncation of large MOSH packets
-  - added user guide documentation covering SSP protocol internals, all packet types, wire format, and a security properties section for auditors
-- added `ssh-mitm server --plugins` flag to inspect and browse available plugins
-  - `ssh-mitm server --plugins` opens an interactive terminal UI (Plugin Browser) to explore all available plugins, their descriptions, and configuration options
-  - Plugin Browser includes a two-tab interface: tree/detail view and a filterable overview table of all plugins
-- added Plugin Browser documentation page (`get_started/plugin_browser`)
-- added SSH-MITM setup diagram to README and documentation index
-- improved README for security students and professional auditors: restructured Quick Start with 4-step flow, feature table with documentation links, rewritten FIDO2 section
-- added plugin development documentation under `doc/develop/plugins.rst`
-- added example check_file plugin to send files to ClamAV
-- added option to use ssh private keys for remote authentication
-- added option to provide remote ssh server fingerprints
-- added new authentication plugin "AuthenticatorRemote" which allows to provide remote credentials without passthrough
-- added "production" option to pip install for fixed/tested dependencies
+- **MOSH session monitoring**: A new `ssh-mitm mosh client <host> <port>`
+  subcommand lets you watch an active MOSH session in real time. The viewer
+  renders a full VT100/ANSI terminal and replays the complete session history
+  to any viewer that connects later.
+
+- **Interactive plugin browser**: `ssh-mitm server --plugins` opens a
+  terminal UI where you can explore all available plugins, their descriptions,
+  and configuration options without having to read the docs.
+
+- **Remote server fingerprint verification**: You can now pass expected
+  fingerprints via `--remote-fingerprints` so SSH-MITM rejects connections
+  to unexpected servers.
+
+- **Credential-based remote authentication**: The new `AuthenticatorRemote`
+  plugin lets you supply fixed credentials for the upstream server without
+  using the passthrough authenticator.
+
+- **Pinned production dependencies**: `pip install ssh-mitm[production]`
+  installs a fully tested set of dependency versions suitable for production
+  use.
 
 ### Fixed
 
-- Resolved issue with EOF handling during remote command execution.
-- Ensured subsystems are started only after SSH client is fully initialized and authenticated.
-- Fixed issues with SFTP file transfers
-- Fixed stat and lstat command in sftp interface by returning SFTP_NO_SUCH_FILE if remote file does not exist
-- fix #187 - forward pty change requests to the remote server
+- Fixed broken SFTP file transfers and incorrect error responses for missing
+  files.
+- Fixed a connection drop that occurred when the remote side closed a command
+  channel before all data was read.
+- Terminal resize events (`SIGWINCH`) are now correctly forwarded to the
+  remote server (#187).
+- Subsystems (e.g. SFTP) are no longer started before the upstream connection
+  is fully authenticated.
 
 ### Changed
 
-- `PublicKeyEnumerator` no longer uses global monkey-patching or a process-wide lock
-  - replaced `PATCH_LOCK` + class-level `AuthHandler` patches with direct RFC 4252 §7
-    probe packets built and sent via `transport._send_message()`; per-instance handlers
-    are registered in `transport._handler_table` — no shared state, no serialisation
-    of parallel sessions
-  - eliminated the fake 2048-bit RSA key that was generated solely to drive
-    `transport.auth_publickey()`; the probe is now sent without any private key
-  - RSA algorithm selection (`rsa-sha2-512` / `rsa-sha2-256` / `ssh-rsa`) reads
-    `transport.server_extensions["server-sig-algs"]` from the EXT_INFO negotiated
-    during `start_client()` instead of always sending `ssh-rsa`
-  - when a pre-connected `_upstream_transport` is available (banner-passthrough path),
-    `PublicKeyEnumerator` borrows it instead of opening a second TCP connection;
-    the entire auth flow — `auth_none` for method discovery, publickey probe, and
-    actual authentication — runs over a single connection, removing one preauth child
-    on the remote server and the associated `srclimit` penalty exposure
-  - `PublicKeyEnumerator` gains an `existing_transport` constructor parameter and an
-    `_owns_transport` flag; `close()` is a no-op for borrowed transports so the
-    upstream `SSHClient` can continue using the same transport for the real auth step
-  - `mark_service_ready()` lets the caller signal that `ssh-userauth` service is
-    already active (e.g. after `auth_none`) to prevent a duplicate service-request
-    round-trip
-  - removed `--close-pubkey-enumerator-with-session` option; lifecycle is now handled
-    automatically — borrowed transports are closed by `SSHClient`, dedicated fallback
-    connections are closed in `post_auth_action()`
+- **Fewer connections to the target server**: The publickey probe (checking
+  whether a client's key is accepted) and the actual authentication now share
+  a single connection to the target. Previously two separate connections were
+  made, which showed up as an extra entry in server logs and counted towards
+  OpenSSH's per-source rate limits.
 
-- `moduleparser`: the entry-point group prefix (`sshmitm`) is no longer hardcoded
-  - `BaseModule` now declares `entry_point_prefix: ClassVar[str | None] = None`; a `BaseModuleMeta` metaclass raises `TypeError` at class-definition time when a subclass forgets to set it
-  - `SSHMITMBaseModule(BaseModule)` introduced as the SSH-MITM-specific base class with `entry_point_prefix = "sshmitm"`; all built-in base classes (`BaseSession`, `BaseForwarder`, `Authenticator`, …) now inherit from it
-  - `ModuleParser` accepts a new `entry_point_prefix` keyword argument (default `"sshmitm"`) for the subcommand entry-point group
-  - Plugin Browser and `serverinfo` read the prefix dynamically from `base_class.entry_point_prefix`
-- Removed SSH extension "check-file", which was announced by Paramiko – [draft-ietf-secsh-filexfer-extensions-00 §3](https://datatracker.ietf.org/doc/html/draft-ietf-secsh-filexfer-extensions-00#section-3)
-- update paramiko requirements to 4.0
-- removed support for DSS keys
-- replaced sshpubkeys module with paramiko based utility class to handle ssh public keys
-- updated documentation for the next relese of SSH-MITM
-- dropped Python 3.9/3.10 support, raised minimum version to 3.11
+- **Removed `--close-pubkey-enumerator-with-session` option**: Connection
+  lifecycle is now managed automatically and the option is no longer needed.
+
+- **Python 3.11 or newer is now required.** Python 3.9 and 3.10 are no
+  longer supported.
+
+- DSS/DSA keys are no longer supported (OpenSSH has deprecated them as well).
+
+- Updated paramiko dependency to version 4.0.
 
 
 ## [5.0.1] - 2025-01-22
