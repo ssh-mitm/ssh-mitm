@@ -65,7 +65,8 @@ def transport_send_kex_init(self):  # type: ignore[no-untyped-def]
         self.clear_to_send.clear()
     finally:
         self.clear_to_send_lock.release()
-    self.gss_kex_used = False
+    if hasattr(self, "gss_kex_used"):
+        self.gss_kex_used = False
     self.in_kex = True
     kex_algos = list(self.preferred_kex)
     if self.server_mode:

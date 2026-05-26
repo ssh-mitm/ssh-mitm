@@ -2,7 +2,7 @@ appimage
 argcomplete
 colored
 packaging
-paramiko>=4.0,<4.1
+paramiko>=4.0,<6.0
 protobuf
 pyte
 python-json-logger
