@@ -105,6 +105,31 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
+- `PublicKeyEnumerator` no longer uses global monkey-patching or a process-wide lock
+  - replaced `PATCH_LOCK` + class-level `AuthHandler` patches with direct RFC 4252 §7
+    probe packets built and sent via `transport._send_message()`; per-instance handlers
+    are registered in `transport._handler_table` — no shared state, no serialisation
+    of parallel sessions
+  - eliminated the fake 2048-bit RSA key that was generated solely to drive
+    `transport.auth_publickey()`; the probe is now sent without any private key
+  - RSA algorithm selection (`rsa-sha2-512` / `rsa-sha2-256` / `ssh-rsa`) reads
+    `transport.server_extensions["server-sig-algs"]` from the EXT_INFO negotiated
+    during `start_client()` instead of always sending `ssh-rsa`
+  - when a pre-connected `_upstream_transport` is available (banner-passthrough path),
+    `PublicKeyEnumerator` borrows it instead of opening a second TCP connection;
+    the entire auth flow — `auth_none` for method discovery, publickey probe, and
+    actual authentication — runs over a single connection, removing one preauth child
+    on the remote server and the associated `srclimit` penalty exposure
+  - `PublicKeyEnumerator` gains an `existing_transport` constructor parameter and an
+    `_owns_transport` flag; `close()` is a no-op for borrowed transports so the
+    upstream `SSHClient` can continue using the same transport for the real auth step
+  - `mark_service_ready()` lets the caller signal that `ssh-userauth` service is
+    already active (e.g. after `auth_none`) to prevent a duplicate service-request
+    round-trip
+  - removed `--close-pubkey-enumerator-with-session` option; lifecycle is now handled
+    automatically — borrowed transports are closed by `SSHClient`, dedicated fallback
+    connections are closed in `post_auth_action()`
+
 - `moduleparser`: the entry-point group prefix (`sshmitm`) is no longer hardcoded
   - `BaseModule` now declares `entry_point_prefix: ClassVar[str | None] = None`; a `BaseModuleMeta` metaclass raises `TypeError` at class-definition time when a subclass forgets to set it
   - `SSHMITMBaseModule(BaseModule)` introduced as the SSH-MITM-specific base class with `entry_point_prefix = "sshmitm"`; all built-in base classes (`BaseSession`, `BaseForwarder`, `Authenticator`, …) now inherit from it
