@@ -5,7 +5,7 @@ import sys
 import threading
 from abc import abstractmethod
 from types import TracebackType
-from typing import TYPE_CHECKING, Any, Self
+from typing import TYPE_CHECKING, Self
 
 import paramiko
 from colored.colored import attr, fg
@@ -19,30 +19,6 @@ from sshmitm.utils import SSHPubKey
 
 if TYPE_CHECKING:
     import sshmitm
-
-PATCH_LOCK = threading.Lock()
-ORIGINAL_PARSE_SERVICE_ACCEPT = paramiko.auth_handler.AuthHandler._parse_service_accept  # type: ignore[attr-defined] # pylint:disable=protected-access
-ORIGINAL_PARSE_USERAUTH_INFO_REQUEST = paramiko.auth_handler.AuthHandler._parse_userauth_info_request  # type: ignore[attr-defined] # pylint:disable=protected-access
-
-
-def patched_parse_service_accept(
-    self: paramiko.auth_handler.AuthHandler, msg: paramiko.message.Message
-) -> None:
-    logging.debug("wait for lock to execute original _parse_service_accept")
-    with PATCH_LOCK:
-        ORIGINAL_PARSE_SERVICE_ACCEPT(self, msg)
-
-
-def patched_parse_userauth_info_request(
-    self: paramiko.auth_handler.AuthHandler, msg: paramiko.message.Message
-) -> None:
-    logging.debug("wait for lock to execute original _parse_userauth_info_request")
-    with PATCH_LOCK:
-        ORIGINAL_PARSE_USERAUTH_INFO_REQUEST(self, msg)
-
-
-paramiko.auth_handler.AuthHandler._parse_service_accept = patched_parse_service_accept  # type: ignore[attr-defined] # pylint:disable=protected-access
-paramiko.auth_handler.AuthHandler._parse_userauth_info_request = patched_parse_userauth_info_request  # type: ignore[attr-defined] # pylint:disable=protected-access
 
 
 class PublicKeyEnumerationError(Exception):
@@ -77,11 +53,13 @@ class PublicKeyEnumerator:
         self.sock: socket.socket | None = None
         self.transport: paramiko.transport.Transport | None = None
         self.connected: bool = False
+        self._service_ready: threading.Event = threading.Event()
 
     def connect(self) -> None:
         if self.connected:
             return
         self.connected = True
+        self._service_ready.clear()
         self.sock = socket.create_connection(self.remote_address)
         self.transport = paramiko.transport.Transport(self.sock)
         self.transport.start_client()
@@ -105,75 +83,77 @@ class PublicKeyEnumerator:
     ) -> None:
         self.close()
 
+    def _rsa_algorithm(self) -> str:
+        if self.transport is None:
+            return "rsa-sha2-512"
+        server_sig_algs = self.transport.server_extensions.get("server-sig-algs", b"").decode()  # type: ignore[attr-defined]
+        for algo in ("rsa-sha2-512", "rsa-sha2-256", "ssh-rsa"):
+            if algo in server_sig_algs:
+                return algo
+        return "rsa-sha2-512"
+
     def check_publickey(
         self, username: str, public_key: str | paramiko.pkey.PublicBlob
     ) -> bool:
         # pylint: disable=protected-access
-        def valid(self, msg: paramiko.message.Message) -> None:  # type: ignore[no-untyped-def] # noqa: ANN001
-            """
-            A helper function that is called when authentication is successful.
-
-            Args:
-                msg (paramiko.message.Message): The message that was sent.
-            """
-            del msg  # unused arguments
-            logging.debug("execute patched _parse_userauth_info_request")
-            self.auth_event.set()
-            self.authenticated = True
-
-        def parse_service_accept(self, message: paramiko.message.Message) -> Any | None:  # type: ignore[no-untyped-def] # noqa: ANN001
-            """
-            A helper function that parses the service accept message.
-
-            Args:
-                message (paramiko.message.Message): The message to parse.
-            """
-            # https://tools.ietf.org/html/rfc4252#section-7
-            logging.debug("execute patched _parse_service_accept")
-            service = message.get_text()
-            if not (service == "ssh-userauth" and self.auth_method == "publickey"):
-                return self._parse_service_accept(message)
-            message = paramiko.message.Message()
-            message.add_byte(paramiko.common.cMSG_USERAUTH_REQUEST)
-            message.add_string(self.username)
-            message.add_string("ssh-connection")
-            message.add_string(self.auth_method)
-            message.add_boolean(False)
-            if self.private_key.public_blob.key_type == "ssh-rsa":
-                message.add_string("rsa-sha2-512")
-            else:
-                message.add_string(self.private_key.public_blob.key_type)
-            message.add_string(self.private_key.public_blob.key_blob)
-            self.transport._send_message(message)
-            return None
-
         if not self.connected:
             self.connect()
         if not self.sock or not self.transport:
             msg = "enumerator not connected! use connect() method before enumeration."
             raise PublicKeyEnumerationError(msg)
 
-        valid_key = False
-        with PATCH_LOCK:
-            paramiko.auth_handler.AuthHandler._parse_service_accept = parse_service_accept  # type: ignore[attr-defined]
-            paramiko.auth_handler.AuthHandler._parse_userauth_info_request = valid  # type: ignore[attr-defined]
-            try:
-                # For compatibility with paramiko, we need to generate a random private key and replace
-                # the public key with our data.
-                key: PKey = paramiko.RSAKey.generate(2048)
-                key.public_blob = (
-                    public_key
-                    if isinstance(public_key, paramiko.pkey.PublicBlob)
-                    else paramiko.pkey.PublicBlob.from_string(public_key)
-                )
-                self.transport.auth_publickey(username, key)
-                valid_key = True
-            except (ValueError, paramiko.ssh_exception.AuthenticationException):
-                valid_key = False
-            finally:
-                paramiko.auth_handler.AuthHandler._parse_service_accept = ORIGINAL_PARSE_SERVICE_ACCEPT  # type: ignore[attr-defined]
-                paramiko.auth_handler.AuthHandler._parse_userauth_info_request = ORIGINAL_PARSE_USERAUTH_INFO_REQUEST  # type: ignore[attr-defined]
-        return valid_key
+        public_blob = (
+            public_key
+            if isinstance(public_key, paramiko.pkey.PublicBlob)
+            else paramiko.pkey.PublicBlob.from_string(public_key)
+        )
+        key_type = public_blob.key_type
+        if key_type == "ssh-rsa":
+            key_type = self._rsa_algorithm()
+
+        result_event = threading.Event()
+        valid_key = [False]
+
+        def handle_pk_ok(msg: paramiko.message.Message) -> None:
+            valid_key[0] = True
+            result_event.set()
+
+        def handle_failure(msg: paramiko.message.Message) -> None:
+            result_event.set()
+
+        # Register per-instance handlers — no global state, no lock needed.
+        # transport._handler_table is checked before auth_handler._handler_table.
+        self.transport._handler_table[paramiko.common.MSG_USERAUTH_PK_OK] = handle_pk_ok  # type: ignore[index]
+        self.transport._handler_table[paramiko.common.MSG_USERAUTH_FAILURE] = handle_failure  # type: ignore[index]
+
+        if not self._service_ready.is_set():
+            def handle_service_accept(msg: paramiko.message.Message) -> None:
+                if msg.get_text() == "ssh-userauth":
+                    self._service_ready.set()
+
+            self.transport._handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = handle_service_accept  # type: ignore[index]
+
+            m = paramiko.message.Message()
+            m.add_byte(paramiko.common.cMSG_SERVICE_REQUEST)
+            m.add_string("ssh-userauth")
+            self.transport._send_message(m)  # type: ignore[attr-defined]
+
+            if not self._service_ready.wait(timeout=10):
+                raise PublicKeyEnumerationError("SSH service request timed out")
+
+        # RFC 4252 §7: probe without signature — server replies with PK_OK (60) or FAILURE (51)
+        m = paramiko.message.Message()
+        m.add_byte(paramiko.common.cMSG_USERAUTH_REQUEST)
+        m.add_string(username)
+        m.add_string("ssh-connection")
+        m.add_string("publickey")
+        m.add_boolean(False)
+        m.add_string(key_type)
+        m.add_string(public_blob.key_blob)
+        self.transport._send_message(m)  # type: ignore[attr-defined]
+
+        result_event.wait(timeout=10)
+        return valid_key[0]
 
 
 class RemoteCredentials:

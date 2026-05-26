@@ -146,3 +146,4 @@ doc/develop/api/
 squashfs-root
 .ruff_cache/
 CLAUDE.md
+reports/

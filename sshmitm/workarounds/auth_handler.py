@@ -58,7 +58,7 @@ def _load_hostbound_key(
     return None
 
 
-def _check_pubkey_auth(handler: AuthHandler, username: str, key: PKey) -> int:
+def _check_pubkey_auth(handler: AuthHandler, username: str, key: PKey, sig_attached: bool = True) -> int:
     if handler.transport.server_object is None:
         return AUTH_FAILED
     return handler.transport.server_object.check_auth_publickey(username, key)
@@ -150,7 +150,7 @@ def auth_handler_parse_userauth_request(self: AuthHandler, m: Message) -> None:
         self._disconnect_no_more_auth()  # type: ignore[attr-defined]
         return
 
-    result = _check_pubkey_auth(self, username, key)
+    result = _check_pubkey_auth(self, username, key, sig_attached=sig_attached)
 
     if result != AUTH_FAILED:
         if not sig_attached:
