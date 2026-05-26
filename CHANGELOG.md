@@ -54,14 +54,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Changed
 
-- **Fewer connections to the target server**: The publickey probe (checking
-  whether a client's key is accepted) and the actual authentication now share
-  a single connection to the target. Previously two separate connections were
-  made, which showed up as an extra entry in server logs and counted towards
-  OpenSSH's per-source rate limits.
-
-- **Removed `--close-pubkey-enumerator-with-session` option**: Connection
-  lifecycle is now managed automatically and the option is no longer needed.
+- **Reduced connection footprint during public key lookup**: SSH-MITM
+  previously opened a separate connection to the target server to check
+  whether a client's public key is accepted, resulting in two log entries per
+  intercepted session. The key check and the actual authentication now share
+  one connection, leaving only a single log entry on the target server and
+  reducing the risk of triggering OpenSSH's rate-limiting.
 
 - **Python 3.11 or newer is now required.** Python 3.9 and 3.10 are no
   longer supported.
