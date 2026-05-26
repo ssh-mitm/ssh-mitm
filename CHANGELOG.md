@@ -17,10 +17,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   from clients using host-bound agent keys no longer fail visibly at the MITM.
   Full documentation is available in the user guide.
 
-- **Server banner passthrough**: SSH-MITM now shows clients the real target
-  server's SSH version string instead of its own. The interception is therefore
-  no longer detectable by simply comparing the SSH banner. The `--banner-name`
-  option still works and takes precedence when set.
+- **Banner passthrough in both directions**: SSH-MITM now exchanges the real
+  SSH version strings in both directions. Clients see the target server's
+  actual version string, and the target server sees the connecting client's
+  actual version string. Previously, the server always saw
+  `SSH-2.0-paramiko_X.Y.Z` regardless of which client was used, which could
+  reveal the interception in server logs or packet captures. The `--banner-name`
+  option still works and takes precedence over the server-side passthrough.
 
 - **MOSH session monitoring**: A new `ssh-mitm mosh client <host> <port>`
   subcommand lets you watch an active MOSH session in real time. The viewer
