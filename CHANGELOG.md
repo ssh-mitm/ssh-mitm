@@ -9,11 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
-- **FIDO2 / hardware security key interception**: SSH-MITM can now intercept
-  clients that use hardware tokens with destination constraints (`ssh-add -h`,
-  available since OpenSSH 8.9). Previously these sessions failed immediately,
-  making the interception visible to the user. Full documentation is available
-  in the user guide.
+- **Clients with SSH agent host key restrictions can now be intercepted**:
+  OpenSSH 8.9 introduced the ability to restrict which hosts an agent key may
+  be used for (`ssh-add -h`). When such a restriction is in place, the agent
+  refuses to sign unless the SSH session is cryptographically bound to the
+  target host key. SSH-MITM now implements this binding correctly, so sessions
+  from clients using host-bound agent keys no longer fail visibly at the MITM.
+  Full documentation is available in the user guide.
 
 - **Server banner passthrough**: SSH-MITM now shows clients the real target
   server's SSH version string instead of its own. The interception is therefore

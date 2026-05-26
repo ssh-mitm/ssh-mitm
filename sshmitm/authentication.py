@@ -580,6 +580,9 @@ class Authenticator(SSHMITMBaseModule):
         if not host:
             raise MissingHostException
 
+        if hasattr(self.session, "finalize_upstream_transport"):
+            self.session.finalize_upstream_transport()
+
         auth_status = paramiko.common.AUTH_FAILED
         with self.session.ssh.client_created:
             upstream_transport = (
@@ -656,6 +659,8 @@ class AuthenticatorPassThrough(Authenticator):
         self.valid_key: PKey | None = None
 
     def _make_pubkey_enumerator(self, host: str, port: int) -> PublicKeyEnumerator:
+        if hasattr(self.session, "finalize_upstream_transport"):
+            self.session.finalize_upstream_transport()
         upstream = getattr(self.session, "_upstream_transport", None)
         if isinstance(upstream, paramiko.Transport) and upstream.is_active():
             return PublicKeyEnumerator(existing_transport=upstream)

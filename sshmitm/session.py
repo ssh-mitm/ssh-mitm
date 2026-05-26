@@ -193,6 +193,7 @@ class Session(BaseSession):
         self.banner_name = banner_name
         self._upstream_transport: paramiko.Transport | None = None
         self._upstream_remote_version: str | None = None
+        self._upstream_sock: socket.socket | None = None
 
     def get_session_log_dir(self) -> str | None:
         """
@@ -251,21 +252,59 @@ class Session(BaseSession):
         )
         return self.proxyserver.running and open_channel_exists and not self.closed
 
+    @staticmethod
+    def _peek_ssh_banner(sock: socket.socket, timeout: float = 10.0) -> str | None:
+        sock.settimeout(timeout)
+        try:
+            buf = b""
+            while b"\n" not in buf:
+                chunk = sock.recv(4096, socket.MSG_PEEK)
+                if not chunk:
+                    return None
+                buf = chunk
+            newline = buf.index(b"\n")
+            return buf[:newline].decode("utf-8", errors="replace").strip()
+        except OSError:
+            return None
+        finally:
+            sock.settimeout(None)
+
     def _preconnect_upstream(self) -> None:
         addr = self.authenticator.get_preconnect_address()
         if addr is None:
             return
         host, port = addr
         try:
-            transport = paramiko.Transport((host, port))
-            transport.start_client()
-            self._upstream_transport = transport
-            self._upstream_remote_version = transport.remote_version
+            sock = socket.create_connection((host, port))
+            server_banner = self._peek_ssh_banner(sock)
+            if server_banner is None:
+                sock.close()
+                return
+            self._upstream_sock = sock
+            self._upstream_remote_version = server_banner
             logging.debug(
                 "(%s) pre-connected to %s:%d for banner passthrough", self, host, port
             )
         except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
             logging.debug("(%s) banner passthrough failed for %s:%d", self, host, port)
+
+    def finalize_upstream_transport(self) -> None:
+        if self._upstream_sock is None:
+            return
+        sock = self._upstream_sock
+        self._upstream_sock = None
+        client_version = getattr(self._transport, "remote_version", None) or None
+        try:
+            transport = paramiko.Transport(sock)
+            if client_version:
+                transport.local_version = client_version
+            transport.start_client()
+            self._upstream_transport = transport
+            logging.debug(
+                "(%s) upstream transport completed with client version: %s", self, client_version
+            )
+        except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+            logging.debug("(%s) failed to complete upstream transport", self)
 
     @property
     def transport(self) -> paramiko.Transport:
