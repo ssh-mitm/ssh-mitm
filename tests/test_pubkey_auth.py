@@ -411,7 +411,6 @@ class TestEndToEnd:
             fallback_port=None,
             fallback_username=None,
             fallback_password=None,
-            close_pubkey_enumerator_with_session=False,
         )
 
         # Build authenticator without __init__ to avoid BaseModule arg parsing

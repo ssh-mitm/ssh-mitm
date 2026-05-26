@@ -48,12 +48,28 @@ class PublicKeyEnumerator:
     which indicates whether the provided public key is authorized or not.
     """
 
-    def __init__(self, hostname_or_ip: str, port: int) -> None:
+    def __init__(
+        self,
+        hostname_or_ip: str = "",
+        port: int = 0,
+        *,
+        existing_transport: paramiko.transport.Transport | None = None,
+    ) -> None:
         self.remote_address = (hostname_or_ip, port)
-        self.sock: socket.socket | None = None
-        self.transport: paramiko.transport.Transport | None = None
-        self.connected: bool = False
+        self._owns_transport: bool = existing_transport is None
         self._service_ready: threading.Event = threading.Event()
+        if existing_transport is not None:
+            self.sock: socket.socket | None = None
+            self.transport: paramiko.transport.Transport | None = existing_transport
+            self.connected: bool = True
+        else:
+            self.sock = None
+            self.transport = None
+            self.connected = False
+
+    def mark_service_ready(self) -> None:
+        """Signal that the ssh-userauth service is already active (e.g. after a prior auth_none call)."""
+        self._service_ready.set()
 
     def connect(self) -> None:
         if self.connected:
@@ -66,6 +82,8 @@ class PublicKeyEnumerator:
 
     def close(self) -> None:
         self.connected = False
+        if not self._owns_transport:
+            return
         if self.transport is not None:
             self.transport.close()
         if self.sock is not None:
@@ -98,7 +116,7 @@ class PublicKeyEnumerator:
         # pylint: disable=protected-access
         if not self.connected:
             self.connect()
-        if not self.sock or not self.transport:
+        if not self.transport:
             msg = "enumerator not connected! use connect() method before enumeration."
             raise PublicKeyEnumerationError(msg)
 
@@ -629,13 +647,6 @@ class AuthenticatorPassThrough(Authenticator):
     @classmethod
     def parser_arguments(cls) -> None:
         super().parser_arguments()
-        plugin_group = cls.argument_group()
-        plugin_group.add_argument(
-            "--close-pubkey-enumerator-with-session",
-            dest="close_pubkey_enumerator_with_session",
-            action="store_true",
-            help="closes the pubkey enumerator when the session is close. This can be used to hide tracks.",
-        )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session=session)
@@ -643,6 +654,14 @@ class AuthenticatorPassThrough(Authenticator):
         self.pubkey_enumerator: PublicKeyEnumerator | None = None
         self.pubkey_auth_success: bool = False
         self.valid_key: PKey | None = None
+
+    def _make_pubkey_enumerator(self, host: str, port: int) -> PublicKeyEnumerator:
+        upstream = getattr(self.session, "_upstream_transport", None)
+        if isinstance(upstream, paramiko.Transport) and upstream.is_active():
+            return PublicKeyEnumerator(existing_transport=upstream)
+        enumerator = PublicKeyEnumerator(host, port)
+        enumerator.connect()
+        return enumerator
 
     def get_auth_methods(
         self, host: str, port: int, username: str | None = None
@@ -656,8 +675,7 @@ class AuthenticatorPassThrough(Authenticator):
         :return: a list of strings representing the available authentication methods.
         """
         if not self.pubkey_enumerator:
-            self.pubkey_enumerator = PublicKeyEnumerator(host, port)
-            self.pubkey_enumerator.connect()
+            self.pubkey_enumerator = self._make_pubkey_enumerator(host, port)
 
         auth_methods = None
         if not self.pubkey_enumerator.transport:
@@ -667,6 +685,8 @@ class AuthenticatorPassThrough(Authenticator):
             self.pubkey_enumerator.transport.auth_none(username or "")
         except paramiko.BadAuthenticationType as err:
             auth_methods = err.allowed_types
+        # ssh-userauth service is now active; skip the service request in check_publickey()
+        self.pubkey_enumerator.mark_service_ready()
         return auth_methods
 
     def auth_agent(self, username: str, host: str, port: int) -> int:
@@ -692,7 +712,7 @@ class AuthenticatorPassThrough(Authenticator):
         the user will not be authenticated and will not be able to log in.
         """
         if not self.pubkey_enumerator:
-            self.pubkey_enumerator = PublicKeyEnumerator(host, port)
+            self.pubkey_enumerator = self._make_pubkey_enumerator(host, port)
 
         if key.can_sign():
             logging.debug(
@@ -779,11 +799,7 @@ class AuthenticatorPassThrough(Authenticator):
 
             return keys_parsed
 
-        if (
-            not self.args.close_pubkey_enumerator_with_session
-            and self.pubkey_enumerator
-            and self.pubkey_enumerator.connected
-        ):
+        if self.pubkey_enumerator and self.pubkey_enumerator.connected:
             self.pubkey_enumerator.close()
 
         logmessage = []
@@ -844,12 +860,7 @@ class AuthenticatorPassThrough(Authenticator):
         logging.info("\n".join(logmessage))
 
     def on_session_close(self) -> None:
-        if (
-            self.args.close_pubkey_enumerator_with_session
-            and self.pubkey_enumerator
-            and self.pubkey_enumerator.connected
-        ):
-            self.pubkey_enumerator.close()
+        pass
 
 
 class AuthenticatorRemote(Authenticator):
