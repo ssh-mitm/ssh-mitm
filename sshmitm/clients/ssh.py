@@ -19,7 +19,6 @@ to remote servers, execute commands, and transfer files.
 """
 
 import logging
-from collections.abc import Callable
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -31,6 +30,8 @@ from sshmitm.exceptions import InvalidHostKey, NoAgentKeys
 from sshmitm.modules import SSHMITMBaseModule
 
 if TYPE_CHECKING:
+    from collections.abc import Callable
+
     import sshmitm
     from sshmitm.forwarders.agent import AgentProxy
     from sshmitm.session import Session  # noqa: F401
@@ -104,7 +105,7 @@ class SSHClient(BaseSSHClient):
         self.interactive_handler: Callable | None = interactive_handler
         self.interactive_submethods: str = interactive_submethods
 
-    def connect(self) -> bool:  # noqa: C901
+    def connect(self) -> bool:  # noqa: C901, PLR0915
         """
         Connects to the remote host using the specified authentication method.
 
@@ -124,7 +125,9 @@ class SSHClient(BaseSSHClient):
         try:
             if self.transport.is_authenticated():
                 remotekey = self.transport.get_remote_server_key()
-                if not self.check_host_key(f"{self.host}:{self.port}", remotekey.get_name(), remotekey):
+                if not self.check_host_key(
+                    f"{self.host}:{self.port}", remotekey.get_name(), remotekey
+                ):
                     raise InvalidHostKey
                 self.connected = True
                 return True
@@ -140,12 +143,15 @@ class SSHClient(BaseSSHClient):
                         self.user, self.interactive_handler, self.interactive_submethods
                     )
                 else:
-                    logging.error("keyboard-interactive auth requires an interactive_handler")
+                    logging.error(
+                        "keyboard-interactive auth requires an interactive_handler"
+                    )
                     return False
             elif self.method is AuthenticationMethod.NONE:
                 remaining = self.transport.auth_none(self.user)
                 if remaining:
-                    raise paramiko.SSHException("none auth did not fully authenticate")
+                    msg_0 = "none auth did not fully authenticate"
+                    raise paramiko.SSHException(msg_0)
             elif self.method is AuthenticationMethod.AGENT:
                 if self.agent is not None:
                     keys = self.agent.get_keys()

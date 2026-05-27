@@ -420,6 +420,7 @@ def handle_mosh(
     :param session: A Session object representing the Mosh connection.
     :param data: Encrypted data from Mosh.
     :param isclient: A boolean value indicating whether the current session is a client session.
+    :param sessionlog: Optional terminal session recorder.
     :return: The processed data.
     """
     if not isclient:

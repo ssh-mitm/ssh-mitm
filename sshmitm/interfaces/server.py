@@ -11,10 +11,12 @@ from paramiko.message import Message
 from paramiko.pkey import PKey
 from paramiko.sftp import CMD_INIT, CMD_VERSION, SFTPError
 
+from sshmitm.authentication import KeyboardInteractiveBridge
 from sshmitm.clients.netconf import NetconfClient
 from sshmitm.clients.sftp import SFTPClient
 from sshmitm.exec_handlers import ExecHandlerRegistry
 from sshmitm.modules import SSHMITMBaseModule
+from sshmitm.workarounds.channel import send_signal
 
 if TYPE_CHECKING:
     import sshmitm
@@ -46,6 +48,8 @@ class BaseServerInterface(paramiko.ServerInterface, SSHMITMBaseModule):
 
 class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-methods
     """SSH-MITM server implementation"""
+
+    _kb_interactive_bridge: KeyboardInteractiveBridge | None = None
 
     @classmethod
     def parser_arguments(cls) -> None:
@@ -254,13 +258,15 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
                 signame,
             )
             return False
-        from sshmitm.workarounds.channel import send_signal  # local import avoids circular dep
         send_signal(self.session.ssh.remote_channel, signame)
         return True
 
     def _lookup_remote_auth_methods(self, username: str) -> None:
         """Query the remote server for supported auth methods (cached after first call)."""
-        if self.possible_auth_methods is not None or self.args.disable_auth_method_lookup:
+        if (
+            self.possible_auth_methods is not None
+            or self.args.disable_auth_method_lookup
+        ):
             return
         creds: RemoteCredentials = (
             self.session.authenticator.get_remote_host_credentials(username)
@@ -272,9 +278,7 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
                         creds.host, creds.port, username
                     )
                 )
-                logging.info(
-                    "Remote auth-methods: %s", str(self.possible_auth_methods)
-                )
+                logging.info("Remote auth-methods: %s", str(self.possible_auth_methods))
             except paramiko.ssh_exception.SSHException as ex:
                 self.session.remote.address_reachable = False
                 logging.error(ex)
@@ -293,7 +297,9 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         )
         if remote_allows_none or self.args.enable_none_auth:
             allowed_auths.append("none")
-        kb_interactive_disabled = getattr(self.args, "disable_keyboard_interactive_auth", False)
+        kb_interactive_disabled = getattr(
+            self.args, "disable_keyboard_interactive_auth", False
+        )
         if not kb_interactive_disabled or self.args.enable_trivial_auth:
             allowed_auths.append("keyboard-interactive")
         if not self.args.disable_pubkey_auth:
@@ -344,7 +350,9 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         is_trivial_auth = (
             self.args.enable_trivial_auth and self.session.auth.accepted_key is not None
         )
-        kb_interactive_disabled = getattr(self.args, "disable_keyboard_interactive_auth", False)
+        kb_interactive_disabled = getattr(
+            self.args, "disable_keyboard_interactive_auth", False
+        )
         if kb_interactive_disabled and not is_trivial_auth:
             return paramiko.common.AUTH_FAILED
 
@@ -362,9 +370,11 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             return paramiko.server.InteractiveQuery()
 
         # RFC 4256 passthrough: proxy real challenges from the remote server to the client
-        from sshmitm.authentication import KeyboardInteractiveBridge  # local to avoid circular import
-
-        submethods_str = submethods.decode("utf-8", errors="replace") if isinstance(submethods, bytes) else submethods
+        submethods_str = (
+            submethods.decode("utf-8", errors="replace")
+            if isinstance(submethods, bytes)
+            else submethods
+        )
 
         creds = self.session.authenticator.get_remote_host_credentials(username)
         if creds.host is None or creds.port is None:
@@ -390,7 +400,9 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
 
         challenge = bridge.get_next_challenge(timeout=30)
         if challenge is None:
-            logging.error("keyboard-interactive: timeout waiting for first challenge from remote")
+            logging.error(
+                "keyboard-interactive: timeout waiting for first challenge from remote"
+            )
             self._kb_interactive_bridge = None
             return paramiko.common.AUTH_FAILED
 
@@ -422,14 +434,18 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
 
         bridge = getattr(self, "_kb_interactive_bridge", None)
         if bridge is None:
-            logging.error("keyboard-interactive: no active bridge in check_auth_interactive_response")
+            logging.error(
+                "keyboard-interactive: no active bridge in check_auth_interactive_response"
+            )
             return paramiko.common.AUTH_FAILED
 
         bridge.send_responses(responses)
 
         challenge = bridge.get_next_challenge(timeout=30)
         if challenge is None:
-            logging.error("keyboard-interactive: timeout waiting for next challenge after responses")
+            logging.error(
+                "keyboard-interactive: timeout waiting for next challenge after responses"
+            )
             self._kb_interactive_bridge = None
             return paramiko.common.AUTH_FAILED
 

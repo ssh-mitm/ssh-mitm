@@ -2,9 +2,13 @@
 
 from __future__ import annotations
 
-import paramiko
+from typing import TYPE_CHECKING
+
 from paramiko.common import cMSG_CHANNEL_REQUEST
 from paramiko.message import Message
+
+if TYPE_CHECKING:
+    import paramiko
 
 
 def send_signal(channel: paramiko.Channel, signame: str) -> None:
@@ -15,14 +19,14 @@ def send_signal(channel: paramiko.Channel, signame: str) -> None:
     """
     m = Message()
     m.add_byte(cMSG_CHANNEL_REQUEST)
-    m.add_int(channel.remote_chanid)  # noqa: SLF001
+    m.add_int(channel.remote_chanid)
     m.add_string("signal")
     m.add_boolean(False)  # want_reply always False for signals
     m.add_string(signame)
-    channel.transport._send_user_message(m)  # noqa: SLF001
+    channel.transport._send_user_message(m)  # pylint: disable=protected-access
 
 
-def request_pty_with_modes(
+def request_pty_with_modes(  # pylint: disable=too-many-arguments
     channel: paramiko.Channel,
     term: bytes | str,
     width: int,
@@ -38,7 +42,7 @@ def request_pty_with_modes(
     """
     m = Message()
     m.add_byte(cMSG_CHANNEL_REQUEST)
-    m.add_int(channel.remote_chanid)  # noqa: SLF001
+    m.add_int(channel.remote_chanid)
     m.add_string("pty-req")
     m.add_boolean(True)  # want_reply
     m.add_string(term)
@@ -47,6 +51,6 @@ def request_pty_with_modes(
     m.add_int(width_pixels)
     m.add_int(height_pixels)
     m.add_string(modes)
-    channel._event_pending()  # noqa: SLF001
-    channel.transport._send_user_message(m)  # noqa: SLF001
-    channel._wait_for_event()  # noqa: SLF001
+    channel._event_pending()  # pylint: disable=protected-access
+    channel.transport._send_user_message(m)  # pylint: disable=protected-access
+    channel._wait_for_event()  # pylint: disable=protected-access

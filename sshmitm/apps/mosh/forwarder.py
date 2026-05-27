@@ -7,7 +7,11 @@ import paramiko
 
 from sshmitm.apps.mosh.proxy import handle_mosh
 from sshmitm.forwarders.exec import ExecHandlerBasePlugin
-from sshmitm.plugins.ssh.terminallogs import AsciinemLogFormat, ScriptLogFormat, TerminalLogFormat
+from sshmitm.plugins.ssh.terminallogs import (
+    AsciinemLogFormat,
+    ScriptLogFormat,
+    TerminalLogFormat,
+)
 
 if TYPE_CHECKING:
     import sshmitm
@@ -55,12 +59,16 @@ class MoshForwarder(ExecHandlerBasePlugin):
             return None
         try:
             log_dir = os.path.join(self.session.session_log_dir, "terminal_sessions")
-            formatter = getattr(self.args, "mosh_terminal_log_formatter", None) or "script"
+            formatter = (
+                getattr(self.args, "mosh_terminal_log_formatter", None) or "script"
+            )
             if formatter == "asciinema":
-                self._mosh_sessionlog = AsciinemLogFormat(log_dir, prefix="mosh_session")
+                self._mosh_sessionlog = AsciinemLogFormat(
+                    log_dir, prefix="mosh_session"
+                )
             else:
                 self._mosh_sessionlog = ScriptLogFormat(log_dir, prefix="mosh_session")
-        except Exception:  # noqa: BLE001
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error creating MOSH session log")
         return self._mosh_sessionlog
 
@@ -76,7 +84,9 @@ class MoshForwarder(ExecHandlerBasePlugin):
         return handle_mosh(self.session, data, True)
 
     def handle_server_data(self, data: bytes) -> bytes:
-        return handle_mosh(self.session, data, False, sessionlog=self._get_mosh_sessionlog())
+        return handle_mosh(
+            self.session, data, False, sessionlog=self._get_mosh_sessionlog()
+        )
 
     def forward(self) -> None:
         self.server_channel.exec_command(self.session.scp.command)  # nosec

@@ -301,7 +301,9 @@ class Session(BaseSession):
             transport.start_client()
             self._upstream_transport = transport
             logging.debug(
-                "(%s) upstream transport completed with client version: %s", self, client_version
+                "(%s) upstream transport completed with client version: %s",
+                self,
+                client_version,
             )
         except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
             logging.debug("(%s) failed to complete upstream transport", self)

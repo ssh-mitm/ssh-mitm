@@ -20,6 +20,7 @@ def patch_channel() -> None:
     The transport dispatch loop calls that table entry directly, bypassing
     any class-attribute patch.  We must update the table entry itself.
     """
+    # pylint: disable-next=protected-access
     original = paramiko.transport.Transport._channel_handler_table[MSG_CHANNEL_REQUEST]
 
     def _handle_request_with_signal(chan: Any, m: Any) -> Any:
@@ -32,7 +33,7 @@ def patch_channel() -> None:
         if key == "signal":
             signame = m.get_text()
             server = chan.transport.server_object
-            if server is not None and hasattr(server, 'check_channel_signal_request'):
+            if server is not None and hasattr(server, "check_channel_signal_request"):
                 server.check_channel_signal_request(chan, signame)
             # signals never request a reply — nothing to send back
             return None
@@ -42,6 +43,7 @@ def patch_channel() -> None:
         m.packet.seek(saved_pos)
         return original(chan, m)
 
+    # pylint: disable-next=protected-access
     paramiko.transport.Transport._channel_handler_table[MSG_CHANNEL_REQUEST] = (
         _handle_request_with_signal
     )

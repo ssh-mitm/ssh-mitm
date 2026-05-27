@@ -11,7 +11,11 @@ from colored.colored import attr, fg
 
 from sshmitm.forwarders.ssh import SSHForwarder
 from sshmitm.moduleparser.colors import Colors
-from sshmitm.plugins.ssh.terminallogs import AsciinemLogFormat, ScriptLogFormat, TerminalLogFormat
+from sshmitm.plugins.ssh.terminallogs import (
+    AsciinemLogFormat,
+    ScriptLogFormat,
+    TerminalLogFormat,
+)
 
 if TYPE_CHECKING:
     import sshmitm
@@ -191,6 +195,7 @@ class SSHMirrorForwarder(SSHForwarder):
                         break
 
                     mirror_transport = paramiko.Transport(self.injector_client_sock)
+                    # pylint: disable-next=no-member
                     mirror_transport.set_gss_host(socket.getfqdn(""))
 
                     mirror_transport.load_server_moduli()
@@ -235,7 +240,9 @@ class SSHMirrorForwarder(SSHForwarder):
             return
         try:
             log_dir = os.path.join(self.session.session_log_dir, "terminal_sessions")
-            formatter = getattr(self.args, "ssh_terminal_log_formatter", None) or "script"
+            formatter = (
+                getattr(self.args, "ssh_terminal_log_formatter", None) or "script"
+            )
             pty = self.session.ssh.pty_kwargs or {}
             width: int = pty.get("width", 80)
             height: int = pty.get("height", 24)
@@ -244,7 +251,9 @@ class SSHMirrorForwarder(SSHForwarder):
             else:
                 self.sessionlog = ScriptLogFormat(log_dir)
         except Exception:  # pylint: disable=broad-exception-caught
-            logging.exception("Error creating session log dir. terminal logging disabled")
+            logging.exception(
+                "Error creating session log dir. terminal logging disabled"
+            )
 
     def close_session(self, channel: paramiko.Channel) -> None:
         super().close_session(channel)

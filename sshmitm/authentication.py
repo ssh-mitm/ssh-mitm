@@ -1,3 +1,4 @@
+# pylint: disable=too-many-lines
 import logging
 import os
 import queue
@@ -135,10 +136,12 @@ class PublicKeyEnumerator:
         valid_key = [False]
 
         def handle_pk_ok(msg: paramiko.message.Message) -> None:
+            del msg
             valid_key[0] = True
             result_event.set()
 
         def handle_failure(msg: paramiko.message.Message) -> None:
+            del msg
             result_event.set()
 
         # Register per-instance handlers — no global state, no lock needed.
@@ -147,6 +150,7 @@ class PublicKeyEnumerator:
         self.transport._handler_table[paramiko.common.MSG_USERAUTH_FAILURE] = handle_failure  # type: ignore[index]
 
         if not self._service_ready.is_set():
+
             def handle_service_accept(msg: paramiko.message.Message) -> None:
                 if msg.get_text() == "ssh-userauth":
                     self._service_ready.set()
@@ -159,7 +163,8 @@ class PublicKeyEnumerator:
             self.transport._send_message(m)  # type: ignore[attr-defined]
 
             if not self._service_ready.wait(timeout=10):
-                raise PublicKeyEnumerationError("SSH service request timed out")
+                msg_0 = "SSH service request timed out"
+                raise PublicKeyEnumerationError(msg_0)
 
         # RFC 4252 §7: probe without signature — server replies with PK_OK (60) or FAILURE (51)
         m = paramiko.message.Message()
@@ -201,12 +206,16 @@ class KeyboardInteractiveBridge:
         try:
             return self._response_queue.get(timeout=60)
         except queue.Empty:
-            logging.warning("keyboard-interactive: timeout waiting for client responses")
+            logging.warning(
+                "keyboard-interactive: timeout waiting for client responses"
+            )
             return []
 
     def set_auth_result(self, success: bool) -> None:
         """Signal auth completion to the MITM server-side."""
-        result = paramiko.common.AUTH_SUCCESSFUL if success else paramiko.common.AUTH_FAILED
+        result = (
+            paramiko.common.AUTH_SUCCESSFUL if success else paramiko.common.AUTH_FAILED
+        )
         self._challenge_queue.put(("result", result))
 
     def get_next_challenge(self, timeout: float = 30.0) -> tuple | None:
@@ -612,9 +621,10 @@ class Authenticator(SSHMITMBaseModule):
 
     def auth_none_remote(self, username: str, host: str, port: int) -> int:
         """Perform none auth with the remote server."""
+        del username, host, port
         return paramiko.common.AUTH_FAILED
 
-    def auth_keyboard_interactive(
+    def auth_keyboard_interactive(  # pylint: disable=too-many-arguments
         self,
         username: str,
         host: str,
@@ -623,6 +633,7 @@ class Authenticator(SSHMITMBaseModule):
         submethods: str = "",
     ) -> int:
         """Perform keyboard-interactive auth with the remote server, proxying challenges via bridge."""
+        del username, host, port, bridge, submethods
         return paramiko.common.AUTH_FAILED
 
     def connect(  # pylint: disable=too-many-arguments
@@ -770,7 +781,7 @@ class AuthenticatorPassThrough(Authenticator):
     def auth_agent(self, username: str, host: str, port: int) -> int:
         return self.connect(username, host, port, AuthenticationMethod.AGENT)
 
-    def auth_keyboard_interactive(
+    def auth_keyboard_interactive(  # pylint: disable=too-many-arguments
         self,
         username: str,
         host: str,

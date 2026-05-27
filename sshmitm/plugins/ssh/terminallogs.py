@@ -130,7 +130,9 @@ class AsciinemLogFormat(TerminalLogFormat):
 
     def _write_event(self, event_type: str, data: bytes) -> None:
         text = data.decode("utf-8", errors="replace")
-        self._file.write(json.dumps([round(self._elapsed(), 6), event_type, text]) + "\n")
+        self._file.write(
+            json.dumps([round(self._elapsed(), 6), event_type, text]) + "\n"
+        )
         self._file.flush()
 
     def stdin(self, buffer: bytes) -> None:

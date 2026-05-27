@@ -1,12 +1,14 @@
 """Minimal SSH mock server for testing SSH-MITM auth passthrough."""
 
+# pylint: disable=broad-exception-caught
+
 from __future__ import annotations
 
-import argparse
+import base64
 import logging
 import shlex
 import socket
-import subprocess
+import subprocess  # nosec B404
 import threading
 from typing import TYPE_CHECKING
 
@@ -17,7 +19,7 @@ import paramiko.server
 from sshmitm.moduleparser import SubCommand
 
 if TYPE_CHECKING:
-    pass
+    import argparse
 
 
 class _MockServerInterface(paramiko.ServerInterface):
@@ -54,7 +56,11 @@ class _MockServerInterface(paramiko.ServerInterface):
         return paramiko.common.AUTH_FAILED
 
     def check_auth_password(self, username: str, password: str) -> int:
-        if username == self._username and self._password is not None and password == self._password:
+        if (
+            username == self._username
+            and self._password is not None
+            and password == self._password
+        ):
             return paramiko.common.AUTH_SUCCESSFUL
         return paramiko.common.AUTH_FAILED
 
@@ -69,6 +75,7 @@ class _MockServerInterface(paramiko.ServerInterface):
     def check_auth_interactive(
         self, username: str, submethods: bytes | str
     ) -> int | paramiko.server.InteractiveQuery:
+        del submethods
         if username != self._username or self._password is None:
             return paramiko.common.AUTH_FAILED
         self._kbd_username = username
@@ -82,9 +89,10 @@ class _MockServerInterface(paramiko.ServerInterface):
         return paramiko.common.AUTH_FAILED
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del kind, chanid
         return paramiko.common.OPEN_SUCCEEDED
 
-    def check_channel_pty_request(
+    def check_channel_pty_request(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.Channel,
         term: bytes,
@@ -94,26 +102,31 @@ class _MockServerInterface(paramiko.ServerInterface):
         pixelheight: int,
         modes: bytes,
     ) -> bool:
+        del channel, term, width, height, pixelwidth, pixelheight, modes
         return True
 
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
         threading.Thread(target=_run_shell, args=(channel,), daemon=True).start()
         return True
 
-    def check_channel_exec_request(self, channel: paramiko.Channel, command: bytes) -> bool:
+    def check_channel_exec_request(
+        self, channel: paramiko.Channel, command: bytes
+    ) -> bool:
         threading.Thread(target=_run_exec, args=(channel, command), daemon=True).start()
         return True
 
     def check_channel_forward_agent_request(self, channel: paramiko.Channel) -> bool:
+        del channel
         return True
 
 
 def _run_exec(channel: paramiko.Channel, command: bytes) -> None:
     try:
-        result = subprocess.run(  # noqa: S603
+        result = subprocess.run(  # noqa: S603  # nosec B603
             shlex.split(command.decode("utf-8", errors="replace")),
             capture_output=True,
             timeout=30,
+            check=False,
         )
         channel.sendall(result.stdout)
         if result.stderr:
@@ -145,10 +158,11 @@ def _run_shell(channel: paramiko.Channel) -> None:
                     channel.sendall(b"$ ")
                     continue
                 try:
-                    result = subprocess.run(  # noqa: S603
+                    result = subprocess.run(  # noqa: S603  # nosec B603
                         shlex.split(cmd.decode("utf-8", errors="replace")),
                         capture_output=True,
                         timeout=10,
+                        check=False,
                     )
                     if result.stdout:
                         channel.sendall(result.stdout)
@@ -157,7 +171,7 @@ def _run_shell(channel: paramiko.Channel) -> None:
                 except Exception as exc:  # noqa: BLE001
                     channel.sendall(f"error: {exc}\n".encode())
                 channel.sendall(b"$ ")
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001, S110  # nosec B110
         pass
     finally:
         channel.send_exit_status(0)
@@ -168,13 +182,13 @@ def _load_pubkeys(paths: list[str]) -> list[paramiko.PKey]:
     keys: list[paramiko.PKey] = []
     for path in paths:
         try:
-            key_data = open(path).read().strip()  # noqa: WPS515
+            with open(path, encoding="utf-8") as f:
+                key_data = f.read().strip()
             parts = key_data.split()
             if len(parts) < 2:
                 logging.warning("mock-server: cannot parse key file %s", path)
                 continue
             key_type, b64 = parts[0], parts[1]
-            import base64
             raw = base64.b64decode(b64)
             msg = paramiko.Message(raw)
             key = paramiko.PKey.from_type_string(key_type, msg)
@@ -194,7 +208,7 @@ def _handle_connection(
     try:
         transport.start_server(server=interface)
         transport.join(timeout=60)
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001, S110  # nosec B110
         pass
 
 
@@ -255,7 +269,9 @@ class MockServer(SubCommand):
 
     def execute(self, args: argparse.Namespace) -> None:
         if args.host_key_file:
-            host_key: paramiko.PKey = paramiko.RSAKey.from_private_key_file(args.host_key_file)
+            host_key: paramiko.PKey = paramiko.RSAKey.from_private_key_file(
+                args.host_key_file
+            )
         else:
             host_key = paramiko.RSAKey.generate(2048)
             logging.info(
