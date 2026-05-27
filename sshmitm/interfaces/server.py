@@ -87,10 +87,16 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             help="Disallows public key authentication but still verifies whether public key authentication would be possible.",
         )
         plugin_group.add_argument(
+            "--force-none-auth",
+            dest="enable_none_auth",
+            action="store_true",
+            help='Forces acceptance of "none" authentication regardless of what the remote server supports.',
+        )
+        plugin_group.add_argument(
             "--enable-none-auth",
             dest="enable_none_auth",
             action="store_true",
-            help='Enables "none" authentication, which allows connections without any authentication.',
+            help=argparse.SUPPRESS,  # kept for backward compatibility; replaced by --force-none-auth
         )
         plugin_group.add_argument(
             "--enable-trivial-auth",
@@ -235,28 +241,31 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             return True
         return False
 
+    def _lookup_remote_auth_methods(self, username: str) -> None:
+        """Query the remote server for supported auth methods (cached after first call)."""
+        if self.possible_auth_methods is not None or self.args.disable_auth_method_lookup:
+            return
+        creds: RemoteCredentials = (
+            self.session.authenticator.get_remote_host_credentials(username)
+        )
+        if creds.host is not None and creds.port is not None:
+            try:
+                self.possible_auth_methods = (
+                    self.session.authenticator.get_auth_methods(
+                        creds.host, creds.port, username
+                    )
+                )
+                logging.info(
+                    "Remote auth-methods: %s", str(self.possible_auth_methods)
+                )
+            except paramiko.ssh_exception.SSHException as ex:
+                self.session.remote.address_reachable = False
+                logging.error(ex)
+
     def get_allowed_auths(self, username: str) -> str:
-        if (
-            self.possible_auth_methods is None
-            and not self.args.disable_auth_method_lookup
-        ):
-            creds: RemoteCredentials = (
-                self.session.authenticator.get_remote_host_credentials(username)
-            )
-            if creds.host is not None and creds.port is not None:
-                try:
-                    self.possible_auth_methods = (
-                        self.session.authenticator.get_auth_methods(
-                            creds.host, creds.port, username
-                        )
-                    )
-                    logging.info(
-                        "Remote auth-methods: %s", str(self.possible_auth_methods)
-                    )
-                except paramiko.ssh_exception.SSHException as ex:
-                    self.session.remote.address_reachable = False
-                    logging.error(ex)
-                    return "publickey"
+        self._lookup_remote_auth_methods(username)
+        if not self.session.remote.address_reachable:
+            return "publickey"
         logging.debug("get_allowed_auths: username=%s", username)
         allowed_auths = []
         if self.args.extra_auth_methods:
@@ -287,6 +296,10 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         logging.debug("check_auth_none: username=%s", username)
         self.session.auth.username = username
         self.session.auth.username_provided = username
+        # Ensure we know what the remote server supports before deciding.
+        # check_auth_none() is called before get_allowed_auths(), so the lookup
+        # may not have run yet.
+        self._lookup_remote_auth_methods(username)
         # Passthrough: remote server explicitly accepts none auth
         remote_allows_none = (
             self.possible_auth_methods is not None
@@ -299,7 +312,7 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
                 return self.session.authenticator.auth_none_remote(
                     creds.username, creds.host, creds.port
                 )
-        # Legacy flag: accept unconditionally without forwarding
+        # Force-accept none auth regardless of what the remote supports
         if self.args.enable_none_auth:
             self.session.authenticator.authenticate(username, key=None)
             return paramiko.common.AUTH_SUCCESSFUL

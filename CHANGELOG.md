@@ -12,9 +12,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - **None authentication is now forwarded to the remote server**: If the
   target server allows login without any credentials (none auth), SSH-MITM
   now forwards this to the client and establishes the session accordingly,
-  instead of always rejecting it. The `--enable-none-auth` flag continues to
-  work as before for cases where you want to accept none auth regardless of
-  what the remote server supports.
+  instead of always rejecting it. The `--enable-none-auth` flag was renamed to
+  `--force-none-auth` and continues to work for cases where you want to accept
+  none auth regardless of what the remote server supports.
+
+- **New `ssh-mitm mock-server` subcommand**: A lightweight built-in SSH server
+  for testing and development. It accepts a single configurable user with
+  password, public-key, keyboard-interactive, and none authentication, and
+  executes commands directly on the host. Useful for testing SSH-MITM without
+  setting up a full OpenSSH server.
 
 - **Keyboard-interactive authentication is now intercepted by default**:
   SSH-MITM transparently forwards keyboard-interactive challenges from the

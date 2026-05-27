@@ -122,6 +122,13 @@ class SSHClient(BaseSSHClient):
             self.transport.start_client()
 
         try:
+            if self.transport.is_authenticated():
+                remotekey = self.transport.get_remote_server_key()
+                if not self.check_host_key(f"{self.host}:{self.port}", remotekey.get_name(), remotekey):
+                    raise InvalidHostKey
+                self.connected = True
+                return True
+
             if self.method is AuthenticationMethod.PASSWORD:
                 self.transport.auth_password(self.user, self.password or "")
             elif self.method is AuthenticationMethod.PUBLICKEY:

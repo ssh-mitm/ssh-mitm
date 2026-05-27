@@ -63,6 +63,78 @@ def _wait_port(port: int, timeout: float = 10.0) -> None:
 # Mock SSH target server (paramiko)
 # ---------------------------------------------------------------------------
 
+class _NoneAuthTargetServerInterface(paramiko.ServerInterface):
+    """Accepts none auth for a single username and runs exec commands."""
+
+    def __init__(self, username: str = "testuser") -> None:
+        self._username = username
+
+    def get_allowed_auths(self, username: str) -> str:
+        return "none" if username == self._username else "publickey"
+
+    def check_auth_none(self, username: str) -> int:
+        return (
+            paramiko.common.AUTH_SUCCESSFUL
+            if username == self._username
+            else paramiko.common.AUTH_FAILED
+        )
+
+    def check_channel_request(self, kind: str, chanid: int) -> int:
+        return paramiko.common.OPEN_SUCCEEDED
+
+    def check_channel_exec_request(
+        self, channel: paramiko.Channel, command: bytes
+    ) -> bool:
+        threading.Thread(
+            target=self._exec, args=(channel, command), daemon=True
+        ).start()
+        return True
+
+    @staticmethod
+    def _exec(channel: paramiko.Channel, command: bytes) -> None:
+        try:
+            channel.sendall(f"REMOTE_OK:{command.decode()}\n".encode())
+            channel.send_exit_status(0)
+        finally:
+            channel.close()
+
+
+def _start_mock_none_auth_target(
+    host_key: paramiko.PKey, username: str = "testuser"
+) -> tuple[int, threading.Event]:
+    stop = threading.Event()
+    ready = threading.Event()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("127.0.0.1", 0))
+    port: int = sock.getsockname()[1]
+    sock.listen(5)
+    sock.settimeout(0.5)
+
+    def _handle(conn: socket.socket) -> None:
+        t = paramiko.Transport(conn)
+        t.add_server_key(host_key)
+        try:
+            t.start_server(server=_NoneAuthTargetServerInterface(username))
+            t.join(timeout=10)
+        except Exception:  # noqa: BLE001
+            pass
+
+    def _serve() -> None:
+        ready.set()
+        while not stop.is_set():
+            try:
+                conn, _ = sock.accept()
+                threading.Thread(target=_handle, args=(conn,), daemon=True).start()
+            except socket.timeout:
+                continue
+        sock.close()
+
+    threading.Thread(target=_serve, daemon=True).start()
+    ready.wait(timeout=2.0)
+    return port, stop
+
+
 class _TargetServerInterface(paramiko.ServerInterface):
     """Accepts one specific public key, executes commands and returns output."""
 
@@ -347,6 +419,50 @@ def mitm_trivial_auth(
     try:
         _wait_port(mitm_port)
         yield mitm_port, log_dir
+    finally:
+        proc.terminate()
+        proc.wait(timeout=5)
+
+
+@pytest.fixture(scope="session")
+def mock_none_auth_target(
+    _session_keys: tuple[paramiko.PKey, paramiko.PKey],
+) -> Generator[int, None, None]:
+    """Start a mock SSH target that only accepts none auth. Yields the port."""
+    host_key, _ = _session_keys
+    port, stop = _start_mock_none_auth_target(host_key)
+    yield port
+    stop.set()
+
+
+@pytest.fixture
+def mitm_none_auth(
+    tmp_path: Path,
+    mock_none_auth_target: int,
+) -> Generator[int, None, None]:
+    """Start ssh-mitm pointing at the none-auth mock target.
+
+    No special flags are needed: none auth passthrough auto-detects that the
+    remote accepts none auth during the banner-probe phase.
+
+    Yields the MITM listening port.
+    """
+    mitm_port = _free_port()
+
+    proc = subprocess.Popen(
+        [
+            _ssh_mitm_bin(), "server",
+            "--listen-port", str(mitm_port),
+            "--remote-host", "127.0.0.1",
+            "--remote-port", str(mock_none_auth_target),
+            "--disable-remote-fingerprint-warning",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        _wait_port(mitm_port)
+        yield mitm_port
     finally:
         proc.terminate()
         proc.wait(timeout=5)
