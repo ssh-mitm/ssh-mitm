@@ -11,7 +11,7 @@ from colored.colored import attr, fg
 
 from sshmitm.forwarders.ssh import SSHForwarder
 from sshmitm.moduleparser.colors import Colors
-from sshmitm.plugins.ssh.terminallogs import ScriptLogFormat, TerminalLogFormat
+from sshmitm.plugins.ssh.terminallogs import AsciinemLogFormat, ScriptLogFormat, TerminalLogFormat
 
 if TYPE_CHECKING:
     import sshmitm
@@ -145,8 +145,9 @@ class SSHMirrorForwarder(SSHForwarder):
         plugin_group.add_argument(
             "--ssh-terminal-log-formatter",
             dest="ssh_terminal_log_formatter",
-            choices=["script"],
-            help="terminal log format for captured ssh session",
+            choices=["script", "asciinema"],
+            default="script",
+            help="terminal log format for captured ssh session (default: script)",
         )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
@@ -157,16 +158,7 @@ class SSHMirrorForwarder(SSHForwarder):
             )
 
         self.sessionlog: TerminalLogFormat | None = None
-        if self.args.store_ssh_session and self.session.session_log_dir:
-            try:
-                self.sessionlog = ScriptLogFormat(
-                    os.path.join(self.session.session_log_dir, "terminal_sessions")
-                )
-            except Exception:  # pylint: disable=broad-exception-caught
-                logging.exception(
-                    "Error creating session log dir. terminal logging disabled"
-                )
-                self.sessionlog = None
+        self._sessionlog_initialized: bool = False
 
         self.injector_sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
         self.injector_sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
@@ -235,6 +227,25 @@ class SSHMirrorForwarder(SSHForwarder):
                 "mirrorshell - injector connection suffered an unexpected error"
             )
 
+    def _init_sessionlog(self) -> None:
+        if self._sessionlog_initialized:
+            return
+        self._sessionlog_initialized = True
+        if not self.args.store_ssh_session or not self.session.session_log_dir:
+            return
+        try:
+            log_dir = os.path.join(self.session.session_log_dir, "terminal_sessions")
+            formatter = getattr(self.args, "ssh_terminal_log_formatter", None) or "script"
+            pty = self.session.ssh.pty_kwargs or {}
+            width: int = pty.get("width", 80)
+            height: int = pty.get("height", 24)
+            if formatter == "asciinema":
+                self.sessionlog = AsciinemLogFormat(log_dir, width=width, height=height)
+            else:
+                self.sessionlog = ScriptLogFormat(log_dir)
+        except Exception:  # pylint: disable=broad-exception-caught
+            logging.exception("Error creating session log dir. terminal logging disabled")
+
     def close_session(self, channel: paramiko.Channel) -> None:
         super().close_session(channel)
         # close sessions and inject server connections
@@ -250,11 +261,13 @@ class SSHMirrorForwarder(SSHForwarder):
             self.sessionlog.close()
 
     def handle_client_data(self, data: bytes) -> bytes:
+        self._init_sessionlog()
         if self.sessionlog:
             self.sessionlog.stdin(data)
         return data
 
     def handle_server_data(self, data: bytes) -> bytes:
+        self._init_sessionlog()
         if self.sessionlog:
             self.sessionlog.stdout(data)
         if (

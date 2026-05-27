@@ -12,6 +12,7 @@ from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 
 from sshmitm.apps.mosh import hostinput_pb2, transportinstruction_pb2, userinput_pb2
 from sshmitm.moduleparser.colors import Colors
+from sshmitm.plugins.ssh.terminallogs import TerminalLogFormat
 from sshmitm.session import Session
 from sshmitm.utils import format_hex
 
@@ -204,6 +205,7 @@ class UdpProxy:
         monitor_port: int | None = 0,
         log_heartbeats: bool = False,
         show_debug: bool = False,
+        sessionlog: TerminalLogFormat | None = None,
     ) -> None:
         self.key = base64.b64decode(key + "==")
         self.listen_ip = listen_ip
@@ -223,6 +225,7 @@ class UdpProxy:
         self._fragment_finals: dict[tuple[tuple[str, int], int], int] = {}
 
         self.show_debug = show_debug
+        self._sessionlog: TerminalLogFormat | None = sessionlog
         self._monitor: MonitorServer | None = None
         if monitor_port is not None:
             self._monitor = MonitorServer(listen_port=monitor_port)
@@ -350,11 +353,7 @@ class UdpProxy:
                 # Packets with no HostBytes and no Keystrokes carry only timing/ack
                 # metadata (heartbeats or EchoAck-only). Nothing to forward to the monitor.
                 is_heartbeat = host_output is None and keystroke_bytes is None
-                if (
-                    host_output is not None
-                    and self._monitor is not None
-                    and new_num > self._server_max_new_num
-                ):
+                if host_output is not None and new_num > self._server_max_new_num:
                     host_bytes = cast("bytes", host_output)  # type: ignore[redundant-cast]
                     # The server often sends two diffs from the same old_num:
                     # first without EchoAck, then with EchoAck (and sometimes
@@ -373,7 +372,12 @@ class UdpProxy:
                     self._last_server_old_num = old_num
                     self._last_server_host_len = len(host_bytes)
                     if output:
-                        self._monitor.send(output)
+                        if self._monitor is not None:
+                            self._monitor.send(output)
+                        if self._sessionlog is not None:
+                            self._sessionlog.stdout(output)
+                if keystroke_bytes is not None and self._sessionlog is not None:
+                    self._sessionlog.stdin(keystroke_bytes)
 
             if self.show_debug and (not is_heartbeat or self.log_heartbeats):
                 data_to_print = [
@@ -404,7 +408,12 @@ class UdpProxy:
                 logging.exception("Error receiving MOSH packet")
 
 
-def handle_mosh(session: Session, data: bytes, isclient: bool) -> bytes:
+def handle_mosh(
+    session: Session,
+    data: bytes,
+    isclient: bool,
+    sessionlog: TerminalLogFormat | None = None,
+) -> bytes:
     """
     Handle encrypted data from Mosh, a mobile shell that serves as a replacement for ssh.
 
@@ -441,6 +450,7 @@ def handle_mosh(session: Session, data: bytes, isclient: bool) -> bytes:
                         if session.remote.address[0] == "127.0.0.1"
                         else int(mosh_connect_parts[2])
                     ),
+                    sessionlog=sessionlog,
                 )
                 mosh_port = mosh_proxy.get_bind_port()
                 mosh_proxy.start()

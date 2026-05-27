@@ -1,6 +1,7 @@
 import datetime
+import json
 import os
-import time
+import time as time_module
 from abc import ABC, abstractmethod
 from pathlib import Path
 
@@ -41,7 +42,7 @@ class TerminalLogFormat(ABC):
 class ScriptLogFormat(TerminalLogFormat):
     def __init__(self, logdir: str | os.PathLike[str], prefix: str = "session") -> None:
         super().__init__(logdir, prefix)
-        timecomponent = str(time.time()).split(".", maxsplit=1)[0]
+        timecomponent = str(time_module.time()).split(".", maxsplit=1)[0]
 
         self.subdirectory.mkdir(parents=True, exist_ok=True)
         self.file_stdin = (
@@ -93,3 +94,53 @@ class ScriptLogFormat(TerminalLogFormat):
             f"{diff.seconds}.{diff.microseconds} {len(text)}\n".encode()
         )
         self.timeingfile.flush()
+
+
+class AsciinemLogFormat(TerminalLogFormat):
+    """Asciinema v2 format recording (single JSONL .cast file).
+
+    Playback: ``asciinema play session_<ts>.cast``
+    """
+
+    def __init__(
+        self,
+        logdir: str | os.PathLike[str],
+        prefix: str = "session",
+        width: int = 80,
+        height: int = 24,
+    ) -> None:
+        super().__init__(logdir, prefix)
+        self._start = time_module.time()
+        self.subdirectory.mkdir(parents=True, exist_ok=True)
+        timecomponent = str(int(self._start))
+        self._file = (self.subdirectory / f"session_{timecomponent}.cast").open(
+            "w", encoding="utf-8"
+        )
+        header = {
+            "version": 2,
+            "width": width,
+            "height": height,
+            "timestamp": int(self._start),
+        }
+        self._file.write(json.dumps(header) + "\n")
+        self._file.flush()
+
+    def _elapsed(self) -> float:
+        return time_module.time() - self._start
+
+    def _write_event(self, event_type: str, data: bytes) -> None:
+        text = data.decode("utf-8", errors="replace")
+        self._file.write(json.dumps([round(self._elapsed(), 6), event_type, text]) + "\n")
+        self._file.flush()
+
+    def stdin(self, buffer: bytes) -> None:
+        self._write_event("i", buffer)
+
+    def stdout(self, buffer: bytes) -> None:
+        self._write_event("o", buffer)
+
+    def stderr(self, buffer: bytes) -> None:
+        self._write_event("o", buffer)
+
+    def close(self) -> None:
+        self._file.close()

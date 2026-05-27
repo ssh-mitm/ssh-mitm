@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Asciinema session recording**: Terminal sessions can now be recorded in
+  asciinema v2 format (`.cast` files) in addition to the existing scriptreplay
+  format. Use `--ssh-terminal-log-formatter asciinema` when starting the
+  server. MOSH sessions can also be recorded to disk for the first time via
+  `--store-mosh-session` with the same format choice
+  (`--mosh-terminal-log-formatter script|asciinema`).
+
 - **None authentication is now forwarded to the remote server**: If the
   target server allows login without any credentials (none auth), SSH-MITM
   now forwards this to the client and establishes the session accordingly,
