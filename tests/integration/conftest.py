@@ -114,8 +114,11 @@ def _start_mock_ssh_target(
     def _handle(conn: socket.socket) -> None:
         t = paramiko.Transport(conn)
         t.add_server_key(host_key)
-        t.start_server(server=_TargetServerInterface(client_key))
-        t.join(timeout=10)
+        try:
+            t.start_server(server=_TargetServerInterface(client_key))
+            t.join(timeout=10)
+        except Exception:  # noqa: BLE001
+            pass  # Banner-probe connections from MITM are expected to reset here
 
     def _serve() -> None:
         ready.set()
@@ -229,8 +232,17 @@ class FakeAgent:
                     data_len = struct.unpack(">I", msg[off:off + 4])[0]
                     off += 4
                     data_to_sign = msg[off:off + data_len]
+                    off += data_len
+                    flags = struct.unpack(">I", msg[off:off + 4])[0] if off + 4 <= len(msg) else 0
 
-                    sig: Message = self._key.sign_ssh_data(data_to_sign)
+                    # For RSA keys, select the signing algorithm from the agent flags.
+                    # Paramiko 5.x dropped the legacy 'ssh-rsa' (SHA-1) algorithm, so we
+                    # must always request an explicit SHA-2 variant when signing RSA data.
+                    algorithm: str | None = None
+                    if self._key.get_name() == "ssh-rsa":
+                        algorithm = "rsa-sha2-512" if (flags & 4) else "rsa-sha2-256"
+
+                    sig: Message = self._key.sign_ssh_data(data_to_sign, algorithm=algorithm)
                     sig_blob = sig.asbytes()
                     body = (
                         bytes([self._AGENT_SIGN_RESPONSE])

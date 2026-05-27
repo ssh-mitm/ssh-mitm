@@ -9,6 +9,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Keyboard-interactive authentication is now intercepted by default**:
+  SSH-MITM transparently forwards keyboard-interactive challenges from the
+  target server to the client and returns the client's answers, so sessions
+  using PAM, TOTP, or any other challenge-response mechanism are captured
+  without any extra configuration. The previous opt-in flag
+  `--enable-keyboard-interactive-auth` is no longer needed; use
+  `--disable-keyboard-interactive-auth` to turn it off explicitly.
+
 - **Clients with SSH agent host key restrictions can now be intercepted**:
   OpenSSH 8.9 introduced the ability to restrict which hosts an agent key may
   be used for (`ssh-add -h`). When such a restriction is in place, the agent

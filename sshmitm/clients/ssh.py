@@ -19,6 +19,7 @@ to remote servers, execute commands, and transfer files.
 """
 
 import logging
+from collections.abc import Callable
 from enum import Enum
 from typing import TYPE_CHECKING
 
@@ -44,6 +45,7 @@ class AuthenticationMethod(Enum):
     PASSWORD = "password"  # nosec # noqa: S105
     PUBLICKEY = "publickey"
     AGENT = "agent"
+    KEYBOARD_INTERACTIVE = "keyboard-interactive"
 
 
 class BaseSSHClient(SSHMITMBaseModule):
@@ -79,6 +81,8 @@ class SSHClient(BaseSSHClient):
         fingerprints: str | None = None,
         disable_fingerprint_warning: bool = False,
         existing_transport: "paramiko.Transport | None" = None,
+        interactive_handler: "Callable | None" = None,
+        interactive_submethods: str = "",
     ) -> None:
         super().__init__()
         self.session: sshmitm.session.Session = session
@@ -96,6 +100,8 @@ class SSHClient(BaseSSHClient):
             f.strip() for f in (fingerprints or "").split(",") if f.strip()
         ]
         self.disable_fingerprint_warning: bool = disable_fingerprint_warning
+        self.interactive_handler: Callable | None = interactive_handler
+        self.interactive_submethods: str = interactive_submethods
 
     def connect(self) -> bool:  # noqa: C901
         """
@@ -120,6 +126,14 @@ class SSHClient(BaseSSHClient):
             elif self.method is AuthenticationMethod.PUBLICKEY:
                 if self.key is not None:
                     self.transport.auth_publickey(self.user, self.key)
+            elif self.method is AuthenticationMethod.KEYBOARD_INTERACTIVE:
+                if self.interactive_handler is not None:
+                    self.transport.auth_interactive(
+                        self.user, self.interactive_handler, self.interactive_submethods
+                    )
+                else:
+                    logging.error("keyboard-interactive auth requires an interactive_handler")
+                    return False
             elif self.method is AuthenticationMethod.AGENT:
                 if self.agent is not None:
                     keys = self.agent.get_keys()

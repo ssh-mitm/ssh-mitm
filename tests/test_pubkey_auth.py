@@ -39,6 +39,7 @@ def _make_server(
     address_reachable: bool = True,
     auth_result: int = paramiko.common.AUTH_SUCCESSFUL,
     enable_keyboard_interactive_auth: bool = False,
+    disable_keyboard_interactive_auth: bool = False,
     disable_keyboard_interactive_prompts: bool = False,
 ) -> tuple[ServerInterface, MagicMock]:
     """Return a (server, session) pair with mocked dependencies."""
@@ -55,6 +56,7 @@ def _make_server(
         enable_trivial_auth=enable_trivial_auth,
         disallow_publickey_auth=disallow_publickey_auth,
         enable_keyboard_interactive_auth=enable_keyboard_interactive_auth,
+        disable_keyboard_interactive_auth=disable_keyboard_interactive_auth,
         disable_keyboard_interactive_prompts=disable_keyboard_interactive_prompts,
     )
 

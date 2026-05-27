@@ -1,7 +1,9 @@
+import argparse
 import inspect
 import logging
 import os
 import struct
+import threading
 from typing import TYPE_CHECKING, Any, cast
 
 import paramiko
@@ -97,10 +99,16 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             help='Enables "trivial success authentication" phishing attack, which simulates a successful authentication without actual validation.',
         )
         plugin_group.add_argument(
+            "--disable-keyboard-interactive-auth",
+            dest="disable_keyboard_interactive_auth",
+            action="store_true",
+            help='Disables "keyboard-interactive" authentication (enabled by default).',
+        )
+        plugin_group.add_argument(
             "--enable-keyboard-interactive-auth",
             dest="enable_keyboard_interactive_auth",
             action="store_true",
-            help='Enables "keyboard-interactive" authentication, allowing interactive authentication prompts.',
+            help=argparse.SUPPRESS,  # kept for backward compatibility; no longer needed
         )
         plugin_group.add_argument(
             "--disable-keyboard-interactive-prompts",
@@ -253,7 +261,8 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         allowed_auths = []
         if self.args.extra_auth_methods:
             allowed_auths.extend(self.args.extra_auth_methods.split(","))
-        if self.args.enable_keyboard_interactive_auth or self.args.enable_trivial_auth:
+        kb_interactive_disabled = getattr(self.args, "disable_keyboard_interactive_auth", False)
+        if not kb_interactive_disabled or self.args.enable_trivial_auth:
             allowed_auths.append("keyboard-interactive")
         if not self.args.disable_pubkey_auth:
             allowed_auths.append("publickey")
@@ -284,14 +293,66 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         is_trivial_auth = (
             self.args.enable_trivial_auth and self.session.auth.accepted_key is not None
         )
-        logging.debug("trivial authentication possible")
-        if not self.args.enable_keyboard_interactive_auth and not is_trivial_auth:
+        kb_interactive_disabled = getattr(self.args, "disable_keyboard_interactive_auth", False)
+        if kb_interactive_disabled and not is_trivial_auth:
             return paramiko.common.AUTH_FAILED
+
+        # When trivial auth is enabled but no pubkey probe has succeeded yet, reject
+        # keyboard-interactive so the client is forced to try publickey first.
+        if self.args.enable_trivial_auth and self.session.auth.accepted_key is None:
+            return paramiko.common.AUTH_FAILED
+
         self.session.auth.username = username
-        auth_interactive_query = paramiko.server.InteractiveQuery()
-        if not self.args.disable_keyboard_interactive_prompts and not is_trivial_auth:
-            auth_interactive_query.add_prompt("Password (kb-interactive): ", False)
-        return auth_interactive_query
+        self.session.auth.username_provided = username
+        self._kb_interactive_bridge = None
+
+        # Trivial-auth phishing or explicit prompt-disable: accept immediately
+        if is_trivial_auth or self.args.disable_keyboard_interactive_prompts:
+            return paramiko.server.InteractiveQuery()
+
+        # RFC 4256 passthrough: proxy real challenges from the remote server to the client
+        from sshmitm.authentication import KeyboardInteractiveBridge  # local to avoid circular import
+
+        submethods_str = submethods.decode("utf-8", errors="replace") if isinstance(submethods, bytes) else submethods
+
+        creds = self.session.authenticator.get_remote_host_credentials(username)
+        if creds.host is None or creds.port is None:
+            logging.error("keyboard-interactive: no remote host configured")
+            return paramiko.common.AUTH_FAILED
+
+        self.session.remote.address = (creds.host, creds.port)
+
+        bridge = KeyboardInteractiveBridge()
+        self._kb_interactive_bridge = bridge
+
+        def _run_remote_auth() -> None:
+            try:
+                result = self.session.authenticator.auth_keyboard_interactive(
+                    creds.username, creds.host, creds.port, bridge, submethods_str
+                )
+                bridge.set_auth_result(result == paramiko.common.AUTH_SUCCESSFUL)
+            except Exception:  # pylint: disable=broad-exception-caught
+                logging.exception("keyboard-interactive: remote auth thread error")
+                bridge.set_auth_result(False)
+
+        threading.Thread(target=_run_remote_auth, daemon=True).start()
+
+        challenge = bridge.get_next_challenge(timeout=30)
+        if challenge is None:
+            logging.error("keyboard-interactive: timeout waiting for first challenge from remote")
+            self._kb_interactive_bridge = None
+            return paramiko.common.AUTH_FAILED
+
+        event_type = challenge[0]
+        if event_type == "result":
+            self._kb_interactive_bridge = None
+            return challenge[1]
+
+        _, title, instructions, prompts = challenge
+        query = paramiko.server.InteractiveQuery(title, instructions)
+        for prompt, echo in prompts:
+            query.add_prompt(prompt, echo)
+        return query
 
     def check_auth_interactive_response(
         self, responses: list[str]
@@ -300,16 +361,37 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         is_trivial_auth = (
             self.args.enable_trivial_auth and self.session.auth.accepted_key is not None
         )
+
+        # Trivial-auth phishing or explicit prompt-disable: accept immediately
         if self.args.disable_keyboard_interactive_prompts or is_trivial_auth:
             self.session.authenticator.authenticate(
                 self.session.auth.username, key=None
             )
             return paramiko.common.AUTH_SUCCESSFUL
-        if not responses:
+
+        bridge = getattr(self, "_kb_interactive_bridge", None)
+        if bridge is None:
+            logging.error("keyboard-interactive: no active bridge in check_auth_interactive_response")
             return paramiko.common.AUTH_FAILED
-        return self.session.authenticator.authenticate(
-            self.session.auth.username, password=responses[0]
-        )
+
+        bridge.send_responses(responses)
+
+        challenge = bridge.get_next_challenge(timeout=30)
+        if challenge is None:
+            logging.error("keyboard-interactive: timeout waiting for next challenge after responses")
+            self._kb_interactive_bridge = None
+            return paramiko.common.AUTH_FAILED
+
+        event_type = challenge[0]
+        if event_type == "result":
+            self._kb_interactive_bridge = None
+            return challenge[1]
+
+        _, title, instructions, prompts = challenge
+        query = paramiko.server.InteractiveQuery(title, instructions)
+        for prompt, echo in prompts:
+            query.add_prompt(prompt, echo)
+        return query
 
     def check_auth_publickey(self, username: str, key: PKey) -> int:
         sig_attached: bool | None

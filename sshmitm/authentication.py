@@ -1,9 +1,11 @@
 import logging
 import os
+import queue
 import socket
 import sys
 import threading
 from abc import abstractmethod
+from collections.abc import Callable
 from types import TracebackType
 from typing import TYPE_CHECKING, Self
 
@@ -172,6 +174,51 @@ class PublicKeyEnumerator:
 
         result_event.wait(timeout=10)
         return valid_key[0]
+
+
+class KeyboardInteractiveBridge:
+    """Thread-safe queue-based bridge for RFC 4256 keyboard-interactive passthrough.
+
+    The remote auth thread calls remote_handler() each challenge round (blocking until
+    the client responds). The MITM server-side calls get_next_challenge() to receive
+    prompts and send_responses() to unblock the handler. set_auth_result() is called
+    once when the remote auth exchange completes.
+    """
+
+    def __init__(self) -> None:
+        self._challenge_queue: queue.Queue[tuple] = queue.Queue()
+        self._response_queue: queue.Queue[list[str]] = queue.Queue()
+
+    def remote_handler(
+        self,
+        title: str,
+        instructions: str,
+        prompt_list: list[tuple[str, bool]],
+    ) -> list[str]:
+        """Called by paramiko in the remote auth thread for each challenge round."""
+        prompts = [(str(p), bool(e)) for p, e in prompt_list]
+        self._challenge_queue.put(("challenge", title, instructions, prompts))
+        try:
+            return self._response_queue.get(timeout=60)
+        except queue.Empty:
+            logging.warning("keyboard-interactive: timeout waiting for client responses")
+            return []
+
+    def set_auth_result(self, success: bool) -> None:
+        """Signal auth completion to the MITM server-side."""
+        result = paramiko.common.AUTH_SUCCESSFUL if success else paramiko.common.AUTH_FAILED
+        self._challenge_queue.put(("result", result))
+
+    def get_next_challenge(self, timeout: float = 30.0) -> tuple | None:
+        """Wait for the next event: ("challenge", title, instructions, prompts) or ("result", int)."""
+        try:
+            return self._challenge_queue.get(timeout=timeout)
+        except queue.Empty:
+            return None
+
+    def send_responses(self, responses: list[str]) -> None:
+        """Provide client responses to unblock the remote_handler."""
+        self._response_queue.put(responses)
 
 
 class RemoteCredentials:
@@ -563,6 +610,17 @@ class Authenticator(SSHMITMBaseModule):
             )
         return auth_status
 
+    def auth_keyboard_interactive(
+        self,
+        username: str,
+        host: str,
+        port: int,
+        bridge: "KeyboardInteractiveBridge",
+        submethods: str = "",
+    ) -> int:
+        """Perform keyboard-interactive auth with the remote server, proxying challenges via bridge."""
+        return paramiko.common.AUTH_FAILED
+
     def connect(  # pylint: disable=too-many-arguments
         self,
         user: str,
@@ -571,6 +629,8 @@ class Authenticator(SSHMITMBaseModule):
         method: AuthenticationMethod,
         password: str | None = None,
         key: PKey | None = None,
+        interactive_handler: Callable | None = None,
+        interactive_submethods: str = "",
         *,
         run_post_auth: bool = True,
     ) -> int:
@@ -602,6 +662,8 @@ class Authenticator(SSHMITMBaseModule):
                 self.args.remote_fingerprints,
                 self.args.disable_remote_fingerprint_warning,
                 existing_transport=upstream_transport,
+                interactive_handler=interactive_handler,
+                interactive_submethods=interactive_submethods,
             )
             self.pre_auth_action()
             try:
@@ -696,6 +758,23 @@ class AuthenticatorPassThrough(Authenticator):
 
     def auth_agent(self, username: str, host: str, port: int) -> int:
         return self.connect(username, host, port, AuthenticationMethod.AGENT)
+
+    def auth_keyboard_interactive(
+        self,
+        username: str,
+        host: str,
+        port: int,
+        bridge: KeyboardInteractiveBridge,
+        submethods: str = "",
+    ) -> int:
+        return self.connect(
+            username,
+            host,
+            port,
+            AuthenticationMethod.KEYBOARD_INTERACTIVE,
+            interactive_handler=bridge.remote_handler,
+            interactive_submethods=submethods,
+        )
 
     def auth_password(self, username: str, host: str, port: int, password: str) -> int:
         return self.connect(
