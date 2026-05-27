@@ -9,6 +9,13 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **None authentication is now forwarded to the remote server**: If the
+  target server allows login without any credentials (none auth), SSH-MITM
+  now forwards this to the client and establishes the session accordingly,
+  instead of always rejecting it. The `--enable-none-auth` flag continues to
+  work as before for cases where you want to accept none auth regardless of
+  what the remote server supports.
+
 - **Keyboard-interactive authentication is now intercepted by default**:
   SSH-MITM transparently forwards keyboard-interactive challenges from the
   target server to the client and returns the client's answers, so sessions

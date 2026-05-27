@@ -610,6 +610,10 @@ class Authenticator(SSHMITMBaseModule):
             )
         return auth_status
 
+    def auth_none_remote(self, username: str, host: str, port: int) -> int:
+        """Perform none auth with the remote server."""
+        return paramiko.common.AUTH_FAILED
+
     def auth_keyboard_interactive(
         self,
         username: str,
@@ -749,12 +753,19 @@ class AuthenticatorPassThrough(Authenticator):
             msg = "pubkey_enumerator not initialized"
             raise PublicKeyEnumerationError(msg)
         try:
-            self.pubkey_enumerator.transport.auth_none(username or "")
+            remaining = self.pubkey_enumerator.transport.auth_none(username or "")
+            # auth_none() returned without raising — the server accepts none auth.
+            # remaining is the list of still-required methods; [] means fully authenticated.
+            if not remaining:
+                auth_methods = ["none"]
         except paramiko.BadAuthenticationType as err:
             auth_methods = err.allowed_types
         # ssh-userauth service is now active; skip the service request in check_publickey()
         self.pubkey_enumerator.mark_service_ready()
         return auth_methods
+
+    def auth_none_remote(self, username: str, host: str, port: int) -> int:
+        return self.connect(username, host, port, AuthenticationMethod.NONE)
 
     def auth_agent(self, username: str, host: str, port: int) -> int:
         return self.connect(username, host, port, AuthenticationMethod.AGENT)

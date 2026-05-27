@@ -261,6 +261,12 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         allowed_auths = []
         if self.args.extra_auth_methods:
             allowed_auths.extend(self.args.extra_auth_methods.split(","))
+        remote_allows_none = (
+            self.possible_auth_methods is not None
+            and "none" in self.possible_auth_methods
+        )
+        if remote_allows_none or self.args.enable_none_auth:
+            allowed_auths.append("none")
         kb_interactive_disabled = getattr(self.args, "disable_keyboard_interactive_auth", False)
         if not kb_interactive_disabled or self.args.enable_trivial_auth:
             allowed_auths.append("keyboard-interactive")
@@ -268,7 +274,7 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             allowed_auths.append("publickey")
         if not self.args.disable_password_auth:
             allowed_auths.append("password")
-        if allowed_auths or self.args.enable_none_auth:
+        if allowed_auths:
             allowed_authentication_methods = ",".join(allowed_auths)
             logging.debug(
                 "Allowed authentication methods: %s", allowed_authentication_methods
@@ -279,6 +285,21 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
 
     def check_auth_none(self, username: str) -> int:
         logging.debug("check_auth_none: username=%s", username)
+        self.session.auth.username = username
+        self.session.auth.username_provided = username
+        # Passthrough: remote server explicitly accepts none auth
+        remote_allows_none = (
+            self.possible_auth_methods is not None
+            and "none" in self.possible_auth_methods
+        )
+        if remote_allows_none:
+            creds = self.session.authenticator.get_remote_host_credentials(username)
+            if creds.host is not None and creds.port is not None:
+                self.session.remote.address = (creds.host, creds.port)
+                return self.session.authenticator.auth_none_remote(
+                    creds.username, creds.host, creds.port
+                )
+        # Legacy flag: accept unconditionally without forwarding
         if self.args.enable_none_auth:
             self.session.authenticator.authenticate(username, key=None)
             return paramiko.common.AUTH_SUCCESSFUL

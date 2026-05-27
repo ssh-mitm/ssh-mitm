@@ -46,6 +46,7 @@ class AuthenticationMethod(Enum):
     PUBLICKEY = "publickey"
     AGENT = "agent"
     KEYBOARD_INTERACTIVE = "keyboard-interactive"
+    NONE = "none"
 
 
 class BaseSSHClient(SSHMITMBaseModule):
@@ -134,6 +135,10 @@ class SSHClient(BaseSSHClient):
                 else:
                     logging.error("keyboard-interactive auth requires an interactive_handler")
                     return False
+            elif self.method is AuthenticationMethod.NONE:
+                remaining = self.transport.auth_none(self.user)
+                if remaining:
+                    raise paramiko.SSHException("none auth did not fully authenticate")
             elif self.method is AuthenticationMethod.AGENT:
                 if self.agent is not None:
                     keys = self.agent.get_keys()
