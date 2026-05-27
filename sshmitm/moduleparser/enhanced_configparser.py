@@ -70,7 +70,7 @@ class ExtendedConfigParser(ConfigParser):
             logging.debug("Using default config: %s", self.default_config)
             self.append(self.default_config)
 
-    def read(self, filenames: Any, encoding: str | None = "utf-8") -> list[str]:
+    def read(self, filenames: Any, encoding: str | None = "utf-8") -> list[str]:  # type: ignore[override]
         try:
             return super().read(filenames, encoding=encoding)
         except Exception:  # pylint: disable=broad-exception-caught

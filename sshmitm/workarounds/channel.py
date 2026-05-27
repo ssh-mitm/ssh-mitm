@@ -23,7 +23,8 @@ def send_signal(channel: paramiko.Channel, signame: str) -> None:
     m.add_string("signal")
     m.add_boolean(False)  # want_reply always False for signals
     m.add_string(signame)
-    channel.transport._send_user_message(m)  # pylint: disable=protected-access
+    # pylint: disable-next=protected-access
+    channel.transport._send_user_message(m)  # type: ignore[union-attr]
 
 
 def request_pty_with_modes(  # pylint: disable=too-many-arguments
@@ -51,6 +52,9 @@ def request_pty_with_modes(  # pylint: disable=too-many-arguments
     m.add_int(width_pixels)
     m.add_int(height_pixels)
     m.add_string(modes)
-    channel._event_pending()  # pylint: disable=protected-access
-    channel.transport._send_user_message(m)  # pylint: disable=protected-access
-    channel._wait_for_event()  # pylint: disable=protected-access
+    # pylint: disable-next=protected-access
+    channel._event_pending()  # type: ignore[attr-defined]
+    # pylint: disable-next=protected-access
+    channel.transport._send_user_message(m)  # type: ignore[union-attr]
+    # pylint: disable-next=protected-access
+    channel._wait_for_event()  # type: ignore[attr-defined]

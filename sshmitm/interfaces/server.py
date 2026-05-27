@@ -381,7 +381,9 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             logging.error("keyboard-interactive: no remote host configured")
             return paramiko.common.AUTH_FAILED
 
-        self.session.remote.address = (creds.host, creds.port)
+        kb_host: str = creds.host
+        kb_port: int = creds.port
+        self.session.remote.address = (kb_host, kb_port)
 
         bridge = KeyboardInteractiveBridge()
         self._kb_interactive_bridge = bridge
@@ -389,7 +391,7 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         def _run_remote_auth() -> None:
             try:
                 result = self.session.authenticator.auth_keyboard_interactive(
-                    creds.username, creds.host, creds.port, bridge, submethods_str
+                    creds.username, kb_host, kb_port, bridge, submethods_str
                 )
                 bridge.set_auth_result(result == paramiko.common.AUTH_SUCCESSFUL)
             except Exception:  # pylint: disable=broad-exception-caught
@@ -409,7 +411,7 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         event_type = challenge[0]
         if event_type == "result":
             self._kb_interactive_bridge = None
-            return challenge[1]
+            return cast("int", challenge[1])
 
         _, title, instructions, prompts = challenge
         query = paramiko.server.InteractiveQuery(title, instructions)
@@ -452,7 +454,7 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         event_type = challenge[0]
         if event_type == "result":
             self._kb_interactive_bridge = None
-            return challenge[1]
+            return cast("int", challenge[1])
 
         _, title, instructions, prompts = challenge
         query = paramiko.server.InteractiveQuery(title, instructions)

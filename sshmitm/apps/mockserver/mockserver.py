@@ -191,7 +191,7 @@ def _load_pubkeys(paths: list[str]) -> list[paramiko.PKey]:
             key_type, b64 = parts[0], parts[1]
             raw = base64.b64decode(b64)
             msg = paramiko.Message(raw)
-            key = paramiko.PKey.from_type_string(key_type, msg)
+            key = paramiko.PKey.from_type_string(key_type, msg)  # type: ignore[arg-type]
             keys.append(key)
         except Exception as exc:  # noqa: BLE001
             logging.warning("mock-server: failed to load key %s: %s", path, exc)

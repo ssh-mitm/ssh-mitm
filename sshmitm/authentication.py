@@ -8,7 +8,7 @@ import threading
 from abc import abstractmethod
 from collections.abc import Callable
 from types import TracebackType
-from typing import TYPE_CHECKING, Self
+from typing import TYPE_CHECKING, Any, Self
 
 import paramiko
 from colored.colored import attr, fg
@@ -107,7 +107,9 @@ class PublicKeyEnumerator:
     def _rsa_algorithm(self) -> str:
         if self.transport is None:
             return "rsa-sha2-512"
-        server_sig_algs = self.transport.server_extensions.get("server-sig-algs", b"").decode()  # type: ignore[attr-defined]
+        server_sig_algs = self.transport.server_extensions.get(
+            "server-sig-algs", b""
+        ).decode()
         for algo in ("rsa-sha2-512", "rsa-sha2-256", "ssh-rsa"):
             if algo in server_sig_algs:
                 return algo
@@ -146,8 +148,8 @@ class PublicKeyEnumerator:
 
         # Register per-instance handlers — no global state, no lock needed.
         # transport._handler_table is checked before auth_handler._handler_table.
-        self.transport._handler_table[paramiko.common.MSG_USERAUTH_PK_OK] = handle_pk_ok  # type: ignore[index]
-        self.transport._handler_table[paramiko.common.MSG_USERAUTH_FAILURE] = handle_failure  # type: ignore[index]
+        self.transport._handler_table[paramiko.common.MSG_USERAUTH_PK_OK] = handle_pk_ok  # type: ignore[attr-defined]
+        self.transport._handler_table[paramiko.common.MSG_USERAUTH_FAILURE] = handle_failure  # type: ignore[attr-defined]
 
         if not self._service_ready.is_set():
 
@@ -155,7 +157,7 @@ class PublicKeyEnumerator:
                 if msg.get_text() == "ssh-userauth":
                     self._service_ready.set()
 
-            self.transport._handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = handle_service_accept  # type: ignore[index]
+            self.transport._handler_table[paramiko.common.MSG_SERVICE_ACCEPT] = handle_service_accept  # type: ignore[attr-defined]
 
             m = paramiko.message.Message()
             m.add_byte(paramiko.common.cMSG_SERVICE_REQUEST)
@@ -191,7 +193,7 @@ class KeyboardInteractiveBridge:
     """
 
     def __init__(self) -> None:
-        self._challenge_queue: queue.Queue[tuple] = queue.Queue()
+        self._challenge_queue: queue.Queue[tuple[Any, ...]] = queue.Queue()
         self._response_queue: queue.Queue[list[str]] = queue.Queue()
 
     def remote_handler(
@@ -218,7 +220,7 @@ class KeyboardInteractiveBridge:
         )
         self._challenge_queue.put(("result", result))
 
-    def get_next_challenge(self, timeout: float = 30.0) -> tuple | None:
+    def get_next_challenge(self, timeout: float = 30.0) -> tuple[Any, ...] | None:
         """Wait for the next event: ("challenge", title, instructions, prompts) or ("result", int)."""
         try:
             return self._challenge_queue.get(timeout=timeout)
@@ -644,7 +646,7 @@ class Authenticator(SSHMITMBaseModule):
         method: AuthenticationMethod,
         password: str | None = None,
         key: PKey | None = None,
-        interactive_handler: Callable | None = None,
+        interactive_handler: Callable[..., Any] | None = None,
         interactive_submethods: str = "",
         *,
         run_post_auth: bool = True,

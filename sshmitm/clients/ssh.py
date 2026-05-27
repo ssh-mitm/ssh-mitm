@@ -20,7 +20,7 @@ to remote servers, execute commands, and transfer files.
 
 import logging
 from enum import Enum
-from typing import TYPE_CHECKING
+from typing import TYPE_CHECKING, Any
 
 import paramiko
 import paramiko.hostkeys
@@ -83,7 +83,7 @@ class SSHClient(BaseSSHClient):
         fingerprints: str | None = None,
         disable_fingerprint_warning: bool = False,
         existing_transport: "paramiko.Transport | None" = None,
-        interactive_handler: "Callable | None" = None,
+        interactive_handler: "Callable[..., Any] | None" = None,
         interactive_submethods: str = "",
     ) -> None:
         super().__init__()
@@ -102,7 +102,7 @@ class SSHClient(BaseSSHClient):
             f.strip() for f in (fingerprints or "").split(",") if f.strip()
         ]
         self.disable_fingerprint_warning: bool = disable_fingerprint_warning
-        self.interactive_handler: Callable | None = interactive_handler
+        self.interactive_handler: Callable[..., Any] | None = interactive_handler
         self.interactive_submethods: str = interactive_submethods
 
     def connect(self) -> bool:  # noqa: C901, PLR0915
