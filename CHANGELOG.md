@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Signal forwarding (RFC 4254 §6.9)**: Signals sent by the SSH client
+  (e.g. `kill -TERM $SSH_TTY_PID`) are now forwarded to the remote server.
+  Paramiko has no built-in support for the "signal" channel request type;
+  SSH-MITM patches the transport dispatch table at startup to intercept it.
+
+- **Terminal modes forwarding**: PTY terminal modes (e.g. `VINTR`, `ECHO`)
+  sent by the client during `pty-req` are now passed through to the remote
+  server unchanged. Previously paramiko's `get_pty()` silently discarded
+  the modes bytes.
+
 - **Asciinema session recording**: Terminal sessions can now be recorded in
   asciinema v2 format (`.cast` files) in addition to the existing scriptreplay
   format. Use `--ssh-terminal-log-formatter asciinema` when starting the

@@ -117,6 +117,7 @@ def main() -> None:
 
     if not args.disable_workarounds:
         monkeypatch.patch_thread()
+        monkeypatch.patch_channel()
         Transport.run = transport.transport_run  # type: ignore[method-assign] # pylint: disable=protected-access
         Transport._send_kex_init = transport.transport_send_kex_init  # type: ignore[attr-defined] # pylint: disable=protected-access
         Transport._activate_outbound = transport.transport_activate_outbound  # type: ignore[attr-defined] # pylint: disable=protected-access

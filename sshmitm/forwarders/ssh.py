@@ -4,6 +4,7 @@ import time
 import paramiko
 
 from sshmitm.forwarders.base import BaseForwarder
+from sshmitm.workarounds.channel import request_pty_with_modes
 
 
 class SSHBaseForwarder(BaseForwarder):  # pylint: disable=abstract-method
@@ -47,7 +48,16 @@ class SSHForwarder(SSHBaseForwarder):
         self.session.ssh.remote_channel = self.server_channel
 
         if self.session.ssh.pty_kwargs:
-            self.server_channel.get_pty(**self.session.ssh.pty_kwargs)
+            pty = self.session.ssh.pty_kwargs
+            request_pty_with_modes(
+                self.server_channel,
+                term=pty.get("term", b"vt100"),
+                width=pty.get("width", 80),
+                height=pty.get("height", 24),
+                width_pixels=pty.get("width_pixels", 0),
+                height_pixels=pty.get("height_pixels", 0),
+                modes=pty.get("modes", b""),
+            )
         self.server_channel.invoke_shell()
 
         try:

@@ -237,9 +237,26 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
                 "height": height,
                 "width_pixels": pixelwidth,
                 "height_pixels": pixelheight,
+                "modes": modes,
             }
             return True
         return False
+
+    def check_channel_signal_request(
+        self, channel: paramiko.Channel, signame: str
+    ) -> bool:
+        logging.debug(
+            "check_channel_signal_request: channel=%s, signame=%s", channel, signame
+        )
+        if not self.session.ssh.remote_channel:
+            logging.warning(
+                "check_channel_signal_request: no remote channel, dropping signal %s",
+                signame,
+            )
+            return False
+        from sshmitm.workarounds.channel import send_signal  # local import avoids circular dep
+        send_signal(self.session.ssh.remote_channel, signame)
+        return True
 
     def _lookup_remote_auth_methods(self, username: str) -> None:
         """Query the remote server for supported auth methods (cached after first call)."""

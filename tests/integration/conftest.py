@@ -10,6 +10,7 @@ No external SSH infrastructure required:
 
 from __future__ import annotations
 
+import contextlib
 import os
 import shutil
 import socket
@@ -24,6 +25,11 @@ from typing import Generator
 import paramiko
 import pytest
 from paramiko.message import Message
+
+# Apply the channel monkey-patch in the test process so that the in-process
+# mock SSH targets also receive signal requests via check_channel_signal_request.
+from sshmitm.workarounds.monkeypatch import patch_channel
+patch_channel()
 
 
 def _ssh_mitm_bin() -> str:
@@ -205,6 +211,104 @@ def _start_mock_ssh_target(
     threading.Thread(target=_serve, daemon=True).start()
     ready.wait(timeout=2.0)
     return port, stop
+
+
+# ---------------------------------------------------------------------------
+# Recording mock SSH target (password auth, records PTY modes + signals)
+# ---------------------------------------------------------------------------
+
+class _RecordingServerInterface(paramiko.ServerInterface):
+    """Password-auth mock server that records PTY modes and received signals."""
+
+    def __init__(self, password: str = "testpass") -> None:
+        self._password = password
+        self.pty_modes: bytes | None = None
+        self.signals: list[str] = []
+
+    def get_allowed_auths(self, username: str) -> str:
+        return "password"
+
+    def check_auth_password(self, username: str, password: str) -> int:
+        return (
+            paramiko.common.AUTH_SUCCESSFUL if password == self._password
+            else paramiko.common.AUTH_FAILED
+        )
+
+    def check_channel_request(self, kind: str, chanid: int) -> int:
+        return paramiko.common.OPEN_SUCCEEDED
+
+    def check_channel_pty_request(
+        self,
+        channel: paramiko.Channel,
+        term: bytes,
+        width: int,
+        height: int,
+        pixelwidth: int,
+        pixelheight: int,
+        modes: bytes,
+    ) -> bool:
+        self.pty_modes = modes
+        return True
+
+    def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
+        threading.Thread(target=self._shell, args=(channel,), daemon=True).start()
+        return True
+
+    def check_channel_signal_request(self, channel: paramiko.Channel, signame: str) -> bool:
+        self.signals.append(signame)
+        return True
+
+    @staticmethod
+    def _shell(channel: paramiko.Channel) -> None:
+        try:
+            channel.sendall(b"$ ")
+            while not channel.closed:
+                if channel.recv_ready():
+                    channel.recv(256)
+                else:
+                    time.sleep(0.05)
+        except Exception:  # noqa: BLE001
+            pass
+        finally:
+            with contextlib.suppress(Exception):
+                channel.close()
+
+
+def _start_recording_target(
+    host_key: paramiko.PKey, password: str = "testpass"
+) -> tuple[int, _RecordingServerInterface, threading.Event]:
+    iface = _RecordingServerInterface(password)
+    stop = threading.Event()
+    ready = threading.Event()
+    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
+    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
+    sock.bind(("127.0.0.1", 0))
+    port: int = sock.getsockname()[1]
+    sock.listen(5)
+    sock.settimeout(0.5)
+
+    def _handle(conn: socket.socket) -> None:
+        t = paramiko.Transport(conn)
+        t.add_server_key(host_key)
+        try:
+            t.start_server(server=iface)
+            t.join(timeout=30)
+        except Exception:  # noqa: BLE001
+            pass
+
+    def _serve() -> None:
+        ready.set()
+        while not stop.is_set():
+            try:
+                conn, _ = sock.accept()
+                threading.Thread(target=_handle, args=(conn,), daemon=True).start()
+            except socket.timeout:
+                continue
+        sock.close()
+
+    threading.Thread(target=_serve, daemon=True).start()
+    ready.wait(timeout=2.0)
+    return port, iface, stop
 
 
 # ---------------------------------------------------------------------------
@@ -463,6 +567,48 @@ def mitm_none_auth(
     try:
         _wait_port(mitm_port)
         yield mitm_port
+    finally:
+        proc.terminate()
+        proc.wait(timeout=5)
+
+
+@pytest.fixture
+def recording_target(
+    _session_keys: tuple[paramiko.PKey, paramiko.PKey],
+) -> Generator[tuple[int, _RecordingServerInterface], None, None]:
+    """Start a recording mock SSH target. Yields (port, iface)."""
+    host_key, _ = _session_keys
+    port, iface, stop = _start_recording_target(host_key)
+    yield port, iface
+    stop.set()
+
+
+@pytest.fixture
+def mitm_recording(
+    tmp_path: Path,
+    recording_target: tuple[int, _RecordingServerInterface],
+) -> Generator[tuple[int, _RecordingServerInterface], None, None]:
+    """Start ssh-mitm pointing at the recording mock target.
+
+    Yields (mitm_port, iface) so tests can inspect what the target received.
+    """
+    target_port, iface = recording_target
+    mitm_port = _free_port()
+
+    proc = subprocess.Popen(
+        [
+            _ssh_mitm_bin(), "server",
+            "--listen-port", str(mitm_port),
+            "--remote-host", "127.0.0.1",
+            "--remote-port", str(target_port),
+            "--disable-remote-fingerprint-warning",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        _wait_port(mitm_port)
+        yield mitm_port, iface
     finally:
         proc.terminate()
         proc.wait(timeout=5)
