@@ -34,26 +34,11 @@ class TutorialStep:
 
 
 @dataclasses.dataclass
-class EventAlert:
-    """A tutorial-specific notification shown when a named SSH-MITM event arrives.
-
-    All string fields may use ``{variable}`` placeholders filled at render time.
-    """
-
-    event: str
-    title: str
-    detail: str = ""
-    hint: str = ""
-
-
-@dataclasses.dataclass
 class Tutorial:
     """A complete tutorial consisting of ordered steps.
 
     *category* groups tutorials in the sidebar (e.g. ``"Authentication"``).
     *description* is a short summary shown in the tutorial list.
-    *event_alerts* defines prominent notifications shown when specific
-    SSH-MITM events arrive, regardless of the current step.
     """
 
     id: str
@@ -64,4 +49,3 @@ class Tutorial:
     mock_port: int = 2200
     sshmitm_port: int = 10022
     auth_type: str = "password"
-    event_alerts: list[EventAlert] = dataclasses.field(default_factory=list)

@@ -42,7 +42,7 @@ from paramiko.auth_handler import AuthHandler
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.config import CONFIGFILE
-from sshmitm.logger import FailSaveLogStream, PlainJsonFormatter, attach_tutorial_handler, start_control_socket
+from sshmitm.logger import FailSaveLogStream, PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.workarounds import auth_handler, monkeypatch, transport
@@ -130,9 +130,6 @@ def main() -> None:
         logging.getLogger("paramiko").setLevel(logging.INFO)
     else:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
-
-    attach_tutorial_handler()
-    start_control_socket()
 
     try:
         parser.execute_subcommand(args.subparser_name, args)

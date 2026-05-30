@@ -26,7 +26,3 @@ input_prompt = "Enter the password shown in the SSH-MITM terminal:"
 hint_waiting = "Look at the SSH-MITM terminal and enter the password above."
 hint_done    = "Correct! Tutorial complete. ✓"
 
-[[event_alerts]]
-event  = "remote_auth_failed"
-title  = "Wrong password"
-detail = "The password was intercepted by SSH-MITM but rejected by the target server. This should not happen in normal tutorial operation."

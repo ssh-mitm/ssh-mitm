@@ -6,7 +6,7 @@ import tomllib
 from importlib import resources
 from importlib.resources.abc import Traversable
 
-from sshmitm.tutorial._definitions import EventAlert, Tutorial, TutorialStep
+from sshmitm.tutorial._definitions import Tutorial, TutorialStep
 
 
 def _read_step_content(tutorial_dir: Traversable, step_id: str) -> str:
@@ -37,16 +37,6 @@ def _load_dir(tutorial_dir: Traversable) -> Tutorial:
         for s in data.get("steps", [])
     ]
 
-    event_alerts = [
-        EventAlert(
-            event=a["event"],
-            title=a.get("title", ""),
-            detail=a.get("detail", ""),
-            hint=a.get("hint", ""),
-        )
-        for a in data.get("event_alerts", [])
-    ]
-
     return Tutorial(
         id=data["id"],
         title=data["title"],
@@ -56,7 +46,6 @@ def _load_dir(tutorial_dir: Traversable) -> Tutorial:
         mock_port=int(data.get("mock_port", 2200)),
         sshmitm_port=int(data.get("sshmitm_port", 10022)),
         auth_type=data.get("auth_type", "password"),
-        event_alerts=event_alerts,
     )
 
 

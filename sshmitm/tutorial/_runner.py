@@ -110,13 +110,11 @@ class TutorialRunner:
         on_step_complete: Callable[[int], None],
         on_auth_event: Callable[[str, str, bool], None],
         on_alert: Callable[[dict], None] | None = None,
-        log_socket_path: str = "",
     ) -> None:
         self._tutorial = tutorial
         self._on_step_complete = on_step_complete
         self._on_auth_event = on_auth_event
         self._on_alert = on_alert
-        self._log_socket_path = log_socket_path
 
         self.state = TutorialState.IDLE
         self.current_step = 0
@@ -125,8 +123,6 @@ class TutorialRunner:
         self._cancel = threading.Event()
         self._auth_events: list[tuple[str, bool]] = []
         self._auth_lock = threading.Lock()
-        self._log_events: list[dict] = []
-        self._log_lock = threading.Lock()
         self._user_input: str | None = None
         self._input_lock = threading.Lock()
         self._auto_connect_fired = False
@@ -149,23 +145,6 @@ class TutorialRunner:
         self._cancel.set()
         self.state = TutorialState.STOPPED
         self._teardown()
-
-    def add_log_event(self, event: dict) -> None:
-        with self._log_lock:
-            self._log_events.append(event)
-        self._check_event_alerts(event)
-
-    def _check_event_alerts(self, event: dict) -> None:
-        if not self._on_alert:
-            return
-        event_name = event.get("event", "")
-        for alert in self._tutorial.event_alerts:
-            if alert.event == event_name:
-                self._on_alert({
-                    "title": self.format(alert.title),
-                    "detail": self.format(alert.detail) if alert.detail else None,
-                    "hint": self.format(alert.hint) if alert.hint else None,
-                })
 
     def format(self, text: str) -> str:
         try:
@@ -211,8 +190,6 @@ class TutorialRunner:
         self.current_step += 1
         with self._auth_lock:
             self._auth_events.clear()
-        with self._log_lock:
-            self._log_events.clear()
         with self._input_lock:
             self._user_input = None
         if self.current_step >= len(self._tutorial.steps):
@@ -239,13 +216,6 @@ class TutorialRunner:
             method, success = m.group(1), m.group(2) == "True"
             with self._auth_lock:
                 return any(met == method and ok == success for met, ok in self._auth_events)
-
-        m = re.match(r'LOG_EVENT\("([^"]+)"(.*)\)$', c)
-        if m:
-            event_name = m.group(1)
-            filters = _parse_kv_filters(m.group(2))
-            with self._log_lock:
-                return any(_event_matches(e, event_name, filters) for e in self._log_events)
 
         m = re.fullmatch(r'USER_INPUT\("([^"]+)"\)', c)
         if m:
@@ -321,7 +291,6 @@ class TutorialRunner:
             "none_user": none_user,
             "mock_port": actual_port,
             "sshmitm_port": self._tutorial.sshmitm_port,
-            "tutorial_socket": self._log_socket_path,
             **extra_creds,
         }
 
@@ -401,25 +370,3 @@ def _load_client_key(credentials: dict) -> paramiko.PKey:
     raise ValueError(f"unsupported key type: {key_type}")
 
 
-# ---------------------------------------------------------------------------
-# LOG_EVENT condition helpers
-# ---------------------------------------------------------------------------
-
-def _parse_kv_filters(filter_str: str) -> dict[str, object]:
-    """Parse ', key=value' pairs from a LOG_EVENT condition tail."""
-    filters: dict[str, object] = {}
-    for m in re.finditer(r',\s*(\w+)=(True|False|"[^"]*")', filter_str):
-        key, raw_val = m.group(1), m.group(2)
-        if raw_val == "True":
-            filters[key] = True
-        elif raw_val == "False":
-            filters[key] = False
-        else:
-            filters[key] = raw_val[1:-1]
-    return filters
-
-
-def _event_matches(event: dict, name: str, filters: dict[str, object]) -> bool:
-    if event.get("event") != name:
-        return False
-    return all(event.get(k) == v for k, v in filters.items())
