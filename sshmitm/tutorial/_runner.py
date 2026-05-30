@@ -351,6 +351,7 @@ class TutorialRunner:
                         [
                             "ssh", "-A",
                             "-o", "StrictHostKeyChecking=no",
+                            "-o", "UserKnownHostsFile=/dev/null",
                             "-o", "BatchMode=yes",
                             "-o", "ConnectTimeout=10",
                             "-p", str(int(self.credentials["sshmitm_port"])),
