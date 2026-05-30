@@ -253,7 +253,7 @@ class TutorialRunner:
         none_user, auth_user = names[0], names[1]
 
         if self._tutorial.auth_type == "publickey":
-            client_key = paramiko.RSAKey.generate(2048)
+            client_key = paramiko.ECDSAKey.generate()
             fp = _sha256_fingerprint(client_key)
             users: dict[str, _UserConfig] = {
                 none_user: MultiUserMockServer.none_user(),
@@ -262,7 +262,7 @@ class TutorialRunner:
             extra_creds: dict[str, str | int] = {
                 "pubkey_user": auth_user,
                 "pubkey_fingerprint": fp,
-                "_client_key_type": "rsa",
+                "_client_key_type": "ecdsa",
                 "_client_key_b64": client_key.get_base64(),
             }
         else:
@@ -281,7 +281,7 @@ class TutorialRunner:
 
         actual_port, stop, closed = start_server_thread(
             factory,
-            host_key=paramiko.RSAKey.generate(2048),
+            host_key=paramiko.ECDSAKey.generate(),
             bind="127.0.0.1",
             port=self._tutorial.mock_port,
         )
@@ -363,10 +363,10 @@ def _sha256_fingerprint(key: paramiko.PKey) -> str:
 
 def _load_client_key(credentials: dict) -> paramiko.PKey:
     b64 = str(credentials.get("_client_key_b64", ""))
-    key_type = str(credentials.get("_client_key_type", "rsa"))
+    key_type = str(credentials.get("_client_key_type", "ecdsa"))
     data = base64.b64decode(b64)
-    if key_type == "rsa":
-        return paramiko.RSAKey(data=data)
+    if key_type == "ecdsa":
+        return paramiko.ECDSAKey(data=data)
     raise ValueError(f"unsupported key type: {key_type}")
 
 
