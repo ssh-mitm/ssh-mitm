@@ -1,26 +1,30 @@
-## Key fingerprint intercepted
+## Public key fingerprint intercepted
 
 A developer just connected to the target server through SSH-MITM using
 public key authentication with agent forwarding enabled.
 
 Switch to the **SSH-MITM terminal**. Look for a line that shows a
-`SHA256:` fingerprint — this is the fingerprint of the public key that
-was accepted by the server.
+`SHA256:` identifier — this is the **public key fingerprint** of the
+client key that the server accepted.
 
-Enter that fingerprint in the field below to confirm you found it.
+Unlike the host key fingerprint (which identifies the *server*), a
+public key fingerprint identifies the *connecting identity* — the key
+pair used to prove who is logging in.
+
+Enter that public key fingerprint in the field below to confirm you found it.
 
 ---
 
-**Why the fingerprint matters**
+**Why the public key fingerprint matters**
 
-The fingerprint uniquely identifies the key pair. An attacker who knows
-the fingerprint can:
+The public key fingerprint uniquely identifies a key pair. An attacker
+who has observed it can:
 
 - Confirm which key has access to which server
-- Search for the same fingerprint in other systems to map the developer's
-  access across the infrastructure
+- Search for the same fingerprint across other systems to map the
+  developer's access across the infrastructure
 - Use a captured agent (via agent forwarding) to authenticate to those
-  systems without needing the private key
+  systems without ever touching the private key
 
 **How to protect against this**
 
@@ -29,4 +33,4 @@ the fingerprint can:
   for the duration of the session.
 - Use per-host keys where possible to limit the blast radius if one key
   is compromised or observed.
-- Monitor access logs for unexpected key fingerprints.
+- Monitor access logs for unexpected public key fingerprints.
