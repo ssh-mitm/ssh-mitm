@@ -6,11 +6,13 @@ import base64
 import hashlib
 import json
 import logging
+import os
 import random
 import re
 import secrets
 import socket
 import string
+import tempfile
 import threading
 import time
 from typing import Callable
@@ -256,6 +258,10 @@ class TutorialRunner:
         if self._tutorial.auth_type == "publickey":
             client_key = paramiko.ECDSAKey.generate()
             self._client_key = client_key
+            agent_sock = tempfile.mktemp(prefix="sshmitm-tutorial-agent-", suffix=".sock")
+            self._agent = MockAgent(client_key)
+            self._agent.start(agent_sock)
+            os.environ["SSH_AUTH_SOCK"] = agent_sock
             fp = _sha256_fingerprint(client_key)
             users: dict[str, _UserConfig] = {
                 none_user: MultiUserMockServer.none_user(),
@@ -344,6 +350,7 @@ class TutorialRunner:
         if self._agent:
             self._agent.stop()
             self._agent = None
+            os.environ.pop("SSH_AUTH_SOCK", None)
 
     def _handle_auth_event(self, method: str, username: str, ok: bool) -> None:
         with self._auth_lock:
