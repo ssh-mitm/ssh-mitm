@@ -11,6 +11,7 @@ import pathlib
 import queue
 import re
 import socketserver
+import subprocess
 import threading
 import time
 import webbrowser
@@ -408,7 +409,14 @@ def run(tutorials: list[Tutorial], port: int = 0, open_browser: bool = True) -> 
     thread.start()
 
     if open_browser:
-        webbrowser.open(url)
+        try:
+            subprocess.Popen(
+                ["xdg-open", url],
+                stdout=subprocess.DEVNULL,
+                stderr=subprocess.DEVNULL,
+            )
+        except FileNotFoundError:
+            webbrowser.open(url)
 
     try:
         thread.join()
