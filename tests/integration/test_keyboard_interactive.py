@@ -46,7 +46,7 @@ _MULTI_PASSWORD = "secret"
 @pytest.fixture
 def mitm_single_prompt(tmp_path: "Path") -> "Generator[int, None, None]":
     """MITM forwarding to a single-prompt keyboard-interactive target."""
-    target_port, stop = start_server_thread(
+    target_port, stop, _ = start_server_thread(
         lambda: KeyboardInteractiveServer(
             prompts=[("Password: ", False)],
             answers=[_SINGLE_PASSWORD],
@@ -79,7 +79,7 @@ def mitm_single_prompt(tmp_path: "Path") -> "Generator[int, None, None]":
 @pytest.fixture
 def mitm_multi_prompt(tmp_path: "Path") -> "Generator[int, None, None]":
     """MITM forwarding to a two-prompt keyboard-interactive target."""
-    target_port, stop = start_server_thread(
+    target_port, stop, _ = start_server_thread(
         lambda: KeyboardInteractiveServer(
             prompts=[("OTP Token: ", True), ("Password: ", False)],
             answers=[_MULTI_TOKEN, _MULTI_PASSWORD],

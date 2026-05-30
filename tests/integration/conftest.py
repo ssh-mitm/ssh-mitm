@@ -88,7 +88,7 @@ def mock_ssh_target(
 ) -> Generator[int, None, None]:
     """Start mock SSH target. Yields the listening port."""
     host_key, client_key = _session_keys
-    port, stop = start_server_thread(lambda: PublicKeyServer(client_key), host_key=host_key)
+    port, stop, _ = start_server_thread(lambda: PublicKeyServer(client_key), host_key=host_key)
     yield port
     stop.set()
 
@@ -170,7 +170,7 @@ def mock_none_auth_target(
 ) -> Generator[int, None, None]:
     """Start a mock SSH target that only accepts none auth. Yields the port."""
     host_key, _ = _session_keys
-    port, stop = start_server_thread(lambda: NoneAuthServer(), host_key=host_key)
+    port, stop, _ = start_server_thread(lambda: NoneAuthServer(), host_key=host_key)
     yield port
     stop.set()
 
@@ -215,7 +215,7 @@ def recording_target(
     """Start a recording mock SSH target. Yields (port, iface)."""
     host_key, _ = _session_keys
     iface = RecordingServer()
-    port, stop = start_server_thread(lambda: iface, host_key=host_key, connection_timeout=30.0)
+    port, stop, _ = start_server_thread(lambda: iface, host_key=host_key, connection_timeout=30.0)
     yield port, iface
     stop.set()
 

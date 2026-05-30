@@ -179,7 +179,11 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             return True
 
         if not self.args.disable_ssh:
-            logging.info("got ssh command: %s", command.decode("utf8"))
+            logging.info(
+                "got ssh command: %s",
+                command.decode("utf8"),
+                extra={"event": "channel_ssh_command", "command": command.decode("utf8")},
+            )
 
             handler_entry = ExecHandlerRegistry.get_exec_handler(
                 command,
@@ -278,7 +282,11 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
                         creds.host, creds.port, username
                     )
                 )
-                logging.info("Remote auth-methods: %s", str(self.possible_auth_methods))
+                logging.info(
+                    "Remote auth-methods: %s",
+                    str(self.possible_auth_methods),
+                    extra={"event": "remote_auth_methods", "methods": self.possible_auth_methods},
+                )
             except paramiko.ssh_exception.SSHException as ex:
                 self.session.remote.address_reachable = False
                 logging.error(ex)
@@ -288,23 +296,27 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         if not self.session.remote.address_reachable:
             return "publickey"
         logging.debug("get_allowed_auths: username=%s", username)
+        remote = set(self.possible_auth_methods or [])
+        unknown = self.possible_auth_methods is None
+
         allowed_auths = []
         if self.args.extra_auth_methods:
             allowed_auths.extend(self.args.extra_auth_methods.split(","))
-        remote_allows_none = (
-            self.possible_auth_methods is not None
-            and "none" in self.possible_auth_methods
-        )
-        if remote_allows_none or self.args.enable_none_auth:
+
+        if self.args.enable_none_auth or "none" in remote:
             allowed_auths.append("none")
+
         kb_interactive_disabled = getattr(
             self.args, "disable_keyboard_interactive_auth", False
         )
-        if not kb_interactive_disabled or self.args.enable_trivial_auth:
+        if not kb_interactive_disabled and (unknown or "keyboard-interactive" in remote or self.args.enable_trivial_auth):
             allowed_auths.append("keyboard-interactive")
-        if not self.args.disable_pubkey_auth:
+
+        accept_first = getattr(self.args, "accept_first_publickey", False)
+        if not self.args.disable_pubkey_auth and (unknown or "publickey" in remote or accept_first):
             allowed_auths.append("publickey")
-        if not self.args.disable_password_auth:
+
+        if not self.args.disable_password_auth and (unknown or "password" in remote):
             allowed_auths.append("password")
         if allowed_auths:
             allowed_authentication_methods = ",".join(allowed_auths)
@@ -520,6 +532,11 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             return paramiko.common.AUTH_SUCCESSFUL
         if not self.session.remote.address_reachable:
             return paramiko.common.AUTH_FAILED
+        if (
+            self.possible_auth_methods is not None
+            and "publickey" not in self.possible_auth_methods
+        ):
+            return paramiko.common.AUTH_FAILED
 
         # Probe the remote server: does this key exist for this user?
         # AuthenticatorPassThrough.auth_publickey stores the result in pubkey_auth_success
@@ -582,11 +599,25 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             "check_auth_password: username=%s, password=%s", username, password
         )
         if self.args.disable_password_auth:
-            logging.warning("Password login attempt, but password auth was disabled!")
+            logging.warning(
+                "password auth disabled",
+                extra={"event": "auth_password_disabled", "username": username},
+            )
             return paramiko.common.AUTH_FAILED
         if not self.session.remote.address_reachable:
             return paramiko.common.AUTH_FAILED
-        return self.session.authenticator.authenticate(username, password=password)
+        result = self.session.authenticator.authenticate(username, password=password)
+        hide = getattr(self.args, "auth_hide_credentials", False)
+        logging.info(
+            "auth_password_attempt",
+            extra={
+                "event": "auth_password_attempt",
+                "username": username,
+                "success": result == paramiko.common.AUTH_SUCCESSFUL,
+                "password": None if hide else password,
+            },
+        )
+        return result
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
         logging.debug("check_channel_request: kind=%s , chanid=%s", kind, chanid)
@@ -644,7 +675,7 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
                 ).handler,
             )
         except paramiko.ssh_exception.SSHException:
-            logging.info("TCP forwarding request denied")
+            logging.info("TCP forwarding request denied", extra={"event": "port_forward_denied"})
             return False
 
     def cancel_port_forward_request(self, address: str, port: int) -> None:
@@ -677,6 +708,11 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             origin,
             destination,
             username,
+            extra={
+                "event": "port_forward_direct",
+                "origin": f"{origin[0]}:{origin[1]}",
+                "destination": f"{destination[0]}:{destination[1]}",
+            },
         )
 
         try:

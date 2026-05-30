@@ -1,10 +1,14 @@
 let state = null;
 
+const ACTIVITY_ICONS = {success: '✓', warning: '⚠', error: '✗', info: '·'};
+const SOURCE_LABELS  = {sshmitm: 'SSH-MITM', mockserver: 'Mock'};
+
 const es = new EventSource('/events');
 es.onmessage = function(e) {
   const ev = JSON.parse(e.data);
-  if (ev.type === 'state') { state = ev.data; render(); }
-  else if (ev.type === 'auth_event') { appendEv(ev.data); }
+  if      (ev.type === 'state')    { state = ev.data; render(); setSshMitmStatus(state.sshmitm_running); }
+  else if (ev.type === 'activity') { appendActivity(ev.data); }
+  else if (ev.type === 'alert')    { showAlert(ev.data); }
 };
 
 function act(name) {
@@ -16,9 +20,15 @@ function selectTut(id) {
   if (state && state.runner_state === 'running' && id !== state.selected) {
     if (!confirm('A tutorial is still running.\nSwitch anyway?')) return;
   }
-  document.getElementById('event-log').innerHTML = '';
+  document.getElementById('activity-log').innerHTML = '';
   fetch('/action', {method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({action: 'select', tutorial_id: id})});
+}
+
+function setSshMitmStatus(running) {
+  const el = document.getElementById('sshmitm-status');
+  el.classList.toggle('connected', !!running);
+  el.querySelector('.status-label').textContent = running ? 'SSH-MITM connected' : 'SSH-MITM';
 }
 
 function copyCmd() {
@@ -55,14 +65,57 @@ function renderCopyable(copyable) {
   }
 }
 
-function appendEv(d) {
-  const log = document.getElementById('event-log');
+function appendActivity(d) {
+  const log = document.getElementById('activity-log');
   const div = document.createElement('div');
-  const ok = d.ok;
-  div.innerHTML = `<span style="color:#888">${d.ts}</span> `
-    + `<span class="${ok ? 'ev-ok' : 'ev-fail'}">${ok ? '✓' : '✗'}</span>  `
-    + `<span style="color:#6c7a99">${d.method.padEnd(20)}</span> user=${JSON.stringify(d.username)}`;
-  log.appendChild(div); log.scrollTop = log.scrollHeight;
+  const type = d.type || 'info';
+  const icon = ACTIVITY_ICONS[type] || '·';
+  const srcLabel = SOURCE_LABELS[d.source] || d.source || '';
+  const srcCls = d.source === 'sshmitm' ? 'av-ssh' : 'av-mock';
+  let body = `<span class="av-title">${_esc(d.title)}</span>`;
+  if (d.detail) body += `<div class="av-detail">${_esc(d.detail)}</div>`;
+  if (d.hint)   body += `<div class="av-hint">${_esc(d.hint)}</div>`;
+  const srcBadgeCls = d.source === 'sshmitm' ? 'src-sshmitm' : 'src-mock';
+  div.className = `av ${type} ${srcCls}`;
+  div.innerHTML = `<span class="av-icon">${icon}</span>`
+    + `<span class="av-body">${body}</span>`
+    + `<span class="av-source ${srcBadgeCls}">${srcLabel}</span>`
+    + `<span class="av-ts">${d.ts}</span>`;
+  log.appendChild(div);
+  log.scrollTop = log.scrollHeight;
+}
+
+function showAlert(d) {
+  const box = document.getElementById('alert-box');
+  if (!box) return;
+  box.className = d.type ? `type-${d.type}` : '';
+  document.getElementById('alert-title').textContent = d.title || '';
+  const detailEl = document.getElementById('alert-detail');
+  detailEl.textContent = d.detail || '';
+  detailEl.style.display = d.detail ? 'block' : 'none';
+  const hintEl = document.getElementById('alert-hint');
+  const hintText = document.getElementById('alert-hint-text');
+  if (d.hint) {
+    hintText.textContent = d.hint;
+    hintEl.style.display = 'flex';
+    const btn = document.getElementById('alert-copy-btn');
+    btn.onclick = () => navigator.clipboard.writeText(d.hint).then(() => {
+      btn.textContent = '✓ Copied'; btn.classList.add('copied');
+      setTimeout(() => { btn.innerHTML = '&#128203; Copy'; btn.classList.remove('copied'); }, 1500);
+    });
+  } else {
+    hintEl.style.display = 'none';
+  }
+  box.style.display = 'flex';
+}
+
+function dismissAlert() {
+  const box = document.getElementById('alert-box');
+  if (box) box.style.display = 'none';
+}
+
+function _esc(s) {
+  return String(s).replace(/&/g,'&amp;').replace(/</g,'&lt;').replace(/>/g,'&gt;');
 }
 
 function render() {
@@ -117,10 +170,41 @@ function renderSteps() {
       document.getElementById('cmd-area').style.display = 'none';
     }
     renderCopyable(active.copyable);
+    renderInputArea(active.input_prompt, active.active);
   }
 }
 
-let _countdownTimer = null;
+function renderInputArea(prompt, isActive) {
+  const area = document.getElementById('input-area');
+  const fb   = document.getElementById('input-feedback');
+  if (prompt && isActive) {
+    document.getElementById('input-prompt').textContent = prompt;
+    document.getElementById('input-value').value = '';
+    fb.style.display = 'none';
+    area.style.display = 'block';
+  } else {
+    area.style.display = 'none';
+  }
+}
+
+function submitInput() {
+  const value = document.getElementById('input-value').value;
+  fetch('/action', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'submit_input', value: value})
+  }).then(r => r.json()).then(data => {
+    const fb = document.getElementById('input-feedback');
+    if (data.correct) {
+      fb.textContent = '✓ Correct!';
+      fb.className = 'input-feedback correct';
+    } else {
+      fb.textContent = '✗ Wrong — check the SSH-MITM terminal and try again.';
+      fb.className = 'input-feedback wrong';
+    }
+    fb.style.display = 'block';
+  });
+}
+
+let _completionShown = false;
 
 function renderBtns() {
   const s = state.runner_state, sel = !!state.selected;
@@ -128,33 +212,29 @@ function renderBtns() {
   const tut = state.tutorials.find(t => t.id === state.selected);
   document.getElementById('tut-title').textContent = tut ? tut.title : '';
   document.getElementById('completion-banner').style.display = done ? 'block' : 'none';
-  document.getElementById('btn-start').disabled = !sel || s === 'running' || done;
+  document.getElementById('btn-start').disabled = !sel || s === 'running';
   document.getElementById('btn-stop').disabled = s !== 'running';
-  if (done) {
-    if (!_countdownTimer) startCountdown(8);
-  } else {
-    clearCountdown();
+  if (done && !_completionShown) {
+    _completionShown = true;
+    document.getElementById('completion-dialog').style.display = 'flex';
+  }
+  if (!done) {
+    _completionShown = false;
+    document.getElementById('completion-dialog').style.display = '';
   }
 }
 
-function startCountdown(sec) {
-  const msg = document.getElementById('countdown-msg');
-  msg.textContent = ` — closing in ${sec}s`;
-  _countdownTimer = setInterval(() => {
-    sec--;
-    if (sec <= 0) {
-      clearInterval(_countdownTimer); _countdownTimer = null;
-      msg.textContent = ' — closing…';
-    } else {
-      msg.textContent = ` — closing in ${sec}s`;
-    }
-  }, 1000);
+function dismissCompletion() {
+  document.getElementById('completion-dialog').style.display = '';
+  // Hard-stop the mock server via stop action so port is freed before next start
+  fetch('/action', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'stop'})});
 }
 
-function clearCountdown() {
-  if (_countdownTimer) { clearInterval(_countdownTimer); _countdownTimer = null; }
-  const msg = document.getElementById('countdown-msg');
-  if (msg) msg.textContent = '';
-}
+document.addEventListener('DOMContentLoaded', () => {
+  document.getElementById('input-value').addEventListener('keydown', e => {
+    if (e.key === 'Enter') submitInput();
+  });
+});
 
-fetch('/state').then(r => r.json()).then(d => { state = d; render(); });
+fetch('/state').then(r => r.json()).then(d => { state = d; render(); setSshMitmStatus(state.sshmitm_running); });

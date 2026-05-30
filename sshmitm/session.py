@@ -176,6 +176,8 @@ class Session(BaseSession):
         self.client_address = client_address
         self.name = f"{client_address}->{remoteaddr}"
         self.closed = False
+        self._started = False
+        self._transport_active = False
 
         self.agent_requested: threading.Event = threading.Event()
 
@@ -399,6 +401,8 @@ class Session(BaseSession):
 
         while not self.channel:
             self.channel = self.transport.accept(0.5)
+            if not self.transport.is_active():
+                return False
             transport_error = self.transport.get_exception()
             if transport_error is not None and not isinstance(
                 transport_error, EOFError
@@ -422,10 +426,12 @@ class Session(BaseSession):
         if not self._start_channels():
             return False
 
+        self._started = True
         logging.info(
             "%s %s - session started",
             Colors.emoji("information"),
             Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
+            extra={"event": "session_started"},
         )
 
         return True
@@ -458,10 +464,15 @@ class Session(BaseSession):
                 tunnel_forwarder.join()
         self.transport.close()
         self.authenticator.on_session_close()
+        event_extra: dict = {"event": "session_closed"}
+        if not self._started and self.auth.username_provided is None:
+            # Client disconnected before any auth attempt — likely a fingerprint warning
+            event_extra["event"] = "session_rejected_early"
         logging.info(
             "%s session %s closed",
             Colors.emoji("information"),
             Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
+            extra=event_extra,
         )
         self.closed = True
 

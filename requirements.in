@@ -9,6 +9,7 @@ python-json-logger
 pytz
 pyyaml
 requests
+markdown
 rich
 textual
 wrapt

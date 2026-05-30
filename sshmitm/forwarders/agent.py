@@ -178,6 +178,7 @@ class AgentForwarder(AgentBaseForwarder):
                     Colors.stylize(
                         self.session.sessionid, fg("light_blue") + attr("bold")
                     ),
+                    extra={"event": "agent_forwarding_accepted"},
                 )
                 if self.args.expose_agent_socket:
                     self._expose_socket(agent)
@@ -187,6 +188,7 @@ class AgentForwarder(AgentBaseForwarder):
                 "%s %s - ssh-agent breakin not successfull!",
                 Colors.emoji("warning"),
                 Colors.stylize(self.session.sessionid, fg("light_blue") + attr("bold")),
+                extra={"event": "agent_forwarding_denied"},
             )
             return existing_agent
         return existing_agent

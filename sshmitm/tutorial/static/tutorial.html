@@ -9,6 +9,10 @@
 <header>
   <img src="/logo.png" alt="SSH-MITM">
   <h1>SSH-MITM Tutorial</h1>
+  <div id="sshmitm-status" title="SSH-MITM connection status">
+    <span class="status-dot"></span>
+    <span class="status-label">SSH-MITM</span>
+  </div>
   <nav style="display:flex;gap:8px">
     <a class="hlink" href="https://docs.ssh-mitm.at" target="_blank" rel="noopener">
       <svg viewBox="0 0 16 16"><path d="M1 2.5A1.5 1.5 0 012.5 1H8v5h5v7.5A1.5 1.5 0 0111.5 15h-9A1.5 1.5 0 011 13.5v-11zM9 1l4 4H9V1zM4.5 8a.5.5 0 000 1h7a.5.5 0 000-1h-7zm0 2a.5.5 0 000 1h7a.5.5 0 000-1h-7zm0 2a.5.5 0 000 1h4a.5.5 0 000-1h-4z"/></svg>
@@ -32,6 +36,17 @@
           <button class="btn-stop"  id="btn-stop"  onclick="act('stop')"  disabled>&#9632; Stop</button>
         </div>
       </div>
+      <div id="alert-box" style="display:none">
+        <div class="alert-header">
+          <span id="alert-title"></span>
+          <button class="alert-close" onclick="dismissAlert()">✕</button>
+        </div>
+        <div id="alert-detail" class="alert-detail"></div>
+        <div id="alert-hint" class="alert-hint" style="display:none">
+          <span id="alert-hint-text"></span>
+          <button class="copy-btn" id="alert-copy-btn">&#128203; Copy</button>
+        </div>
+      </div>
       <div class="tview-body">
         <div id="step-list"></div>
         <hr style="border:none;border-top:1px solid #eef0fb">
@@ -44,12 +59,30 @@
           </div>
         </div>
         <div id="copyable-area"></div>
-        <div id="completion-banner">
-          &#10003; Tutorial complete! <span id="countdown-msg"></span>
+        <div id="input-area" style="display:none">
+          <div id="input-prompt"></div>
+          <div class="input-row">
+            <input type="text" id="input-value" autocomplete="off" spellcheck="false">
+            <button id="input-submit-btn" onclick="submitInput()">Submit</button>
+          </div>
+          <div id="input-feedback" style="display:none"></div>
         </div>
-        <div>
-          <div class="evlog-label">Authentication Events</div>
-          <div id="event-log"></div>
+        <div id="completion-banner">
+          &#10003; Tutorial complete!
+        </div>
+
+        <div id="completion-dialog">
+          <div class="cdialog-backdrop" onclick="dismissCompletion()"></div>
+          <div class="cdialog-box">
+            <div class="cdialog-icon">&#10003;</div>
+            <h2>Tutorial complete!</h2>
+            <p>You can now start this tutorial again or choose a different one from the sidebar.</p>
+            <button class="btn-start cdialog-btn" onclick="dismissCompletion()">OK</button>
+          </div>
+        </div>
+        <div class="activity-wrap">
+          <div class="activity-label">Activity</div>
+          <div id="activity-log"></div>
         </div>
       </div>
     </div>

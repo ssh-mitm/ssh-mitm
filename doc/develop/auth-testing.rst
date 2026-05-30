@@ -8,6 +8,17 @@ each SSH authentication method can be exercised against SSH-MITM in passthrough 
 All examples assume the test user is named ``sshtest`` and SSH-MITM listens on port
 ``10022`` while the target sshd runs on port ``22``.
 
+.. tip::
+
+    For most development and CI testing, the built-in mock server is the simpler
+    choice — no root access, no system configuration, no test user required::
+
+        python -m sshmitm.mockserver
+
+    It provides ready-made users for all four authentication methods.  Use the
+    OpenSSH setup below when you need to test against a real ``sshd``, require
+    SFTP or port-forwarding support, or want production-realistic behaviour.
+
 .. admonition:: :fas:`scale-balanced` Legal Notice
    :class: legal-notice
 
@@ -294,9 +305,11 @@ Via SSH-MITM:
 
 .. note::
 
-    SSH-MITM currently forwards only the first keyboard-interactive prompt to the
-    remote server as a password.  Multi-step challenge–response (e.g. TOTP) is not
-    yet fully supported.
+    SSH-MITM forwards keyboard-interactive challenges transparently, including
+    multi-step challenge–response (e.g. TOTP) and multi-round iterative exchanges
+    as defined in RFC 4256.  The built-in mock server (``python -m sshmitm.mockserver``)
+    provides ready-made users for both single-round and iterative keyboard-interactive
+    authentication for testing.
 
 
 Cleanup

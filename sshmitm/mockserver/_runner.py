@@ -15,7 +15,7 @@ def start_server_thread(
     bind: str = "127.0.0.1",
     port: int = 0,
     connection_timeout: float = 30.0,
-) -> tuple[int, threading.Event]:
+) -> tuple[int, threading.Event, threading.Event]:
     """Start an SSH server in a background thread.
 
     Args:
@@ -26,13 +26,16 @@ def start_server_thread(
         connection_timeout: per-connection transport join timeout in seconds
 
     Returns:
-        ``(actual_port, stop_event)`` — call ``stop_event.set()`` to shut down
+        ``(actual_port, stop_event, closed_event)``
+        Call ``stop_event.set()`` to request shutdown.
+        ``closed_event`` is set once the listening socket is fully closed.
     """
     if host_key is None:
         host_key = paramiko.RSAKey.generate(2048)
 
     _host_key = host_key
     stop = threading.Event()
+    closed = threading.Event()
     ready = threading.Event()
 
     sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
@@ -60,7 +63,8 @@ def start_server_thread(
             except socket.timeout:
                 continue
         sock.close()
+        closed.set()
 
     threading.Thread(target=_serve, daemon=True).start()
     ready.wait(timeout=2.0)
-    return actual_port, stop
+    return actual_port, stop, closed

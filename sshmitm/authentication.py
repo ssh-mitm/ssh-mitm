@@ -610,6 +610,7 @@ class Authenticator(SSHMITMBaseModule):
                     + " publickey authentication failed - no agent forwarded - connecting to honeypot!",
                     fg("yellow") + attr("bold"),
                 ),
+                extra={"event": "honeypot_redirect"},
             )
         else:
             logging.error(
@@ -618,6 +619,7 @@ class Authenticator(SSHMITMBaseModule):
                     + " Authentication against honeypot failed!",
                     fg("red") + attr("bold"),
                 ),
+                extra={"event": "honeypot_failed"},
             )
         return auth_status
 
@@ -854,6 +856,12 @@ class AuthenticatorPassThrough(Authenticator):
                     key.get_name(),
                     key.fingerprint,
                     key.get_bits(),
+                    extra={
+                        "event": "pubkey_valid_found",
+                        "username": username,
+                        "keytype": key.get_name(),
+                        "fingerprint": key.fingerprint,
+                    },
                 )
                 self.pubkey_auth_success = True
                 self.valid_key = key
@@ -965,6 +973,24 @@ class AuthenticatorPassThrough(Authenticator):
                 )
             )
 
+        hide = getattr(self.args, "auth_hide_credentials", False)
+        remote_host = None
+        remote_port = None
+        if self.session.ssh.client is not None:
+            remote_host = self.session.ssh.client.host
+            remote_port = self.session.ssh.client.port
+        logging.info(
+            "remote_auth_success" if success else "remote_auth_failed",
+            extra={
+                "event": "remote_auth_success" if success else "remote_auth_failed",
+                "username": self.session.auth.username_provided,
+                "password": None if hide else self.session.auth.password_provided,
+                "has_password": self.session.auth.password_provided is not None,
+                "has_agent": self.session.auth.agent is not None,
+                "remote_host": remote_host,
+                "remote_port": remote_port,
+            },
+        )
         logging.info("\n".join(logmessage))
 
     def on_session_close(self) -> None:

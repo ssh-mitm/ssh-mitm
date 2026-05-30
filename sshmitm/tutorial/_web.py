@@ -3,20 +3,26 @@
 from __future__ import annotations
 
 import html as _html
+import signal
 import http.server
 import json
 import logging
+import os
 import pathlib
 import queue
 import re
+import socket
 import socketserver
+import tempfile
 import threading
+import time
 import webbrowser
 from datetime import datetime
 from importlib import resources as _resources
 from typing import TYPE_CHECKING
 
 from sshmitm.tutorial._definitions import Tutorial
+from sshmitm.tutorial._event_processor import process as process_event
 from sshmitm.tutorial._progress import load_completed, mark_completed
 from sshmitm.tutorial._runner import TutorialRunner, TutorialState
 
@@ -119,10 +125,14 @@ class _Handler(http.server.BaseHTTPRequestHandler):
         if self.path == "/action":
             length = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(length))
-            self.server.handle_action(  # type: ignore[attr-defined]
-                body.get("action"), body.get("tutorial_id")
-            )
-            self._send(200, "application/json", b'{"ok":true}')
+            action = body.get("action")
+            if action == "submit_input":
+                correct = self.server.submit_input(body.get("value", ""))  # type: ignore[attr-defined]
+                self._send(200, "application/json",
+                           json.dumps({"ok": True, "correct": correct}).encode())
+            else:
+                self.server.handle_action(action, body.get("tutorial_id"))  # type: ignore[attr-defined]
+                self._send(200, "application/json", b'{"ok":true}')
         else:
             self.send_response(404)
             self.end_headers()
@@ -185,7 +195,15 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         self._completed: set[str] = load_completed()
         self._clients: list[queue.Queue[dict]] = []
         self._lock = threading.Lock()
-        self._exit_timer: threading.Timer | None = None
+
+        self._log_socket_path = os.path.join(
+            tempfile.gettempdir(), "sshmitm-tutorial.sock"
+        )
+        self._log_socket: socket.socket | None = None
+        self._sshmitm_socket_connected = False
+        self._sshmitm_running = False
+        self._start_log_socket()
+        self._start_status_checker()
 
     # SSE client management
 
@@ -199,6 +217,121 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                 self._clients.remove(q)
             except ValueError:
                 pass
+
+    # ------------------------------------------------------------------
+    # Unix socket — receives structured log events from SSH-MITM
+    # ------------------------------------------------------------------
+
+    def _start_log_socket(self) -> None:
+        if os.path.exists(self._log_socket_path):
+            os.unlink(self._log_socket_path)
+        sock = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        sock.bind(self._log_socket_path)
+        sock.listen(5)
+        sock.settimeout(1.0)
+        self._log_socket = sock
+        t = threading.Thread(target=self._log_accept_loop, daemon=True)
+        t.start()
+
+    @staticmethod
+    def _port_open(port: int) -> bool:
+        hex_port = f"{port:04X}"
+        for path in ("/proc/net/tcp", "/proc/net/tcp6"):
+            try:
+                with open(path) as f:
+                    next(f)
+                    for line in f:
+                        parts = line.split()
+                        if len(parts) > 3 and parts[3] == "0A":
+                            _, local_port = parts[1].rsplit(":", 1)
+                            if local_port.upper() == hex_port:
+                                return True
+            except OSError:
+                pass
+        return False
+
+    def _start_status_checker(self) -> None:
+        t = threading.Thread(target=self._status_check_loop, daemon=True)
+        t.start()
+
+    def _status_check_loop(self) -> None:
+        while True:
+            time.sleep(2)
+            with self._lock:
+                tut = self._selected
+                connected = self._sshmitm_socket_connected
+                prev = self._sshmitm_running
+
+            # Retry push to SSH-MITM whenever the socket connection is absent
+            if not connected:
+                _notify_sshmitm(self._log_socket_path)
+
+            if tut is None:
+                continue
+            running = connected or self._port_open(tut.sshmitm_port)
+            with self._lock:
+                self._sshmitm_running = running
+            if running != prev:
+                self.broadcast("state", self.get_state())
+
+    def _log_accept_loop(self) -> None:
+        assert self._log_socket is not None
+        while True:
+            try:
+                conn, _ = self._log_socket.accept()
+                threading.Thread(
+                    target=self._log_read_client, args=(conn,), daemon=True
+                ).start()
+            except socket.timeout:
+                continue
+            except OSError:
+                break
+
+    def _log_read_client(self, conn: socket.socket) -> None:
+        with self._lock:
+            self._sshmitm_socket_connected = True
+            self._sshmitm_running = True
+        self.broadcast("state", self.get_state())
+        buf = b""
+        try:
+            while True:
+                chunk = conn.recv(4096)
+                if not chunk:
+                    break
+                buf += chunk
+                while b"\n" in buf:
+                    line, buf = buf.split(b"\n", 1)
+                    if line:
+                        try:
+                            self._on_log_event(json.loads(line))
+                        except json.JSONDecodeError:
+                            pass
+        except OSError:
+            pass
+        finally:
+            conn.close()
+            with self._lock:
+                self._sshmitm_socket_connected = False
+            self.broadcast("state", self.get_state())
+
+    def _on_log_event(self, event: dict) -> None:
+        with self._lock:
+            runner = self._runner
+        if event.get("event") and runner is not None:
+            runner.add_log_event(event)
+        display = process_event(event)
+        if display is None:
+            return
+        # Forward alerts with hints (e.g. host-key errors) but suppress generic activity entries.
+        if display.get("hint"):
+            tut_events = {a.event for a in runner._tutorial.event_alerts} if runner else set()
+            if event.get("event") not in tut_events:
+                self.broadcast("alert", {
+                    "title": display["title"],
+                    "detail": display.get("detail"),
+                    "hint": display["hint"],
+                    "ts": datetime.now().strftime("%H:%M:%S"),
+                })
 
     def broadcast(self, event_type: str, data: object) -> None:
         event = {"type": event_type, "data": data}
@@ -237,6 +370,7 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                     "command": cmd,
                     "copyable": copyable,
                     "hint": hint,
+                    "input_prompt": s.input_prompt,
                     "done": i < current,
                     "active": i == current,
                 })
@@ -254,6 +388,7 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
             "runner_state": self._runner.state if self._runner else TutorialState.IDLE,
             "current_step": current,
             "steps": steps,
+            "sshmitm_running": self._sshmitm_running,
         }
 
     # Actions
@@ -263,7 +398,6 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         if action == "select" and tutorial_id:
             tut = next((t for t in self._tutorials if t.id == tutorial_id), None)
             if tut and tut is not self._selected:
-                self._cancel_exit_timer()
                 if self._runner:
                     self._runner.stop()
                     self._runner = None
@@ -274,17 +408,22 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
             if self._selected and (
                 not self._runner or self._runner.state != TutorialState.RUNNING
             ):
-                self._cancel_exit_timer()
+                if self._runner:
+                    self._runner.stop()
                 self._runner = self._make_runner()
                 self._runner.start()
                 self.broadcast("state", self.get_state())
 
         elif action == "stop":
-            self._cancel_exit_timer()
             if self._runner:
                 self._runner.stop()
                 self._runner = None
             self.broadcast("state", self.get_state())
+
+    def submit_input(self, value: str) -> bool:
+        if self._runner:
+            return self._runner.submit_input(value)
+        return False
 
     def _make_runner(self) -> TutorialRunner:
         assert self._selected is not None
@@ -292,12 +431,12 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
             self._selected,
             on_step_complete=self._on_step_complete,
             on_auth_event=self._on_auth_event,
+            on_alert=self._on_runner_alert,
+            log_socket_path=self._log_socket_path,
         )
 
-    def _cancel_exit_timer(self) -> None:
-        if self._exit_timer is not None:
-            self._exit_timer.cancel()
-            self._exit_timer = None
+    def _on_runner_alert(self, alert: dict) -> None:
+        self.broadcast("alert", {"ts": datetime.now().strftime("%H:%M:%S"), **alert})
 
     def _on_step_complete(self, _idx: int) -> None:
         if (
@@ -307,16 +446,36 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
         ):
             mark_completed(self._selected.id)
             self._completed = load_completed()
-            self._exit_timer = threading.Timer(8.0, self.shutdown)
-            self._exit_timer.daemon = True
-            self._exit_timer.start()
         self.broadcast("state", self.get_state())
 
+    _AUTH_METHOD_LABELS = {
+        "password":             "password",
+        "publickey":            "public key",
+        "keyboard-interactive": "keyboard-interactive",
+        "none":                 "no credentials",
+    }
+
     def _on_auth_event(self, method: str, username: str, ok: bool) -> None:
-        self.broadcast("auth_event", {
-            "method": method,
-            "username": username,
-            "ok": ok,
+        # A failed "none" auth is always the standard SSH method-discovery probe,
+        # not a real login attempt — every SSH client does this first.
+        if method == "none" and not ok:
+            return
+
+        method_label = self._AUTH_METHOD_LABELS.get(method, method)
+        if method == "none" and ok:
+            title = f"{username} logged in without credentials (none auth)"
+            detail = "The mock server is configured to accept this username without a password."
+        elif ok:
+            title = f"{username} authenticated via {method_label}"
+            detail = "The mock server accepted the credentials forwarded by SSH-MITM."
+        else:
+            title = f"{username} failed {method_label} authentication"
+            detail = "The mock server rejected the credentials."
+        self.broadcast("activity", {
+            "source": "mockserver",
+            "type": "success" if ok else "warning",
+            "title": title,
+            "detail": detail,
             "ts": datetime.now().strftime("%H:%M:%S"),
         })
 
@@ -325,12 +484,37 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 # Entry point
 # ---------------------------------------------------------------------------
 
+def _notify_sshmitm(tutorial_socket_path: str) -> None:
+    """Push the tutorial socket path to a running SSH-MITM via its control socket."""
+    ctrl = os.path.join(tempfile.gettempdir(), "sshmitm-control.sock")
+    if not os.path.exists(ctrl):
+        return
+    try:
+        conn = socket.socket(socket.AF_UNIX, socket.SOCK_STREAM)
+        conn.settimeout(2.0)
+        conn.connect(ctrl)
+        conn.sendall(json.dumps({
+            "cmd": "attach_tutorial_socket",
+            "path": tutorial_socket_path,
+        }).encode())
+        conn.close()
+        _log.debug("notified SSH-MITM of tutorial socket: %s", tutorial_socket_path)
+    except OSError:
+        pass
+
+
 def run(tutorials: list[Tutorial], port: int = 0, open_browser: bool = True) -> None:
+    # Stay alive when the parent shell exits (e.g. user types 'exit' in a terminal)
+    if hasattr(signal, "SIGHUP"):
+        signal.signal(signal.SIGHUP, signal.SIG_IGN)
+
     srv = TutorialWebServer(tutorials, port=port)
     actual_port = srv.server_address[1]
     url = f"http://127.0.0.1:{actual_port}"
     _log.info("Tutorial server listening on %s", url)
     print(f"SSH-MITM Tutorial  →  {url}")
+    print(f"Log socket         →  {srv._log_socket_path}")
+    _notify_sshmitm(srv._log_socket_path)
 
     thread = threading.Thread(target=srv.serve_forever, daemon=True)
     thread.start()

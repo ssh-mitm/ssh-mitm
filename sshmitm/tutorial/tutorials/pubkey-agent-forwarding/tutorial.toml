@@ -1,7 +1,8 @@
-id          = "password-auth"
-title       = "Password Authentication"
+id          = "pubkey-agent-forwarding"
+title       = "Public Key Auth & Agent Forwarding"
 category    = "Authentication"
-description = "Learn how SSH-MITM intercepts plaintext passwords."
+description = "Learn what SSH-MITM can see when public key auth and agent forwarding are used."
+auth_type   = "publickey"
 
 [[steps]]
 id        = "mock-server"
@@ -19,14 +20,9 @@ hint_done    = "SSH-MITM is running on port {sshmitm_port}. ✓"
 
 [[steps]]
 id           = "verify"
-title        = "Enter the intercepted password"
-condition    = 'USER_INPUT("password_value")'
+title        = "Enter the intercepted key fingerprint"
+condition    = 'USER_INPUT("pubkey_fingerprint")'
 auto_connect = true
-input_prompt = "Enter the password shown in the SSH-MITM terminal:"
-hint_waiting = "Look at the SSH-MITM terminal and enter the password above."
+input_prompt = "Enter the SHA256 fingerprint shown in the SSH-MITM terminal:"
+hint_waiting = "Look at the SSH-MITM terminal and enter the key fingerprint above."
 hint_done    = "Correct! Tutorial complete. ✓"
-
-[[event_alerts]]
-event  = "remote_auth_failed"
-title  = "Wrong password"
-detail = "The password was intercepted by SSH-MITM but rejected by the target server. This should not happen in normal tutorial operation."

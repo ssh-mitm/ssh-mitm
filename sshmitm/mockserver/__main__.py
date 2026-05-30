@@ -297,7 +297,7 @@ def main() -> None:
 
     _print_serverinfo(cfg)
 
-    _, stop = start_server_thread(
+    _, stop, _ = start_server_thread(
         lambda: _ObservableServer(cfg.users),
         host_key=host_key,
         bind=args.address,
