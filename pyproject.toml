@@ -50,7 +50,7 @@ server = "sshmitm.server.cli:SSHServerModules"
 audit = "sshmitm.audit.cli:Audit"
 check-publickey = "sshmitm.commands.check_publickey:CheckPublickey"
 mosh = "sshmitm.apps.mosh.client:Mosh"
-mock-server = "sshmitm.apps.mockserver.mockserver:MockServer"
+tutorial = "sshmitm.tutorial.cli:Tutorial"
 
 [project.entry-points."sshmitm.AgentBaseForwarder"]
 base = "sshmitm.forwarders.agent:AgentForwarder"
@@ -113,6 +113,8 @@ include = [
     "sshmitm/data/*.*",
     "sshmitm/apps/mosh/*.*",
     "sshmitm/moduleparser/pluginbrowser/*.tcss",
+    "sshmitm/tutorial/static/*.*",
+    "sshmitm/tutorial/tutorials/**/*",
 ]
 
 [tool.hatch.envs.lint]

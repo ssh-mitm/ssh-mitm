@@ -1,0 +1,33 @@
+id          = "password-auth"
+title       = "Password Authentication"
+category    = "Authentication"
+description = "Learn how SSH-MITM intercepts plaintext passwords."
+
+[[steps]]
+id        = "mock-server"
+title     = "Mock server ready"
+condition = "TRUE()"
+hint_done = "Mock server is running and ready."
+
+[[steps]]
+id           = "start-sshmitm"
+title        = "Start SSH-MITM"
+condition    = "PORT_OPEN(sshmitm_port)"
+command      = "ssh-mitm server --remote-host 127.0.0.1 --remote-port {mock_port} --listen-port {sshmitm_port} --disable-remote-fingerprint-warning"
+hint_waiting = "Waiting for SSH-MITM to start on port {sshmitm_port}…"
+hint_done    = "SSH-MITM is running on port {sshmitm_port}. ✓"
+
+[[steps]]
+id           = "connect"
+title        = "Connect through SSH-MITM"
+condition    = 'AUTH_EVENT("password", True)'
+command      = "ssh -o PreferredAuthentications=password -o StrictHostKeyChecking=no -p {sshmitm_port} {password_user}@127.0.0.1"
+copyable     = ["password_value"]
+hint_waiting = "Waiting for an SSH connection through the proxy…"
+hint_done    = "Password intercepted successfully. ✓"
+
+[[steps]]
+id        = "observe"
+title     = "What just happened?"
+condition = "TRUE()"
+hint_done = "Tutorial complete! ✓"

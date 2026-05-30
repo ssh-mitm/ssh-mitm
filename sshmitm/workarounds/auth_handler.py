@@ -59,9 +59,11 @@ def _load_hostbound_key(
 
 
 def _check_pubkey_auth(
-    handler: AuthHandler, username: str, key: PKey, sig_attached: bool = True
+    handler: AuthHandler,
+    username: str,
+    key: PKey,
+    sig_attached: bool = True,  # noqa: ARG001 – kept for frame inspection in check_auth_publickey
 ) -> int:
-    del sig_attached
     if handler.transport.server_object is None:
         return AUTH_FAILED
     return handler.transport.server_object.check_auth_publickey(username, key)

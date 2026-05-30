@@ -35,3 +35,4 @@ By the end of this chapter, you will have a comprehensive understanding of the d
    contributing
    plugins
    api
+   auth-testing

@@ -15,175 +15,28 @@ Tests cover:
 
 from __future__ import annotations
 
-import socket
 import subprocess
-import threading
-import time
-from typing import Generator
+from typing import TYPE_CHECKING, Callable, Generator
 
 import paramiko
 import paramiko.common
 import pytest
 
 from tests.integration.conftest import _free_port, _ssh_mitm_bin, _wait_port
+from sshmitm.mockserver import KeyboardInteractiveServer, start_server_thread
+
+if TYPE_CHECKING:
+    from pathlib import Path
 
 
 # ---------------------------------------------------------------------------
-# Mock SSH target servers for keyboard-interactive
+# Credential constants
 # ---------------------------------------------------------------------------
 
-class _SinglePromptServer(paramiko.ServerInterface):
-    """Accepts keyboard-interactive with a single 'Password:' prompt."""
+_SINGLE_PASSWORD = "correct-password"
 
-    VALID_PASSWORD = "correct-password"  # noqa: S105
-
-    def get_allowed_auths(self, username: str) -> str:
-        return "keyboard-interactive"
-
-    def check_auth_none(self, username: str) -> int:
-        return paramiko.common.AUTH_FAILED
-
-    def check_auth_password(self, username: str, password: str) -> int:
-        return paramiko.common.AUTH_FAILED
-
-    def check_auth_interactive(
-        self, username: str, submethods: str
-    ) -> paramiko.server.InteractiveQuery:
-        query = paramiko.server.InteractiveQuery("", "")
-        query.add_prompt("Password: ", False)
-        return query
-
-    def check_auth_interactive_response(self, responses: list[str]) -> int:
-        if responses and responses[0] == self.VALID_PASSWORD:
-            return paramiko.common.AUTH_SUCCESSFUL
-        return paramiko.common.AUTH_FAILED
-
-    def check_channel_request(self, kind: str, chanid: int) -> int:
-        return paramiko.common.OPEN_SUCCEEDED
-
-    def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
-        return True
-
-    def check_channel_pty_request(
-        self,
-        channel: paramiko.Channel,
-        term: bytes,
-        width: int,
-        height: int,
-        pixelwidth: int,
-        pixelheight: int,
-        modes: bytes,
-    ) -> bool:
-        return True
-
-
-class _MultiPromptServer(paramiko.ServerInterface):
-    """Accepts keyboard-interactive with two prompts: OTP token + password."""
-
-    VALID_TOKEN = "123456"
-    VALID_PASSWORD = "secret"  # noqa: S105
-
-    def get_allowed_auths(self, username: str) -> str:
-        return "keyboard-interactive"
-
-    def check_auth_none(self, username: str) -> int:
-        return paramiko.common.AUTH_FAILED
-
-    def check_auth_password(self, username: str, password: str) -> int:
-        return paramiko.common.AUTH_FAILED
-
-    def check_auth_interactive(
-        self, username: str, submethods: str
-    ) -> paramiko.server.InteractiveQuery:
-        query = paramiko.server.InteractiveQuery(
-            name="Two-Factor Authentication",
-            instructions="Enter your OTP token and password.",
-        )
-        query.add_prompt("OTP Token: ", True)   # echo=True
-        query.add_prompt("Password: ", False)    # echo=False (hidden)
-        return query
-
-    def check_auth_interactive_response(self, responses: list[str]) -> int:
-        if (
-            len(responses) == 2
-            and responses[0] == self.VALID_TOKEN
-            and responses[1] == self.VALID_PASSWORD
-        ):
-            return paramiko.common.AUTH_SUCCESSFUL
-        return paramiko.common.AUTH_FAILED
-
-    def check_channel_request(self, kind: str, chanid: int) -> int:
-        return paramiko.common.OPEN_SUCCEEDED
-
-    def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
-        return True
-
-    def check_channel_pty_request(
-        self,
-        channel: paramiko.Channel,
-        term: bytes,
-        width: int,
-        height: int,
-        pixelwidth: int,
-        pixelheight: int,
-        modes: bytes,
-    ) -> bool:
-        return True
-
-
-def _start_mock_kbdinteractive_target(
-    server_interface_class: type[paramiko.ServerInterface],
-) -> tuple[int, threading.Event]:
-    """Start a paramiko SSH server using the given ServerInterface. Returns (port, stop_event)."""
-    host_key = paramiko.RSAKey.generate(2048)
-    stop = threading.Event()
-    ready = threading.Event()
-    sock = socket.socket(socket.AF_INET, socket.SOCK_STREAM)
-    sock.setsockopt(socket.SOL_SOCKET, socket.SO_REUSEADDR, 1)
-    sock.bind(("127.0.0.1", 0))
-    port: int = sock.getsockname()[1]
-    sock.listen(5)
-    sock.settimeout(0.5)
-
-    def _handle(conn: socket.socket) -> None:
-        transport = paramiko.Transport(conn)
-        transport.add_server_key(host_key)
-        try:
-            transport.start_server(server=server_interface_class())
-            transport.join(timeout=15)
-        except Exception:  # noqa: BLE001
-            pass  # Connection resets from MITM banner-probing are expected
-
-    def _serve() -> None:
-        ready.set()
-        while not stop.is_set():
-            try:
-                conn, _ = sock.accept()
-                threading.Thread(target=_handle, args=(conn,), daemon=True).start()
-            except socket.timeout:
-                continue
-        sock.close()
-
-    threading.Thread(target=_serve, daemon=True).start()
-    ready.wait(timeout=2.0)
-    return port, stop
-
-
-def _kbdinteractive_connect(
-    mitm_port: int,
-    handler: "Callable[[str, str, list[tuple[str, bool]]], list[str]]",
-    submethods: str = "",
-) -> bool:
-    """Connect to MITM via keyboard-interactive. Returns True on auth success."""
-    transport = paramiko.Transport(("127.0.0.1", mitm_port))
-    transport.start_client(timeout=10)
-    try:
-        remaining = transport.auth_interactive("testuser", handler, submethods)
-        return remaining == []
-    except paramiko.AuthenticationException:
-        return False
-    finally:
-        transport.close()
+_MULTI_TOKEN = "123456"
+_MULTI_PASSWORD = "secret"
 
 
 # ---------------------------------------------------------------------------
@@ -193,7 +46,12 @@ def _kbdinteractive_connect(
 @pytest.fixture
 def mitm_single_prompt(tmp_path: "Path") -> "Generator[int, None, None]":
     """MITM forwarding to a single-prompt keyboard-interactive target."""
-    target_port, stop = _start_mock_kbdinteractive_target(_SinglePromptServer)
+    target_port, stop = start_server_thread(
+        lambda: KeyboardInteractiveServer(
+            prompts=[("Password: ", False)],
+            answers=[_SINGLE_PASSWORD],
+        )
+    )
     mitm_port = _free_port()
 
     proc = subprocess.Popen(
@@ -221,7 +79,14 @@ def mitm_single_prompt(tmp_path: "Path") -> "Generator[int, None, None]":
 @pytest.fixture
 def mitm_multi_prompt(tmp_path: "Path") -> "Generator[int, None, None]":
     """MITM forwarding to a two-prompt keyboard-interactive target."""
-    target_port, stop = _start_mock_kbdinteractive_target(_MultiPromptServer)
+    target_port, stop = start_server_thread(
+        lambda: KeyboardInteractiveServer(
+            prompts=[("OTP Token: ", True), ("Password: ", False)],
+            answers=[_MULTI_TOKEN, _MULTI_PASSWORD],
+            name="Two-Factor Authentication",
+            instructions="Enter your OTP token and password.",
+        )
+    )
     mitm_port = _free_port()
 
     proc = subprocess.Popen(
@@ -247,6 +112,27 @@ def mitm_multi_prompt(tmp_path: "Path") -> "Generator[int, None, None]":
 
 
 # ---------------------------------------------------------------------------
+# Helper
+# ---------------------------------------------------------------------------
+
+def _kbdinteractive_connect(
+    mitm_port: int,
+    handler: Callable[[str, str, list[tuple[str, bool]]], list[str]],
+    submethods: str = "",
+) -> bool:
+    """Connect to MITM via keyboard-interactive. Returns True on auth success."""
+    transport = paramiko.Transport(("127.0.0.1", mitm_port))
+    transport.start_client(timeout=10)
+    try:
+        remaining = transport.auth_interactive("testuser", handler, submethods)
+        return remaining == []
+    except paramiko.AuthenticationException:
+        return False
+    finally:
+        transport.close()
+
+
+# ---------------------------------------------------------------------------
 # Tests: single-prompt passthrough
 # ---------------------------------------------------------------------------
 
@@ -256,7 +142,7 @@ def test_single_prompt_auth_success(mitm_single_prompt: int) -> None:
 
     def handler(title: str, instructions: str, prompt_list: list[tuple[str, bool]]) -> list[str]:
         received.append((title, instructions, prompt_list))
-        return [_SinglePromptServer.VALID_PASSWORD]
+        return [_SINGLE_PASSWORD]
 
     assert _kbdinteractive_connect(mitm_single_prompt, handler) is True
     assert len(received) == 1, "Expected exactly one challenge round"
@@ -277,7 +163,7 @@ def test_single_prompt_forwarded_correctly(mitm_single_prompt: int) -> None:
 
     def handler(title: str, instructions: str, prompt_list: list[tuple[str, bool]]) -> list[str]:
         received.append((title, instructions, prompt_list))
-        return [_SinglePromptServer.VALID_PASSWORD]
+        return [_SINGLE_PASSWORD]
 
     _kbdinteractive_connect(mitm_single_prompt, handler)
 
@@ -299,7 +185,7 @@ def test_multi_prompt_auth_success(mitm_multi_prompt: int) -> None:
 
     def handler(title: str, instructions: str, prompt_list: list[tuple[str, bool]]) -> list[str]:
         received.append((title, instructions, prompt_list))
-        return [_MultiPromptServer.VALID_TOKEN, _MultiPromptServer.VALID_PASSWORD]
+        return [_MULTI_TOKEN, _MULTI_PASSWORD]
 
     assert _kbdinteractive_connect(mitm_multi_prompt, handler) is True
     assert len(received) == 1
@@ -320,7 +206,7 @@ def test_multi_prompt_name_instructions_forwarded(mitm_multi_prompt: int) -> Non
 
     def handler(title: str, instructions: str, prompt_list: list[tuple[str, bool]]) -> list[str]:
         received.append((title, instructions, prompt_list))
-        return [_MultiPromptServer.VALID_TOKEN, _MultiPromptServer.VALID_PASSWORD]
+        return [_MULTI_TOKEN, _MULTI_PASSWORD]
 
     _kbdinteractive_connect(mitm_multi_prompt, handler)
 

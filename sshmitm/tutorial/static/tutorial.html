@@ -1,0 +1,60 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+<meta charset="UTF-8">
+<title>SSH-MITM Tutorial</title>
+<link rel="stylesheet" href="/static/tutorial.css">
+</head>
+<body>
+<header>
+  <img src="/logo.png" alt="SSH-MITM">
+  <h1>SSH-MITM Tutorial</h1>
+  <nav style="display:flex;gap:8px">
+    <a class="hlink" href="https://docs.ssh-mitm.at" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16"><path d="M1 2.5A1.5 1.5 0 012.5 1H8v5h5v7.5A1.5 1.5 0 0111.5 15h-9A1.5 1.5 0 011 13.5v-11zM9 1l4 4H9V1zM4.5 8a.5.5 0 000 1h7a.5.5 0 000-1h-7zm0 2a.5.5 0 000 1h7a.5.5 0 000-1h-7zm0 2a.5.5 0 000 1h4a.5.5 0 000-1h-4z"/></svg>
+      Docs
+    </a>
+    <a class="hlink" href="https://github.com/ssh-mitm/ssh-mitm" target="_blank" rel="noopener">
+      <svg viewBox="0 0 16 16"><path d="M8 0C3.58 0 0 3.58 0 8c0 3.54 2.29 6.53 5.47 7.59.4.07.55-.17.55-.38l-.01-1.49c-2.01.37-2.53-.49-2.69-.94-.09-.23-.48-.94-.82-1.13-.28-.15-.68-.52-.01-.53.63-.01 1.08.58 1.23.82.72 1.21 1.87.87 2.33.66.07-.52.28-.87.51-1.07-1.78-.2-3.64-.89-3.64-3.95 0-.87.31-1.59.82-2.15-.08-.2-.36-1.02.08-2.12 0 0 .67-.21 2.2.82.64-.18 1.32-.27 2-.27.68 0 1.36.09 2 .27 1.53-1.04 2.2-.82 2.2-.82.44 1.1.16 1.92.08 2.12.51.56.82 1.27.82 2.15 0 3.07-1.87 3.75-3.65 3.95.29.25.54.73.54 1.48l-.01 2.2c0 .21.15.46.55.38A8.013 8.013 0 0016 8c0-4.42-3.58-8-8-8z"/></svg>
+      GitHub
+    </a>
+  </nav>
+</header>
+<main>
+  <nav id="sidebar"></nav>
+  <section id="content">
+    <div id="placeholder">&#9656; Select a tutorial from the left</div>
+    <div id="tview" style="display:none">
+      <div id="tview-header">
+        <span id="tut-title"></span>
+        <div id="tview-actions">
+          <button class="btn-start" id="btn-start" onclick="act('start')" disabled>&#9654; Start</button>
+          <button class="btn-stop"  id="btn-stop"  onclick="act('stop')"  disabled>&#9632; Stop</button>
+        </div>
+      </div>
+      <div class="tview-body">
+        <div id="step-list"></div>
+        <hr style="border:none;border-top:1px solid #eef0fb">
+        <div id="step-content"></div>
+        <div id="hint"></div>
+        <div id="cmd-area" style="display:none">
+          <div class="cmd-box">
+            <span class="cmd-text" id="cmd-text"></span>
+            <button class="copy-btn" id="copy-btn" onclick="copyCmd()">&#128203; Copy</button>
+          </div>
+        </div>
+        <div id="copyable-area"></div>
+        <div id="completion-banner">
+          &#10003; Tutorial complete! <span id="countdown-msg"></span>
+        </div>
+        <div>
+          <div class="evlog-label">Authentication Events</div>
+          <div id="event-log"></div>
+        </div>
+      </div>
+    </div>
+  </section>
+</main>
+<script src="/static/tutorial.js"></script>
+</body>
+</html>
