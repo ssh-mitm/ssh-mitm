@@ -12,6 +12,7 @@ import re
 import secrets
 import socket
 import string
+import subprocess
 import tempfile
 import threading
 import time
@@ -19,7 +20,6 @@ from typing import Callable
 
 import paramiko
 
-from sshmitm.mockserver._agent import MockAgent
 from sshmitm.mockserver._interfaces import MultiUserMockServer, _UserConfig
 from sshmitm.mockserver._runner import start_server_thread
 from sshmitm.tutorial._definitions import Tutorial
@@ -131,7 +131,6 @@ class TutorialRunner:
         self._client_key: paramiko.PKey | None = None
         self._mock_stop: threading.Event | None = None
         self._mock_closed: threading.Event | None = None
-        self._agent: MockAgent | None = None
 
     # ------------------------------------------------------------------
     # Public API
@@ -258,10 +257,6 @@ class TutorialRunner:
         if self._tutorial.auth_type == "publickey":
             client_key = paramiko.ECDSAKey.generate()
             self._client_key = client_key
-            agent_sock = tempfile.mktemp(prefix="sshmitm-tutorial-agent-", suffix=".sock")
-            self._agent = MockAgent(client_key)
-            self._agent.start(agent_sock)
-            os.environ["SSH_AUTH_SOCK"] = agent_sock
             fp = _sha256_fingerprint(client_key)
             users: dict[str, _UserConfig] = {
                 none_user: MultiUserMockServer.none_user(),
@@ -303,35 +298,25 @@ class TutorialRunner:
     def _run_auto_client(self) -> None:
         time.sleep(1.0)
         auth_type = self._tutorial.auth_type
+        if auth_type == "publickey":
+            self._run_auto_client_pubkey()
+        else:
+            self._run_auto_client_password()
+
+    def _run_auto_client_password(self) -> None:
         for attempt in range(5):
             try:
                 client = paramiko.SSHClient()
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                if auth_type == "publickey":
-                    client.connect(
-                        "127.0.0.1",
-                        port=int(self.credentials["sshmitm_port"]),
-                        username=str(self.credentials["pubkey_user"]),
-                        pkey=self._client_key,
-                        timeout=10.0,
-                        allow_agent=True,
-                        look_for_keys=False,
-                    )
-                    transport = client.get_transport()
-                    if transport is not None:
-                        chan = transport.open_session()
-                        paramiko.agent.AgentRequestHandler(chan)
-                        time.sleep(2.0)  # let SSH-MITM capture the agent before disconnect
-                else:
-                    client.connect(
-                        "127.0.0.1",
-                        port=int(self.credentials["sshmitm_port"]),
-                        username=str(self.credentials["password_user"]),
-                        password=str(self.credentials["password_value"]),
-                        timeout=10.0,
-                        allow_agent=False,
-                        look_for_keys=False,
-                    )
+                client.connect(
+                    "127.0.0.1",
+                    port=int(self.credentials["sshmitm_port"]),
+                    username=str(self.credentials["password_user"]),
+                    password=str(self.credentials["password_value"]),
+                    timeout=10.0,
+                    allow_agent=False,
+                    look_for_keys=False,
+                )
                 client.close()
                 return
             except Exception:
@@ -340,6 +325,56 @@ class TutorialRunner:
                 else:
                     _log.debug("auto-client failed after %d attempts", attempt + 1, exc_info=True)
 
+    def _run_auto_client_pubkey(self) -> None:
+        assert self._client_key is not None
+        keyfile = tempfile.mktemp(prefix="sshmitm-tutorial-key-", suffix=".pem")
+        agent_env: dict[str, str] = {}
+        try:
+            self._client_key.write_private_key_file(keyfile)
+            os.chmod(keyfile, 0o600)
+
+            # Start a fresh ssh-agent
+            result = subprocess.run(
+                ["ssh-agent", "-s"], capture_output=True, text=True, check=True
+            )
+            for line in result.stdout.splitlines():
+                for var in ("SSH_AUTH_SOCK", "SSH_AGENT_PID"):
+                    if line.startswith(var + "="):
+                        agent_env[var] = line.split("=", 1)[1].split(";")[0]
+
+            env = {**os.environ, **agent_env}
+            subprocess.run(["ssh-add", keyfile], env=env, capture_output=True, check=True)
+
+            for attempt in range(5):
+                try:
+                    subprocess.run(
+                        [
+                            "ssh", "-A",
+                            "-o", "StrictHostKeyChecking=no",
+                            "-o", "BatchMode=yes",
+                            "-o", "ConnectTimeout=10",
+                            "-p", str(int(self.credentials["sshmitm_port"])),
+                            f"{self.credentials['pubkey_user']}@127.0.0.1",
+                            "exit",
+                        ],
+                        env=env,
+                        capture_output=True,
+                        timeout=15,
+                    )
+                    return
+                except Exception:
+                    if attempt < 4:
+                        time.sleep(1.0)
+                    else:
+                        _log.debug("pubkey auto-client failed after %d attempts", attempt + 1, exc_info=True)
+        finally:
+            if "SSH_AGENT_PID" in agent_env:
+                subprocess.run(["kill", agent_env["SSH_AGENT_PID"]], capture_output=True)
+            try:
+                os.unlink(keyfile)
+            except OSError:
+                pass
+
     def _teardown(self) -> None:
         if self._mock_stop:
             self._mock_stop.set()
@@ -347,10 +382,7 @@ class TutorialRunner:
                 self._mock_closed.wait(timeout=2.0)
             self._mock_stop = None
             self._mock_closed = None
-        if self._agent:
-            self._agent.stop()
-            self._agent = None
-            os.environ.pop("SSH_AUTH_SOCK", None)
+
 
     def _handle_auth_event(self, method: str, username: str, ok: bool) -> None:
         with self._auth_lock:
