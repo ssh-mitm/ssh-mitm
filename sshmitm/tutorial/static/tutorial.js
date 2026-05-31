@@ -1,14 +1,10 @@
 let state = null;
 
-const ACTIVITY_ICONS = {success: '✓', warning: '⚠', error: '✗', info: '·'};
-const SOURCE_LABELS  = {sshmitm: 'SSH-MITM', mockserver: 'Mock'};
-
 const es = new EventSource('/events');
 es.onmessage = function(e) {
   const ev = JSON.parse(e.data);
-  if      (ev.type === 'state')    { state = ev.data; render(); setSshMitmStatus(state.sshmitm_running); }
-  else if (ev.type === 'activity') { appendActivity(ev.data); }
-  else if (ev.type === 'alert')    { showAlert(ev.data); }
+  if      (ev.type === 'state') { state = ev.data; render(); setSshMitmStatus(state.sshmitm_running); }
+  else if (ev.type === 'alert') { showAlert(ev.data); }
 };
 
 function act(name) {
@@ -20,7 +16,6 @@ function selectTut(id) {
   if (state && state.runner_state === 'running' && id !== state.selected) {
     if (!confirm('A tutorial is still running.\nSwitch anyway?')) return;
   }
-  document.getElementById('activity-log').innerHTML = '';
   fetch('/action', {method: 'POST', headers: {'Content-Type': 'application/json'},
     body: JSON.stringify({action: 'select', tutorial_id: id})});
 }
@@ -63,26 +58,6 @@ function renderCopyable(copyable) {
     });
     area.appendChild(wrap);
   }
-}
-
-function appendActivity(d) {
-  const log = document.getElementById('activity-log');
-  const div = document.createElement('div');
-  const type = d.type || 'info';
-  const icon = ACTIVITY_ICONS[type] || '·';
-  const srcLabel = SOURCE_LABELS[d.source] || d.source || '';
-  const srcCls = d.source === 'sshmitm' ? 'av-ssh' : 'av-mock';
-  let body = `<span class="av-title">${_esc(d.title)}</span>`;
-  if (d.detail) body += `<div class="av-detail">${_esc(d.detail)}</div>`;
-  if (d.hint)   body += `<div class="av-hint">${_esc(d.hint)}</div>`;
-  const srcBadgeCls = d.source === 'sshmitm' ? 'src-sshmitm' : 'src-mock';
-  div.className = `av ${type} ${srcCls}`;
-  div.innerHTML = `<span class="av-icon">${icon}</span>`
-    + `<span class="av-body">${body}</span>`
-    + `<span class="av-source ${srcBadgeCls}">${srcLabel}</span>`
-    + `<span class="av-ts">${d.ts}</span>`;
-  log.appendChild(div);
-  log.scrollTop = log.scrollHeight;
 }
 
 function showAlert(d) {
@@ -161,6 +136,7 @@ function renderSteps() {
     document.getElementById('step-content').innerHTML = active.content_html;
     const hintEl = document.getElementById('hint');
     const hint = active.hint || '';
+    hintEl.className = 'hint hint-' + (active.hint_type || 'info');
     if (hint) { hintEl.textContent = hint; hintEl.style.display = 'block'; }
     else { hintEl.style.display = 'none'; }
     if (active.command) {
@@ -170,38 +146,112 @@ function renderSteps() {
       document.getElementById('cmd-area').style.display = 'none';
     }
     renderCopyable(active.copyable);
-    renderInputArea(active.input_prompt, active.active);
+    renderInteractionArea(active.active);
+    renderContinueBtn(active.active);
   }
 }
 
-function renderInputArea(prompt, isActive) {
-  const area = document.getElementById('input-area');
-  const fb   = document.getElementById('input-feedback');
-  if (prompt && isActive) {
-    document.getElementById('input-prompt').textContent = prompt;
-    document.getElementById('input-value').value = '';
-    fb.style.display = 'none';
-    area.style.display = 'block';
-  } else {
-    area.style.display = 'none';
-  }
-}
+let _renderedStepId = null;
 
-function submitInput() {
-  const value = document.getElementById('input-value').value;
-  fetch('/action', {method: 'POST', headers: {'Content-Type': 'application/json'},
-    body: JSON.stringify({action: 'submit_input', value: value})
-  }).then(r => r.json()).then(data => {
-    const fb = document.getElementById('input-feedback');
-    if (data.correct) {
-      fb.textContent = '✓ Correct!';
-      fb.className = 'input-feedback correct';
-    } else {
-      fb.textContent = '✗ Wrong — check the SSH-MITM terminal and try again.';
-      fb.className = 'input-feedback wrong';
+function renderInteractionArea(isActive) {
+  const area = document.getElementById('interaction-area');
+  const active = state.steps ? state.steps.find(s => s.active) : null;
+  const stepId = active ? active.id : null;
+
+  // Fully rebuild only when the step changes (prevents input clearing on state updates)
+  if (stepId !== _renderedStepId) {
+    area.innerHTML = '';
+    _renderedStepId = stepId;
+    if (!isActive) return;
+    _buildInputFields(area);
+    return;
+  }
+
+  // Same step: update satisfied state and feedback without touching input values
+  if (!isActive) return;
+  const inputs = (state && state.user_inputs) || [];
+  for (const field of inputs) {
+    const inp = area.querySelector(`input[data-key="${CSS.escape(field.key)}"]`);
+    if (!inp) continue;
+    inp.classList.toggle('satisfied', !!field.satisfied);
+    if (field.satisfied) {
+      const fb = area.querySelector(`.input-feedback[data-key="${CSS.escape(field.key)}"]`);
+      if (fb && fb.style.display === 'none') {
+        fb.textContent = '✓ Correct!';
+        fb.className = 'input-feedback correct';
+        fb.style.display = 'block';
+      }
     }
-    fb.style.display = 'block';
+  }
+}
+
+function _buildInputFields(area) {
+  const inputs = (state && state.user_inputs) || [];
+  if (!inputs.length) return;
+
+  for (const field of inputs) {
+    const group = document.createElement('div');
+    group.className = 'input-group';
+    const prompt = document.createElement('div');
+    prompt.className = 'input-prompt';
+    prompt.textContent = field.prompt || field.key.replace(/_/g, ' ');
+    const inp = document.createElement('input');
+    inp.type = 'text';
+    inp.autocomplete = 'off';
+    inp.spellcheck = false;
+    inp.dataset.key = field.key;
+    const fb = document.createElement('div');
+    fb.className = 'input-feedback';
+    fb.style.display = 'none';
+    fb.dataset.key = field.key;
+    group.appendChild(prompt); group.appendChild(inp); group.appendChild(fb);
+    area.appendChild(group);
+  }
+
+  const submitBtn = document.createElement('button');
+  submitBtn.id = 'submit-all-btn';
+  submitBtn.className = 'btn-submit-all';
+  submitBtn.textContent = 'Submit';
+  submitBtn.onclick = submitAll;
+  area.appendChild(submitBtn);
+}
+
+function renderContinueBtn(isActive) {
+  const area = document.getElementById('interaction-area');
+  const existing = area.querySelector('.btn-continue');
+  if (existing) existing.remove();
+  if (!isActive) return;
+  const ready = state && state.step_ready;
+  const btn = document.createElement('button');
+  btn.className = 'btn-continue' + (ready ? '' : ' disabled');
+  btn.textContent = ready ? 'Continue →' : 'Continue';
+  btn.disabled = !ready;
+  btn.onclick = ready ? advance : null;
+  area.appendChild(btn);
+}
+
+function submitAll() {
+  const area = document.getElementById('interaction-area');
+  const values = {};
+  area.querySelectorAll('input[data-key]').forEach(inp => {
+    values[inp.dataset.key] = inp.value;
   });
+  fetch('/action', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'submit_all', values: values})
+  }).then(r => r.json()).then(data => {
+    for (const [key, correct] of Object.entries(data.results || {})) {
+      const fb = area.querySelector(`.input-feedback[data-key="${CSS.escape(key)}"]`);
+      if (!fb) continue;
+      fb.textContent = correct ? '✓ Correct!' : '✗ Wrong — check the SSH-MITM terminal and try again.';
+      fb.className = 'input-feedback ' + (correct ? 'correct' : 'wrong');
+      fb.style.display = 'block';
+    }
+  });
+}
+
+function advance() {
+  fetch('/action', {method: 'POST', headers: {'Content-Type': 'application/json'},
+    body: JSON.stringify({action: 'advance'})});
 }
 
 let _completionShown = false;
@@ -231,10 +281,5 @@ function dismissCompletion() {
     body: JSON.stringify({action: 'stop'})});
 }
 
-document.addEventListener('DOMContentLoaded', () => {
-  document.getElementById('input-value').addEventListener('keydown', e => {
-    if (e.key === 'Enter') submitInput();
-  });
-});
 
 fetch('/state').then(r => r.json()).then(d => { state = d; render(); setSshMitmStatus(state.sshmitm_running); });

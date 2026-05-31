@@ -3,7 +3,7 @@
 A developer just connected to the target server through SSH-MITM using
 public key authentication with agent forwarding enabled.
 
-Switch to the **SSH-MITM terminal**. Look for a line that shows a
+Switch to the **SSH-MITM terminal**.  Look for a line that shows a
 `SHA256:` identifier — this is the **public key fingerprint** of the
 client key that the server accepted.
 
@@ -17,7 +17,7 @@ Enter that public key fingerprint in the field below to confirm you found it.
 
 **Why the public key fingerprint matters**
 
-The public key fingerprint uniquely identifies a key pair. An attacker
+The public key fingerprint uniquely identifies a key pair.  An attacker
 who has observed it can:
 
 - Confirm which key has access to which server
@@ -29,7 +29,7 @@ who has observed it can:
 **How to protect against this**
 
 - Avoid agent forwarding (`ssh -A`) unless you fully trust every host in
-  the chain. Once a host has access to your agent, it can use your keys
+  the chain.  Once a host has access to your agent, it can use your keys
   for the duration of the session.
 - Use per-host keys where possible to limit the blast radius if one key
   is compromised or observed.

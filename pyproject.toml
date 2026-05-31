@@ -96,6 +96,10 @@ socks = "sshmitm.plugins.tunnel.socks:SOCKSTunnelForwarder"
 [project.entry-points."sshmitm.ExecHandler"]
 mosh = "sshmitm.apps.mosh.forwarder:MoshForwarder"
 
+[project.entry-points."sshmitm.Tutorial"]
+01-password-auth = "sshmitm.tutorial.tutorials.password_auth:PasswordAuthTutorial"
+02-pubkey-agent-forwarding = "sshmitm.tutorial.tutorials.pubkey_agent_forwarding:PubkeyAgentForwardingTutorial"
+
 [tool.hatch.version]
 path = "sshmitm/__init__.py"
 

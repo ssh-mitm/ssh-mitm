@@ -1,28 +1,30 @@
-"""Tutorial execution engine: manages mock server and evaluates step conditions."""
+"""Tutorial execution engine: manages mock server lifecycle and evaluates step conditions."""
 
 from __future__ import annotations
 
 import base64
 import hashlib
-import json
 import logging
-import os
 import random
-import re
 import secrets
-import socket
 import string
-import subprocess
-import tempfile
 import threading
 import time
-from typing import Callable
+from typing import Any, Callable
 
 import paramiko
 
 from sshmitm.mockserver._interfaces import MultiUserMockServer, _UserConfig
 from sshmitm.mockserver._runner import start_server_thread
+from sshmitm.tutorial._conditions import collect_user_inputs, has_continue
+from sshmitm.tutorial._context import AuthEventData, TutorialContext
 from sshmitm.tutorial._definitions import Tutorial
+from sshmitm.tutorial._server_config import (
+    KeyboardInteractiveAuth,
+    NoneAuth,
+    PasswordAuth,
+    PublicKeyAuth,
+)
 
 _log = logging.getLogger(__name__)
 
@@ -44,11 +46,23 @@ def _random_password(length: int = 16) -> str:
     return "".join(secrets.choice(alphabet) for _ in range(length))
 
 
+def _random_username() -> str:
+    combos = [f"{a}_{b}" for a in _ADJECTIVES for b in _BASE_NAMES]
+    return random.choice(combos)
+
+
+def _sha256_fingerprint(key: paramiko.PKey) -> str:
+    digest = hashlib.sha256(key.asbytes()).digest()
+    return "SHA256:" + base64.b64encode(digest).decode().rstrip("=")
+
+
 # ---------------------------------------------------------------------------
 # Observable mock server
 # ---------------------------------------------------------------------------
 
 class _TutorialServer(MultiUserMockServer):
+    """MultiUserMockServer extended with auth-event callbacks."""
+
     def __init__(self, users: dict[str, _UserConfig], on_auth: Callable) -> None:
         super().__init__(users)
         self._on_auth = on_auth
@@ -97,13 +111,17 @@ class TutorialState:
 # ---------------------------------------------------------------------------
 
 class TutorialRunner:
-    """Manages one tutorial session: mock server lifecycle + step conditions.
+    """Manages one tutorial session: mock server lifecycle + step-condition polling.
 
-    Conditions are declarative strings evaluated by :meth:`_eval`:
+    All public attributes that :mod:`sshmitm.tutorial._web` reads are
+    preserved for backward compatibility:
 
-    * ``"TRUE()"``                        — completes immediately
-    * ``"PORT_OPEN(sshmitm_port)"``       — waits for a TCP port
-    * ``'AUTH_EVENT("password", True)'``  — waits for an auth event
+    * ``state``       — current :class:`TutorialState` string
+    * ``current_step``— zero-based index of the active step
+    * ``credentials`` — dict of runtime values (ports, users, passwords, …)
+    * ``format(text)``— substitute ``{variable}`` placeholders
+    * ``submit_input(key, value)`` — validate a user-submitted answer
+    * ``acknowledge()``— mark the current step as acknowledged (Continue button)
     """
 
     def __init__(
@@ -112,25 +130,35 @@ class TutorialRunner:
         on_step_complete: Callable[[int], None],
         on_auth_event: Callable[[str, str, bool], None],
         on_alert: Callable[[dict], None] | None = None,
+        on_state_update: Callable[[], None] | None = None,
     ) -> None:
         self._tutorial = tutorial
         self._on_step_complete = on_step_complete
         self._on_auth_event = on_auth_event
         self._on_alert = on_alert
+        # Called whenever runner state changes without a step completing
+        # (e.g. condition becomes ready / unready).
+        self._on_state_update = on_state_update or (lambda: None)
 
         self.state = TutorialState.IDLE
         self.current_step = 0
-        self.credentials: dict[str, str | int] = {}
 
+        self._ctx = TutorialContext({})
         self._cancel = threading.Event()
-        self._auth_events: list[tuple[str, bool]] = []
         self._auth_lock = threading.Lock()
-        self._user_input: str | None = None
-        self._input_lock = threading.Lock()
-        self._auto_connect_fired = False
-        self._client_key: paramiko.PKey | None = None
+        self._victim_fired = False
+        self._step_ready = False   # True when condition is satisfied; user must click Continue
+        self._prev_ready = False   # last broadcast value; reset on step change so re-broadcast fires
         self._mock_stop: threading.Event | None = None
         self._mock_closed: threading.Event | None = None
+
+    # ------------------------------------------------------------------
+    # Backward-compat property used by _web.py
+    # ------------------------------------------------------------------
+
+    @property
+    def credentials(self) -> dict[str, Any]:
+        return self._ctx.credentials
 
     # ------------------------------------------------------------------
     # Public API
@@ -141,6 +169,7 @@ class TutorialRunner:
         self.current_step = 0
         self.state = TutorialState.RUNNING
         self._setup_mock_server()
+        self._activate_step(0)
         threading.Thread(target=self._poll, args=(self._cancel,), daemon=True).start()
 
     def stop(self) -> None:
@@ -150,132 +179,168 @@ class TutorialRunner:
 
     def format(self, text: str) -> str:
         try:
-            return text.format(**self.credentials)
+            return text.format(**self._ctx.credentials)
         except KeyError:
             return text
 
-    # ------------------------------------------------------------------
-    # Poll loop — single thread, evaluates current step condition
-    # ------------------------------------------------------------------
+    def submit_input(self, key: str, value: str) -> bool:
+        """Validate *value* for the credential *key*.
 
-    def submit_input(self, text: str) -> bool:
-        step = self._tutorial.steps[self.current_step] if self.current_step < len(self._tutorial.steps) else None
-        if step is None:
-            return False
-        m = re.fullmatch(r'USER_INPUT\("([^"]+)"\)', step.condition.strip())
-        if not m:
-            return False
-        expected = str(self.credentials.get(m.group(1), ""))
-        correct = text.strip() == expected
-        with self._input_lock:
-            self._user_input = text.strip() if correct else None
+        Stores the value in the context if correct so that the condition can
+        pick it up on the next poll.  Returns True on correct input.
+        """
+        expected = str(self._ctx.credentials.get(key, ""))
+        correct = value.strip() == expected
+        if correct:
+            self._ctx.user_inputs[key] = value.strip()
+        else:
+            self._ctx.user_inputs.pop(key, None)
         return correct
+
+    def advance(self) -> bool:
+        """Advance to the next step — only allowed when the condition is satisfied.
+
+        Returns True when the step was actually advanced.  The web server
+        should call this when the user clicks the Continue button.
+        """
+        if self.state != TutorialState.RUNNING:
+            return False
+        if not self._step_ready:
+            return False
+        self._complete_step()
+        return True
+
+    def is_step_ready(self) -> bool:
+        return self._step_ready
+
+    def get_step_hint(self, step_idx: int) -> tuple[str, str]:
+        """Return (hint_text, hint_type) for the given step index.
+
+        For the active step, a dynamic ``hint_override`` from the context
+        takes precedence over the static ``hint_waiting`` text.
+        """
+        steps = self._tutorial.steps
+        if step_idx >= len(steps):
+            return "", "info"
+        step = steps[step_idx]
+        current = self.current_step
+        if step_idx < current:
+            return self.format(step.hint_done), "info"
+        if step_idx == current:
+            override = self._ctx.hint_override
+            if override:
+                return self.format(override), self._ctx.hint_override_type
+            if self._step_ready and step.hint_done:
+                return self.format(step.hint_done), "info"
+            return self.format(step.hint_waiting) if step.hint_waiting else "", "info"
+        return "", "info"
+
+    def get_active_user_inputs(self) -> list[dict[str, str]]:
+        """Return the UserInput prompts for the current step.
+
+        Each entry is ``{"key": ..., "prompt": ..., "satisfied": bool}``.
+        Used by the web server to render input fields.
+        """
+        steps = self._tutorial.steps
+        if self.current_step >= len(steps):
+            return []
+        condition = steps[self.current_step].condition
+        result = []
+        for ui in collect_user_inputs(condition):
+            result.append({
+                "key": ui.key,
+                "prompt": ui.prompt,
+                "satisfied": self._ctx.user_inputs.get(ui.key)
+                             == str(self._ctx.credentials.get(ui.key, "")),
+            })
+        return result
+
+    # ------------------------------------------------------------------
+    # Poll loop
+    # ------------------------------------------------------------------
 
     def _poll(self, cancel: threading.Event) -> None:
         while not cancel.is_set():
             if self.state == TutorialState.RUNNING:
-                if self.current_step < len(self._tutorial.steps):
-                    step = self._tutorial.steps[self.current_step]
-                    if step.auto_connect and not self._auto_connect_fired:
-                        self._auto_connect_fired = True
-                        threading.Thread(target=self._run_auto_client, daemon=True).start()
-                    if self._eval(step.condition):
-                        self._auto_connect_fired = False
-                        self._complete_step()
-                else:
+                steps = self._tutorial.steps
+                if self.current_step < len(steps):
+                    step = steps[self.current_step]
+                    if step.victim_action and not self._victim_fired:
+                        self._victim_fired = True
+                        threading.Thread(
+                            target=step.victim_action.run,
+                            args=(self._ctx,),
+                            daemon=True,
+                        ).start()
+                    ready = bool(step.condition(self._ctx))
+                    self._step_ready = ready
+                    if ready != self._prev_ready:
+                        self._prev_ready = ready
+                        self._on_state_update()
+                elif self.state != TutorialState.COMPLETED:
                     self.state = TutorialState.COMPLETED
                     self._teardown()
             time.sleep(0.3)
 
+    def _activate_step(self, idx: int) -> None:
+        """Reset per-step state and call reset() on the step's condition."""
+        self._victim_fired = False
+        self._ctx.clear_step_state()
+        steps = self._tutorial.steps
+        if idx < len(steps):
+            cond = steps[idx].condition
+            if hasattr(cond, "reset"):
+                cond.reset()  # type: ignore[union-attr]
+
     def _complete_step(self) -> None:
         idx = self.current_step
         self.current_step += 1
-        with self._auth_lock:
-            self._auth_events.clear()
-        with self._input_lock:
-            self._user_input = None
+        self._step_ready = False
+        self._prev_ready = False  # ensure next poll broadcasts even if condition is immediately True
+        self._activate_step(self.current_step)
         if self.current_step >= len(self._tutorial.steps):
             self.state = TutorialState.COMPLETED
         self._on_step_complete(idx)
 
     # ------------------------------------------------------------------
-    # Condition evaluation
-    # ------------------------------------------------------------------
-
-    def _eval(self, condition: str) -> bool:
-        c = condition.strip()
-
-        if c == "TRUE()":
-            return True
-
-        m = re.fullmatch(r"PORT_OPEN\((\w+)\)", c)
-        if m:
-            port = int(self.credentials.get(m.group(1), 0))
-            return self._port_open(port)
-
-        m = re.fullmatch(r'AUTH_EVENT\("([^"]+)",\s*(True|False)\)', c)
-        if m:
-            method, success = m.group(1), m.group(2) == "True"
-            with self._auth_lock:
-                return any(met == method and ok == success for met, ok in self._auth_events)
-
-        m = re.fullmatch(r'USER_INPUT\("([^"]+)"\)', c)
-        if m:
-            key = m.group(1)
-            expected = str(self.credentials.get(key, ""))
-            with self._input_lock:
-                return self._user_input is not None and self._user_input == expected
-
-        _log.warning("unknown condition expression: %r", c)
-        return False
-
-    def _port_open(self, port: int) -> bool:
-        hex_port = f"{port:04X}"
-        for path in ("/proc/net/tcp", "/proc/net/tcp6"):
-            try:
-                with open(path) as f:
-                    next(f)
-                    for line in f:
-                        parts = line.split()
-                        if len(parts) > 3 and parts[3] == "0A":
-                            _, local_port = parts[1].rsplit(":", 1)
-                            if local_port.upper() == hex_port:
-                                return True
-            except OSError:
-                pass
-        return False
-
-    # ------------------------------------------------------------------
-    # Mock server
+    # Mock server setup
     # ------------------------------------------------------------------
 
     def _setup_mock_server(self) -> None:
-        combos = [f"{a}_{b}" for a in _ADJECTIVES for b in _BASE_NAMES]
-        names = random.sample(combos, 2)
-        none_user, auth_user = names[0], names[1]
+        server_cfg = self._tutorial.get_server()
+        users: dict[str, _UserConfig] = {}
+        credentials: dict[str, Any] = {
+            "mock_port": server_cfg.mock_port,
+            "sshmitm_port": server_cfg.sshmitm_port,
+        }
 
-        if self._tutorial.auth_type == "publickey":
-            client_key = paramiko.ECDSAKey.generate()
-            self._client_key = client_key
-            fp = _sha256_fingerprint(client_key)
-            users: dict[str, _UserConfig] = {
-                none_user: MultiUserMockServer.none_user(),
-                auth_user: MultiUserMockServer.pubkey_user([client_key]),
-            }
-            extra_creds: dict[str, str | int] = {
-                "pubkey_user": auth_user,
-                "pubkey_fingerprint": fp,
-            }
-        else:
-            pw = _random_password()
-            users = {
-                none_user: MultiUserMockServer.none_user(),
-                auth_user: MultiUserMockServer.password_user(pw),
-            }
-            extra_creds = {
-                "password_user": auth_user,
-                "password_value": pw,
-            }
+        used_names: set[str] = set()
+
+        for user_cfg in server_cfg.users:
+            username = user_cfg.username or _unique_username(used_names)
+            used_names.add(username)
+            auth = user_cfg.auth
+
+            if isinstance(auth, PasswordAuth):
+                pw = auth.password or _random_password()
+                users[username] = MultiUserMockServer.password_user(pw)
+                credentials.setdefault("password_user", username)
+                credentials.setdefault("password_value", pw)
+
+            elif isinstance(auth, PublicKeyAuth):
+                key = auth.key or paramiko.ECDSAKey.generate()
+                users[username] = MultiUserMockServer.pubkey_user([key])
+                credentials.setdefault("pubkey_user", username)
+                credentials.setdefault("pubkey_fingerprint", _sha256_fingerprint(key))
+                credentials.setdefault("_client_key", key)
+
+            elif isinstance(auth, NoneAuth):
+                users[username] = MultiUserMockServer.none_user()
+                credentials.setdefault("none_user", username)
+
+            elif isinstance(auth, KeyboardInteractiveAuth):
+                users[username] = MultiUserMockServer.kbdint_iterative_user(auth.rounds)
+                credentials.setdefault("kbdint_user", username)
 
         def factory() -> _TutorialServer:
             return _TutorialServer(users, self._handle_auth_event)
@@ -284,97 +349,12 @@ class TutorialRunner:
             factory,
             host_key=paramiko.ECDSAKey.generate(),
             bind="127.0.0.1",
-            port=self._tutorial.mock_port,
+            port=server_cfg.mock_port,
         )
         self._mock_stop = stop
         self._mock_closed = closed
-        self.credentials = {
-            "none_user": none_user,
-            "mock_port": actual_port,
-            "sshmitm_port": self._tutorial.sshmitm_port,
-            **extra_creds,
-        }
-
-    def _run_auto_client(self) -> None:
-        time.sleep(1.0)
-        auth_type = self._tutorial.auth_type
-        if auth_type == "publickey":
-            self._run_auto_client_pubkey()
-        else:
-            self._run_auto_client_password()
-
-    def _run_auto_client_password(self) -> None:
-        for attempt in range(5):
-            try:
-                client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                client.connect(
-                    "127.0.0.1",
-                    port=int(self.credentials["sshmitm_port"]),
-                    username=str(self.credentials["password_user"]),
-                    password=str(self.credentials["password_value"]),
-                    timeout=10.0,
-                    allow_agent=False,
-                    look_for_keys=False,
-                )
-                client.close()
-                return
-            except Exception:
-                if attempt < 4:
-                    time.sleep(1.0)
-                else:
-                    _log.debug("auto-client failed after %d attempts", attempt + 1, exc_info=True)
-
-    def _run_auto_client_pubkey(self) -> None:
-        assert self._client_key is not None
-        keyfile = tempfile.mktemp(prefix="sshmitm-tutorial-key-", suffix=".pem")
-        agent_env: dict[str, str] = {}
-        try:
-            self._client_key.write_private_key_file(keyfile)
-            os.chmod(keyfile, 0o600)
-
-            # Start a fresh ssh-agent
-            result = subprocess.run(
-                ["ssh-agent", "-s"], capture_output=True, text=True, check=True
-            )
-            for line in result.stdout.splitlines():
-                for var in ("SSH_AUTH_SOCK", "SSH_AGENT_PID"):
-                    if line.startswith(var + "="):
-                        agent_env[var] = line.split("=", 1)[1].split(";")[0]
-
-            env = {**os.environ, **agent_env}
-            subprocess.run(["ssh-add", keyfile], env=env, capture_output=True, check=True)
-
-            for attempt in range(5):
-                try:
-                    subprocess.run(
-                        [
-                            "ssh", "-A",
-                            "-o", "StrictHostKeyChecking=no",
-                            "-o", "UserKnownHostsFile=/dev/null",
-                            "-o", "BatchMode=yes",
-                            "-o", "ConnectTimeout=10",
-                            "-p", str(int(self.credentials["sshmitm_port"])),
-                            f"{self.credentials['pubkey_user']}@127.0.0.1",
-                            "exit",
-                        ],
-                        env=env,
-                        capture_output=True,
-                        timeout=15,
-                    )
-                    return
-                except Exception:
-                    if attempt < 4:
-                        time.sleep(1.0)
-                    else:
-                        _log.debug("pubkey auto-client failed after %d attempts", attempt + 1, exc_info=True)
-        finally:
-            if "SSH_AGENT_PID" in agent_env:
-                subprocess.run(["kill", agent_env["SSH_AGENT_PID"]], capture_output=True)
-            try:
-                os.unlink(keyfile)
-            except OSError:
-                pass
+        credentials["mock_port"] = actual_port
+        self._ctx = TutorialContext(credentials)
 
     def _teardown(self) -> None:
         if self._mock_stop:
@@ -384,21 +364,20 @@ class TutorialRunner:
             self._mock_stop = None
             self._mock_closed = None
 
-
     def _handle_auth_event(self, method: str, username: str, ok: bool) -> None:
         with self._auth_lock:
-            self._auth_events.append((method, ok))
+            self._ctx.auth_events.append(AuthEventData(method, username, ok))
         self._on_auth_event(method, username, ok)
 
 
 # ---------------------------------------------------------------------------
-# Key helpers
+# Helpers
 # ---------------------------------------------------------------------------
 
-def _sha256_fingerprint(key: paramiko.PKey) -> str:
-    digest = hashlib.sha256(key.asbytes()).digest()
-    return "SHA256:" + base64.b64encode(digest).decode().rstrip("=")
-
-
-
-
+def _unique_username(used: set[str]) -> str:
+    combos = [f"{a}_{b}" for a in _ADJECTIVES for b in _BASE_NAMES]
+    random.shuffle(combos)
+    for name in combos:
+        if name not in used:
+            return name
+    return f"user_{secrets.token_hex(4)}"

@@ -13,7 +13,7 @@ Open a **new terminal** and run the command shown below.
 
 Even though the developer authenticates with a public key (no password is
 transmitted), SSH-MITM terminates the TLS-like SSH handshake with its own
-host key. It sees the public key offered by the client, checks it against
+host key.  It sees the public key offered by the client, checks it against
 the real server, and logs the result — including the SHA256 fingerprint of
 the accepted key.
 

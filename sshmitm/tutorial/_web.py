@@ -123,10 +123,14 @@ class _Handler(http.server.BaseHTTPRequestHandler):
             length = int(self.headers.get("Content-Length", 0))
             body = json.loads(self.rfile.read(length))
             action = body.get("action")
-            if action == "submit_input":
-                correct = self.server.submit_input(body.get("value", ""))  # type: ignore[attr-defined]
+            if action == "submit_all":
+                results = self.server.submit_all(body.get("values", {}))  # type: ignore[attr-defined]
                 self._send(200, "application/json",
-                           json.dumps({"ok": True, "correct": correct}).encode())
+                           json.dumps({"ok": True, "results": results}).encode())
+            elif action == "advance":
+                ok = self.server.advance()  # type: ignore[attr-defined]
+                self._send(200, "application/json",
+                           json.dumps({"ok": True, "advanced": ok}).encode())
             else:
                 self.server.handle_action(action, body.get("tutorial_id"))  # type: ignore[attr-defined]
                 self._send(200, "application/json", b'{"ok":true}')
@@ -268,12 +272,10 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                         val = self._runner.credentials.get(key)
                         if val is not None:
                             copyable[key] = str(val)
-                if i < current:
-                    hint = self._runner.format(s.hint_done) if self._runner and s.hint_done else s.hint_done
-                elif i == current:
-                    hint = self._runner.format(s.hint_waiting) if self._runner and s.hint_waiting else s.hint_waiting
+                if self._runner:
+                    hint, hint_type = self._runner.get_step_hint(i)
                 else:
-                    hint = ""
+                    hint, hint_type = (s.hint_done if i < current else s.hint_waiting if i == current else ""), "info"
                 steps.append({
                     "id": s.id,
                     "title": s.title,
@@ -281,7 +283,7 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                     "command": cmd,
                     "copyable": copyable,
                     "hint": hint,
-                    "input_prompt": s.input_prompt,
+                    "hint_type": hint_type,
                     "done": i < current,
                     "active": i == current,
                 })
@@ -300,6 +302,8 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
             "current_step": current,
             "steps": steps,
             "sshmitm_running": self._sshmitm_running,
+            "user_inputs": self._runner.get_active_user_inputs() if self._runner else [],
+            "step_ready": self._runner.is_step_ready() if self._runner else False,
         }
 
     # Actions
@@ -331,9 +335,19 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                 self._runner = None
             self.broadcast("state", self.get_state())
 
-    def submit_input(self, value: str) -> bool:
+    def submit_all(self, values: dict[str, str]) -> dict[str, bool]:
+        if not self._runner:
+            return {}
+        results = {key: self._runner.submit_input(key, value) for key, value in values.items()}
+        self.broadcast("state", self.get_state())
+        return results
+
+    def advance(self) -> bool:
         if self._runner:
-            return self._runner.submit_input(value)
+            advanced = self._runner.advance()
+            if advanced:
+                self.broadcast("state", self.get_state())
+            return advanced
         return False
 
     def _make_runner(self) -> TutorialRunner:
@@ -343,6 +357,7 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
             on_step_complete=self._on_step_complete,
             on_auth_event=self._on_auth_event,
             on_alert=self._on_runner_alert,
+            on_state_update=lambda: self.broadcast("state", self.get_state()),
         )
 
     def _on_runner_alert(self, alert: dict) -> None:

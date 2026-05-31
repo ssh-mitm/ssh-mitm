@@ -11,7 +11,7 @@ Open a **new terminal** and run the command shown below.
 
 In a real attack the developer would be routed to this port through ARP
 spoofing, a rogue DNS entry, or by compromising a network device on the
-path. In this tutorial the routing is simulated by the tutorial itself.
+path.  In this tutorial the routing is handled automatically.
 
 **What to expect**
 
