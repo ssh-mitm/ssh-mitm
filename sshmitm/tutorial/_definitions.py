@@ -60,7 +60,7 @@ from __future__ import annotations
 
 import dataclasses
 import importlib.resources
-from typing import TYPE_CHECKING, Any, ClassVar
+from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
     from sshmitm.tutorial._conditions import Condition
@@ -180,6 +180,48 @@ class Tutorial:
     # ------------------------------------------------------------------
     # Server config helpers
     # ------------------------------------------------------------------
+
+    def generate_tutorial_session_data(self) -> dict[str, object]:
+        """Return tutorial-specific values merged into the session data at start.
+
+        Override in subclasses to inject randomized values (e.g. filenames,
+        commands) that :class:`~sshmitm.tutorial._conditions.UserInput`
+        conditions check against.
+        """
+        return {}
+
+    def shell_prompt(self) -> bytes:
+        """Prompt shown by the mock interactive shell.  Override to customise."""
+        return b"$ "
+
+    def generate_shell_outputs(self, session_data: dict[str, object]) -> dict[str, bytes]:
+        """Return mock shell outputs ``{command: output}`` for this session.
+
+        Override in subclasses that use a :class:`ShellSessionAction`.  The
+        mock shell shows :meth:`shell_prompt` and returns predefined output for
+        each registered command without spawning any subprocess.
+        """
+        return {}
+
+    def generate_exec_outputs(self, session_data: dict[str, object]) -> dict[str, bytes]:
+        """Return mock exec outputs ``{command: stdout}`` for this session.
+
+        Override in subclasses that use an SSH exec victim action.  Only
+        registered commands return output; all others return an empty response
+        with exit status 1 — no real subprocess is ever spawned on the mock
+        server.
+        """
+        return {}
+
+    def generate_sftp_files(self, session_data: dict[str, object]) -> dict[str, bytes]:
+        """Return the in-memory SFTP filesystem ``{path: content}`` for this session.
+
+        Override in subclasses that use an SFTP victim action.  Only the
+        returned paths are accessible via SFTP; all other requests are rejected
+        with ``SFTP_NO_SUCH_FILE``.  Return an empty dict (default) to disable
+        SFTP on the mock server.
+        """
+        return {}
 
     def get_server(self) -> "MockServerConfig":
         """Return the mock server config, falling back to the default."""

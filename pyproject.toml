@@ -99,6 +99,9 @@ mosh = "sshmitm.apps.mosh.forwarder:MoshForwarder"
 [project.entry-points."sshmitm.Tutorial"]
 01-password-auth = "sshmitm.tutorial.tutorials.password_auth:PasswordAuthTutorial"
 02-pubkey-agent-forwarding = "sshmitm.tutorial.tutorials.pubkey_agent_forwarding:PubkeyAgentForwardingTutorial"
+03-sftp-download = "sshmitm.tutorial.tutorials.sftp_download:SFTPDownloadTutorial"
+04-ssh-exec = "sshmitm.tutorial.tutorials.ssh_exec:SSHExecTutorial"
+05-mirrorshell = "sshmitm.tutorial.tutorials.mirrorshell:MirrorshellTutorial"
 
 [tool.hatch.version]
 path = "sshmitm/__init__.py"

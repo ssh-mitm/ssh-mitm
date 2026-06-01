@@ -98,7 +98,7 @@ class PortOpen:
         self._was_open_at_start = None
 
     def __call__(self, ctx: "TutorialContext") -> bool:
-        port = int(ctx.credentials.get(self.var, 0))
+        port = int(ctx.tutorial_session_data.get(self.var, 0))
         open_ = ctx.port_open(port)
 
         if self._was_open_at_start is None:
@@ -177,7 +177,7 @@ class UserInput:
         pass  # state lives in ctx.user_inputs, cleared by the runner
 
     def __call__(self, ctx: "TutorialContext") -> bool:
-        expected = str(ctx.credentials.get(self.key, ""))
+        expected = str(ctx.tutorial_session_data.get(self.key, ""))
         return ctx.user_inputs.get(self.key) == expected
 
 
@@ -263,7 +263,7 @@ class SSHMitmRunning:
     instance is fine.
 
     *required* maps CLI flag names to expected values.  Values are resolved
-    against ``ctx.credentials`` first, then treated as literals::
+    against ``ctx.tutorial_session_data`` first, then treated as literals::
 
         SSHMitmRunning("sshmitm_port", {
             "--remote-host": "127.0.0.1",    # literal
@@ -277,14 +277,14 @@ class SSHMitmRunning:
         self.required = required
 
     def __call__(self, ctx: "TutorialContext") -> bool:
-        port = int(ctx.credentials.get(self.port_var, 0))
+        port = int(ctx.tutorial_session_data.get(self.port_var, 0))
         if not ctx.port_open(port):
             ctx.hint_override = None
             return False
 
         # Port is open — resolve expected values against credentials
         resolved = {
-            flag: str(ctx.credentials.get(val, val))
+            flag: str(ctx.tutorial_session_data.get(val, val))
             for flag, val in self.required.items()
         }
 

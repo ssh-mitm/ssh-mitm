@@ -51,7 +51,7 @@ class SSHPasswordAction:
     """Connect via SSH with password authentication through the MITM proxy.
 
     Reads ``password_user``, ``password_value``, and ``sshmitm_port`` from
-    *ctx.credentials*.
+    *ctx.tutorial_session_data*.
     """
 
     def run(self, ctx: TutorialContext) -> None:
@@ -62,9 +62,9 @@ class SSHPasswordAction:
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.credentials["sshmitm_port"]),
-                    username=str(ctx.credentials["password_user"]),
-                    password=str(ctx.credentials["password_value"]),
+                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    username=str(ctx.tutorial_session_data["password_user"]),
+                    password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
                     allow_agent=False,
                     look_for_keys=False,
@@ -82,12 +82,12 @@ class SSHPublicKeyAction:
     """Connect via SSH with public key auth + agent forwarding through the MITM proxy.
 
     Reads ``pubkey_user``, ``_client_key`` (paramiko.PKey), and
-    ``sshmitm_port`` from *ctx.credentials*.
+    ``sshmitm_port`` from *ctx.tutorial_session_data*.
     """
 
     def run(self, ctx: TutorialContext) -> None:
         time.sleep(_INITIAL_DELAY)
-        key: paramiko.PKey | None = ctx.credentials.get("_client_key")  # type: ignore[assignment]
+        key: paramiko.PKey | None = ctx.tutorial_session_data.get("_client_key")  # type: ignore[assignment]
         if key is None:
             _log.error("SSHPublicKeyAction: no _client_key in credentials")
             return
@@ -114,8 +114,8 @@ class SSHPublicKeyAction:
                             "-o", "UserKnownHostsFile=/dev/null",
                             "-o", "BatchMode=yes",
                             "-o", "ConnectTimeout=10",
-                            "-p", str(int(ctx.credentials["sshmitm_port"])),
-                            f"{ctx.credentials['pubkey_user']}@127.0.0.1",
+                            "-p", str(int(ctx.tutorial_session_data["sshmitm_port"])),
+                            f"{ctx.tutorial_session_data['pubkey_user']}@127.0.0.1",
                             "exit",
                         ],
                         env=env,
@@ -141,7 +141,7 @@ class SSHKeyboardInteractiveAction:
     """Connect via SSH with keyboard-interactive auth through the MITM proxy.
 
     *answers* are sent in order in response to the server's prompts.
-    Reads ``kbdint_user`` and ``sshmitm_port`` from *ctx.credentials*.
+    Reads ``kbdint_user`` and ``sshmitm_port`` from *ctx.tutorial_session_data*.
     """
 
     def __init__(self, answers: list[str]) -> None:
@@ -160,8 +160,8 @@ class SSHKeyboardInteractiveAction:
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.credentials["sshmitm_port"]),
-                    username=str(ctx.credentials["kbdint_user"]),
+                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    username=str(ctx.tutorial_session_data["kbdint_user"]),
                     auth_strategy=None,
                     allow_agent=False,
                     look_for_keys=False,
@@ -195,9 +195,9 @@ class ShellAction:
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.credentials["sshmitm_port"]),
-                    username=str(ctx.credentials["password_user"]),
-                    password=str(ctx.credentials["password_value"]),
+                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    username=str(ctx.tutorial_session_data["password_user"]),
+                    password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
                     allow_agent=False,
                     look_for_keys=False,
@@ -218,6 +218,121 @@ class ShellAction:
                     _log.debug("ShellAction failed after %d attempts", attempt + 1, exc_info=True)
 
 
+class KeepAliveShellAction:
+    """Open an interactive SSH shell via key auth + agent and keep it alive.
+
+    Uses the same key + ssh-agent pattern as :class:`SSHPublicKeyAction` so
+    that the session includes proper PTY negotiation.  This matters for
+    mirrorshell: SSH-MITM only requests a PTY from the backend server when
+    the victim itself requested one.
+
+    Reads ``pubkey_user`` and ``_client_key`` from *ctx.tutorial_session_data*.
+    The tutorial must therefore use :class:`~sshmitm.tutorial._server_config.PublicKeyAuth`.
+    """
+
+    def __init__(self, duration: float = 600.0) -> None:
+        self.duration = duration
+
+    def run(self, ctx: TutorialContext) -> None:
+        time.sleep(_INITIAL_DELAY)
+        key: paramiko.PKey | None = ctx.tutorial_session_data.get("_client_key")  # type: ignore[assignment]
+        if key is None:
+            _log.error("KeepAliveShellAction: no _client_key in tutorial_session_data")
+            return
+        keyfile = tempfile.mktemp(prefix="sshmitm-tutorial-key-", suffix=".pem")
+        agent_env: dict[str, str] = {}
+        try:
+            key.write_private_key_file(keyfile)
+            os.chmod(keyfile, 0o600)
+            result = subprocess.run(
+                ["ssh-agent", "-s"], capture_output=True, text=True, check=True
+            )
+            for line in result.stdout.splitlines():
+                for var in ("SSH_AUTH_SOCK", "SSH_AGENT_PID"):
+                    if line.startswith(var + "="):
+                        agent_env[var] = line.split("=", 1)[1].split(";")[0]
+            env = {**os.environ, **agent_env}
+            subprocess.run(["ssh-add", keyfile], env=env, capture_output=True, check=True)
+            for attempt in range(_RETRIES):
+                try:
+                    proc = subprocess.Popen(
+                        [
+                            "ssh", "-A",
+                            "-o", "StrictHostKeyChecking=no",
+                            "-o", "UserKnownHostsFile=/dev/null",
+                            "-o", "BatchMode=yes",
+                            "-o", "ConnectTimeout=10",
+                            "-p", str(int(ctx.tutorial_session_data["sshmitm_port"])),
+                            f"{ctx.tutorial_session_data['pubkey_user']}@127.0.0.1",
+                        ],
+                        env=env,
+                        stdin=subprocess.DEVNULL,
+                        stdout=subprocess.DEVNULL,
+                        stderr=subprocess.DEVNULL,
+                    )
+                    try:
+                        proc.wait(timeout=self.duration)
+                    except subprocess.TimeoutExpired:
+                        proc.terminate()
+                    return
+                except Exception:
+                    if attempt < _RETRIES - 1:
+                        time.sleep(_RETRY_DELAY)
+                    else:
+                        _log.debug("KeepAliveShellAction failed after %d attempts", attempt + 1, exc_info=True)
+        finally:
+            if "SSH_AGENT_PID" in agent_env:
+                subprocess.run(["kill", agent_env["SSH_AGENT_PID"]], capture_output=True)
+            try:
+                os.unlink(keyfile)
+            except OSError:
+                pass
+
+
+class ShellSessionAction:
+    """Open an SSH shell and run the command stored in ``tutorial_session_data[cred_key]``.
+
+    The command is resolved from the session data at run time so it can be
+    randomised via :meth:`~sshmitm.tutorial._definitions.Tutorial.generate_tutorial_session_data`.
+    """
+
+    def __init__(self, cred_key: str = "shell_command") -> None:
+        self.cred_key = cred_key
+
+    def run(self, ctx: TutorialContext) -> None:
+        command = str(ctx.tutorial_session_data.get(self.cred_key, ""))
+        if not command:
+            _log.error("ShellSessionAction: %r not in tutorial_session_data", self.cred_key)
+            return
+        time.sleep(_INITIAL_DELAY)
+        for attempt in range(_RETRIES):
+            try:
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                client.connect(
+                    "127.0.0.1",
+                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    username=str(ctx.tutorial_session_data["password_user"]),
+                    password=str(ctx.tutorial_session_data["password_value"]),
+                    timeout=10.0,
+                    allow_agent=False,
+                    look_for_keys=False,
+                )
+                chan = client.invoke_shell()
+                time.sleep(0.5)
+                chan.send(command.encode() + b"\n")
+                time.sleep(0.5)
+                chan.send(b"exit\n")
+                time.sleep(0.3)
+                client.close()
+                return
+            except Exception:
+                if attempt < _RETRIES - 1:
+                    time.sleep(_RETRY_DELAY)
+                else:
+                    _log.debug("ShellSessionAction failed after %d attempts", attempt + 1, exc_info=True)
+
+
 # ---------------------------------------------------------------------------
 # SFTP actions
 # ---------------------------------------------------------------------------
@@ -226,7 +341,7 @@ class SFTPUploadAction:
     """Upload *filename* via SFTP through the MITM proxy.
 
     *content* defaults to a small placeholder.  Reads ``password_user``,
-    ``password_value``, and ``sshmitm_port`` from *ctx.credentials*.
+    ``password_value``, and ``sshmitm_port`` from *ctx.tutorial_session_data*.
     """
 
     def __init__(self, filename: str, content: bytes = b"tutorial test file\n") -> None:
@@ -241,9 +356,9 @@ class SFTPUploadAction:
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.credentials["sshmitm_port"]),
-                    username=str(ctx.credentials["password_user"]),
-                    password=str(ctx.credentials["password_value"]),
+                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    username=str(ctx.tutorial_session_data["password_user"]),
+                    password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
                     allow_agent=False,
                     look_for_keys=False,
@@ -275,9 +390,9 @@ class SFTPDownloadAction:
                 client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.credentials["sshmitm_port"]),
-                    username=str(ctx.credentials["password_user"]),
-                    password=str(ctx.credentials["password_value"]),
+                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    username=str(ctx.tutorial_session_data["password_user"]),
+                    password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
                     allow_agent=False,
                     look_for_keys=False,
@@ -318,11 +433,11 @@ class SCPUploadAction:
                             "scp",
                             "-o", "StrictHostKeyChecking=no",
                             "-o", "UserKnownHostsFile=/dev/null",
-                            "-P", str(int(ctx.credentials["sshmitm_port"])),
+                            "-P", str(int(ctx.tutorial_session_data["sshmitm_port"])),
                             tmp.name,
-                            f"{ctx.credentials['password_user']}@127.0.0.1:{self.filename}",
+                            f"{ctx.tutorial_session_data['password_user']}@127.0.0.1:{self.filename}",
                         ],
-                        input=f"{ctx.credentials['password_value']}\n".encode(),
+                        input=f"{ctx.tutorial_session_data['password_value']}\n".encode(),
                         capture_output=True,
                         timeout=15,
                     )
@@ -351,11 +466,11 @@ class SCPDownloadAction:
                         "scp",
                         "-o", "StrictHostKeyChecking=no",
                         "-o", "UserKnownHostsFile=/dev/null",
-                        "-P", str(int(ctx.credentials["sshmitm_port"])),
-                        f"{ctx.credentials['password_user']}@127.0.0.1:{self.remote_path}",
+                        "-P", str(int(ctx.tutorial_session_data["sshmitm_port"])),
+                        f"{ctx.tutorial_session_data['password_user']}@127.0.0.1:{self.remote_path}",
                         os.devnull,
                     ],
-                    input=f"{ctx.credentials['password_value']}\n".encode(),
+                    input=f"{ctx.tutorial_session_data['password_value']}\n".encode(),
                     capture_output=True,
                     timeout=15,
                 )
@@ -365,3 +480,89 @@ class SCPDownloadAction:
                     time.sleep(_RETRY_DELAY)
                 else:
                     _log.debug("SCPDownloadAction failed after %d attempts", attempt + 1, exc_info=True)
+
+
+# ---------------------------------------------------------------------------
+# Session-data-driven actions (filename/command chosen at runtime)
+# ---------------------------------------------------------------------------
+
+class SFTPDownloadSessionAction:
+    """Download the file named by ``tutorial_session_data[cred_key]`` via SFTP.
+
+    The filename is resolved from the session data at run time, so it can be
+    randomised via :meth:`~sshmitm.tutorial._definitions.Tutorial.generate_tutorial_session_data`.
+    """
+
+    def __init__(self, cred_key: str = "sftp_filename") -> None:
+        self.cred_key = cred_key
+
+    def run(self, ctx: TutorialContext) -> None:
+        remote_path = str(ctx.tutorial_session_data.get(self.cred_key, ""))
+        if not remote_path:
+            _log.error("SFTPDownloadSessionAction: %r not in tutorial_session_data", self.cred_key)
+            return
+        time.sleep(_INITIAL_DELAY)
+        for attempt in range(_RETRIES):
+            try:
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                client.connect(
+                    "127.0.0.1",
+                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    username=str(ctx.tutorial_session_data["password_user"]),
+                    password=str(ctx.tutorial_session_data["password_value"]),
+                    timeout=10.0,
+                    allow_agent=False,
+                    look_for_keys=False,
+                )
+                sftp = client.open_sftp()
+                sftp.getfo(remote_path, open(os.devnull, "wb"))
+                sftp.close()
+                client.close()
+                return
+            except Exception:
+                if attempt < _RETRIES - 1:
+                    time.sleep(_RETRY_DELAY)
+                else:
+                    _log.debug("SFTPDownloadSessionAction failed after %d attempts", attempt + 1, exc_info=True)
+
+
+class SSHExecAction:
+    """Execute the command stored in ``tutorial_session_data[cred_key]`` via SSH exec.
+
+    Uses paramiko's ``exec_command`` channel — equivalent to ``ssh user@host "cmd"``.
+    The command is resolved from the session data at run time so it can be
+    randomised via :meth:`~sshmitm.tutorial._definitions.Tutorial.generate_tutorial_session_data`.
+    """
+
+    def __init__(self, cred_key: str = "exec_command") -> None:
+        self.cred_key = cred_key
+
+    def run(self, ctx: TutorialContext) -> None:
+        command = str(ctx.tutorial_session_data.get(self.cred_key, ""))
+        if not command:
+            _log.error("SSHExecAction: %r not in tutorial_session_data", self.cred_key)
+            return
+        time.sleep(_INITIAL_DELAY)
+        for attempt in range(_RETRIES):
+            try:
+                client = paramiko.SSHClient()
+                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                client.connect(
+                    "127.0.0.1",
+                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    username=str(ctx.tutorial_session_data["password_user"]),
+                    password=str(ctx.tutorial_session_data["password_value"]),
+                    timeout=10.0,
+                    allow_agent=False,
+                    look_for_keys=False,
+                )
+                _, stdout, _ = client.exec_command(command)
+                stdout.read()
+                client.close()
+                return
+            except Exception:
+                if attempt < _RETRIES - 1:
+                    time.sleep(_RETRY_DELAY)
+                else:
+                    _log.debug("SSHExecAction failed after %d attempts", attempt + 1, exc_info=True)

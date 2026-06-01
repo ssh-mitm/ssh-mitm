@@ -20,6 +20,7 @@ from importlib import resources as _resources
 from typing import TYPE_CHECKING
 
 from sshmitm.tutorial._definitions import Tutorial
+from sshmitm.tutorial._conditions import has_continue
 from sshmitm.tutorial._progress import load_completed, mark_completed
 from sshmitm.tutorial._runner import TutorialRunner, TutorialState
 
@@ -269,7 +270,7 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                 copyable: dict[str, str] = {}
                 if self._runner:
                     for key in s.copyable:
-                        val = self._runner.credentials.get(key)
+                        val = self._runner.tutorial_session_data.get(key)
                         if val is not None:
                             copyable[key] = str(val)
                 if self._runner:
@@ -285,7 +286,8 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
                     "hint": hint,
                     "hint_type": hint_type,
                     "done": i < current,
-                    "active": i == current,
+                    "active": self._runner is not None and i == current,
+                    "has_continue": has_continue(s.condition),
                 })
         return {
             "tutorials": [

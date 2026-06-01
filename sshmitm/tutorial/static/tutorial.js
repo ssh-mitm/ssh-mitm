@@ -131,7 +131,8 @@ function renderSteps() {
     h += `<div class="${cls}"><span>${icon}</span>${s.title}</div>`;
   }
   document.getElementById('step-list').innerHTML = h;
-  const active = state.steps.find(s => s.active) || state.steps[state.steps.length - 1];
+  const fallback = state.steps[Math.min(state.current_step, state.steps.length - 1)];
+  const active = state.steps.find(s => s.active) || fallback;
   if (active) {
     document.getElementById('step-content').innerHTML = active.content_html;
     const hintEl = document.getElementById('hint');
@@ -222,11 +223,15 @@ function renderContinueBtn(isActive) {
   if (existing) existing.remove();
   if (!isActive) return;
   const ready = state && state.step_ready;
+  const active = state.steps ? state.steps.find(s => s.active) : null;
+  const hasContinue = !!(active && active.has_continue);
+  if (!ready && !hasContinue) return;
+  const canClick = ready || hasContinue;
   const btn = document.createElement('button');
-  btn.className = 'btn-continue' + (ready ? '' : ' disabled');
+  btn.className = 'btn-continue' + (canClick ? '' : ' disabled');
   btn.textContent = ready ? 'Continue →' : 'Continue';
-  btn.disabled = !ready;
-  btn.onclick = ready ? advance : null;
+  btn.disabled = !canClick;
+  btn.onclick = canClick ? advance : null;
   area.appendChild(btn);
 }
 

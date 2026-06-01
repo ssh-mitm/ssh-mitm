@@ -10,7 +10,7 @@ import secrets
 import string
 import threading
 import time
-from typing import Any, Callable
+from typing import Callable
 
 import paramiko
 
@@ -27,6 +27,85 @@ from sshmitm.tutorial._server_config import (
 )
 
 _log = logging.getLogger(__name__)
+
+
+# ---------------------------------------------------------------------------
+# Mock interactive shell
+# ---------------------------------------------------------------------------
+
+class _MockShell:
+    """Fake interactive shell backed by an in-memory command→output dict.
+
+    Does not spawn any subprocess.  Input is echoed back line-by-line;
+    recognised commands return their predefined output, everything else
+    gets an "unknown command" reply.  The prompt and unknown-command
+    message are configurable so tutorials can impersonate any device
+    (router, switch, database console, etc.).
+    """
+
+    def __init__(
+        self,
+        channel: paramiko.Channel,
+        outputs: dict[str, bytes],
+        prompt: bytes = b"$ ",
+        unknown: bytes | None = None,
+    ) -> None:
+        self._channel = channel
+        self._outputs = outputs
+        self._prompt = prompt
+        self._unknown = unknown  # None → derive from command name
+
+    def run(self) -> None:
+        try:
+            self._channel.sendall(self._prompt)
+            buf: bytearray = bytearray()
+            in_escape = False
+            while True:
+                data = self._channel.recv(256)
+                if not data:
+                    break
+                for byte in data:
+                    if in_escape:
+                        # Skip until end of ANSI escape sequence (0x40–0x7e)
+                        if 0x40 <= byte <= 0x7E:
+                            in_escape = False
+                        continue
+                    if byte == 0x1B:  # ESC
+                        in_escape = True
+                    elif byte in (0x0D, 0x0A):  # CR / LF → execute line
+                        self._channel.sendall(b"\r\n")
+                        cmd = buf.decode("utf-8", errors="replace").strip()
+                        buf.clear()
+                        if cmd in ("exit", "quit", "logout"):
+                            return
+                        if cmd:
+                            self._channel.sendall(self._response(cmd))
+                        self._channel.sendall(self._prompt)
+                    elif byte in (0x7F, 0x08):  # DEL / Backspace
+                        if buf:
+                            buf.pop()
+                            self._channel.sendall(b"\x08 \x08")
+                    elif byte == 0x03:  # Ctrl+C
+                        self._channel.sendall(b"^C\r\n")
+                        buf.clear()
+                        self._channel.sendall(self._prompt)
+                    elif 0x20 <= byte < 0x7F:  # printable ASCII
+                        buf.append(byte)
+                        self._channel.sendall(bytes([byte]))
+        except Exception:  # noqa: BLE001
+            pass
+        finally:
+            with __import__("contextlib").suppress(Exception):
+                self._channel.send_exit_status(0)
+                self._channel.close()
+
+    def _response(self, cmd: str) -> bytes:
+        output = self._outputs.get(cmd)
+        if output is not None:
+            return output
+        if self._unknown is not None:
+            return self._unknown
+        return f"% Unknown command: {cmd}\r\n".encode()
 
 _ADJECTIVES = [
     "brave", "calm", "clever", "daring", "eager",
@@ -61,11 +140,53 @@ def _sha256_fingerprint(key: paramiko.PKey) -> str:
 # ---------------------------------------------------------------------------
 
 class _TutorialServer(MultiUserMockServer):
-    """MultiUserMockServer extended with auth-event callbacks."""
+    """MultiUserMockServer with auth-event callbacks and a virtual exec filesystem.
 
-    def __init__(self, users: dict[str, _UserConfig], on_auth: Callable) -> None:
+    Commands registered in *exec_outputs* return their predefined output without
+    any subprocess being spawned.  Unregistered commands receive an empty response
+    with exit status 1 — real execution is intentionally disabled for the tutorial
+    mock server.
+    """
+
+    def __init__(
+        self,
+        users: dict[str, _UserConfig],
+        on_auth: Callable,
+        exec_outputs: dict[str, bytes] | None = None,
+        shell_outputs: dict[str, bytes] | None = None,
+        shell_prompt: bytes = b"$ ",
+    ) -> None:
         super().__init__(users)
         self._on_auth = on_auth
+        self._exec_outputs: dict[str, bytes] = exec_outputs or {}
+        self._shell_outputs: dict[str, bytes] = shell_outputs or {}
+        self._shell_prompt = shell_prompt
+
+    def check_channel_exec_request(
+        self, channel: paramiko.Channel, command: bytes
+    ) -> bool:
+        cmd = command.decode("utf-8", errors="replace")
+        output = self._exec_outputs.get(cmd, b"")
+        threading.Thread(
+            target=self._mock_exec, args=(channel, output), daemon=True
+        ).start()
+        return True
+
+    def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
+        threading.Thread(
+            target=_MockShell(channel, self._shell_outputs, self._shell_prompt).run,
+            daemon=True,
+        ).start()
+        return True
+
+    @staticmethod
+    def _mock_exec(channel: paramiko.Channel, output: bytes) -> None:
+        try:
+            if output:
+                channel.sendall(output)
+            channel.send_exit_status(0 if output else 1)
+        finally:
+            channel.close()
 
     def _notify(self, method: str, username: str, result: int) -> None:
         ok = result == paramiko.common.AUTH_SUCCESSFUL
@@ -118,7 +239,7 @@ class TutorialRunner:
 
     * ``state``       — current :class:`TutorialState` string
     * ``current_step``— zero-based index of the active step
-    * ``credentials`` — dict of runtime values (ports, users, passwords, …)
+    * ``tutorial_session_data`` — dict of runtime values (ports, users, passwords, …)
     * ``format(text)``— substitute ``{variable}`` placeholders
     * ``submit_input(key, value)`` — validate a user-submitted answer
     * ``acknowledge()``— mark the current step as acknowledged (Continue button)
@@ -157,8 +278,8 @@ class TutorialRunner:
     # ------------------------------------------------------------------
 
     @property
-    def credentials(self) -> dict[str, Any]:
-        return self._ctx.credentials
+    def tutorial_session_data(self) -> dict[str, object]:
+        return self._ctx.tutorial_session_data
 
     # ------------------------------------------------------------------
     # Public API
@@ -179,7 +300,7 @@ class TutorialRunner:
 
     def format(self, text: str) -> str:
         try:
-            return text.format(**self._ctx.credentials)
+            return text.format(**self._ctx.tutorial_session_data)
         except KeyError:
             return text
 
@@ -189,7 +310,7 @@ class TutorialRunner:
         Stores the value in the context if correct so that the condition can
         pick it up on the next poll.  Returns True on correct input.
         """
-        expected = str(self._ctx.credentials.get(key, ""))
+        expected = str(self._ctx.tutorial_session_data.get(key, ""))
         correct = value.strip() == expected
         if correct:
             self._ctx.user_inputs[key] = value.strip()
@@ -200,12 +321,19 @@ class TutorialRunner:
     def advance(self) -> bool:
         """Advance to the next step — only allowed when the condition is satisfied.
 
-        Returns True when the step was actually advanced.  The web server
-        should call this when the user clicks the Continue button.
+        Sets ``ctx.acknowledged`` before re-evaluating so that a
+        :class:`~sshmitm.tutorial._conditions.Continue` condition in the
+        current step is satisfied by this click.
         """
         if self.state != TutorialState.RUNNING:
             return False
+        steps = self._tutorial.steps
+        if self.current_step >= len(steps):
+            return False
+        self._ctx.acknowledged = True
+        self._step_ready = bool(steps[self.current_step].condition(self._ctx))
         if not self._step_ready:
+            self._on_state_update()
             return False
         self._complete_step()
         return True
@@ -251,7 +379,7 @@ class TutorialRunner:
                 "key": ui.key,
                 "prompt": ui.prompt,
                 "satisfied": self._ctx.user_inputs.get(ui.key)
-                             == str(self._ctx.credentials.get(ui.key, "")),
+                             == str(self._ctx.tutorial_session_data.get(ui.key, "")),
             })
         return result
 
@@ -307,11 +435,13 @@ class TutorialRunner:
     # ------------------------------------------------------------------
 
     def _setup_mock_server(self) -> None:
+        extra = self._tutorial.generate_tutorial_session_data()
         server_cfg = self._tutorial.get_server()
         users: dict[str, _UserConfig] = {}
-        credentials: dict[str, Any] = {
+        session_data: dict[str, object] = {
             "mock_port": server_cfg.mock_port,
             "sshmitm_port": server_cfg.sshmitm_port,
+            **extra,
         }
 
         used_names: set[str] = set()
@@ -324,37 +454,49 @@ class TutorialRunner:
             if isinstance(auth, PasswordAuth):
                 pw = auth.password or _random_password()
                 users[username] = MultiUserMockServer.password_user(pw)
-                credentials.setdefault("password_user", username)
-                credentials.setdefault("password_value", pw)
+                session_data.setdefault("password_user", username)
+                session_data.setdefault("password_value", pw)
 
             elif isinstance(auth, PublicKeyAuth):
                 key = auth.key or paramiko.ECDSAKey.generate()
                 users[username] = MultiUserMockServer.pubkey_user([key])
-                credentials.setdefault("pubkey_user", username)
-                credentials.setdefault("pubkey_fingerprint", _sha256_fingerprint(key))
-                credentials.setdefault("_client_key", key)
+                session_data.setdefault("pubkey_user", username)
+                session_data.setdefault("pubkey_fingerprint", _sha256_fingerprint(key))
+                session_data.setdefault("_client_key", key)
 
             elif isinstance(auth, NoneAuth):
                 users[username] = MultiUserMockServer.none_user()
-                credentials.setdefault("none_user", username)
+                session_data.setdefault("none_user", username)
 
             elif isinstance(auth, KeyboardInteractiveAuth):
                 users[username] = MultiUserMockServer.kbdint_iterative_user(auth.rounds)
-                credentials.setdefault("kbdint_user", username)
+                session_data.setdefault("kbdint_user", username)
+
+        exec_outputs = self._tutorial.generate_exec_outputs(session_data) or None
+        shell_outputs = self._tutorial.generate_shell_outputs(session_data) or None
+        shell_prompt = self._tutorial.shell_prompt()
 
         def factory() -> _TutorialServer:
-            return _TutorialServer(users, self._handle_auth_event)
+            return _TutorialServer(
+                users,
+                self._handle_auth_event,
+                exec_outputs=exec_outputs,
+                shell_outputs=shell_outputs,
+                shell_prompt=shell_prompt,
+            )
 
+        sftp_files = self._tutorial.generate_sftp_files(session_data) or None
         actual_port, stop, closed = start_server_thread(
             factory,
             host_key=paramiko.ECDSAKey.generate(),
             bind="127.0.0.1",
             port=server_cfg.mock_port,
+            sftp_files=sftp_files,
         )
         self._mock_stop = stop
         self._mock_closed = closed
-        credentials["mock_port"] = actual_port
-        self._ctx = TutorialContext(credentials)
+        session_data["mock_port"] = actual_port
+        self._ctx = TutorialContext(session_data)
 
     def _teardown(self) -> None:
         if self._mock_stop:

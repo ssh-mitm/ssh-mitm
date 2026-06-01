@@ -3,7 +3,6 @@
 from __future__ import annotations
 
 import dataclasses
-from typing import Any
 
 
 @dataclasses.dataclass
@@ -37,8 +36,8 @@ class TutorialContext:
     to decide whether their step is complete.
     """
 
-    def __init__(self, credentials: dict[str, Any]) -> None:
-        self.credentials: dict[str, Any] = credentials
+    def __init__(self, tutorial_session_data: dict[str, object]) -> None:
+        self.tutorial_session_data: dict[str, object] = tutorial_session_data
 
         # Event queues — appended to by the runner; read by conditions.
         # Cleared at the start of each step so conditions see only events
