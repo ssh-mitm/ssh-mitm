@@ -39,6 +39,10 @@ ssh-mitm tutorial
 Opens a browser-based, step-by-step guide — no target server needed.
 Five built-in tutorials cover password interception, public-key auth, SFTP transfers, command execution, and live session mirroring.
 
+<p align="center">
+  <img alt="SSH-MITM interactive tutorial" src="https://docs.ssh-mitm.at/_images/ssh-mitm-tutorial.png" width="80%">
+</p>
+
 ---
 
 ## Quick Start
