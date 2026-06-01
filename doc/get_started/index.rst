@@ -21,6 +21,7 @@ and plugin support for customization.
    :maxdepth: 1
 
    installation
+   tutorial
    plugin_browser
    configuration
    terminal_session

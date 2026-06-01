@@ -59,6 +59,13 @@ Features
       Intercept hardware token authentication via the trivial
       authentication attack (CVE-2021-36367, CVE-2021-36368).
 
+   .. grid-item-card:: :fas:`graduation-cap` Interactive Tutorial
+      :link: get_started/tutorial
+      :link-type: doc
+
+      Learn SSH-MITM step by step in a browser-based guide — no target
+      server needed. Run ``ssh-mitm tutorial`` to get started.
+
    .. grid-item-card:: :fas:`puzzle-piece` Plugin Browser
       :link: get_started/plugin_browser
       :link-type: doc
