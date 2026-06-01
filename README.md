@@ -30,7 +30,7 @@ Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
 
 ---
 
-## New to SSH-MITM? Start with the interactive tutorial
+## 🎓 New to SSH-MITM? Start with the interactive tutorial
 
 ```bash
 ssh-mitm tutorial
@@ -61,7 +61,7 @@ chmod +x ssh-mitm-x86_64.AppImage
 
 For other installation options (pip, Flatpak, Snap) see the [installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
 
-To try the latest unreleased features (including the interactive tutorial), install directly from GitHub:
+⚡ To try the latest unreleased features (including the interactive tutorial), install directly from GitHub:
 
 ```bash
 pip install git+https://github.com/ssh-mitm/ssh-mitm.git
