@@ -190,6 +190,9 @@ class SSHProxyServer:
                 )
             if self.debug:
                 rich_print("[bold red]:exclamation: Debug mode enabled")
+            rich_print(
+                ":mortar_board: [bold]New to SSH-MITM?[/bold] Run [bold cyan]ssh-mitm tutorial[/bold cyan] for an interactive, browser-based introduction."
+            )
             sshconsole.rule("[red]waiting for connections", style="red")
 
     def generate_host_key(self) -> None:

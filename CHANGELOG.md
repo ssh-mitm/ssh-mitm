@@ -9,6 +9,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Interactive tutorial system**: `ssh-mitm tutorial` opens a browser-based,
+  step-by-step tutorial that demonstrates SSH-MITM's core capabilities without
+  requiring an external target server. The tutorial spins up a built-in mock SSH
+  server for each exercise and guides the learner through each scenario
+  interactively. Five tutorials are included out of the box:
+  password authentication interception, public-key auth and agent-forwarding
+  interception, SFTP file-download interception, SSH command execution
+  interception, and live session mirroring (mirror shell). Additional tutorials
+  can be installed as Python packages via the `sshmitm.Tutorial` entry point.
+
 - **Signal forwarding (RFC 4254 §6.9)**: Signals sent by the SSH client
   (e.g. `kill -TERM $SSH_TTY_PID`) are now forwarded to the remote server.
   Paramiko has no built-in support for the "signal" channel request type;
@@ -37,7 +47,9 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   for testing and development. It accepts a single configurable user with
   password, public-key, keyboard-interactive, and none authentication, and
   executes commands directly on the host. Useful for testing SSH-MITM without
-  setting up a full OpenSSH server.
+  setting up a full OpenSSH server. The mock server also supports an in-memory
+  SFTP subsystem, allowing tutorials and tests to serve virtual files without
+  touching the real filesystem.
 
 - **Keyboard-interactive authentication is now intercepted by default**:
   SSH-MITM transparently forwards keyboard-interactive challenges from the
@@ -85,6 +97,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   use.
 
 ### Fixed
+
+- **Mirror shell**: connecting clients now see a brief status banner with their
+  observed IP address. The connection loop was also hardened against channels
+  that close mid-session, preventing a hang when the original session ends.
 
 - Fixed broken SFTP file transfers and incorrect error responses for missing
   files.
