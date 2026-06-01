@@ -61,6 +61,12 @@ chmod +x ssh-mitm-x86_64.AppImage
 
 For other installation options (pip, Flatpak, Snap) see the [installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
 
+To try the latest unreleased features (including the interactive tutorial), install directly from GitHub:
+
+```bash
+pip install git+https://github.com/ssh-mitm/ssh-mitm.git
+```
+
 ### 2. Start SSH-MITM
 
 Point SSH-MITM at your target host — use a system you are authorized to test:
