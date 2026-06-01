@@ -409,12 +409,26 @@ class TutorialWebServer(socketserver.ThreadingMixIn, http.server.HTTPServer):
 # Entry point
 # ---------------------------------------------------------------------------
 
-def run(tutorials: list[Tutorial], port: int = 0, open_browser: bool = True) -> None:
+def _load_tutorials() -> list[Tutorial]:
+    from importlib.metadata import entry_points
+    tutorials: list[Tutorial] = []
+    for ep in entry_points(group="sshmitm.Tutorial"):
+        try:
+            cls = ep.load()
+        except Exception:
+            _log.warning("Failed to load tutorial entry point %r", ep.name, exc_info=True)
+            continue
+        if isinstance(cls, type) and issubclass(cls, Tutorial):
+            tutorials.append(cls())
+    return sorted(tutorials, key=lambda t: t.id)
+
+
+def run(port: int = 0, open_browser: bool = True) -> None:
     # Stay alive when the parent shell exits (e.g. user types 'exit' in a terminal)
     if hasattr(signal, "SIGHUP"):
         signal.signal(signal.SIGHUP, signal.SIG_IGN)
 
-    srv = TutorialWebServer(tutorials, port=port)
+    srv = TutorialWebServer(_load_tutorials(), port=port)
     actual_port = srv.server_address[1]
     url = f"http://127.0.0.1:{actual_port}"
     _log.info("Tutorial server listening on %s", url)

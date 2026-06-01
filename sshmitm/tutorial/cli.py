@@ -47,6 +47,5 @@ class Tutorial(SubCommand):
             )
 
         from sshmitm.tutorial._web import run
-        from sshmitm.tutorial.tutorials import ALL_TUTORIALS
 
-        run(ALL_TUTORIALS, port=args.port, open_browser=not args.no_browser)
+        run(port=args.port, open_browser=not args.no_browser)

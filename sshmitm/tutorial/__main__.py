@@ -1,11 +1,10 @@
 """SSH-MITM Tutorial — run with: python -m sshmitm.tutorial"""
 
-from sshmitm.tutorial._app import TutorialApp
-from sshmitm.tutorial.tutorials import ALL_TUTORIALS
+from sshmitm.tutorial._web import run
 
 
 def main() -> None:
-    TutorialApp(ALL_TUTORIALS).run()
+    run()
 
 
 if __name__ == "__main__":
