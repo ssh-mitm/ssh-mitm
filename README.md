@@ -30,10 +30,18 @@ Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
 
 ---
 
-## Quick Start
+## New to SSH-MITM? Start with the interactive tutorial
 
-> **New to SSH-MITM?** Run `ssh-mitm tutorial` for a browser-based, step-by-step
-> introduction that works without an external target server.
+```bash
+ssh-mitm tutorial
+```
+
+Opens a browser-based, step-by-step guide — no target server needed.
+Five built-in tutorials cover password interception, public-key auth, SFTP transfers, command execution, and live session mirroring.
+
+---
+
+## Quick Start
 
 Placed between a client and its SSH server, SSH-MITM intercepts the connection transparently —
 forwarding it to the target while giving the auditor full visibility and control:
@@ -99,25 +107,6 @@ ssh -p 34463 127.0.0.1
 
 The mirror shell reflects the session in real time. The auditor can observe the user's activity
 and inject commands independently, without affecting the original connection.
-
-## Interactive Tutorial
-
-Run `ssh-mitm tutorial` to open a browser-based tutorial that walks through SSH-MITM's
-core features step by step. No external server is needed — each exercise spins up a
-built-in mock SSH server automatically.
-
-Five tutorials are included:
-
-| Tutorial | What you learn |
-| -------- | -------------- |
-| Password Authentication | How SSH-MITM intercepts plaintext passwords |
-| Public Key & Agent Forwarding | Intercepting public-key sessions and forwarded agent keys |
-| SFTP File Download | Capturing and replacing files during SFTP transfers |
-| SSH Command Execution | Intercepting non-interactive SSH commands |
-| Session Mirroring | Attaching to a live session as a silent observer |
-
-Extra tutorials can be installed as third-party Python packages via the
-`sshmitm.Tutorial` entry point.
 
 ## What SSH-MITM can do
 
