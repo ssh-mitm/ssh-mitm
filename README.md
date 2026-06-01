@@ -61,13 +61,13 @@ chmod +x ssh-mitm-x86_64.AppImage
 
 For other installation options (pip, Flatpak, Snap) see the [installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
 
-#### ⚡ Get the latest version
-
-The PyPI release may lag behind. Install directly from GitHub to get the interactive tutorial and all recent improvements:
-
-```bash
-pip install git+https://github.com/ssh-mitm/ssh-mitm.git
-```
+> **⚡ Get the latest version**
+>
+> The PyPI release may lag behind. Install directly from GitHub to get the interactive tutorial and all recent improvements:
+>
+> ```bash
+> pip install git+https://github.com/ssh-mitm/ssh-mitm.git
+> ```
 
 ### 2. Start SSH-MITM
 
