@@ -119,6 +119,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   remote server (#187).
 - Subsystems (e.g. SFTP) are no longer started before the upstream connection
   is fully authenticated.
+- **Mosh fails to start on systems with old `cryptography` packages**: The
+  `AESOCB3` cipher class required by Mosh support was introduced in
+  `cryptography` 38.0.0 (September 2022), but the package was only constrained
+  transitively via `paramiko` to `>=3.3`, allowing broken combinations on e.g.
+  Ubuntu 22.04 LTS. `cryptography>=38.0.0` is now an explicit dependency.
+  A `try/except` with a clear upgrade hint was added around the import so that
+  users with an incompatible system-Python installation see an actionable error
+  instead of a bare `ImportError`. Closes #195.
 
 ### Changed
 

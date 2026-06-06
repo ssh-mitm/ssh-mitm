@@ -8,7 +8,13 @@ from collections import defaultdict
 from typing import cast
 
 from colored.colored import attr, fg
-from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
+try:
+    from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
+except ImportError as e:
+    raise ImportError(
+        "Mosh support requires cryptography>=38.0.0. "
+        "Upgrade with: pip install --upgrade cryptography"
+    ) from e
 
 from sshmitm.apps.mosh import hostinput_pb2, transportinstruction_pb2, userinput_pb2
 from sshmitm.moduleparser.colors import Colors
