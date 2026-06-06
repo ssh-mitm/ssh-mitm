@@ -141,6 +141,13 @@ class Session(BaseSession):
             dest="session_log_dir",
             help="directory to store ssh session logs",
         )
+        plugin_group.add_argument(
+            "--max-connections",
+            dest="max_connections",
+            type=int,
+            default=100,
+            help="maximum number of concurrent SSH connections (default: 100, 0 = unlimited)",
+        )
 
     def __init__(  # pylint: disable=too-many-arguments
         self,

@@ -119,6 +119,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   remote server (#187).
 - Subsystems (e.g. SFTP) are no longer started before the upstream connection
   is fully authenticated.
+- **Connection limit (`--max-connections`)**: the server now rejects incoming
+  connections once the configured limit is reached instead of spawning threads
+  without bound. The default is 100 concurrent sessions; set to 0 for
+  unlimited. Finished session threads are cleaned up automatically on each
+  new connection so the count stays accurate. Closes #171.
 - **Graceful server shutdown**: pressing Ctrl-C now waits up to 30 seconds
   for active session threads to finish before exiting. The listening socket
   is closed immediately so no new connections are accepted, and

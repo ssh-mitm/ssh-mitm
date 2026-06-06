@@ -347,11 +347,21 @@ class SSHProxyServer:
                 if len(readable) == 1 and readable[0] is sock:
                     client, addr = sock.accept()
                     remoteaddr = client.getsockname()
-                    thread = threading.Thread(
-                        target=self.create_session, args=(client, addr, remoteaddr)
-                    )
-                    thread.start()
-                    self._threads.append(thread)
+                    self._threads = [t for t in self._threads if t.is_alive()]
+                    max_connections = getattr(self.session_class.args, "max_connections", 100)
+                    if max_connections and len(self._threads) >= max_connections:
+                        logging.warning(
+                            "max connections reached (%d), rejecting connection from %s",
+                            max_connections,
+                            addr,
+                        )
+                        client.close()
+                    else:
+                        thread = threading.Thread(
+                            target=self.create_session, args=(client, addr, remoteaddr)
+                        )
+                        thread.start()
+                        self._threads.append(thread)
         except KeyboardInterrupt:
             self.running = False
             if sys.stdout.isatty():
