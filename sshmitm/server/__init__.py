@@ -360,17 +360,27 @@ class SSHProxyServer:
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error creating socket!")
         finally:
+            self.running = False
             logging.info(
                 "%s %s",
                 Colors.emoji("exclamation"),
                 Colors.stylize("Shutting down server ...", fg("red")),
             )
-            # TODO @manfred-kaiser: better shutdown for threads. At the moment we kill the server
-            # https://github.com/ssh-mitm/ssh-mitm/issues/167
-            # sock.close()  # noqa: ERA001
-            # for thread in self._threads[:]:
-            #    thread.join()  # noqa: ERA001
-            os._exit(os.EX_OK)
+            if sock is not None:
+                sock.close()
+            shutdown_timeout = 30
+            deadline = time.monotonic() + shutdown_timeout
+            for thread in list(self._threads):
+                wait = max(0.0, deadline - time.monotonic())
+                thread.join(timeout=wait)
+            still_alive = [t for t in self._threads if t.is_alive()]
+            if still_alive:
+                logging.warning(
+                    "%d session thread(s) did not stop within %ds, forcing exit",
+                    len(still_alive),
+                    shutdown_timeout,
+                )
+                os._exit(os.EX_OK)
 
     def create_session(
         self,

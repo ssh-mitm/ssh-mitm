@@ -119,6 +119,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   remote server (#187).
 - Subsystems (e.g. SFTP) are no longer started before the upstream connection
   is fully authenticated.
+- **Graceful server shutdown**: pressing Ctrl-C now waits up to 30 seconds
+  for active session threads to finish before exiting. The listening socket
+  is closed immediately so no new connections are accepted, and
+  `session.running` becomes `False` for all sessions so their forwarding
+  loops stop within one polling cycle (~100 ms). `os._exit()` is used only
+  as a last resort if threads do not stop within the timeout. Closes #167.
 - **Mosh fails to start on systems with old `cryptography` packages**: The
   `AESOCB3` cipher class required by Mosh support was introduced in
   `cryptography` 38.0.0 (September 2022), but the package was only constrained
