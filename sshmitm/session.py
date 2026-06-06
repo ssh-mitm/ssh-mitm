@@ -97,6 +97,7 @@ class AuthState:
     remote_key: "PKey | None" = field(default=None)
     accepted_key: "PKey | None" = field(default=None)
     agent: "AgentProxy | None" = field(default=None)
+    kbdint_responses: list[tuple[str, str]] = field(default_factory=list)
 
 
 @dataclass

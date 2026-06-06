@@ -50,6 +50,7 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
     """SSH-MITM server implementation"""
 
     _kb_interactive_bridge: KeyboardInteractiveBridge | None = None
+    _kb_interactive_prompts: list[tuple[str, bool]] = []
 
     @classmethod
     def parser_arguments(cls) -> None:
@@ -429,6 +430,7 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         query = paramiko.server.InteractiveQuery(title, instructions)
         for prompt, echo in prompts:
             query.add_prompt(prompt, echo)
+        self._kb_interactive_prompts = prompts
         return query
 
     def check_auth_interactive_response(
@@ -453,6 +455,20 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             )
             return paramiko.common.AUTH_FAILED
 
+        hide = getattr(self.args, "auth_hide_credentials", False)
+        prompts = self._kb_interactive_prompts
+        round_pairs = list(zip([p for p, _ in prompts], responses))
+        self.session.auth.kbdint_responses.extend(round_pairs)
+        logging.info(
+            "auth_kbdint_response",
+            extra={
+                "event": "auth_kbdint_response",
+                "username": self.session.auth.username,
+                "prompts": [p for p, _ in prompts],
+                "responses": None if hide else responses,
+            },
+        )
+
         bridge.send_responses(responses)
 
         challenge = bridge.get_next_challenge(timeout=30)
@@ -466,12 +482,22 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         event_type = challenge[0]
         if event_type == "result":
             self._kb_interactive_bridge = None
-            return cast("int", challenge[1])
+            result = cast("int", challenge[1])
+            logging.info(
+                "auth_kbdint_result",
+                extra={
+                    "event": "auth_kbdint_result",
+                    "username": self.session.auth.username,
+                    "success": result == paramiko.common.AUTH_SUCCESSFUL,
+                },
+            )
+            return result
 
         _, title, instructions, prompts = challenge
         query = paramiko.server.InteractiveQuery(title, instructions)
         for prompt, echo in prompts:
             query.add_prompt(prompt, echo)
+        self._kb_interactive_prompts = prompts
         return query
 
     def check_auth_publickey(self, username: str, key: PKey) -> int:

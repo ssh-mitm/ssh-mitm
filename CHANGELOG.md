@@ -96,6 +96,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   installs a fully tested set of dependency versions suitable for production
   use.
 
+- **Keyboard-interactive responses are now logged**: Each challenge round is
+  captured as a structured log event (`auth_kbdint_response`) containing the
+  prompt texts and the client's answers. The final outcome is logged separately
+  as `auth_kbdint_result`. All captured prompt/response pairs are also stored
+  in `session.auth.kbdint_responses` so custom plugins can access them.
+  The `--auth-hide-credentials` flag suppresses the response values in both the
+  log and the stored list. Closes #137 (partial — `AUTH_PARTIALLY_SUCCESSFUL`
+  chaining for multi-method 2FA is still open).
+
 ### Fixed
 
 - **Mirror shell**: connecting clients now see a brief status banner with their
