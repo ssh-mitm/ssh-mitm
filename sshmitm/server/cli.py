@@ -3,6 +3,7 @@ import argparse
 from sshmitm.authentication import Authenticator
 from sshmitm.forwarders.agent import AgentBaseForwarder
 from sshmitm.forwarders.netconf import NetconfBaseForwarder
+from sshmitm.forwarders.powershell import PowerShellBaseForwarder
 from sshmitm.forwarders.scp import SCPBaseForwarder
 from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin
 from sshmitm.forwarders.ssh import SSHBaseForwarder
@@ -29,6 +30,11 @@ class SSHServerModules(SubCommand):
             "--netconf-interface",
             dest="netconf_interface",
             baseclass=NetconfBaseForwarder,
+        )
+        self.parser.add_module(
+            "--powershell-interface",
+            dest="powershell_interface",
+            baseclass=PowerShellBaseForwarder,
         )
         self.parser.add_module(
             "--ssh-interface",
@@ -141,6 +147,7 @@ class SSHServerModules(SubCommand):
             ssh_interface=args.ssh_interface,
             scp_interface=args.scp_interface,
             netconf_interface=args.netconf_interface,
+            powershell_interface=args.powershell_interface,
             sftp_interface=args.sftp_interface,
             sftp_handler=args.sftp_handler,
             server_tunnel_interface=args.server_tunnel_interface,

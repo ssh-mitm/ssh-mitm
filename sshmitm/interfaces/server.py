@@ -13,6 +13,7 @@ from paramiko.sftp import CMD_INIT, CMD_VERSION, SFTPError
 
 from sshmitm.authentication import KeyboardInteractiveBridge
 from sshmitm.clients.netconf import NetconfClient
+from sshmitm.clients.powershell import PowerShellClient
 from sshmitm.clients.sftp import SFTPClient
 from sshmitm.exec_handlers import ExecHandlerRegistry
 from sshmitm.modules import SSHMITMBaseModule
@@ -673,6 +674,9 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         elif name.lower() == "netconf":
             self.session.netconf.requested = True
             self.session.netconf_channel = channel
+        elif name.lower() == "powershell":
+            self.session.powershell.requested = True
+            self.session.powershell_channel = channel
         return super().check_channel_subsystem_request(channel, name)
 
     def check_port_forward_request(self, address: str, port: int) -> int:
@@ -906,3 +910,63 @@ class ProxyNetconfServer(paramiko.SubsystemHandler):
             return
         self.session.netconf.client.subsystem_count -= 1
         self.session.netconf.client.close()
+
+
+class ProxyPowerShellServer(paramiko.SubsystemHandler):
+    """SSH subsystem handler for PowerShell remoting (PSRP over SSH).
+
+    Started by paramiko when a client requests the ``powershell`` subsystem
+    (``pwsh -sshs``).  Unlike :class:`ProxyNetconfServer`, the traffic relay is
+    run *synchronously* inside :meth:`start_subsystem`: paramiko closes the
+    channel as soon as ``start_subsystem`` returns, so the relay must block for
+    the whole lifetime of the subsystem.
+    """
+
+    def __init__(  # pylint: disable=too-many-arguments
+        self,
+        channel: paramiko.Channel,
+        name: str,
+        server: ServerInterface,
+        powershell_forwarder: Any,
+        session: "sshmitm.session.Session",
+        *largs: Any,
+        **kwargs: Any,
+    ) -> None:
+        """
+        Initializes the subsystem handler class ProxyPowerShellServer.
+        """
+        super().__init__(channel, name, server)
+        self.session = session
+        self.session.register_session_thread()
+        self.powershell_forwarder = powershell_forwarder
+        del largs, kwargs
+
+    def start_subsystem(
+        self, name: str, transport: paramiko.Transport, channel: paramiko.Channel
+    ) -> None:
+        # name/transport/channel are part of the paramiko handler contract; the
+        # relay works on the session's powershell channel instead.
+        del name, transport, channel
+        with self.session.ssh.client_created:
+            self.session.ssh.client_created.wait_for(
+                lambda: self.session.ssh.client_auth_finished
+            )
+        self.session.powershell.client = PowerShellClient.from_client(
+            self.session.ssh.client
+        )
+        if not self.session.powershell.client:
+            logging.error("no powershell client available")
+            return
+        self.session.powershell.client.subsystem_count += 1
+        try:
+            # Blocking relay: keeps the channel open until either side closes.
+            self.powershell_forwarder(self.session).forward()
+        except Exception:  # pylint: disable=broad-exception-caught
+            logging.exception("failed to relay powershell subsystem")
+
+    def finish_subsystem(self) -> None:
+        super().finish_subsystem()
+        if not self.session.powershell.client:
+            return
+        self.session.powershell.client.subsystem_count -= 1
+        self.session.powershell.client.close()

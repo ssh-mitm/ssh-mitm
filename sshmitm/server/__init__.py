@@ -23,6 +23,10 @@ from sshmitm.forwarders.agent import (
     AgentProxy,
 )
 from sshmitm.forwarders.netconf import NetconfBaseForwarder, NetconfForwarder
+from sshmitm.forwarders.powershell import (
+    PowerShellBaseForwarder,
+    PowerShellForwarder,
+)
 from sshmitm.forwarders.scp import SCPBaseForwarder, SCPForwarder
 from sshmitm.forwarders.sftp import SFTPHandlerBasePlugin, SFTPHandlerPlugin
 from sshmitm.forwarders.ssh import SSHBaseForwarder, SSHForwarder
@@ -33,6 +37,7 @@ from sshmitm.forwarders.tunnel import (
 from sshmitm.interfaces.server import (
     BaseServerInterface,
     ProxyNetconfServer,
+    ProxyPowerShellServer,
     ProxySFTPServer,
     ServerInterface,
 )
@@ -58,6 +63,7 @@ class SSHProxyServer:
         ssh_interface: type[SSHBaseForwarder] = SSHForwarder,
         scp_interface: type[SCPBaseForwarder] = SCPForwarder,
         netconf_interface: type[NetconfBaseForwarder] = NetconfForwarder,
+        powershell_interface: type[PowerShellBaseForwarder] = PowerShellForwarder,
         sftp_interface: type[BaseSFTPServerInterface] = SFTPProxyServerInterface,
         sftp_handler: type[SFTPHandlerBasePlugin] = SFTPHandlerPlugin,
         server_tunnel_interface: type[
@@ -89,6 +95,7 @@ class SSHProxyServer:
         self.ssh_interface: type[SSHBaseForwarder] = ssh_interface
         self.scp_interface: type[SCPBaseForwarder] = scp_interface
         self.netconf_interface: type[NetconfBaseForwarder] = netconf_interface
+        self.powershell_interface: type[PowerShellBaseForwarder] = powershell_interface
         self.sftp_handler: type[SFTPHandlerBasePlugin] = sftp_handler
         self.sftp_interface: type[BaseSFTPServerInterface] = (
             self.sftp_handler.get_interface() or sftp_interface
@@ -298,6 +305,9 @@ class SSHProxyServer:
         transport.set_subsystem_handler(
             "netconf", ProxyNetconfServer, self.netconf_interface, session
         )
+        transport.set_subsystem_handler(
+            "powershell", ProxyPowerShellServer, self.powershell_interface, session
+        )
 
     def create_agent_proxy(self, transport: Transport) -> AgentProxy:
         return AgentProxy(transport)
@@ -307,6 +317,16 @@ class SSHProxyServer:
 
     def create_agent_forwarder(self, session: Session) -> AgentBaseForwarder:
         return self.agent_forwarder(session)
+
+    def _resolve_max_connections(self) -> int:
+        # ``args`` is an instance attribute set in BaseModule.__init__, so it is
+        # not available on the session class itself. Resolve the configured
+        # max-connections value once from the parsed CLI arguments instead.
+        try:
+            session_args, _ = self.session_class.parser().parse_known_args()
+            return int(getattr(session_args, "max_connections", 100))
+        except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+            return 100
 
     def start(self) -> None:
         self._clean_environment()
@@ -348,7 +368,7 @@ class SSHProxyServer:
                     client, addr = sock.accept()
                     remoteaddr = client.getsockname()
                     self._threads = [t for t in self._threads if t.is_alive()]
-                    max_connections = getattr(self.session_class.args, "max_connections", 100)
+                    max_connections = self._resolve_max_connections()
                     if max_connections and len(self._threads) >= max_connections:
                         logging.warning(
                             "max connections reached (%d), rejecting connection from %s",

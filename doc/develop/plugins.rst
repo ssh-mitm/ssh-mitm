@@ -47,6 +47,8 @@ parsing, entry-point discovery, and configuration-file support.
        class SCPForwarder
        class NetconfBaseForwarder
        class NetconfForwarder
+       class PowerShellBaseForwarder
+       class PowerShellForwarder
        class SSHBaseForwarder {
            +handle_client_data(data)
            +handle_server_data(data)
@@ -89,6 +91,8 @@ parsing, entry-point discovery, and configuration-file support.
        SCPBaseForwarder <|-- SCPForwarder
        ExecForwarder <|-- NetconfBaseForwarder
        NetconfBaseForwarder <|-- NetconfForwarder
+       ExecForwarder <|-- PowerShellBaseForwarder
+       PowerShellBaseForwarder <|-- PowerShellForwarder
        ExecForwarder <|-- MoshForwarder
        SSHBaseForwarder <|-- SSHForwarder
        SSHForwarder <|-- SSHMirrorForwarder
@@ -185,6 +189,8 @@ are extending:
      - SCP file-transfer forwarder (``--scp-interface``)
    * - ``sshmitm.NetconfBaseForwarder``
      - NETCONF subsystem forwarder (``--netconf-interface``)
+   * - ``sshmitm.PowerShellBaseForwarder``
+     - PowerShell remoting (PSRP) subsystem forwarder (``--powershell-interface``)
    * - ``sshmitm.SFTPHandlerBasePlugin``
      - SFTP file-transfer handler (``--sftp-handler``)
    * - ``sshmitm.BaseSFTPServerInterface``
@@ -456,6 +462,89 @@ inspect or modify the NETCONF messages in-flight.
 .. code-block:: bash
 
     ssh-mitm server --netconf-interface logging
+
+
+PowerShell Forwarder Plugins
+^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+**Base class:** ``sshmitm.forwarders.powershell.PowerShellForwarder``
+
+**CLI argument:** ``--powershell-interface``
+
+**Entry-point group:** ``sshmitm.PowerShellBaseForwarder``
+
+PowerShell remoting over SSH (PSRP over SSH) is an SSH *subsystem*: the Windows
+client (e.g. ``Enter-PSSession -HostName …``) opens a channel and requests the
+``powershell`` subsystem, which on the remote host starts ``pwsh -sshs``. All
+traffic on that channel is the binary PowerShell Remoting Protocol (PSRP) — a
+bidirectional, framed-by-PowerShell stream that must be relayed verbatim.
+
+Unlike NETCONF, PSRP has no line-oriented framing that SSH-MITM could parse
+safely, so the default implementation performs a transparent byte-for-byte relay.
+
+.. mermaid::
+
+   classDiagram
+       direction LR
+       class ExecForwarder["ExecForwarder"]
+       class PowerShellBaseForwarder["PowerShellBaseForwarder\n«base»"]
+       class PowerShellForwarder["PowerShellForwarder\n«default»"]
+
+       ExecForwarder <|-- PowerShellBaseForwarder
+       PowerShellBaseForwarder <|-- PowerShellForwarder
+
+.. list-table::
+   :header-rows: 1
+   :widths: 45 55
+
+   * - Method
+     - Purpose
+   * - ``handle_client_data(data: bytes) -> bytes``
+     - PSRP bytes from the Windows client (client → ``pwsh``). Return the bytes to forward.
+   * - ``handle_server_data(data: bytes) -> bytes``
+     - PSRP bytes from the remote ``pwsh`` process (``pwsh`` → client). Return the bytes to forward.
+   * - ``handle_error(data: bytes) -> bytes``
+     - Called when the remote side sends data on the stderr stream.
+
+**Prerequisites on the remote host**
+
+The SSH server must have the ``powershell`` subsystem configured, e.g. in
+``/etc/ssh/sshd_config``:
+
+.. code-block:: text
+
+    Subsystem powershell /usr/bin/pwsh -sshs -NoLogo
+
+**Example — log the raw PSRP byte stream:**
+
+.. code-block:: python
+
+    import logging
+    from sshmitm.forwarders.powershell import PowerShellForwarder
+
+    class LoggingPowerShellForwarder(PowerShellForwarder):
+        """Logs the raw PSRP byte stream for debugging"""
+
+        def handle_client_data(self, data: bytes) -> bytes:
+            logging.debug("[PSRP] client→pwsh: %d bytes", len(data))
+            return super().handle_client_data(data)
+
+        def handle_server_data(self, data: bytes) -> bytes:
+            logging.debug("[PSRP] pwsh→client: %d bytes", len(data))
+            return super().handle_server_data(data)
+
+**Registration:**
+
+.. code-block:: toml
+
+    [project.entry-points."sshmitm.PowerShellBaseForwarder"]
+    logging = "mypkg.ps_log:LoggingPowerShellForwarder"
+
+**Usage:**
+
+.. code-block:: bash
+
+    ssh-mitm server --powershell-interface logging
 
 
 SFTP Handler Plugins

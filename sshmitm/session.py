@@ -47,6 +47,7 @@ if TYPE_CHECKING:
 
     import sshmitm
     import sshmitm.clients.netconf
+    import sshmitm.clients.powershell
     import sshmitm.clients.sftp
     import sshmitm.clients.ssh
     import sshmitm.forwarders.scp
@@ -85,6 +86,13 @@ class NetconfState:
     requested: bool = False
     command: bytes = b""
     client: "sshmitm.clients.netconf.NetconfClient | None" = field(default=None)
+    client_ready: threading.Event = field(default_factory=threading.Event)
+
+
+@dataclass
+class PowerShellState:
+    requested: bool = False
+    client: "sshmitm.clients.powershell.PowerShellClient | None" = field(default=None)
     client_ready: threading.Event = field(default_factory=threading.Event)
 
 
@@ -193,6 +201,7 @@ class Session(BaseSession):
         self.scp = SCPState()
         self.sftp = SFTPState()
         self.netconf = NetconfState()
+        self.powershell = PowerShellState()
 
         self.auth = AuthState()
         self.remote = RemoteState(socket_address=remoteaddr)
@@ -248,6 +257,17 @@ class Session(BaseSession):
             self._active_channels.pop("netconf", None)
         else:
             self._active_channels["netconf"] = value
+
+    @property
+    def powershell_channel(self) -> paramiko.Channel | None:
+        return self._active_channels.get("powershell")
+
+    @powershell_channel.setter
+    def powershell_channel(self, value: paramiko.Channel | None) -> None:
+        if value is None:
+            self._active_channels.pop("powershell", None)
+        else:
+            self._active_channels["powershell"] = value
 
     @property
     def running(self) -> bool:
@@ -355,6 +375,7 @@ class Session(BaseSession):
         if self.ssh.client:
             self.sftp.client_ready.set()
             self.netconf.client_ready.set()
+            self.powershell.client_ready.set()
             return True
 
         # Connect method start
@@ -388,12 +409,14 @@ class Session(BaseSession):
             and not self.ssh.requested
             and not self.sftp.requested
             and not self.netconf.requested
+            and not self.powershell.requested
         ) and self.transport.is_active():
             self.transport.close()
             return False
 
         self.sftp.client_ready.set()
         self.netconf.client_ready.set()
+        self.powershell.client_ready.set()
         return True
 
     def start(self) -> bool:

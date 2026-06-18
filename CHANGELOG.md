@@ -96,6 +96,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   installs a fully tested set of dependency versions suitable for production
   use.
 
+- **PowerShell remoting (PSRP over SSH) interception**: SSH-MITM now intercepts
+  PowerShell remoting sessions that use the SSH transport (`Enter-PSSession
+  -HostName …`). The binary PSRP stream is relayed transparently between the
+  client and the remote `pwsh -sshs` process. A new `--powershell-interface`
+  CLI argument selects the forwarder plugin; the default is
+  `PowerShellForwarder`. Custom plugins can subclass it and override
+  `handle_client_data` / `handle_server_data` to inspect or modify the raw
+  stream. Includes the new `sshmitm.clients.powershell.PowerShellClient` and
+  `sshmitm.forwarders.powershell.PowerShellBaseForwarder` base classes.
+
 - **Keyboard-interactive responses are now logged**: Each challenge round is
   captured as a structured log event (`auth_kbdint_response`) containing the
   prompt texts and the client's answers. The final outcome is logged separately

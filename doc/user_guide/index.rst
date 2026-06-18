@@ -48,3 +48,4 @@ Contents
    transparent
    advanced-usage
    mosh
+   powershell
