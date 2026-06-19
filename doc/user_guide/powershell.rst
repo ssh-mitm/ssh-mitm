@@ -30,7 +30,8 @@ PSRP wire format over SSH
 
 PSRP over SSH does **not** use a raw binary stream.  Instead, each logical
 message is wrapped in an XML envelope and the binary payload is base64-encoded
-(MS-PSRP specification §2.2.4, "SSH transport"):
+(`MS-PSRP specification §2.2.4, "SSH transport"
+<https://docs.microsoft.com/en-us/openspecs/windows_protocols/ms-psrp/>`_):
 
 .. code-block:: xml
 
