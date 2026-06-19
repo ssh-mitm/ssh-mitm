@@ -92,6 +92,7 @@ class NetconfState:
 @dataclass
 class PowerShellState:
     requested: bool = False
+    command: bytes = b""
     client: "sshmitm.clients.powershell.PowerShellClient | None" = field(default=None)
     client_ready: threading.Event = field(default_factory=threading.Event)
 

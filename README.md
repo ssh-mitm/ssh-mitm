@@ -130,6 +130,7 @@ and inject commands independently, without affecting the original connection.
 | [FIDO2 token phishing](https://docs.ssh-mitm.at/user_guide/trivialauth.html) | Intercept hardware token authentication via the trivial auth attack ([OpenSSH info](https://www.openssh.com/agent-restrict.html)) |
 | [Authentication interception](https://docs.ssh-mitm.at/user_guide/authentication.html) | Capture passwords; accept the same public key as the target server and fall back to password auth automatically |
 | [MOSH session monitoring](https://docs.ssh-mitm.at/user_guide/mosh.html) | Intercept and decrypt MOSH (Mobile Shell) UDP sessions; view the live terminal via a built-in VT100/ANSI emulator |
+| [PowerShell remoting (PSRP)](https://docs.ssh-mitm.at/user_guide/powershell.html) | Intercept PowerShell remoting sessions over SSH; log commands, output, errors, and state transitions; write per-session transcripts |
 | [Client auditing](https://docs.ssh-mitm.at/vulnerabilities/index.html) | Identify known vulnerabilities in connecting SSH clients |
 | [Plugin support](https://docs.ssh-mitm.at/get_started/plugin_browser.html) | Extend and customize all interception behavior with plugins |
 

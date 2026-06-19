@@ -59,6 +59,14 @@ Features
       Intercept hardware token authentication via the trivial
       authentication attack (CVE-2021-36367, CVE-2021-36368).
 
+   .. grid-item-card:: :fab:`windows` PowerShell Remoting (PSRP)
+      :link: user_guide/powershell
+      :link-type: doc
+
+      Intercept PowerShell remoting sessions over SSH. Log executed commands,
+      output, errors, and state transitions. Write human-readable per-session
+      transcript files.
+
    .. grid-item-card:: :fas:`graduation-cap` Interactive Tutorial
       :link: get_started/tutorial
       :link-type: doc
