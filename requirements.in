@@ -2,7 +2,7 @@ appimage
 argcomplete
 colored
 packaging
-cryptography>=38.0.0
+cryptography>=48.0.1
 paramiko>=4.0,<6.0
 protobuf
 lxml
