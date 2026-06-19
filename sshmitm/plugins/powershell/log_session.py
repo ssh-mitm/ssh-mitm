@@ -163,8 +163,17 @@ def _int_attr(root: "etree._Element", tag: str, attr: str) -> int | None:
 
 
 def _all_strings(root: "etree._Element") -> list[str]:
-    """Collect text of all bare <S> elements."""
-    return [el.text for el in root.iter() if etree.QName(el.tag).localname == "S" and el.text]
+    """Collect text of all scalar leaf elements per MS-PSRP CLIXML schema.
+
+    The CLIXML namespace is http://schemas.microsoft.com/powershell/2004/04;
+    we compare only the local name to stay namespace-agnostic.
+    Note: Double is serialised as <Db>, not <Dbl>.
+    """
+    _SCALAR_TAGS = frozenset({
+        "S", "I8", "I16", "I32", "I64", "U8", "U16", "U32", "U64",
+        "Db", "Dec", "Sg", "B", "C", "SB", "By", "DT", "TS",
+    })
+    return [el.text for el in root.iter() if etree.QName(el.tag).localname in _SCALAR_TAGS and el.text]
 
 
 class PSRPLoggingForwarder(PowerShellForwarder):
