@@ -106,6 +106,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   stream. Includes the new `sshmitm.clients.powershell.PowerShellClient` and
   `sshmitm.forwarders.powershell.PowerShellBaseForwarder` base classes.
 
+- **PSRP session logging plugin** (`--powershell-interface log-session`):
+  The new `PSRPLoggingForwarder` parses the PSRP-over-SSH wire format on the
+  fly (MS-PSRP §2.2.4) and logs every protocol message — executed commands,
+  pipeline output, errors, warnings, and runspace/pipeline state transitions.
+  The stream is forwarded to the server unchanged. An optional
+  `--psrp-transcript-dir` argument writes a human-readable per-session
+  transcript file (one line per message). XML parsing uses `lxml` with all
+  dangerous features disabled (no entity expansion, no DTD, no network access)
+  to prevent XXE attacks.
+
 - **Keyboard-interactive responses are now logged**: Each challenge round is
   captured as a structured log event (`auth_kbdint_response`) containing the
   prompt texts and the client's answers. The final outcome is logged separately

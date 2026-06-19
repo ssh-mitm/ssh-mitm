@@ -436,10 +436,10 @@ See :doc:`../develop/plugins` for the full plugin development guide.
 Limitations
 ===========
 
-* **PipelineOutput detail** — the ``log-session`` plugin extracts plain-string
-  values from pipeline output.  Rich objects (integers, dates, custom types)
-  appear in the transcript only as their serialised CLIXML string
-  representation, not with full property names and values.
+* **PipelineOutput detail** — the ``log-session`` plugin extracts all CLIXML
+  scalar values (strings, integers, doubles, booleans, dates, …) from pipeline
+  output.  The values are joined with spaces; property names are not included.
+  Deeply nested or binary objects may not produce human-readable output.
 
 * **Certificate-based authentication** — if the client is configured to use
   SSH certificate authentication, SSH-MITM can intercept the session only when
