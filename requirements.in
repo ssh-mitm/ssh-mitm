@@ -5,6 +5,8 @@ packaging
 cryptography>=38.0.0
 paramiko>=4.0,<6.0
 protobuf
+lxml
+psrpcore
 pyte
 python-json-logger
 pytz

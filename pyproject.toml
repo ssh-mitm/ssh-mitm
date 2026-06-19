@@ -81,6 +81,7 @@ base = "sshmitm.forwarders.netconf:NetconfForwarder"
 
 [project.entry-points."sshmitm.PowerShellBaseForwarder"]
 base = "sshmitm.forwarders.powershell:PowerShellForwarder"
+log-session = "sshmitm.plugins.powershell.log_session:PSRPLoggingForwarder"
 
 [project.entry-points."sshmitm.BaseSFTPServerInterface"]
 base = "sshmitm.interfaces.sftp:SFTPProxyServerInterface"
