@@ -479,8 +479,9 @@ client (e.g. ``Enter-PSSession -HostName …``) opens a channel and requests the
 traffic on that channel is the binary PowerShell Remoting Protocol (PSRP) — a
 bidirectional, framed-by-PowerShell stream that must be relayed verbatim.
 
-Unlike NETCONF, PSRP has no line-oriented framing that SSH-MITM could parse
-safely, so the default implementation performs a transparent byte-for-byte relay.
+The default ``log-session`` plugin parses the PSRP wire format on the fly
+and logs commands, output, errors, and state transitions without modifying the
+stream.  See :doc:`../user_guide/powershell` for usage and transcript format.
 
 .. mermaid::
 
@@ -545,6 +546,64 @@ The SSH server must have the ``powershell`` subsystem configured, e.g. in
 .. code-block:: bash
 
     ssh-mitm server --powershell-interface logging
+
+**Example — capture the raw wire stream to files for offline analysis:**
+
+The ``<Data>…</Data>`` XML stream can be captured to binary files and decoded
+later with the ``psrpcore`` library:
+
+.. code-block:: python
+
+    from sshmitm.forwarders.powershell import PowerShellForwarder
+
+    class RawCapture(PowerShellForwarder):
+        def handle_client_data(self, data: bytes) -> bytes:
+            with open("/tmp/psrp-client.bin", "ab") as fh:
+                fh.write(data)
+            return data
+
+        def handle_server_data(self, data: bytes) -> bytes:
+            with open("/tmp/psrp-server.bin", "ab") as fh:
+                fh.write(data)
+            return data
+
+Decode the captured files offline:
+
+.. code-block:: python
+
+    import base64, re, struct
+    from psrpcore._payload import unpack_fragment, unpack_message
+
+    DATA_RE = re.compile(rb"<Data[^>]*>([^<]*)</Data>")
+    HEADER = 21
+    fragments = {}
+
+    for match in DATA_RE.finditer(open("/tmp/psrp-server.bin", "rb").read()):
+        raw = bytearray(base64.b64decode(match.group(1)))
+        if len(raw) < HEADER:
+            continue
+        blob_len = struct.unpack_from(">I", raw, 17)[0]
+        frag = unpack_fragment(raw[:HEADER + blob_len])
+        if frag.start:
+            fragments[frag.object_id] = bytearray()
+        if frag.object_id in fragments:
+            fragments[frag.object_id].extend(frag.data)
+        if frag.end and frag.object_id in fragments:
+            msg = unpack_message(fragments.pop(frag.object_id))
+            print(msg.message_type.name, bytes(msg.data)[:120])
+
+**Registration:**
+
+.. code-block:: toml
+
+    [project.entry-points."sshmitm.PowerShellBaseForwarder"]
+    raw-capture = "mypkg.ps_capture:RawCapture"
+
+**Usage:**
+
+.. code-block:: bash
+
+    ssh-mitm server --powershell-interface raw-capture
 
 
 SFTP Handler Plugins

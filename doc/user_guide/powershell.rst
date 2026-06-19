@@ -348,72 +348,13 @@ When ``--session-log-dir`` is already configured, the transcript is written
 there automatically even without ``--psrp-transcript-dir``.
 
 
-Extending the forwarder
-========================
+Writing a custom forwarder plugin
+==================================
 
 To inspect or modify the raw PSRP stream, subclass
-:class:`~sshmitm.forwarders.powershell.PowerShellForwarder` and override the
-data hooks.  ``handle_client_data`` and ``handle_server_data`` receive every
-chunk before it is forwarded; the return value is what gets sent on.
-
-**Example — capture the raw wire stream to files for offline analysis:**
-
-.. code-block:: python
-
-    import os
-    from sshmitm.forwarders.powershell import PowerShellForwarder
-
-    class RawCapture(PowerShellForwarder):
-        def handle_client_data(self, data: bytes) -> bytes:
-            with open("/tmp/psrp-client.bin", "ab") as fh:
-                fh.write(data)
-            return data
-
-        def handle_server_data(self, data: bytes) -> bytes:
-            with open("/tmp/psrp-server.bin", "ab") as fh:
-                fh.write(data)
-            return data
-
-The captured files contain the raw ``<Data>…</Data>`` XML stream and can be
-decoded offline:
-
-.. code-block:: python
-
-    import base64, re, struct
-    from psrpcore._payload import unpack_fragment, unpack_message
-
-    DATA_RE = re.compile(rb"<Data[^>]*>([^<]*)</Data>")
-    HEADER = 21
-    fragments = {}
-
-    for match in DATA_RE.finditer(open("/tmp/psrp-server.bin", "rb").read()):
-        raw = bytearray(base64.b64decode(match.group(1)))
-        if len(raw) < HEADER:
-            continue
-        blob_len = struct.unpack_from(">I", raw, 17)[0]
-        frag = unpack_fragment(raw[:HEADER + blob_len])
-        if frag.start:
-            fragments[frag.object_id] = bytearray()
-        if frag.object_id in fragments:
-            fragments[frag.object_id].extend(frag.data)
-        if frag.end and frag.object_id in fragments:
-            msg = unpack_message(fragments.pop(frag.object_id))
-            print(msg.message_type.name, bytes(msg.data)[:120])
-
-Register the plugin in your ``pyproject.toml``:
-
-.. code-block:: toml
-
-    [project.entry-points."sshmitm.PowerShellBaseForwarder"]
-    raw-capture = "mypkg.ps_capture:RawCapture"
-
-Activate it with:
-
-.. code-block:: bash
-
-    ssh-mitm server --remote-host <target> --powershell-interface raw-capture
-
-See :doc:`../develop/plugins` for the full plugin development guide.
+:class:`~sshmitm.forwarders.powershell.PowerShellForwarder`.
+See :doc:`../develop/plugins` for examples, the full API reference, and
+registration instructions.
 
 
 Limitations
