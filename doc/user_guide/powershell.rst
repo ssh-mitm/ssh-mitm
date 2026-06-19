@@ -105,82 +105,55 @@ Common ``MessageType`` values:
      - ``PipelineState``
      - ``<I32 N="PipelineState">N</I32>`` where N: 4=Completed, 6=Failed
 
-Analysing the raw stream with SSH-MITM
----------------------------------------
+Analysing sessions with SSH-MITM
+----------------------------------
 
-SSH-MITM makes it straightforward to capture and inspect the live PSRP stream.
+The ``log-session`` plugin is active by default.  It parses the PSRP protocol
+on the fly and makes two types of output available: a human-readable transcript
+file and a structured JSON log.
 
-**Option 1 — live structured log (JSON)**
+**Human-readable transcript file (recommended)**
 
-Start SSH-MITM with the ``log-session`` plugin.  Every parsed PSRP message
-appears as one JSON line in the log:
-
-.. code-block:: bash
-
-    ssh-mitm server --remote-host <target> --powershell-interface log-session
-
-Filter with :command:`jq` while the session is running:
-
-.. code-block:: bash
-
-    tail -f sshmitm.log | jq 'select(.event == "psrp_message")'
-
-**Option 2 — human-readable transcript file**
+Pass ``--psrp-transcript-dir`` to write one plain-text file per session:
 
 .. code-block:: bash
 
     ssh-mitm server --remote-host <target> \
-        --powershell-interface log-session \
         --psrp-transcript-dir /tmp/psrp-transcripts/
 
-See :ref:`logging-transcripts` below for the file format.
+Each file is named ``<session-id>.log``.  See :ref:`logging-transcripts` below
+for the full format description.
 
-**Option 3 — capture raw bytes for offline analysis**
+**Structured JSON log**
 
-Write a minimal plugin that saves the raw ``<Data>…</Data>`` XML stream to a
-file.  The ``handle_client_data`` and ``handle_server_data`` hooks receive
-every chunk before it is forwarded:
+When SSH-MITM's output is piped, it automatically switches to JSON format.
+Pipe directly to :command:`jq` to filter live:
 
-.. code-block:: python
+.. code-block:: bash
 
-    import os
-    from sshmitm.forwarders.powershell import PowerShellForwarder
+    ssh-mitm server --remote-host <target> \
+        | jq 'select(.event == "psrp_message")'
 
-    class RawCapture(PowerShellForwarder):
-        def handle_client_data(self, data: bytes) -> bytes:
-            with open("/tmp/psrp-client.bin", "ab") as fh:
-                fh.write(data)
-            return data
+To keep a log file and follow it at the same time:
 
-        def handle_server_data(self, data: bytes) -> bytes:
-            with open("/tmp/psrp-server.bin", "ab") as fh:
-                fh.write(data)
-            return data
+.. code-block:: bash
 
-Decode the captured data offline with Python:
+    # Terminal 1 — start server, write JSON log
+    ssh-mitm server --remote-host <target> > sshmitm.log
 
-.. code-block:: python
+    # Terminal 2 — follow and filter
+    tail -f sshmitm.log | jq 'select(.event == "psrp_message")'
 
-    import base64, re, struct
-    from psrpcore._payload import unpack_fragment, unpack_message
+Useful :command:`jq` queries:
 
-    DATA_RE = re.compile(rb"<Data[^>]*>([^<]*)</Data>")
-    HEADER = 21
-    fragments = {}
+.. code-block:: bash
 
-    for match in DATA_RE.finditer(open("/tmp/psrp-server.bin", "rb").read()):
-        raw = bytearray(base64.b64decode(match.group(1)))
-        if len(raw) < HEADER:
-            continue
-        blob_len = struct.unpack_from(">I", raw, 17)[0]
-        frag = unpack_fragment(raw[:HEADER + blob_len])
-        if frag.start:
-            fragments[frag.object_id] = bytearray()
-        if frag.object_id in fragments:
-            fragments[frag.object_id].extend(frag.data)
-        if frag.end and frag.object_id in fragments:
-            msg = unpack_message(fragments.pop(frag.object_id))
-            print(msg.message_type.name, bytes(msg.data)[:120])
+    # Show all executed commands
+    jq -r 'select(.message_type == "CreatePipeline")
+            | "\(.timestamp)  \(.commands[]?)"' sshmitm.log
+
+    # Show all errors
+    jq 'select(.message_type == "ErrorRecord")' sshmitm.log
 
 
 Prerequisites on the target host
@@ -337,21 +310,15 @@ SSH-MITM logs the credentials as soon as authentication succeeds:
 Logging and transcripts
 ========================
 
-The built-in ``log-session`` plugin parses the PSRP protocol and logs every
-command, output, error, and state-change message:
+The ``log-session`` plugin is active by default.  It parses the PSRP protocol
+and logs every command, output, error, and state-change message.
 
-.. code-block:: bash
-
-    ssh-mitm server --remote-host <target> \
-        --powershell-interface log-session
-
-To also write a human-readable transcript file for each session, add
+To write a human-readable transcript file for each session, add
 ``--psrp-transcript-dir``:
 
 .. code-block:: bash
 
     ssh-mitm server --remote-host <target> \
-        --powershell-interface log-session \
         --psrp-transcript-dir /tmp/psrp-transcripts/
 
 Each session produces one file named ``<session-id>.log``:
@@ -380,55 +347,71 @@ Each session produces one file named ``<session-id>.log``:
 When ``--session-log-dir`` is already configured, the transcript is written
 there automatically even without ``--psrp-transcript-dir``.
 
-The structured JSON log (from SSH-MITM's main logger) contains the same events
-with additional machine-readable fields (``event``, ``commands``, ``state``, …)
-and can be queried with :command:`jq`:
-
-.. code-block:: bash
-
-    # Show all executed commands
-    jq -r 'select(.message_type == "CreatePipeline")
-            | "\(.timestamp)  \(.commands[]?)"' sshmitm.log
-
-    # Show all errors
-    jq 'select(.message_type == "ErrorRecord")' sshmitm.log
-
 
 Extending the forwarder
 ========================
 
-The transparent relay is the default behaviour.  To inspect or modify the PSRP
-stream, subclass :class:`~sshmitm.forwarders.powershell.PowerShellForwarder`
-and override the data hooks:
+To inspect or modify the raw PSRP stream, subclass
+:class:`~sshmitm.forwarders.powershell.PowerShellForwarder` and override the
+data hooks.  ``handle_client_data`` and ``handle_server_data`` receive every
+chunk before it is forwarded; the return value is what gets sent on.
+
+**Example — capture the raw wire stream to files for offline analysis:**
 
 .. code-block:: python
 
-    import logging
+    import os
     from sshmitm.forwarders.powershell import PowerShellForwarder
 
-    class LoggingPowerShellForwarder(PowerShellForwarder):
-        """Logs the size of every PSRP chunk in both directions."""
-
+    class RawCapture(PowerShellForwarder):
         def handle_client_data(self, data: bytes) -> bytes:
-            logging.info("[PSRP] client→pwsh %d bytes", len(data))
+            with open("/tmp/psrp-client.bin", "ab") as fh:
+                fh.write(data)
             return data
 
         def handle_server_data(self, data: bytes) -> bytes:
-            logging.info("[PSRP] pwsh→client %d bytes", len(data))
+            with open("/tmp/psrp-server.bin", "ab") as fh:
+                fh.write(data)
             return data
+
+The captured files contain the raw ``<Data>…</Data>`` XML stream and can be
+decoded offline:
+
+.. code-block:: python
+
+    import base64, re, struct
+    from psrpcore._payload import unpack_fragment, unpack_message
+
+    DATA_RE = re.compile(rb"<Data[^>]*>([^<]*)</Data>")
+    HEADER = 21
+    fragments = {}
+
+    for match in DATA_RE.finditer(open("/tmp/psrp-server.bin", "rb").read()):
+        raw = bytearray(base64.b64decode(match.group(1)))
+        if len(raw) < HEADER:
+            continue
+        blob_len = struct.unpack_from(">I", raw, 17)[0]
+        frag = unpack_fragment(raw[:HEADER + blob_len])
+        if frag.start:
+            fragments[frag.object_id] = bytearray()
+        if frag.object_id in fragments:
+            fragments[frag.object_id].extend(frag.data)
+        if frag.end and frag.object_id in fragments:
+            msg = unpack_message(fragments.pop(frag.object_id))
+            print(msg.message_type.name, bytes(msg.data)[:120])
 
 Register the plugin in your ``pyproject.toml``:
 
 .. code-block:: toml
 
     [project.entry-points."sshmitm.PowerShellBaseForwarder"]
-    logging = "mypkg.ps_log:LoggingPowerShellForwarder"
+    raw-capture = "mypkg.ps_capture:RawCapture"
 
 Activate it with:
 
 .. code-block:: bash
 
-    ssh-mitm server --remote-host <target> --powershell-interface logging
+    ssh-mitm server --remote-host <target> --powershell-interface raw-capture
 
 See :doc:`../develop/plugins` for the full plugin development guide.
 
