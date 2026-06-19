@@ -20,14 +20,166 @@ server must have this subsystem registered in ``/etc/ssh/sshd_config``:
 
     Subsystem powershell /usr/bin/pwsh -sshs -NoLogo
 
-Once the subsystem is granted, both sides exchange binary PSRP frames over the
-SSH channel for the full lifetime of the session.  PSRP is a proprietary
-Microsoft binary protocol — SSH-MITM relays it byte-for-byte without parsing.
+Once the subsystem is granted, both sides exchange PSRP data over the SSH
+channel for the full lifetime of the session.
 
-Unlike NETCONF or SFTP, PSRP has no line-oriented framing, so SSH-MITM cannot
-safely parse individual messages in the default forwarder.  All traffic is
-forwarded transparently; custom forwarder plugins can hook into the raw stream
-(see :doc:`../develop/plugins`).
+.. _psrp-protocol:
+
+PSRP wire format over SSH
+--------------------------
+
+PSRP over SSH does **not** use a raw binary stream.  Instead, each logical
+message is wrapped in an XML envelope and the binary payload is base64-encoded
+(MS-PSRP specification §2.2.4, "SSH transport"):
+
+.. code-block:: xml
+
+    <Data Stream='Default' PSGuid='00000000-0000-0000-0000-000000000000'>
+        AAAAAAAAAAE...BASE64...
+    </Data>
+
+Each ``<Data>`` element contains exactly one **PSRP fragment** encoded in
+base64.  A fragment has the following 21-byte binary header followed by a
+variable-length blob:
+
+.. code-block:: none
+
+    Offset  Size  Field        Description
+    ------  ----  -----------  ------------------------------------------
+         0     8  ObjectId     uint64 big-endian — groups fragments into
+                               one logical message
+         8     8  FragmentId   uint64 big-endian — sequence number within
+                               the object
+        16     1  Flags        bit 0 = start fragment; bit 1 = end fragment
+        17     4  BlobLength   uint32 big-endian — length of the blob below
+        21     N  Blob         raw bytes of this fragment's payload
+
+Fragments with the same ``ObjectId`` are concatenated in order.  When
+``Flags & 0x01`` (start) and ``Flags & 0x02`` (end) are both set on a single
+fragment, that fragment is a complete, self-contained message.
+
+The reassembled blob forms a **PSRP message** with a 40-byte header:
+
+.. code-block:: none
+
+    Offset  Size  Field        Description
+    ------  ----  -----------  ------------------------------------------
+         0     4  Destination  uint32 little-endian (1 = client, 2 = server)
+         4     4  MessageType  uint32 little-endian (see table below)
+         8    16  RPID         UUID (runspace pool ID)
+        24    16  PID          UUID (pipeline ID, or all-zeros)
+        40     *  MessageData  CLIXML (UTF-8 XML, optional BOM)
+
+Common ``MessageType`` values:
+
+.. list-table::
+   :header-rows: 1
+   :widths: 10 35 55
+
+   * - Code
+     - Name
+     - Content
+   * - 0x00010002
+     - ``SessionCapability``
+     - Protocol version negotiation
+   * - 0x00010004
+     - ``InitRunspacePool``
+     - Pool parameters (min/max threads, ApartmentState, …)
+   * - 0x00010007
+     - ``RunspacePoolState``
+     - ``<I32 N="RunspaceState">N</I32>`` where N: 0=BeforeOpen … 2=Opened … 4=Closed
+   * - 0x00021006
+     - ``CreatePipeline``
+     - ``<S N="Cmd">command text</S>`` inside a nested CLIXML structure
+   * - 0x00041002
+     - ``PipelineOutput``
+     - Serialised result objects in CLIXML
+   * - 0x00041007
+     - ``ErrorRecord``
+     - ``<S N="Message">…</S>`` and stack-trace fields
+   * - 0x00041008
+     - ``WarningRecord``
+     - Plain string
+   * - 0x00041009
+     - ``PipelineState``
+     - ``<I32 N="PipelineState">N</I32>`` where N: 4=Completed, 6=Failed
+
+Analysing the raw stream with SSH-MITM
+---------------------------------------
+
+SSH-MITM makes it straightforward to capture and inspect the live PSRP stream.
+
+**Option 1 — live structured log (JSON)**
+
+Start SSH-MITM with the ``log-session`` plugin.  Every parsed PSRP message
+appears as one JSON line in the log:
+
+.. code-block:: bash
+
+    ssh-mitm server --remote-host <target> --powershell-interface log-session
+
+Filter with :command:`jq` while the session is running:
+
+.. code-block:: bash
+
+    tail -f sshmitm.log | jq 'select(.event == "psrp_message")'
+
+**Option 2 — human-readable transcript file**
+
+.. code-block:: bash
+
+    ssh-mitm server --remote-host <target> \
+        --powershell-interface log-session \
+        --psrp-transcript-dir /tmp/psrp-transcripts/
+
+See :ref:`logging-transcripts` below for the file format.
+
+**Option 3 — capture raw bytes for offline analysis**
+
+Write a minimal plugin that saves the raw ``<Data>…</Data>`` XML stream to a
+file.  The ``handle_client_data`` and ``handle_server_data`` hooks receive
+every chunk before it is forwarded:
+
+.. code-block:: python
+
+    import os
+    from sshmitm.forwarders.powershell import PowerShellForwarder
+
+    class RawCapture(PowerShellForwarder):
+        def handle_client_data(self, data: bytes) -> bytes:
+            with open("/tmp/psrp-client.bin", "ab") as fh:
+                fh.write(data)
+            return data
+
+        def handle_server_data(self, data: bytes) -> bytes:
+            with open("/tmp/psrp-server.bin", "ab") as fh:
+                fh.write(data)
+            return data
+
+Decode the captured data offline with Python:
+
+.. code-block:: python
+
+    import base64, re, struct
+    from psrpcore._payload import unpack_fragment, unpack_message
+
+    DATA_RE = re.compile(rb"<Data[^>]*>([^<]*)</Data>")
+    HEADER = 21
+    fragments = {}
+
+    for match in DATA_RE.finditer(open("/tmp/psrp-server.bin", "rb").read()):
+        raw = bytearray(base64.b64decode(match.group(1)))
+        if len(raw) < HEADER:
+            continue
+        blob_len = struct.unpack_from(">I", raw, 17)[0]
+        frag = unpack_fragment(raw[:HEADER + blob_len])
+        if frag.start:
+            fragments[frag.object_id] = bytearray()
+        if frag.object_id in fragments:
+            fragments[frag.object_id].extend(frag.data)
+        if frag.end and frag.object_id in fragments:
+            msg = unpack_message(fragments.pop(frag.object_id))
+            print(msg.message_type.name, bytes(msg.data)[:120])
 
 
 Prerequisites on the target host
@@ -179,6 +331,68 @@ SSH-MITM logs the credentials as soon as authentication succeeds:
     DEBUG    powershell subsystem relay finished
 
 
+.. _logging-transcripts:
+
+Logging and transcripts
+========================
+
+The built-in ``log-session`` plugin parses the PSRP protocol and logs every
+command, output, error, and state-change message:
+
+.. code-block:: bash
+
+    ssh-mitm server --remote-host <target> \
+        --powershell-interface log-session
+
+To also write a human-readable transcript file for each session, add
+``--psrp-transcript-dir``:
+
+.. code-block:: bash
+
+    ssh-mitm server --remote-host <target> \
+        --powershell-interface log-session \
+        --psrp-transcript-dir /tmp/psrp-transcripts/
+
+Each session produces one file named ``<session-id>.log``:
+
+.. code-block:: none
+   :class: no-copybutton
+
+    # PSRP transcript  session=f93cc784-7868-4f52-bfcb-82721024774f
+    # started=2026-06-19T05:25:13.019806+00:00
+    # timestamp                   direction      type                  detail
+    #----------------------------------------------------------------------------------------------------
+      2026-06-19T05:25:13.022Z  client→server  SessionCapability
+      2026-06-19T05:25:13.324Z  server→client  RunspacePoolState     Opened
+      2026-06-19T05:25:14.837Z  client→server  CreatePipeline        Get-Process | Sort-Object | Select-Object
+      2026-06-19T05:25:15.138Z  server→client  PipelineOutput        codium
+      2026-06-19T05:25:15.139Z  server→client  PipelineOutput        gnome-shell
+      2026-06-19T05:25:15.139Z  server→client  PipelineState         Completed
+      2026-06-19T05:25:16.247Z  client→server  CreatePipeline        Write-Error 'Kritischer Fehler'
+      2026-06-19T05:25:16.349Z  server→client  ErrorRecord           Kritischer Fehler
+      2026-06-19T05:25:16.349Z  server→client  WarningRecord         Warnung: Ressource knapp
+      2026-06-19T05:25:16.349Z  server→client  PipelineOutput        Alles OK
+      2026-06-19T05:25:16.349Z  server→client  PipelineState         Completed
+      2026-06-19T05:25:16.752Z  server→client  RunspacePoolState     Closed
+    # ended=2026-06-19T05:25:16.853269+00:00
+
+When ``--session-log-dir`` is already configured, the transcript is written
+there automatically even without ``--psrp-transcript-dir``.
+
+The structured JSON log (from SSH-MITM's main logger) contains the same events
+with additional machine-readable fields (``event``, ``commands``, ``state``, …)
+and can be queried with :command:`jq`:
+
+.. code-block:: bash
+
+    # Show all executed commands
+    jq -r 'select(.message_type == "CreatePipeline")
+            | "\(.timestamp)  \(.commands[]?)"' sshmitm.log
+
+    # Show all errors
+    jq 'select(.message_type == "ErrorRecord")' sshmitm.log
+
+
 Extending the forwarder
 ========================
 
@@ -221,9 +435,10 @@ See :doc:`../develop/plugins` for the full plugin development guide.
 Limitations
 ===========
 
-* **PSRP is opaque** — SSH-MITM relays the binary PSRP stream verbatim.  The
-  default forwarder does not parse individual PowerShell commands or output.
-  A plugin can capture the raw bytes for offline analysis.
+* **PipelineOutput detail** — the ``log-session`` plugin extracts plain-string
+  values from pipeline output.  Rich objects (integers, dates, custom types)
+  appear in the transcript only as their serialised CLIXML string
+  representation, not with full property names and values.
 
 * **Certificate-based authentication** — if the client is configured to use
   SSH certificate authentication, SSH-MITM can intercept the session only when
