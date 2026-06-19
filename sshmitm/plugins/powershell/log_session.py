@@ -22,9 +22,11 @@ Each message starts with a 40-byte header followed by CLIXML.
 
 import base64
 import logging
+import os
 import re
 import struct
-from typing import TYPE_CHECKING, Generator
+from datetime import datetime, timezone
+from typing import IO, TYPE_CHECKING, Generator
 
 from lxml import etree
 from psrpcore._payload import Message, unpack_fragment, unpack_message
@@ -85,6 +87,10 @@ _INFO_TYPES = frozenset({
     PSRPMessageType.InformationRecord,
 })
 
+# Transcript column widths for human-readable output.
+_COL_DIR = 13    # "client→server" / "server→client"
+_COL_TYPE = 20   # message type name
+
 
 class _PSRPStreamParser:
     """Reassembles PSRP messages from the SSH <Data>BASE64</Data> stream."""
@@ -126,10 +132,9 @@ class _PSRPStreamParser:
 
 
 def _parse_clixml(xml_data: bytes) -> "etree._Element | None":
-    """Parse CLIXML safely. Returns None on any parse error."""
+    """Parse CLIXML safely with lxml. Returns None on any parse error."""
     try:
-        # Strip optional UTF-8 BOM before parsing.
-        payload = xml_data.lstrip(b"\xef\xbb\xbf")
+        payload = xml_data.lstrip(b"\xef\xbb\xbf")  # strip optional UTF-8 BOM
         return etree.fromstring(payload, parser=_XML_PARSER)
     except etree.XMLSyntaxError:
         return None
@@ -158,22 +163,76 @@ def _int_attr(root: "etree._Element", tag: str, attr: str) -> int | None:
 
 
 def _all_strings(root: "etree._Element") -> list[str]:
-    """Collect text of all bare <S> elements (no N attribute required)."""
+    """Collect text of all bare <S> elements."""
     return [el.text for el in root.iter() if etree.QName(el.tag).localname == "S" and el.text]
 
 
 class PSRPLoggingForwarder(PowerShellForwarder):
     """Logs PSRP messages (commands, output, errors) while relaying the stream unchanged.
 
+    Optionally writes a human-readable per-session transcript file.
+
     Activate with::
 
         ssh-mitm server --remote-host <target> --powershell-interface log-session
+
+    To save a transcript::
+
+        ssh-mitm server --remote-host <target> --powershell-interface log-session \\
+            --psrp-transcript-dir /tmp/psrp-transcripts/
     """
+
+    @classmethod
+    def parser_arguments(cls) -> None:
+        plugin_group = cls.argument_group()
+        plugin_group.add_argument(
+            "--psrp-transcript-dir",
+            dest="psrp_transcript_dir",
+            default=None,
+            metavar="DIR",
+            help=(
+                "Write a human-readable PSRP transcript file for each session into DIR. "
+                "The filename is <session-id>.log.  "
+                "Falls back to the session log directory when not set."
+            ),
+        )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
         super().__init__(session)
         self._client_parser = _PSRPStreamParser()
         self._server_parser = _PSRPStreamParser()
+        self._transcript: IO[str] | None = self._open_transcript()
+
+    def _open_transcript(self) -> "IO[str] | None":
+        transcript_dir = self.args.psrp_transcript_dir or self.session.session_log_dir
+        if not transcript_dir:
+            return None
+        try:
+            os.makedirs(transcript_dir, exist_ok=True)
+            path = os.path.join(transcript_dir, f"{self.session.sessionid}.log")
+            fh = open(path, "w", encoding="utf-8", buffering=1)  # line-buffered
+            fh.write(f"# PSRP transcript  session={self.session.sessionid}\n")
+            fh.write(f"# started={datetime.now(tz=timezone.utc).isoformat()}\n")
+            fh.write(f"# {'timestamp':<26}  {'direction':<{_COL_DIR}}  {'type':<{_COL_TYPE}}  detail\n")
+            fh.write("#" + "-" * 100 + "\n")
+            logging.info(
+                "psrp: writing transcript to %s", path, extra={"event": "psrp_transcript_open"}
+            )
+            return fh
+        except OSError:
+            logging.warning("psrp: could not open transcript file in %s", transcript_dir, exc_info=True)
+            return None
+
+    def forward(self) -> None:
+        try:
+            super().forward()
+        finally:
+            if self._transcript:
+                self._transcript.write(
+                    f"# ended={datetime.now(tz=timezone.utc).isoformat()}\n"
+                )
+                self._transcript.close()
+                self._transcript = None
 
     def handle_client_data(self, data: bytes) -> bytes:
         for msg in self._client_parser.feed(data):
@@ -184,6 +243,14 @@ class PSRPLoggingForwarder(PowerShellForwarder):
         for msg in self._server_parser.feed(data):
             self._log_message(msg, "server→client")
         return data
+
+    def _write_transcript(self, direction: str, mtype_name: str, detail: str) -> None:
+        if self._transcript is None:
+            return
+        ts = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+        self._transcript.write(
+            f"  {ts}  {direction:<{_COL_DIR}}  {mtype_name:<{_COL_TYPE}}  {detail}\n"
+        )
 
     def _log_message(self, msg: Message, direction: str) -> None:
         mtype = msg.message_type
@@ -199,23 +266,17 @@ class PSRPLoggingForwarder(PowerShellForwarder):
 
         if mtype == PSRPMessageType.CreatePipeline:
             cmds = _attr_texts(root, "S", "Cmd") if root is not None else []
+            detail = " | ".join(cmds) if cmds else "(no commands extracted)"
             extra["commands"] = cmds
-            logging.info(
-                "psrp %s CreatePipeline: %s",
-                direction,
-                " | ".join(cmds) if cmds else "(no commands extracted)",
-                extra=extra,
-            )
+            logging.info("psrp %s CreatePipeline: %s", direction, detail, extra=extra)
+            self._write_transcript(direction, "CreatePipeline", detail)
 
         elif mtype == PSRPMessageType.PipelineOutput:
             values = _all_strings(root) if root is not None else []
+            detail = " ".join(values)[:200] if values else f"({len(xml_bytes)} bytes)"
             extra["output"] = values
-            logging.debug(
-                "psrp %s PipelineOutput: %s",
-                direction,
-                " ".join(values)[:200] if values else f"({len(xml_bytes)} bytes)",
-                extra=extra,
-            )
+            logging.debug("psrp %s PipelineOutput: %s", direction, detail, extra=extra)
+            self._write_transcript(direction, "PipelineOutput", detail)
 
         elif mtype == PSRPMessageType.ErrorRecord:
             values = (
@@ -223,38 +284,35 @@ class PSRPLoggingForwarder(PowerShellForwarder):
                 if root is not None
                 else []
             )
+            detail = " ".join(values)[:200] if values else f"({len(xml_bytes)} bytes)"
             extra["error"] = values
-            logging.warning(
-                "psrp %s ErrorRecord: %s",
-                direction,
-                " ".join(values)[:200] if values else f"({len(xml_bytes)} bytes)",
-                extra=extra,
-            )
+            logging.warning("psrp %s ErrorRecord: %s", direction, detail, extra=extra)
+            self._write_transcript(direction, "ErrorRecord", detail)
 
         elif mtype == PSRPMessageType.WarningRecord:
             values = _all_strings(root) if root is not None else []
+            detail = " ".join(values)[:200]
             extra["warning"] = values
-            logging.warning(
-                "psrp %s WarningRecord: %s",
-                direction,
-                " ".join(values)[:200],
-                extra=extra,
-            )
+            logging.warning("psrp %s WarningRecord: %s", direction, detail, extra=extra)
+            self._write_transcript(direction, "WarningRecord", detail)
 
         elif mtype == PSRPMessageType.PipelineState:
             code = _int_attr(root, "I32", "PipelineState") if root is not None else None
             state = _PIPELINE_STATES.get(code, str(code)) if code is not None else "unknown"
             extra["state"] = state
             logging.info("psrp %s PipelineState: %s", direction, state, extra=extra)
+            self._write_transcript(direction, "PipelineState", state)
 
         elif mtype == PSRPMessageType.RunspacePoolState:
             code = _int_attr(root, "I32", "RunspaceState") if root is not None else None
             state = _RUNSPACE_STATES.get(code, str(code)) if code is not None else "unknown"
             extra["state"] = state
             logging.info("psrp %s RunspacePoolState: %s", direction, state, extra=extra)
+            self._write_transcript(direction, "RunspacePoolState", state)
 
         elif mtype in _INFO_TYPES:
             logging.info("psrp %s %s", direction, mtype.name, extra=extra)
+            self._write_transcript(direction, mtype.name, "")
 
         else:
             logging.debug(
