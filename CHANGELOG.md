@@ -7,6 +7,22 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- **CVE-2023-48795 (Terrapin) detection**: Fixed a bug where the vulnerability
+  check incorrectly evaluated `supports_cbc_etm or supports_cbc_etm` instead of
+  `supports_chacha20 or supports_cbc_etm`, causing ChaCha20-Poly1305 to never
+  be considered when determining vulnerability status.
+
+### Changed
+
+- **CVE-2023-48795 (Terrapin) detection**: Improved reporting now lists the
+  specific affected algorithms per direction (client-to-server / server-to-client),
+  including the concrete CBC ciphers and ETM MACs involved.
+  `rijndael-cbc@lysator.liu.se` is now also recognized as a CBC variant.
+  Both `kex-strict-c-v00@openssh.com` and `kex-strict-s-v00@openssh.com`
+  are checked when determining mitigation status.
+
 ### Added
 
 - **Interactive tutorial system**: `ssh-mitm tutorial` opens a browser-based,
