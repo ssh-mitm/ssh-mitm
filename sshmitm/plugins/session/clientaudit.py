@@ -270,6 +270,8 @@ class SSHClientAudit:
         return {"clientaudit": report}
 
     def check_terrapin_attack(self) -> dict[str, ClientAuditReport]:
+        # CVE-2023-48795 - Terrapin Attack
+        # https://github.com/RUB-NDS/Terrapin-Artifacts
         kex_algos = self.key_negotiation_data.kex_algorithms
         enc_c2s = self.key_negotiation_data.encryption_algorithms_client_to_server
         enc_s2c = self.key_negotiation_data.encryption_algorithms_server_to_client
