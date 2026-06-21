@@ -271,6 +271,10 @@ class SSHClientAudit:
 
     def check_terrapin_attack(self) -> dict[str, ClientAuditReport]:
         # CVE-2023-48795 - Terrapin Attack
+        # The Terrapin-Artifacts repository contains PoC exploits, scanning utilities,
+        # and reference implementations used in the original research. The vulnerability
+        # affects connections using ChaCha20-Poly1305 or CBC ciphers combined with
+        # ETM MACs when the strict key exchange extension (kex-strict) is absent.
         # https://github.com/RUB-NDS/Terrapin-Artifacts
         kex_algos = self.key_negotiation_data.kex_algorithms
         enc_c2s = self.key_negotiation_data.encryption_algorithms_client_to_server
