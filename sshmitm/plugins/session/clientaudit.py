@@ -270,51 +270,67 @@ class SSHClientAudit:
         return {"clientaudit": report}
 
     def check_terrapin_attack(self) -> dict[str, ClientAuditReport]:
-        cha_cha20 = "chacha20-poly1305@openssh.com"
-        etm_suffix = "-etm@openssh.com"
-        cbc_suffix = "-cbc"
-        kex_strict_indicator_client = "kex-strict-c-v00@openssh.com"
-        # kex_strict_indicator_server = "kex-strict-s-v00@openssh.com"  # noqa: ERA001
+        kex_algos = self.key_negotiation_data.kex_algorithms
+        enc_c2s = self.key_negotiation_data.encryption_algorithms_client_to_server
+        enc_s2c = self.key_negotiation_data.encryption_algorithms_server_to_client
+        mac_c2s = self.key_negotiation_data.mac_algorithms_client_to_server
+        mac_s2c = self.key_negotiation_data.mac_algorithms_server_to_client
 
-        supports_cha_cha20 = (
-            cha_cha20
-            in self.key_negotiation_data.encryption_algorithms_client_to_server
-            or cha_cha20
-            in self.key_negotiation_data.encryption_algorithms_server_to_client
+        strict_kex = (
+            "kex-strict-c-v00@openssh.com" in kex_algos
+            or "kex-strict-s-v00@openssh.com" in kex_algos
         )
-        supports_cbc_etm = (
-            any(
-                algo.endswith(cbc_suffix)
-                for algo in self.key_negotiation_data.encryption_algorithms_client_to_server
-            )
-            and any(
-                mac.endswith(etm_suffix)
-                for mac in self.key_negotiation_data.mac_algorithms_client_to_server
-            )
-        ) or (
-            any(
-                algo.endswith(cbc_suffix)
-                for algo in self.key_negotiation_data.encryption_algorithms_server_to_client
-            )
-            and any(
-                mac.endswith(etm_suffix)
-                for mac in self.key_negotiation_data.mac_algorithms_server_to_client
-            )
-        )
-        supports_strict_kex = (
-            kex_strict_indicator_client in self.key_negotiation_data.kex_algorithms
-        )
-        vulnerable = (supports_cbc_etm or supports_cbc_etm) and not supports_strict_kex
-        title_color = "red" if vulnerable else "green"
 
-        report = ClientAuditReport(
-            "CVE-2023-48795 - Terrapin-Attack", vulnerable=vulnerable
-        )
-        report.messages.append(f"ChaCha20-Poly1305 support:   {supports_cha_cha20}")
-        report.messages.append(f"CBC-EtM support:             {supports_cbc_etm}")
-        report.messages.append(f"Strict key exchange support: {supports_strict_kex}")
+        chacha20_algo = "chacha20-poly1305@openssh.com"
+        chacha20_affected = [
+            direction
+            for direction, algos in [("client-to-server", enc_c2s), ("server-to-client", enc_s2c)]
+            if chacha20_algo in algos
+        ]
+
+        def _cbc_algos(algos: list[str]) -> list[str]:
+            return [
+                a for a in algos
+                if a.endswith("-cbc") or a == "rijndael-cbc@lysator.liu.se"
+            ]
+
+        def _etm_algos(macs: list[str]) -> list[str]:
+            return [m for m in macs if m.endswith("-etm@openssh.com")]
+
+        cbc_etm_affected = [
+            (direction, _cbc_algos(enc), _etm_algos(mac))
+            for direction, enc, mac in [
+                ("client-to-server", enc_c2s, mac_c2s),
+                ("server-to-client", enc_s2c, mac_s2c),
+            ]
+            if _cbc_algos(enc) and _etm_algos(mac)
+        ]
+
+        vulnerable = (bool(chacha20_affected) or bool(cbc_etm_affected)) and not strict_kex
+        status_color = "red" if vulnerable else "green"
+
+        report = ClientAuditReport("CVE-2023-48795 - Terrapin-Attack", vulnerable=vulnerable)
         report.messages.append(
-            f"Mitigation status:           {Colors.stylize('vulnerable' if vulnerable else 'mitigated', fg(title_color))}"
+            f"Strict key exchange: {'supported' if strict_kex else 'not supported'}"
+        )
+
+        if chacha20_affected:
+            report.messages.append(
+                f"ChaCha20-Poly1305 ({', '.join(chacha20_affected)}): affected"
+            )
+        else:
+            report.messages.append("ChaCha20-Poly1305: not affected")
+
+        if cbc_etm_affected:
+            for direction, cbcs, etms in cbc_etm_affected:
+                report.messages.append(f"CBC-EtM ({direction}):")
+                report.messages.append(f"  ciphers: {', '.join(cbcs)}")
+                report.messages.append(f"  MACs:    {', '.join(etms)}")
+        else:
+            report.messages.append("CBC-EtM: not affected")
+
+        report.messages.append(
+            f"Mitigation status: {Colors.stylize('vulnerable' if vulnerable else 'mitigated', fg(status_color))}"
         )
         return {"clientaudit": report}
 
