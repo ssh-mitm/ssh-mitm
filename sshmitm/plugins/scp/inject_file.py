@@ -21,17 +21,30 @@ if TYPE_CHECKING:
 
 
 class SCPInjectFile(SCPForwarder):
-    """Injecting an additional file during SCP transmission (CVE-2019-6111, CVE-2019-6110)
+    """Injects an additional file into an SCP download (CVE-2019-6111, CVE-2019-6110).
 
-    This feature is based on a OpenSSH Client Vulnerability 'SSHtranger Things'
-    that has been patched with version > OpenSSH 8.0p1
+    When an SCP client downloads a file from the server, this plugin exploits the
+    *SSHtranger Things* vulnerability to silently deliver an extra file alongside
+    the requested one.  CVE-2019-6110 is used to hide the injection by sending ANSI
+    escape sequences over stderr that erase the extra filename from the client's
+    terminal output.
 
-    * Title:     SSHtranger Things
-    * Author:    Mark E. Haase <mhaase@hyperiongray.com>
-    * Homepage:  https://www.hyperiongray.com
-    * Date:      2019-01-17
-    * CVE:       CVE-2019-6111, CVE-2019-6110
-    * Advisory:  https://sintonen.fi/advisories/scp-client-multiple-vulnerabilities.txt
+    The vulnerability was patched in OpenSSH 8.0p1.  Clients running older versions
+    or unpatched builds are affected.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --scp-forwarder inject_file --scp-inject-file /path/to/inject.txt
+
+    **Notes**
+
+    * Only triggers for SCP download operations (``scp -f``).  Upload sessions fall
+      back to the transparent ``SCPForwarder`` automatically.
+    * The injected file is sent to the client under its basename.
+    * References: CVE-2019-6111, CVE-2019-6110,
+      `SSHtranger Things advisory <https://sintonen.fi/advisories/scp-client-multiple-vulnerabilities.txt>`_
     """
 
     @classmethod
@@ -54,6 +67,10 @@ class SCPInjectFile(SCPForwarder):
         return SCPForwarder(args[0])
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
+        """Resolves the inject-file path and reads its metadata.
+
+        :param session: the active SSH session being intercepted.
+        """
         super().__init__(session)
         self.args.scp_inject_file = os.path.expanduser(self.args.scp_inject_file)
 
