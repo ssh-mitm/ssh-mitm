@@ -25,6 +25,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Persistent host key**: The server now saves the generated host key to a
+  platform-appropriate state directory on first start and reloads it on
+  subsequent starts, so clients no longer see a changed host key after a
+  restart. The state directory follows this priority: `$STATE_DIRECTORY`
+  (systemd `StateDirectory=`), `$XDG_STATE_HOME/ssh-mitm/` (Snap and Flatpak
+  redirect this automatically), `~/.local/state/ssh-mitm/`, `/var/lib/ssh-mitm/`
+  (root fallback), and `/tmp/ssh-mitm-<uid>/` as a last resort with a warning.
+  When `--host-key` points to a non-existent file, the key is generated and
+  written there instead of raising an error. The startup output now shows
+  whether the key was loaded from an existing file, freshly generated and saved,
+  or is temporary (not persisted).
+
 - **Interactive tutorial system**: `ssh-mitm tutorial` opens a browser-based,
   step-by-step tutorial that demonstrates SSH-MITM's core capabilities without
   requiring an external target server. The tutorial spins up a built-in mock SSH
