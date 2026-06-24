@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 from binascii import hexlify
+from pathlib import Path
 from socket import socket
 
 from colored import attr, fg
@@ -16,6 +17,7 @@ from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.console import sshconsole
 from sshmitm.exceptions import KeyGenerationError
+from sshmitm.state import get_state_dir
 from sshmitm.forwarders.agent import (
     AgentBaseForwarder,
     AgentForwarder,
@@ -82,6 +84,8 @@ class SSHProxyServer:
     ) -> None:
         self._threads: list[threading.Thread] = []
         self._hostkey: PKey | None = None
+        self._key_path: Path | None = None
+        self._key_was_generated: bool = False
 
         self.listen_port = listen_port
         self.listen_address = listen_address
@@ -126,8 +130,16 @@ class SSHProxyServer:
         if self.key_algorithm_class is None or self._hostkey is None:
             return
         ssh_host_key_pub = SSHPubKey(self._hostkey)
+        if self._key_path is not None:
+            key_origin = "generated" if self._key_was_generated else "loaded"
+            key_location = str(self._key_path)
+        else:
+            key_origin = "temporary"
+            key_location = ""
+
         log_data = {
-            "keygeneration": "loaded" if self.key_file else "generated temporary",
+            "key_origin": key_origin,
+            "key_location": key_location,
             "algorithm": self.key_algorithm_class.__name__,
             "bits": self._hostkey.get_bits(),
             "md5": Colors.stylize(
@@ -145,7 +157,11 @@ class SSHProxyServer:
         }
 
         if json_log or not sys.stdout.isatty():
-            logging.info("ssh-mitm server info", extra={"serverinfo": log_data})
+            log_data_json = {k: v for k, v in log_data.items() if k not in ("md5", "sha256", "sha512")}
+            log_data_json["md5"] = ssh_host_key_pub.hash_md5()
+            log_data_json["sha256"] = ssh_host_key_pub.hash_sha256()
+            log_data_json["sha512"] = ssh_host_key_pub.hash_sha512()
+            logging.info("ssh-mitm server info", extra={"serverinfo": log_data_json})
         else:
             print("\33]0;SSH-MITM - ssh audits made simple\a", end="", flush=True)
             sshconsole.rule(
@@ -176,10 +192,22 @@ class SSHProxyServer:
                 )
                 sshconsole.rule(characters=".", style="bright_black")
 
-            rich_print("[bold blue]:key: SSH-Host-Keys:")
+            rich_print("[bold blue]:key: SSH-Host-Keys:[/bold blue]")
+            if log_data["key_origin"] == "temporary":
+                rich_print(
+                    "   [yellow]:warning: temporary key (not persisted, changes on every restart)[/yellow]"
+                )
+            elif log_data["key_origin"] == "generated":
+                rich_print(
+                    f"   [green]:floppy_disk: generated, saved to[/green] [bold]{log_data['key_location']}[/bold]"
+                )
+            else:
+                rich_print(
+                    f"   [green]:white_check_mark: loaded from[/green] [bold]{log_data['key_location']}[/bold]"
+                )
             print(
                 (
-                    "   {keygeneration} {algorithm} key with {bits} bit length\n"  # pylint: disable=consider-using-f-string
+                    "   {algorithm} key with {bits} bit length\n"  # pylint: disable=consider-using-f-string
                     "   {md5}\n"
                     "   {sha256}\n"
                     "   {sha512}"
@@ -204,7 +232,7 @@ class SSHProxyServer:
 
     def generate_host_key(self) -> None:
         self.key_algorithm_class = None
-        key_algorithm_bits = None
+        key_algorithm_bits: int | None = None
         if self.key_algorithm == "rsa":
             self.key_algorithm_class = RSAKey
             key_algorithm_bits = self.key_length
@@ -221,28 +249,57 @@ class SSHProxyServer:
             msg = f"host key algorithm '{self.key_algorithm}' not supported!"
             raise ValueError(msg)
 
-        if not self.key_file:
-            try:
-                self._hostkey = self.key_algorithm_class.generate(  # type: ignore[union-attr]
-                    bits=key_algorithm_bits or 2048
-                )
-            except ValueError as err:
-                logging.error(str(err))
-                raise KeyGenerationError from err
-        else:
-            if not os.path.isfile(self.key_file):
-                msg = f"host key '{self.key_file}' file does not exist"
-                raise FileNotFoundError(msg)
-            for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
-                try:
-                    key = self._key_from_filepath(self.key_file, pkey_class, None)
-                    self._hostkey = key
-                    break
-                except SSHException:
-                    pass
+        if self.key_file:
+            key_path = Path(self.key_file)
+            if key_path.is_file():
+                self._load_host_key(key_path)
             else:
-                logging.error("host key format not supported!")
-                raise KeyGenerationError
+                self._generate_host_key(key_algorithm_bits)
+                self._persist_host_key(key_path)
+        else:
+            state_dir = get_state_dir()
+            if state_dir is not None:
+                key_path = state_dir / "host_key"
+                if key_path.is_file():
+                    self._load_host_key(key_path)
+                else:
+                    self._generate_host_key(key_algorithm_bits)
+                    self._persist_host_key(key_path)
+            else:
+                self._generate_host_key(key_algorithm_bits)
+
+    def _generate_host_key(self, bits: int | None) -> None:
+        try:
+            self._hostkey = self.key_algorithm_class.generate(  # type: ignore[union-attr]
+                bits=bits or 2048
+            )
+            self._key_was_generated = True
+            self._key_path = None
+        except ValueError as err:
+            logging.error(str(err))
+            raise KeyGenerationError from err
+
+    def _persist_host_key(self, key_path: Path) -> None:
+        if self._hostkey is None:
+            return
+        key_path.parent.mkdir(parents=True, exist_ok=True)
+        self._hostkey.write_private_key_file(str(key_path))
+        key_path.chmod(0o600)
+        self._key_path = key_path
+
+    def _load_host_key(self, key_path: Path) -> None:
+        for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
+            try:
+                key = self._key_from_filepath(str(key_path), pkey_class, None)
+                self._hostkey = key
+                self.key_algorithm_class = type(key)
+                self._key_was_generated = False
+                self._key_path = key_path
+                return
+            except SSHException:
+                pass
+        logging.error("host key format not supported!")
+        raise KeyGenerationError
 
     def _key_from_filepath(
         self, filename: str, klass: type[PKey], password: str | None
