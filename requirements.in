@@ -12,6 +12,7 @@ python-json-logger
 pytz
 pyyaml
 requests
+aiohttp
 markdown
 rich
 textual
