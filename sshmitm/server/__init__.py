@@ -227,12 +227,13 @@ class SSHProxyServer:
                     rich_print(
                         f"   [green]:white_check_mark: {d['algorithm']} — loaded from[/green] [bold]{d['location']}[/bold]"
                     )
-                print(
-                    "   {bits} bit  "  # pylint: disable=consider-using-f-string
-                    "MD5:{md5}  SHA256:{sha256}".format(
+                print(  # pylint: disable=consider-using-f-string
+                    "   {bits} bit\n"
+                    "   {sha256}\n"
+                    "   {md5}".format(
                         bits=d["bits"],
-                        md5=Colors.stylize(d["md5"], fg("light_blue") + attr("bold")),
                         sha256=Colors.stylize(d["sha256"], fg("light_blue") + attr("bold")),
+                        md5=Colors.stylize(d["md5"], fg("light_blue") + attr("bold")),
                     )
                 )
             sshconsole.rule(characters=".", style="bright_black")
