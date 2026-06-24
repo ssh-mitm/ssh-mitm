@@ -141,7 +141,36 @@ class AgentLocalSocket:
 
 
 class AgentForwarder(AgentBaseForwarder):
-    """Forwards the SSH agent from the client, with optional breakin support."""
+    """Forwards the SSH agent from the client, with optional agent breakin and socket exposure.
+
+    This is the default agent forwarder.  When the intercepted client forwards its SSH agent,
+    this plugin proxies it so the agent remains available for authentication to the remote host.
+
+    Optionally, it can actively request the agent from the client even if the client did not
+    initiate forwarding (agent breakin), and expose the forwarded agent as a local Unix socket
+    for direct use by the operator.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --agent-forwarder base
+
+    Request the agent even if the client did not forward it::
+
+        ssh-mitm server --request-agent-breakin
+
+    Expose the forwarded agent as a local Unix socket::
+
+        ssh-mitm server --expose-agent-socket
+
+    **Notes**
+
+    * Agent breakin attempts to request the agent channel from the client; not all clients
+      permit this.
+    * With ``--expose-agent-socket``, SSH-MITM logs ready-to-use ``SSH_AUTH_SOCK=...``
+      commands so the operator can use the client's agent directly in their shell.
+    """
 
     @classmethod
     def parser_arguments(cls) -> None:
