@@ -13,7 +13,23 @@ from sshmitm.utils import format_hex
 
 
 class SCPDebugForwarder(SCPForwarder):
-    """print data as hexdump"""
+    """Prints raw SCP traffic to stdout as a hexdump for debugging.
+
+    Intercepts all data exchanged between the SCP client and the remote server
+    and prints it as a formatted hexdump to stdout. Both directions are shown
+    separately — client-to-server and server-to-client.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --scp-forwarder debug_traffic
+
+    **Notes**
+
+    * Output goes to stdout — redirect to a file if you need persistent capture.
+    * The original data is forwarded unchanged; this plugin is read-only.
+    """
 
     def handle_client_data(self, data: bytes) -> bytes:
         print("Client data:")
