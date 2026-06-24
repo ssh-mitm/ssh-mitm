@@ -34,7 +34,24 @@ if TYPE_CHECKING:
 
 
 class SCPReplaceFile(SCPForwarder):
-    """replace the file with another file"""
+    """Replaces the transferred file with a different file during an SCP upload.
+
+    When an SCP client uploads a file to the server, this plugin intercepts the
+    transfer and substitutes the specified replacement file, so the server receives
+    the replacement instead of the original content.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --scp-forwarder replace_file --scp-replace-file /path/to/replacement.bin
+
+    **Notes**
+
+    * Only affects upload operations.  Download transfers pass through unchanged.
+    * File size and permissions are taken from the replacement file, not the
+      original, so the client may observe a size mismatch if it checks.
+    """
 
     @classmethod
     def parser_arguments(cls) -> None:
@@ -47,6 +64,10 @@ class SCPReplaceFile(SCPForwarder):
         )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
+        """Resolves the replacement file path and opens it for reading.
+
+        :param session: the active SSH session being intercepted.
+        """
         super().__init__(session)
         self.args.scp_replace_file = os.path.expanduser(self.args.scp_replace_file)
 
