@@ -18,7 +18,7 @@ as a package in other systems.
 Vulnerabilities
 ---------------
 
-.. admonition:: **Only vulnerabilities, which are included in SSH-MITM, are listed.**
+.. admonition:: **Listed vulnerabilities are either integrated in SSH-MITM or were discovered by Manfred Kaiser (AUT-milCERT).**
    :class: dropdown
 
    For a full list you should use `cvedetails.com <https://www.cvedetails.com/product/585/Openbsd-Openssh.html?vendor_id=97>`_
@@ -26,7 +26,6 @@ Vulnerabilities
 .. toctree::
    :maxdepth: 1
 
-   CVE-2023-38408
    CVE-2023-25136
    CVE-2021-36368
    CVE-2020-15778

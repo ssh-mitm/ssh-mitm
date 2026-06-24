@@ -15,7 +15,7 @@ PuTTY was written and is maintained primarily by Simon Tatham, a British program
 Vulnerabilities
 ---------------
 
-.. admonition:: **Only vulnerabilities, which are included in SSH-MITM, are listed.**
+.. admonition:: **Listed vulnerabilities are either integrated in SSH-MITM or were discovered by Manfred Kaiser (AUT-milCERT).**
    :class: dropdown
 
    For a full list you should use `cvedetails.com <https://www.cvedetails.com/vendor/471/Putty.html>`_

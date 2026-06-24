@@ -13,7 +13,7 @@ of a successful attack.
 
 .. note::
 
-   **Only vulnerabilities, which are included in SSH-MITM, are listed.**
+   **Listed vulnerabilities are either integrated in SSH-MITM or were discovered by Manfred Kaiser (AUT-milCERT).**
 
    The vulnerabilities are divided into 4 categories to show the risk.
 
@@ -32,11 +32,11 @@ of a successful attack.
    :maxdepth: 2
    :titlesonly:
 
+   findings
    openssh
    putty
    dropbear
    winscp
    midnightcommander
    rsync
-   rust-lang
    mobaxterm

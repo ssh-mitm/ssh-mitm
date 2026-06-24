@@ -18,7 +18,7 @@ It is also available as a plugin for Altap Salamander file manager, and there ex
 Vulnerabilities
 ---------------
 
-.. admonition:: **Only vulnerabilities, which are included in SSH-MITM, are listed.**
+.. admonition:: **Listed vulnerabilities are either integrated in SSH-MITM or were discovered by Manfred Kaiser (AUT-milCERT).**
    :class: dropdown
 
    For a full list you should use `cvedetails.com <https://www.cvedetails.com/vendor/1327/Winscp.html>`_

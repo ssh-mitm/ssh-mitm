@@ -1,3 +1,8 @@
+.. Old URL: /trivialauth.html (root level, before move to user_guide/)
+.. Redirect in conf.py: "trivialauth" → "user_guide/trivialauth.html"
+.. External backlinks: NVD (CVE-2021-36368), SentinelOne, OpenCVE,
+..                     Ubuntu Security, Debian Security Tracker
+
 .. _trivialauth:
 
 :fas:`handshake-slash` Trivial Authentication
@@ -151,3 +156,8 @@ Connect the client to SSH-MITM with agent forwarding:
 In this case, the client must authenticate to the SSH-MITM server using "publickey", which requires a confirmation.
 
 After the user has successfully logged in to the MitM server, the agent is requested and logging in to the remote host is started, which requires a 2nd confirmation by ssh-askpass.
+
+.. rubric:: Permalink
+
+- Current: https://docs.ssh-mitm.at/user_guide/trivialauth.html
+- Previous: https://docs.ssh-mitm.at/trivialauth.html

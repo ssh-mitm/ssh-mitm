@@ -82,6 +82,21 @@ Features
       interactively in the terminal — without editing any files.
 
 
+Security Research
+=================
+
+.. card:: :fas:`magnifying-glass` Vulnerabilities discovered through SSH-MITM research
+
+   Operating from the Man-in-the-Middle position makes it possible to observe SSH client
+   behavior that is invisible from either endpoint. During security audits using SSH-MITM,
+   **6 previously unknown vulnerabilities** were discovered in widely-deployed SSH software —
+   including PuTTY, OpenSSH, Dropbear, Midnight Commander, and MobaXterm. Each was reported
+   to the vendor and assigned a CVE number.
+
+   :bdg-link-primary-line:`CVE-2021-36367 <vulnerabilities/CVE-2021-36367.html>` :bdg-link-primary-line:`CVE-2021-36368 <vulnerabilities/CVE-2021-36368.html>` :bdg-link-primary-line:`CVE-2021-36369 <vulnerabilities/CVE-2021-36369.html>` :bdg-link-primary-line:`CVE-2021-36370 <vulnerabilities/CVE-2021-36370.html>` :bdg-link-primary-line:`CVE-2022-38336 <vulnerabilities/CVE-2022-38336.html>` :bdg-link-primary-line:`CVE-2022-38337 <vulnerabilities/CVE-2022-38337.html>`
+   +++
+   :doc:`→ Security Research Findings <vulnerabilities/findings>`
+
 Quick Start
 ===========
 

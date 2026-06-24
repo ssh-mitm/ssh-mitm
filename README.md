@@ -141,12 +141,11 @@ and inject commands independently, without affecting the original connection.
 - **Training environments** — demonstrate MITM techniques and session hijacking in controlled lab setups
 - **Malware analysis** — monitor and interact with SSH sessions from suspicious clients in isolated environments
 
-## The attack that started it all
+## Security Research
 
 SSH-MITM was originally developed to investigate a fundamental weakness in how SSH clients handle
 hardware token authentication. The research uncovered that FIDO2 tokens — often used as a second
-factor — can be phished through a technique called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html),
-which was subsequently assigned [CVE-2021-36368](https://docs.ssh-mitm.at/CVE-2021-36368.html).
+factor — can be phished through a technique called [trivial authentication](https://docs.ssh-mitm.at/trivialauth.html).
 
 The attack exploits the fact that SSH clients can be forced into a trivial authentication method —
 such as keyboard-interactive with no prompts — which effectively grants access without any real
@@ -157,14 +156,24 @@ challenged. SSH-MITM can simulate this against any client that does not explicit
 ssh-mitm server --enable-trivial-auth
 ```
 
-The attack only applies when public-key authentication is available — password authentication is
-not affected and continues to work normally.
+Operating from the Man-in-the-Middle position makes it possible to observe SSH client behavior
+that is invisible from either endpoint. SSH-MITM has been used to discover **[6 previously unknown
+vulnerabilities](https://docs.ssh-mitm.at/vulnerabilities/findings.html)** in widely-deployed SSH software:
+
+<p align="center">
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36367.html"><img src="https://img.shields.io/badge/CVE--2021--36367-CVSS%208.1-important?style=flat-square" alt="CVE-2021-36367"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36368.html"><img src="https://img.shields.io/badge/CVE--2021--36368-CVSS%203.7-informational?style=flat-square" alt="CVE-2021-36368"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36369.html"><img src="https://img.shields.io/badge/CVE--2021--36369-CVSS%208.1-important?style=flat-square" alt="CVE-2021-36369"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36370.html"><img src="https://img.shields.io/badge/CVE--2021--36370-CVSS%207.5-important?style=flat-square" alt="CVE-2021-36370"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2022-38336.html"><img src="https://img.shields.io/badge/CVE--2022--38336-CVSS%205.4-yellow?style=flat-square" alt="CVE-2022-38336"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2022-38337.html"><img src="https://img.shields.io/badge/CVE--2022--38337-CVSS%205.4-yellow?style=flat-square" alt="CVE-2022-38337"></a>
+</p>
 
 <p align="center">
   <b>Talk at DeepSec 2021 — full explanation of the attack:</b><br/>
   <i>Click to view on vimeo.com</i><br/>
   <a href="https://vimeo.com/showcase/9059922/video/651517195">
-  <img src="https://github.com/ssh-mitm/ssh-mitm/raw/master/doc/images/ds2021-video.png" alt="Click to view video on vimeo.com">
+  <img src="https://github.com/ssh-mitm/ssh-mitm/raw/master/doc/images/ds2021-video-small.png" alt="Click to view video on vimeo.com">
   </a>
 </p>
 
