@@ -51,7 +51,28 @@ class ClamAVClient:
 
 
 class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
-    """Buffers transferred files in memory, scans with ClamAV before forwarding"""
+    """Scans SFTP-transferred files with ClamAV before forwarding them.
+
+    All file data is buffered in memory during the transfer.  On uploads, the
+    complete content is scanned via the ClamAV INSTREAM protocol before being
+    written to the remote server.  On downloads, the remote file is fetched and
+    scanned before being served to the client.  Transfers that fail the scan are
+    blocked with a permission-denied error.
+
+    **Usage example**
+
+    Requires a running ClamAV daemon with a Unix socket::
+
+        ssh-mitm server --sftp-handler check_file --clamav-socket /tmp/clamd.sock
+
+    **Notes**
+
+    * ClamAV must be reachable via the configured socket; if the connection
+      fails the transfer is blocked as a precaution.
+    * The entire file is held in memory — avoid this plugin for very large files
+      without sufficient RAM.
+    * Both uploads and downloads are scanned.
+    """
 
     @classmethod
     def parser_arguments(cls) -> None:
@@ -64,6 +85,11 @@ class SFTPHandlerCheckFilePlugin(SFTPHandlerPlugin):
         )
 
     def __init__(self, sftp: SFTPBaseHandle, filename: str) -> None:
+        """Initializes the in-memory buffer and logs the start of the transfer.
+
+        :param sftp: the SFTP file handle for the intercepted transfer.
+        :param filename: the original filename as requested by the client.
+        """
         super().__init__(sftp, filename)
         self.file_id = str(uuid.uuid4())
         self.filename = filename
