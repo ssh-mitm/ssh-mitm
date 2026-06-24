@@ -15,10 +15,32 @@ if TYPE_CHECKING:
 
 
 class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
-    """For each server port forwarding request open a local port to inject data into the port-forward
+    """Intercepts SSH remote port forwarding and opens a local injection port per session.
 
-    The Handler is still the same as the RemotePortForwardingForwarder, only a tcp server is added
+    When the SSH client requests remote port forwarding (``-R``), this plugin accepts
+    the forwarded connection as usual and additionally starts a local TCP listener on
+    a random port.  A second client can connect to that local port and have its traffic
+    injected directly into the forwarded channel.
 
+    SSH-MITM logs the injection port when the forwarding session is established::
+
+        [i] <session-id> - created server tunnel injector for host 127.0.0.1 on port 34567 to destination ('10.0.0.1', 8080)
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --remote-port-forwarder inject
+
+    Connect to the printed injection port to send data into the tunnel::
+
+        nc 127.0.0.1 34567
+
+    **Notes**
+
+    * One injection listener is created per forwarded-tcpip channel.
+    * Use ``--tunnel-server-net`` to bind the injection listener to a specific
+      interface (default: all interfaces).
     """
 
     @classmethod
@@ -36,6 +58,12 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
         server_interface: "ServerInterface",
         destination: tuple[str, int] | None,
     ) -> None:
+        """Starts the local injection TCP listener for this forwarding session.
+
+        :param session: the active SSH session being intercepted.
+        :param server_interface: the paramiko server interface handling this session.
+        :param destination: the remote host and port the client is forwarding to.
+        """
         super().__init__(session, server_interface, destination)
         self.tcpserver = TCPServerThread(
             self.handle_request,
