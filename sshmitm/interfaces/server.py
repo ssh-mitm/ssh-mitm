@@ -48,7 +48,25 @@ class BaseServerInterface(paramiko.ServerInterface, SSHMITMBaseModule):
 
 
 class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-methods
-    """SSH-MITM server implementation"""
+    """Core SSH-MITM server interface handling all protocol negotiation and channel dispatch.
+
+    This is the default server interface.  It handles the complete SSH handshake on behalf
+    of SSH-MITM — authentication, channel requests, port forwarding, and subsystem
+    negotiation — and dispatches each channel type to the configured forwarder plugin.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --server-interface base
+
+    **Notes**
+
+    * This is the default interface; no explicit flag is needed unless using a custom
+      implementation.
+    * Individual protocol features (SSH shell, SFTP, SCP, NETCONF, PowerShell) can be
+      disabled with their respective ``--disable-*`` flags.
+    """
 
     _kb_interactive_bridge: KeyboardInteractiveBridge | None = None
     _kb_interactive_prompts: list[tuple[str, bool]] = []
@@ -883,14 +901,15 @@ class ProxyNetconfServer(paramiko.SubsystemHandler):
         super().__init__(channel, name, server)
         self.session = session
         self.session.register_session_thread()
-
-        # Due to compatibility reasons in the dynamic function call that must support other subsystem handlers, the arguments netconf_forwarder, *largs, **kwargs are mandatory.
-        #         To prevent the linter (pyling, ruff) from failing, they are combined to an anonymous tuple.
-        _ = (netconf_forwarder, largs, kwargs)
+        self.netconf_forwarder = netconf_forwarder
+        del largs, kwargs
 
     def start_subsystem(
         self, name: str, transport: paramiko.Transport, channel: paramiko.Channel
     ) -> None:
+        # name/transport/channel are part of the paramiko handler contract; the
+        # relay works on the session's netconf channel instead.
+        del name, transport, channel
         with self.session.ssh.client_created:
             self.session.ssh.client_created.wait_for(
                 lambda: self.session.ssh.client_auth_finished
@@ -902,7 +921,14 @@ class ProxyNetconfServer(paramiko.SubsystemHandler):
                 logging.error("no netconf client available")
                 return
             self.session.netconf.client.subsystem_count += 1
-            super().start_subsystem(name, transport, channel)
+        try:
+            # Blocking relay — paramiko closes the channel as soon as
+            # start_subsystem returns, so forward() must run synchronously
+            # here for the whole lifetime of the subsystem (same pattern as
+            # ProxyPowerShellServer).
+            self.netconf_forwarder(self.session).forward()
+        except Exception:  # pylint: disable=broad-exception-caught
+            logging.exception("failed to relay netconf subsystem")
 
     def finish_subsystem(self) -> None:
         super().finish_subsystem()
