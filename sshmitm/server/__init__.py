@@ -533,11 +533,7 @@ class SSHProxyServer:
                             scp_interface = interface_class(session)
                             thread = threading.Thread(target=scp_interface.forward)
                             thread.start()
-                        elif session.netconf.requested and self.netconf_interface:
-                            session.netconf.requested = False
-                            netconf_interface = self.netconf_interface(session)
-                            thread = threading.Thread(target=netconf_interface.forward)
-                            thread.start()
+
 
                 else:
                     logging.warning("(%s) session not started", session)

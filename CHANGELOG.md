@@ -25,6 +25,29 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **NETCONF forwarder (experimental)**: Complete rewrite of the NETCONF SSH
+  subsystem forwarder covering three implementation phases:
+  - *Framing (RFC 4742 / RFC 6242)*: Deadline-aware readers for both EOM
+    (`]]>]]>`) and chunked (`\n#<size>\n<data>\n##\n`) framing with a
+    configurable 30 s read timeout. Framing is auto-detected during the
+    `<hello>` exchange and then enforced explicitly for subsequent messages.
+  - *Capability negotiation*: The `<hello>` exchange is parsed with
+    `xml.etree.ElementTree`. Both sides' capability URNs are stored in
+    `session.netconf.{server,client}_capabilities`; `session.netconf.use_chunked`
+    reflects the negotiated framing mode (`:base:1.1` = chunked,
+    `:base:1.0` only = EOM).
+  - *RPC interception hooks*: `NetconfBaseForwarder` exposes
+    `handle_rpc_request(message_id, operation, element)` and
+    `handle_rpc_reply(message_id, element)` as overridable hooks that receive
+    the parsed `<rpc>` / `<rpc-reply>` element. A plugin returning a modified
+    element causes the forwarder to re-encode and re-frame the message before
+    forwarding; returning `None` passes the original bytes through unchanged.
+  - New plugin `--netconf-forwarder log-session` logs every RPC operation
+    name and message-id plus the reply status (ok / error-tag list).
+  - Bug fixes: namespace prefix corruption on XML rewrites, end-of-chunks
+    marker validation, EOM-branch timeout accounting, dead session-loop
+    code and a no-op flag write in the exec-request handler.
+
 - **Multiple host keys**: The server now supports multiple host keys
   simultaneously (RSA, ECDSA, Ed25519 by default), matching OpenSSH behaviour.
   Clients negotiate the best algorithm during the handshake.

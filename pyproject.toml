@@ -78,6 +78,7 @@ CVE-2022-29154 = "sshmitm.plugins.scp.cve202229154:CVE202229154"
 
 [project.entry-points."sshmitm.NetconfBaseForwarder"]
 base = "sshmitm.forwarders.netconf:NetconfForwarder"
+log-session = "sshmitm.plugins.netconf.log_session:NetconfLoggingForwarder"
 
 [project.entry-points."sshmitm.PowerShellBaseForwarder"]
 base = "sshmitm.forwarders.powershell:PowerShellForwarder"

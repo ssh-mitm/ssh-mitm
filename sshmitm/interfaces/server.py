@@ -193,7 +193,6 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             return True
         if self.session.netconf.requested:
             logging.debug("got netconf command: %s", command.decode("utf8"))
-            self.session.netconf.requested = True
             self.session.netconf.command = command
             self.session.netconf_channel = channel
             return True
