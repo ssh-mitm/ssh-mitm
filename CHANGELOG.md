@@ -25,6 +25,16 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Multiple host keys**: The server now supports multiple host keys
+  simultaneously (RSA, ECDSA, Ed25519 by default), matching OpenSSH behaviour.
+  Clients negotiate the best algorithm during the handshake.
+  New arguments replace the old single-key options (breaking change):
+  `--host-key-algorithms` (list of active algorithms),
+  `--host-key-rsa`, `--host-key-ecdsa`, `--host-key-ed25519` (optional explicit
+  paths per algorithm), and `--host-key-rsa-length` (RSA bit length).
+  The `dss` algorithm has been removed.
+  Ed25519 keys can now be auto-generated without requiring an explicit file path.
+
 - **Persistent host key**: The server now saves the generated host key to a
   platform-appropriate state directory on first start and reloads it on
   subsequent starts, so clients no longer see a changed host key after a

@@ -360,8 +360,7 @@ class Session(BaseSession):
                     msg = "ciphers must be a tuple"
                     raise ValueError(msg)
                 self._transport.get_security_options().ciphers = self.CIPHERS
-            host_key: PKey | None = self.proxyserver.host_key
-            if host_key is not None:
+            for host_key in self.proxyserver.host_keys:
                 self._transport.add_server_key(host_key)
             self.proxyserver.register_subsystem_handlers(self._transport, self)
 

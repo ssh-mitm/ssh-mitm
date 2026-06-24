@@ -245,7 +245,7 @@ class SSHClientAudit:
         """
         Check if a key negotiation data is known.
         """
-        if isinstance(self.key_negotiation_data.session.proxyserver.host_key, ECDSAKey):
+        if any(isinstance(k, ECDSAKey) for k in self.key_negotiation_data.session.proxyserver.host_keys):
             logging.warning(
                 "%s: ecdsa-sha2 key is a bad choice; this will produce false positives!",
                 self.client_info.get("name", ""),

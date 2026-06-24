@@ -5,6 +5,7 @@ import sys
 import threading
 import time
 from binascii import hexlify
+from dataclasses import dataclass, field
 from pathlib import Path
 from socket import socket
 
@@ -51,6 +52,26 @@ from sshmitm.session import Session
 from sshmitm.utils import SSHPubKey
 
 
+_ALGO_CLASS: dict[str, type[PKey]] = {
+    "rsa": RSAKey,
+    "ecdsa": ECDSAKey,
+    "ed25519": Ed25519Key,
+}
+
+_ALGO_STATE_FILE: dict[str, str] = {
+    "rsa": "host_key_rsa",
+    "ecdsa": "host_key_ecdsa",
+    "ed25519": "host_key_ed25519",
+}
+
+
+@dataclass
+class HostKeyEntry:
+    key: PKey
+    path: Path | None
+    was_generated: bool
+
+
 class SSHProxyServer:
     SELECT_TIMEOUT = 0.5
 
@@ -59,9 +80,11 @@ class SSHProxyServer:
         listen_address: str,
         listen_port: int,
         *,
-        key_file: str | None = None,
-        key_algorithm: str = "rsa",
-        key_length: int = 2048,
+        key_algorithms: list[str] | None = None,
+        key_file_rsa: str | None = None,
+        key_file_ecdsa: str | None = None,
+        key_file_ed25519: str | None = None,
+        key_rsa_length: int = 2048,
         ssh_interface: type[SSHBaseForwarder] = SSHForwarder,
         scp_interface: type[SCPBaseForwarder] = SCPForwarder,
         netconf_interface: type[NetconfBaseForwarder] = NetconfForwarder,
@@ -83,18 +106,18 @@ class SSHProxyServer:
         debug: bool = False,
     ) -> None:
         self._threads: list[threading.Thread] = []
-        self._hostkey: PKey | None = None
-        self._key_path: Path | None = None
-        self._key_was_generated: bool = False
+        self._host_key_entries: list[HostKeyEntry] = []
+        self._key_algorithms: list[str] = key_algorithms or ["rsa", "ecdsa", "ed25519"]
+        self._key_files: dict[str, str | None] = {
+            "rsa": key_file_rsa,
+            "ecdsa": key_file_ecdsa,
+            "ed25519": key_file_ed25519,
+        }
+        self._key_rsa_length: int = key_rsa_length
 
         self.listen_port = listen_port
         self.listen_address = listen_address
         self.running = False
-
-        self.key_file: str | None = key_file
-        self.key_algorithm: str = key_algorithm
-        self.key_algorithm_class: type[PKey] | None = None
-        self.key_length: int = key_length
 
         self.ssh_interface: type[SSHBaseForwarder] = ssh_interface
         self.scp_interface: type[SCPBaseForwarder] = scp_interface
@@ -121,47 +144,38 @@ class SSHProxyServer:
         self.banner_name: str | None = banner_name
         self.debug: bool = debug
 
-        try:
-            self.generate_host_key()
-        except KeyGenerationError:
-            sys.exit(1)
+        self.setup_host_keys()
 
     def print_serverinfo(self, json_log: bool = False) -> None:
-        if self.key_algorithm_class is None or self._hostkey is None:
+        if not self._host_key_entries:
             return
-        ssh_host_key_pub = SSHPubKey(self._hostkey)
-        if self._key_path is not None:
-            key_origin = "generated" if self._key_was_generated else "loaded"
-            key_location = str(self._key_path)
-        else:
-            key_origin = "temporary"
-            key_location = ""
 
-        log_data = {
-            "key_origin": key_origin,
-            "key_location": key_location,
-            "algorithm": self.key_algorithm_class.__name__,
-            "bits": self._hostkey.get_bits(),
-            "md5": Colors.stylize(
-                ssh_host_key_pub.hash_md5(), fg("light_blue") + attr("bold")
-            ),
-            "sha256": Colors.stylize(
-                ssh_host_key_pub.hash_sha256(), fg("light_blue") + attr("bold")
-            ),
-            "sha512": Colors.stylize(
-                ssh_host_key_pub.hash_sha512(), fg("light_blue") + attr("bold")
-            ),
-            "listen_address": self.listen_address,
-            "listen_port": self.listen_port,
-            "transparen_mode": self.transparent,
-        }
+        entries_data = []
+        for entry in self._host_key_entries:
+            pub = SSHPubKey(entry.key)
+            if entry.path is not None:
+                origin = "generated" if entry.was_generated else "loaded"
+                location = str(entry.path)
+            else:
+                origin = "temporary"
+                location = ""
+            entries_data.append({
+                "origin": origin,
+                "location": location,
+                "algorithm": type(entry.key).__name__,
+                "bits": entry.key.get_bits(),
+                "md5": pub.hash_md5(),
+                "sha256": pub.hash_sha256(),
+                "sha512": pub.hash_sha512(),
+            })
 
         if json_log or not sys.stdout.isatty():
-            log_data_json = {k: v for k, v in log_data.items() if k not in ("md5", "sha256", "sha512")}
-            log_data_json["md5"] = ssh_host_key_pub.hash_md5()
-            log_data_json["sha256"] = ssh_host_key_pub.hash_sha256()
-            log_data_json["sha512"] = ssh_host_key_pub.hash_sha512()
-            logging.info("ssh-mitm server info", extra={"serverinfo": log_data_json})
+            logging.info("ssh-mitm server info", extra={"serverinfo": {
+                "host_keys": entries_data,
+                "listen_address": self.listen_address,
+                "listen_port": self.listen_port,
+                "transparent_mode": self.transparent,
+            }})
         else:
             print("\33]0;SSH-MITM - ssh audits made simple\a", end="", flush=True)
             sshconsole.rule(
@@ -193,30 +207,33 @@ class SSHProxyServer:
                 sshconsole.rule(characters=".", style="bright_black")
 
             rich_print("[bold blue]:key: SSH-Host-Keys:[/bold blue]")
-            if log_data["key_origin"] == "temporary":
-                rich_print(
-                    "   [yellow]:warning: temporary key (not persisted, changes on every restart)[/yellow]"
+            for d in entries_data:
+                if d["origin"] == "temporary":
+                    rich_print(
+                        f"   [yellow]:warning: {d['algorithm']} — temporary (not persisted, changes on every restart)[/yellow]"
+                    )
+                elif d["origin"] == "generated":
+                    rich_print(
+                        f"   [green]:floppy_disk: {d['algorithm']} — generated, saved to[/green] [bold]{d['location']}[/bold]"
+                    )
+                else:
+                    rich_print(
+                        f"   [green]:white_check_mark: {d['algorithm']} — loaded from[/green] [bold]{d['location']}[/bold]"
+                    )
+                print(
+                    "   {bits} bit  "  # pylint: disable=consider-using-f-string
+                    "MD5:{md5}  SHA256:{sha256}".format(
+                        bits=d["bits"],
+                        md5=Colors.stylize(d["md5"], fg("light_blue") + attr("bold")),
+                        sha256=Colors.stylize(d["sha256"], fg("light_blue") + attr("bold")),
+                    )
                 )
-            elif log_data["key_origin"] == "generated":
-                rich_print(
-                    f"   [green]:floppy_disk: generated, saved to[/green] [bold]{log_data['key_location']}[/bold]"
-                )
-            else:
-                rich_print(
-                    f"   [green]:white_check_mark: loaded from[/green] [bold]{log_data['key_location']}[/bold]"
-                )
-            print(
-                (
-                    "   {algorithm} key with {bits} bit length\n"  # pylint: disable=consider-using-f-string
-                    "   {md5}\n"
-                    "   {sha256}\n"
-                    "   {sha512}"
-                ).format(**log_data)
-            )
             sshconsole.rule(characters=".", style="bright_black")
             print(
                 "{servericon} listen interfaces {listen_address} on port {listen_port}".format(
-                    **log_data, servericon=Colors.emoji("computer")
+                    servericon=Colors.emoji("computer"),
+                    listen_address=self.listen_address,
+                    listen_port=self.listen_port,
                 )
             )
             if self.transparent:
@@ -230,108 +247,92 @@ class SSHProxyServer:
             )
             sshconsole.rule("[red]waiting for connections", style="red")
 
-    def generate_host_key(self) -> None:
-        self.key_algorithm_class = None
-        key_algorithm_bits: int | None = None
-        if self.key_algorithm == "rsa":
-            self.key_algorithm_class = RSAKey
-            key_algorithm_bits = self.key_length
-        elif self.key_algorithm == "ecdsa":
-            self.key_algorithm_class = ECDSAKey
-        elif self.key_algorithm == "ed25519":
-            self.key_algorithm_class = Ed25519Key
-            if not self.key_file:
-                logging.error(
-                    "ed25519 requires a key file, please use also use --host-key parameter"
-                )
+    def setup_host_keys(self) -> None:
+        if not self._key_algorithms:
+            logging.error("no host key algorithms configured")
+            sys.exit(1)
+        state_dir = get_state_dir()
+        for algo in self._key_algorithms:
+            if algo not in _ALGO_CLASS:
+                logging.error("unsupported host key algorithm: %s", algo)
                 sys.exit(1)
-        else:
-            msg = f"host key algorithm '{self.key_algorithm}' not supported!"
-            raise ValueError(msg)
+            self._setup_key_for_algo(algo, self._key_files.get(algo), state_dir)
+        if not self._host_key_entries:
+            logging.error("no host keys could be set up")
+            sys.exit(1)
 
-        if self.key_file:
-            key_path = Path(self.key_file)
+    def _setup_key_for_algo(
+        self, algo: str, explicit_path: str | None, state_dir: Path | None
+    ) -> None:
+        if explicit_path:
+            key_path = Path(explicit_path)
             if key_path.is_file():
-                self._load_host_key(key_path)
+                key = self._load_pkey(key_path)
+                self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=False))
             else:
-                self._generate_host_key(key_algorithm_bits)
-                self._persist_host_key(key_path)
+                key = self._generate_pkey(algo)
+                self._persist_pkey(key, key_path)
+                self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=True))
+        elif state_dir is not None:
+            key_path = state_dir / _ALGO_STATE_FILE[algo]
+            if key_path.is_file():
+                key = self._load_pkey(key_path)
+                self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=False))
+            else:
+                key = self._generate_pkey(algo)
+                self._persist_pkey(key, key_path)
+                self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=True))
         else:
-            state_dir = get_state_dir()
-            if state_dir is not None:
-                key_path = state_dir / "host_key"
-                if key_path.is_file():
-                    self._load_host_key(key_path)
-                else:
-                    self._generate_host_key(key_algorithm_bits)
-                    self._persist_host_key(key_path)
-            else:
-                self._generate_host_key(key_algorithm_bits)
+            key = self._generate_pkey(algo)
+            self._host_key_entries.append(HostKeyEntry(key=key, path=None, was_generated=True))
 
-    def _generate_host_key(self, bits: int | None) -> None:
+    def _generate_pkey(self, algo: str) -> PKey:
         try:
-            self._hostkey = self.key_algorithm_class.generate(  # type: ignore[union-attr]
-                bits=bits or 2048
-            )
-            self._key_was_generated = True
-            self._key_path = None
+            if algo == "rsa":
+                return RSAKey.generate(bits=self._key_rsa_length)
+            if algo == "ecdsa":
+                return ECDSAKey.generate()
+            if algo == "ed25519":
+                return Ed25519Key.generate()
         except ValueError as err:
-            logging.error(str(err))
+            logging.error("failed to generate %s key: %s", algo, err)
             raise KeyGenerationError from err
+        msg = f"unsupported algorithm: {algo}"
+        raise KeyGenerationError(msg)
 
-    def _persist_host_key(self, key_path: Path) -> None:
-        if self._hostkey is None:
-            return
+    def _persist_pkey(self, key: PKey, key_path: Path) -> None:
         key_path.parent.mkdir(parents=True, exist_ok=True)
-        self._hostkey.write_private_key_file(str(key_path))
+        key.write_private_key_file(str(key_path))
         key_path.chmod(0o600)
-        self._key_path = key_path
 
-    def _load_host_key(self, key_path: Path) -> None:
+    def _load_pkey(self, key_path: Path) -> PKey:
         for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
             try:
-                key = self._key_from_filepath(str(key_path), pkey_class, None)
-                self._hostkey = key
-                self.key_algorithm_class = type(key)
-                self._key_was_generated = False
-                self._key_path = key_path
-                return
+                return self._key_from_filepath(str(key_path), pkey_class, None)
             except SSHException:
                 pass
-        logging.error("host key format not supported!")
+        logging.error("host key format not supported: %s", key_path)
         raise KeyGenerationError
 
     def _key_from_filepath(
         self, filename: str, klass: type[PKey], password: str | None
     ) -> PKey:
-        """
-        Attempt to derive a `.PKey` from given string path ``filename``:
-        - If ``filename`` appears to be a cert, the matching private key is
-          loaded.
-        - Otherwise, the filename is assumed to be a private key, and the
-          matching public cert will be loaded if it exists.
-        """
         cert_suffix = "-cert.pub"
-        # Assume privkey, not cert, by default
         if filename.endswith(cert_suffix):
             key_path = filename[: -len(cert_suffix)]
             cert_path = filename
         else:
             key_path = filename
             cert_path = filename + cert_suffix
-        # Blindly try the key path; if no private key, nothing will work.
         key = klass.from_private_key_file(key_path, password)
         hexlify(key.get_fingerprint())
-        # Attempt to load cert if it exists.
         if os.path.isfile(cert_path):
             key.load_certificate(cert_path)
         return key
 
     @property
-    def host_key(self) -> PKey | None:
-        if not self._hostkey:
-            self.generate_host_key()
-        return self._hostkey
+    def host_keys(self) -> list[PKey]:
+        return [entry.key for entry in self._host_key_entries]
 
     @staticmethod
     def _clean_environment() -> None:

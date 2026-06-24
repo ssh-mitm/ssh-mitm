@@ -110,21 +110,35 @@ class SSHServerModules(SubCommand):
             help="Enables transparent mode, which uses Linux TProxy for intercepting incoming connections. Requires root privileges.",
         )
         parser_group.add_argument(
-            "--host-key",
-            dest="host_key",
-            help="Specifies the path to a custom private SSH key used as the host key. If not provided, a random host key is generated.",
+            "--host-key-algorithms",
+            dest="host_key_algorithms",
+            nargs="*",
+            metavar="ALGORITHM",
+            help="List of host key algorithms to use. Accepted values: rsa, ecdsa, ed25519. Keys are loaded from or persisted to the state directory unless an explicit path is given via --host-key-rsa / --host-key-ecdsa / --host-key-ed25519.",
         )
         parser_group.add_argument(
-            "--host-key-algorithm",
-            dest="host_key_algorithm",
-            choices=["dss", "rsa", "ecdsa", "ed25519"],
-            help="Defines the algorithm used to generate the random host key (default: `rsa`).",
+            "--host-key-rsa",
+            dest="host_key_rsa",
+            metavar="FILE",
+            help="Path to the RSA host key file. If the file does not exist, a new RSA key is generated and saved there.",
         )
         parser_group.add_argument(
-            "--host-key-length",
-            dest="host_key_length",
+            "--host-key-ecdsa",
+            dest="host_key_ecdsa",
+            metavar="FILE",
+            help="Path to the ECDSA host key file. If the file does not exist, a new ECDSA key is generated and saved there.",
+        )
+        parser_group.add_argument(
+            "--host-key-ed25519",
+            dest="host_key_ed25519",
+            metavar="FILE",
+            help="Path to the Ed25519 host key file. If the file does not exist, a new Ed25519 key is generated and saved there.",
+        )
+        parser_group.add_argument(
+            "--host-key-rsa-length",
+            dest="host_key_rsa_length",
             type=int,
-            help="Sets the key length for the generated host key (applies to `dss` and `rsa` algorithms, default: `2048`).",
+            help="Bit length for generated RSA host keys (default: 2048).",
         )
         parser_group.add_argument(
             "--banner-name",
@@ -141,9 +155,11 @@ class SSHServerModules(SubCommand):
         proxy = SSHProxyServer(
             args.listen_address,
             args.listen_port,
-            key_file=args.host_key,
-            key_algorithm=args.host_key_algorithm,
-            key_length=args.host_key_length,
+            key_algorithms=args.host_key_algorithms or [],
+            key_file_rsa=args.host_key_rsa,
+            key_file_ecdsa=args.host_key_ecdsa,
+            key_file_ed25519=args.host_key_ed25519,
+            key_rsa_length=args.host_key_rsa_length,
             ssh_interface=args.ssh_interface,
             scp_interface=args.scp_interface,
             netconf_interface=args.netconf_interface,
