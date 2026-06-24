@@ -277,8 +277,7 @@ class SSHProxyServer:
                 key = self._load_pkey(key_path)
                 self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=False))
             else:
-                key = self._generate_pkey(algo)
-                self._persist_pkey(key, key_path)
+                key = self._generate_and_persist_pkey(algo, key_path)
                 self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=True))
         elif state_dir is not None:
             key_path = state_dir / _ALGO_STATE_FILE[algo]
@@ -286,14 +285,39 @@ class SSHProxyServer:
                 key = self._load_pkey(key_path)
                 self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=False))
             else:
-                key = self._generate_pkey(algo)
-                self._persist_pkey(key, key_path)
+                key = self._generate_and_persist_pkey(algo, key_path)
                 self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=True))
         else:
-            key = self._generate_pkey(algo)
+            key = self._generate_temp_pkey(algo)
             self._host_key_entries.append(HostKeyEntry(key=key, path=None, was_generated=True))
 
-    def _generate_pkey(self, algo: str) -> PKey:
+    def _generate_and_persist_pkey(self, algo: str, key_path: Path) -> PKey:
+        key_path.parent.mkdir(parents=True, exist_ok=True)
+        try:
+            if algo == "ed25519":
+                # paramiko 5.x Ed25519Key lacks write_private_key_file support;
+                # write the OpenSSH PEM directly and reload from disk.
+                pem = Ed25519PrivateKey.generate().private_bytes(
+                    Encoding.PEM, PrivateFormat.OpenSSH, NoEncryption()
+                )
+                key_path.write_bytes(pem)
+                key_path.chmod(0o600)
+                return Ed25519Key.from_private_key_file(str(key_path))
+            if algo == "rsa":
+                key: PKey = RSAKey.generate(bits=self._key_rsa_length)
+            elif algo == "ecdsa":
+                key = ECDSAKey.generate()
+            else:
+                msg = f"unsupported algorithm: {algo}"
+                raise KeyGenerationError(msg)
+            key.write_private_key_file(str(key_path))
+            key_path.chmod(0o600)
+            return key
+        except ValueError as err:
+            logging.error("failed to generate %s key: %s", algo, err)
+            raise KeyGenerationError from err
+
+    def _generate_temp_pkey(self, algo: str) -> PKey:
         try:
             if algo == "rsa":
                 return RSAKey.generate(bits=self._key_rsa_length)
@@ -309,11 +333,6 @@ class SSHProxyServer:
             raise KeyGenerationError from err
         msg = f"unsupported algorithm: {algo}"
         raise KeyGenerationError(msg)
-
-    def _persist_pkey(self, key: PKey, key_path: Path) -> None:
-        key_path.parent.mkdir(parents=True, exist_ok=True)
-        key.write_private_key_file(str(key_path))
-        key_path.chmod(0o600)
 
     def _load_pkey(self, key_path: Path) -> PKey:
         for pkey_class in (RSAKey, ECDSAKey, Ed25519Key):
