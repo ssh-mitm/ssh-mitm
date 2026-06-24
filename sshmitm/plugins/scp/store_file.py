@@ -26,7 +26,27 @@ if TYPE_CHECKING:
 
 
 class SCPStorageForwarder(SCPForwarder):
-    """Stores transferred files to the file system"""
+    """Saves files transferred via SCP to the local file system.
+
+    For each intercepted SCP session, transferred file data is written to
+    ``<log-dir>/<session-id>/scp/`` under a UUID-based filename. The original
+    transfer continues unmodified — storage is transparent to both client and server.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --scp-forwarder store_file --store-scp-files --log-dir /tmp/scp-logs
+
+    **Notes**
+
+    * ``--log-dir`` must be configured; without it no files are stored even if
+      ``--store-scp-files`` is set.
+    * Each file is saved with a UUID filename.  The original filename is logged
+      alongside the UUID so transfers can be correlated.
+    * Non-interactive SSH command data can also be captured with
+      ``--store-command-data``; output is written to ``<log-dir>/<session-id>/command/``.
+    """
 
     @classmethod
     def parser_arguments(cls) -> None:
@@ -45,6 +65,10 @@ class SCPStorageForwarder(SCPForwarder):
         )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
+        """Resolves the storage directory from the session log path.
+
+        :param session: the active SSH session being intercepted.
+        """
         super().__init__(session)
         self.file_id: str | None = None
         self.scp_storage_dir = None
