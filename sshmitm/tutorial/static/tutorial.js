@@ -5,6 +5,8 @@ es.onmessage = function(e) {
   const ev = JSON.parse(e.data);
   if      (ev.type === 'state') { state = ev.data; render(); setSshMitmStatus(state.sshmitm_running); }
   else if (ev.type === 'alert') { showAlert(ev.data); }
+  // 'activity' events (SSH auth results) are intentionally not displayed —
+  // showing them would reveal credentials the user is supposed to discover themselves.
 };
 
 function act(name) {

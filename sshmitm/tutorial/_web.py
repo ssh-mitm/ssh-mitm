@@ -284,6 +284,8 @@ class TutorialWebServer:
     }
 
     def _on_auth_event(self, method: str, username: str, ok: bool) -> None:
+        # Broadcasts 'activity' events that the frontend intentionally ignores —
+        # displaying auth results would reveal credentials the user must discover themselves.
         if method == "none" and not ok:
             return
         method_label = self._AUTH_METHOD_LABELS.get(method, method)

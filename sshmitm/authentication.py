@@ -723,9 +723,44 @@ class Authenticator(SSHMITMBaseModule):
 
 
 class AuthenticatorPassThrough(Authenticator):
-    """A subclass of `Authenticator` which passes the authentication to the remote server.
+    """Forwards the client's credentials to the real SSH server transparently.
 
-    This class reuses the credentials received from the client and sends it directly to the remote server for authentication.
+    This is the default authenticator. It intercepts the credentials offered by
+    the SSH client and replays them against the remote host, supporting all
+    common authentication methods:
+
+    * **Password** — the password is captured and forwarded as-is.
+    * **Public key with agent forwarding** — the agent is proxied so the remote
+      server can challenge the client's key directly.
+    * **Public key without agent** — the tool probes the remote server to
+      determine whether the presented key is accepted, then signals success to
+      the client so it will continue and eventually forward its agent.
+    * **Keyboard-interactive** — challenge/response rounds are bridged between
+      client and server in real time.
+
+    **Usage example**
+
+    ``passthrough`` is the default, so no explicit flag is required.  To set it
+    explicitly::
+
+        ssh-mitm server --authenticator passthrough
+
+    To redirect unauthenticatable sessions to a honeypot instead of dropping
+    them::
+
+        ssh-mitm server --enable-auth-fallback \\
+            --fallback-host 192.0.2.1 \\
+            --fallback-username honeypot \\
+            --fallback-password secret
+
+    **Notes**
+
+    * Captured passwords are logged unless ``--hide-credentials`` is set.
+    * Agent keys are written to ``<log-dir>/<session-id>/publickeys`` when a
+      log directory is configured.
+    * The honeypot fallback only triggers when the intercepted client cannot be
+      authenticated against the real server (e.g. no agent forwarded, key not
+      accepted).
     """
 
     @classmethod
@@ -733,6 +768,10 @@ class AuthenticatorPassThrough(Authenticator):
         super().parser_arguments()
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
+        """Initializes per-session public-key enumeration state.
+
+        :param session: the active SSH session being intercepted.
+        """
         super().__init__(session=session)
 
         self.pubkey_enumerator: PublicKeyEnumerator | None = None
