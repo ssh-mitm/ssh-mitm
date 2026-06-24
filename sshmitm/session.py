@@ -87,6 +87,12 @@ class NetconfState:
     command: bytes = b""
     client: "sshmitm.clients.netconf.NetconfClient | None" = field(default=None)
     client_ready: threading.Event = field(default_factory=threading.Event)
+    #: Capabilities advertised by the remote NETCONF server in its <hello>.
+    server_capabilities: frozenset[str] = field(default_factory=frozenset)
+    #: Capabilities advertised by the client in its <hello>.
+    client_capabilities: frozenset[str] = field(default_factory=frozenset)
+    #: True when both sides negotiated :base:1.1 (RFC 6242 chunked framing).
+    use_chunked: bool = False
 
 
 @dataclass
@@ -128,13 +134,27 @@ class BaseSession(SSHMITMBaseModule):
 
 
 class Session(BaseSession):
-    """Session Handler to store and manage active SSH sessions.
+    """Manages an intercepted SSH session from handshake to teardown.
 
-    :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
-    :param client_socket: A socket instance representing the connection from the client
-    :param client_address: Address information of the client
-    :param authenticator: Type of the authentication class to be used
-    :param remoteaddr: Remote address information
+    This is the default session class.  It tracks all state for a single client
+    connection — authentication credentials, transport, active channels, and
+    protocol-specific state for SSH, SCP, SFTP, NETCONF, and PowerShell.
+
+    A session log directory can be configured with ``--session-log-dir``; plugins
+    use this path to store captured data under ``<log-dir>/<session-id>/``.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --session-class base
+
+    **Notes**
+
+    * This is the default session class; no explicit flag is needed unless
+      using a custom session implementation.
+    * The maximum number of concurrent connections can be capped with
+      ``--max-connections`` (default: 100; 0 = unlimited).
     """
 
     CIPHERS = None
@@ -168,13 +188,12 @@ class Session(BaseSession):
         banner_name: str | None = None,
     ) -> None:
         """
-        Initialize the class instance.
-
-        :param proxyserver: Instance of 'sshmitm.server.SSHProxyServer' class
-        :param client_socket: A socket instance representing the connection from the client
-        :param client_address: Address information of the client
-        :param authenticator: Type of the authentication class to be used
-        :param remoteaddr: Remote address information
+        :param proxyserver: the proxy server instance managing this session.
+        :param client_socket: the socket representing the incoming client connection.
+        :param client_address: address information of the connecting client.
+        :param authenticator: the authenticator class to use for this session.
+        :param remoteaddr: the remote address to connect to.
+        :param banner_name: optional custom SSH banner name sent to the client.
         """
         super().__init__()
         self.register_session_thread()
