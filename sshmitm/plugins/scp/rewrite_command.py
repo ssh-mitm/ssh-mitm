@@ -15,7 +15,28 @@ from sshmitm.forwarders.scp import SCPForwarder
 
 
 class SCPRewriteCommand(SCPForwarder):
-    """Rewrite SCP Commands (can also used for rsync and git)"""
+    """Rewrites the SCP command before it is sent to the remote server.
+
+    Intercepts the exec command that the SCP client sends and either appends a
+    string to it or replaces it entirely.  Because SCP, rsync, and git all tunnel
+    over the SSH exec channel, this plugin can manipulate any of those commands.
+
+    **Usage example**
+
+    Append a string to the existing command::
+
+        ssh-mitm server --scp-forwarder replace-command --scp-append-string " --dry-run"
+
+    Replace the command entirely::
+
+        ssh-mitm server --scp-forwarder replace-command --scp-replace-string "echo hijacked"
+
+    **Notes**
+
+    * If both ``--scp-append-string`` and ``--scp-replace-string`` are set,
+      append takes precedence.
+    * The rewritten command is logged at INFO level.
+    """
 
     @classmethod
     def parser_arguments(cls) -> None:
