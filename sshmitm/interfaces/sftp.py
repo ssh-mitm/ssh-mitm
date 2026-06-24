@@ -23,7 +23,28 @@ class BaseSFTPServerInterface(paramiko.SFTPServerInterface, SSHMITMBaseModule):
 
 
 class SFTPProxyServerInterface(BaseSFTPServerInterface):
-    """sftp subsystem implementation for SSH-MITM"""
+    """Transparent SFTP subsystem that proxies all operations to the remote server.
+
+    This is the default SFTP interface.  It intercepts each SFTP operation — file open,
+    read, write, list, stat, and attribute changes — and forwards it to the remote server,
+    passing responses back to the client unchanged.
+
+    SFTP handler plugins (``--sftp-handler``) hook into individual file transfers on top
+    of this interface without replacing it.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --sftp-interface base
+
+    **Notes**
+
+    * This is the default SFTP interface; no explicit flag is needed unless using a custom
+      implementation.
+    * To intercept or modify file content, use SFTP handler plugins rather than replacing
+      this interface.
+    """
 
     def chattr(self, path: str, attr: SFTPAttributes) -> int:
         self.session.sftp.client_ready.wait()
