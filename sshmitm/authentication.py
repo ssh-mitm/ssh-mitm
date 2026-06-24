@@ -1037,6 +1037,30 @@ class AuthenticatorPassThrough(Authenticator):
 
 
 class AuthenticatorRemote(Authenticator):
+    """Authenticates clients against the remote server using their own public key.
+
+    Unlike the passthrough authenticator, this variant accepts only public-key
+    authentication where the client holds and can sign with its private key directly.
+    Password, agent forwarding, and keyboard-interactive are rejected.
+
+    This authenticator is useful when you want to restrict interception to clients
+    that authenticate with a locally held private key, without relying on agent
+    forwarding.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --authenticator remoteauth
+
+    **Notes**
+
+    * Clients that use password or keyboard-interactive authentication will be
+      rejected immediately.
+    * Agent forwarding is not used — the client must hold the private key locally.
+    * The client's public key is verified against the remote server before the
+      session is established.
+    """
 
     @classmethod
     def parser_arguments(cls) -> None:
