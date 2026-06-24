@@ -57,9 +57,22 @@ class PowerShellBaseForwarder(ExecForwarder):
 class PowerShellForwarder(PowerShellBaseForwarder):
     """Transparent MITM forwarder for the PowerShell remoting (PSRP) subsystem.
 
-    Relays the binary PSRP stream between the client and the remote
-    ``pwsh -sshs`` process without modification.  See the module docstring for
-    how to hook into the stream for logging or modification.
+    Relays the binary PSRP stream between the client and the remote ``pwsh -sshs``
+    process without modification.  No parsing or logging is performed — all traffic
+    is forwarded byte-for-byte.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --powershell-interface base
+
+    **Notes**
+
+    * This is the default PowerShell forwarder; no ``--powershell-interface`` flag
+      is needed unless overriding.
+    * To log or inspect PSRP traffic use the ``log-session`` plugin instead.
+    * See the module docstring for how to subclass and hook into the stream.
     """
 
     def forward(self) -> None:
