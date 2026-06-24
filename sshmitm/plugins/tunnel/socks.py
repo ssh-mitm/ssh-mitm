@@ -78,7 +78,36 @@ class ClientTunnelHandler:
 
 
 class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
-    """SOCKS4/5 server to serve out direct-tcpip connections over a session on local ports"""
+    """Exposes a SOCKS4/5 proxy on a local port for each intercepted SSH session.
+
+    When the SSH client opens a dynamic port forwarding channel (``-D``), this plugin
+    intercepts it and starts a SOCKS4/5 proxy instead.  Any application that connects
+    to the local SOCKS port has its traffic routed through the intercepted SSH session
+    to arbitrary destinations — giving full visibility into the client's tunnelled network.
+
+    SSH-MITM logs the SOCKS port and ready-to-use example commands when a session starts.
+
+    **Usage example**
+
+    ::
+
+        ssh-mitm server --local-port-forwarder socks
+
+    Route traffic through the proxy using the port printed at connect time::
+
+        # SOCKS4
+        nc -X 4 -x localhost:<port> address port
+        # SOCKS5
+        nc -X 5 -x localhost:<port> address port
+
+    **Notes**
+
+    * SOCKS5 authentication can be required with ``--socks5-username`` and
+      ``--socks5-password``; SOCKS4 clients cannot authenticate and are rejected
+      when credentials are configured.
+    * Use ``--socks-listen-address`` to restrict the proxy to a specific interface
+      (default: 127.0.0.1).
+    """
 
     @classmethod
     def parser_arguments(cls) -> None:
