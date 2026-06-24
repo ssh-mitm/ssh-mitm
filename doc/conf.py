@@ -47,6 +47,7 @@ extensions = [
 
 autodoc_default_options = {
     "undoc-members": False,
+    "special-members": "__init__",
 }
 myst_enable_extensions = ["colon_fence"]
 

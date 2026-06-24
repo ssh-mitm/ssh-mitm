@@ -101,38 +101,7 @@ class SSHMirrorForwarder(SSHForwarder):
 
     @classmethod
     def parser_arguments(cls) -> None:
-        """Configures command-line arguments for the SSH-MirrorShell plugin.
-
-        Available Arguments:
-
-        ``--ssh-mirrorshell-net <address>``
-            Specifies the local address or network interface on which the SSH injector
-            listener binds. This determines where the SSH server will accept connections.
-
-            - **Default:** ``0.0.0.0`` (all available interfaces)
-            - **Example:** ``127.0.0.1`` (restricts access to the local machine only)
-
-        ``--ssh-mirrorshell-key <path>``
-            Path to an RSA private key file used as the host key for the SSH injector server.
-            If omitted, a temporary 2048-bit RSA key is generated for each session.
-
-            - **Purpose:** Using a fixed key avoids "host-key-changed" warnings when
-            reconnecting to the server.
-            - **Example:** ``--ssh-mirrorshell-key /path/to/private_key.pem``
-
-        ``--store-ssh-session``
-            Enables recording of the complete terminal session (stdin, stdout, stderr)
-            to disk in *scriptreplay* format. This is useful for auditing or debugging.
-
-            - **Requirement:** ``--log-dir`` must be set to specify where log files are stored.
-            - **Note:** Logs are saved in a format compatible with the ``scriptreplay`` tool.
-
-        ``--ssh-terminal-log-formatter script``
-            Selects the format for terminal session logs. Currently, only ``script`` is
-            supported, which produces files compatible with the ``scriptreplay`` utility.
-
-            - **Default:** ``script``
-        """
+        """Registers CLI arguments for the mirror-shell plugin."""
         plugin_group = cls.argument_group()
         plugin_group.add_argument(
             "--ssh-mirrorshell-net",
@@ -155,6 +124,10 @@ class SSHMirrorForwarder(SSHForwarder):
         )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
+        """Binds a TCP listener on a random port and starts the mirror-client accept thread.
+
+        :param session: the active SSH session being intercepted.
+        """
         super().__init__(session)
         if self.args.ssh_mirrorshell_key:
             self.args.ssh_mirrorshell_key = os.path.expanduser(
