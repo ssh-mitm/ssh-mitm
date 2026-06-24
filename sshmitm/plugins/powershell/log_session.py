@@ -179,16 +179,30 @@ def _all_strings(root: "etree._Element") -> list[str]:
 class PSRPLoggingForwarder(PowerShellForwarder):
     """Logs PSRP messages (commands, output, errors) while relaying the stream unchanged.
 
-    Optionally writes a human-readable per-session transcript file.
+    Parses the PowerShell Remoting Protocol stream on-the-fly and logs each message
+    type together with key fields such as command names, pipeline output, error records,
+    and state transitions.  The raw byte stream is forwarded to the remote host unchanged
+    — this plugin is fully transparent to both client and server.
 
-    Activate with::
+    Optionally writes a structured per-session transcript to a file.
 
-        ssh-mitm server --remote-host <target> --powershell-interface log-session
+    **Usage example**
 
-    To save a transcript::
+    ::
 
-        ssh-mitm server --remote-host <target> --powershell-interface log-session \\
+        ssh-mitm server --powershell-interface log-session
+
+    To save a transcript to a directory::
+
+        ssh-mitm server --powershell-interface log-session \\
             --psrp-transcript-dir /tmp/psrp-transcripts/
+
+    **Notes**
+
+    * High-level message types (``CreatePipeline``, ``PipelineState``,
+      ``ErrorRecord``, etc.) are logged at INFO level; all others at DEBUG.
+    * Transcript files are named ``<session-id>.log`` and written into the
+      configured directory, falling back to the session log directory.
     """
 
     @classmethod
@@ -207,6 +221,10 @@ class PSRPLoggingForwarder(PowerShellForwarder):
         )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
+        """Initializes per-direction PSRP stream parsers and opens the transcript file.
+
+        :param session: the active SSH session being intercepted.
+        """
         super().__init__(session)
         self._client_parser = _PSRPStreamParser()
         self._server_parser = _PSRPStreamParser()
