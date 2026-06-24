@@ -217,21 +217,19 @@ class SSHProxyServer:
             for d in entries_data:
                 if d["origin"] == "temporary":
                     rich_print(
-                        f"   [yellow]:warning: {d['algorithm']} — temporary (not persisted, changes on every restart)[/yellow]"
+                        f"   [yellow]:warning: {d['algorithm']} {d['bits']} bit — temporary (not persisted, changes on every restart)[/yellow]"
                     )
                 elif d["origin"] == "generated":
                     rich_print(
-                        f"   [green]:floppy_disk: {d['algorithm']} — generated, saved to[/green] [bold]{d['location']}[/bold]"
+                        f"   [green]:floppy_disk: {d['algorithm']} {d['bits']} bit — generated, saved to[/green] [bold]{d['location']}[/bold]"
                     )
                 else:
                     rich_print(
-                        f"   [green]:white_check_mark: {d['algorithm']} — loaded from[/green] [bold]{d['location']}[/bold]"
+                        f"   [green]:white_check_mark: {d['algorithm']} {d['bits']} bit — loaded from[/green] [bold]{d['location']}[/bold]"
                     )
                 print(  # pylint: disable=consider-using-f-string
-                    "   {bits} bit\n"
                     "   {sha256}\n"
                     "   {md5}".format(
-                        bits=d["bits"],
                         sha256=Colors.stylize(d["sha256"], fg("light_blue") + attr("bold")),
                         md5=Colors.stylize(d["md5"], fg("light_blue") + attr("bold")),
                     )
