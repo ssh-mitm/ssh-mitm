@@ -4,12 +4,19 @@ import select
 import sys
 import threading
 import time
+import io
 from binascii import hexlify
 from dataclasses import dataclass, field
 from pathlib import Path
 from socket import socket
 
 from colored import attr, fg
+from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
+from cryptography.hazmat.primitives.serialization import (
+    Encoding,
+    NoEncryption,
+    PrivateFormat,
+)
 from paramiko import ECDSAKey, Ed25519Key, PKey, RSAKey, Transport
 from paramiko.ssh_exception import SSHException
 from rich import print as rich_print
@@ -293,7 +300,10 @@ class SSHProxyServer:
             if algo == "ecdsa":
                 return ECDSAKey.generate()
             if algo == "ed25519":
-                return Ed25519Key.generate()
+                pem = Ed25519PrivateKey.generate().private_bytes(
+                    Encoding.PEM, PrivateFormat.OpenSSH, NoEncryption()
+                )
+                return Ed25519Key.from_private_key(io.StringIO(pem.decode()))
         except ValueError as err:
             logging.error("failed to generate %s key: %s", algo, err)
             raise KeyGenerationError from err
