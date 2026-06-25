@@ -37,7 +37,9 @@ ssh-mitm tutorial
 ```
 
 Opens a browser-based, step-by-step guide — no target server needed.
-Five built-in tutorials cover password interception, public-key auth, SFTP transfers, command execution, and live session mirroring.
+Five chapters follow an authorized assessment of **Logfile Inc.**, covering
+password interception, public-key auth, SFTP transfers, command execution,
+and live session mirroring.
 
 <p align="center">
   <img alt="SSH-MITM interactive tutorial" src="https://docs.ssh-mitm.at/_images/ssh-mitm-tutorial.png" width="80%">
@@ -94,7 +96,7 @@ SSH-MITM intercepts the session and logs the credentials immediately:
 ```
 INFO     Remote authentication succeeded
     Remote Address: <target-host>:22
-    Username: user
+    Username: alice
     Password: secret
     Agent: no agent
 ```

@@ -74,7 +74,7 @@ SSH-MITM intercepts the session and logs the credentials immediately:
 
     INFO     Client connection established with parameters:
                  Remote Address: <target-host>:22
-                 Username:       user
+                 Username:       alice
                  Password:       secret
                  Agent:          no agent
 
