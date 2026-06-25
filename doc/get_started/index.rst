@@ -175,16 +175,3 @@ Go deeper
 The :doc:`Audit Guide </user_guide/index>` covers all interception
 techniques in depth — authentication, file transfers, port forwarding,
 protocol-specific interception, and client auditing.
-
-
-Adding custom tutorials
------------------------
-
-Additional tutorials can be installed as Python packages. Register the
-tutorial class under the ``sshmitm.Tutorial`` entry point in
-``pyproject.toml``:
-
-.. code-block:: toml
-
-    [project.entry-points."sshmitm.Tutorial"]
-    my-tutorial = "my_package.my_module:MyTutorial"

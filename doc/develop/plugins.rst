@@ -1139,3 +1139,19 @@ normal Python package with a ``pyproject.toml`` that declares the entry point:
 
 After ``pip install sshmitm-my-plugin``, the plugin is available to SSH-MITM
 automatically — no configuration change needed beyond selecting it on the CLI.
+
+
+Tutorial Plugins
+----------------
+
+The interactive tutorial (``ssh-mitm tutorial``) also supports custom chapters
+distributed as Python packages. Register the tutorial class under the
+``sshmitm.Tutorial`` entry point:
+
+.. code-block:: toml
+
+    [project.entry-points."sshmitm.Tutorial"]
+    my-tutorial = "my_package.my_module:MyTutorial"
+
+After installation, the chapter appears in the tutorial automatically
+alongside the built-in ones.
