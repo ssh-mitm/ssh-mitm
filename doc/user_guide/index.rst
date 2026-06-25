@@ -9,6 +9,15 @@ a thorough security audit.
 .. grid:: 1 1 2 2
    :gutter: 3
 
+   .. grid-item-card:: :fas:`crosshairs` Positioning
+      :shadow: sm
+
+      Understand how SSH-MITM is placed between client and server — direct
+      connection, ARP spoofing, DNS hijacking, rogue access point, or
+      transparent proxy at a gateway.
+
+      :doc:`attack_scenarios`
+
    .. grid-item-card:: :fas:`key` Authentication
       :shadow: sm
 
@@ -51,6 +60,13 @@ a thorough security audit.
 
       :doc:`plugin_browser` · :doc:`configuration` · :doc:`transparent` · :doc:`faq` · :doc:`legal`
 
+
+.. toctree::
+   :caption: Positioning
+   :maxdepth: 1
+   :hidden:
+
+   attack_scenarios
 
 .. toctree::
    :caption: Authentication
