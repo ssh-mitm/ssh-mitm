@@ -1,6 +1,6 @@
 ## Chapter 5 — The Open Terminal
 
-The network admin — responsible for Meridian Systems' core infrastructure —
+The network admin — responsible for Logfile Inc.'s core infrastructure —
 connects to the production router to check the running configuration.
 He authenticates, opens a shell, and then leaves to get coffee.
 

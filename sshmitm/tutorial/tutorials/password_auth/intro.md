@@ -1,10 +1,10 @@
 ## Chapter 1 — The First Connection
 
-You are conducting an authorized red team assessment of **Meridian Systems**.
+You are conducting an authorized red team assessment of **Logfile Inc.**
 Your objective: determine how much an attacker positioned on the internal
 network can learn from SSH sessions passing through.
 
-SSH-MITM is running as a transparent proxy between Meridian's developers
+SSH-MITM is running as a proxy between Logfile Inc.'s developers
 and their servers. The first connection is coming in.
 
 It is Alice — a senior developer — connecting to the dev server the same way

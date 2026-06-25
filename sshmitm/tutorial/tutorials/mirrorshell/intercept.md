@@ -38,3 +38,14 @@ talking to is SSH-MITM. The proxy decrypts the session, exposes it via
 the mirrorshell port, and forwards all traffic to the real device. The
 admin has no indication that the session is being observed or that
 commands can be injected.
+
+---
+
+**To be continued...**
+
+The Logfile Inc. assessment is not over. More chapters are in development —
+covering additional techniques and scenarios encountered during the engagement.
+
+In the meantime, the [Audit Guide](https://docs.ssh-mitm.at/user_guide/index.html)
+covers every technique shown here in depth, including configuration options,
+plugin customization, and how to apply them in real authorized engagements.

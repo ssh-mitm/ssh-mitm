@@ -1,6 +1,6 @@
 ## Chapter 2 — The Security Upgrade
 
-After the first session, Meridian Systems' IT department sent out a reminder:
+After the first session, Logfile Inc.'s IT department sent out a reminder:
 passwords are to be replaced with SSH keys. Alice updated her configuration and
 now connects with her private key and agent forwarding enabled.
 

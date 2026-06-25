@@ -90,11 +90,16 @@ full visibility into the session without disrupting it.
 Security Research
 =================
 
-Operating from the Man-in-the-Middle position makes it possible to observe
-SSH client behavior that is invisible from either endpoint. SSH-MITM was used
-to discover **6 previously unknown vulnerabilities** in widely-deployed SSH
-software — including PuTTY, OpenSSH, Dropbear, Midnight Commander, and
-MobaXterm. Each was reported to the vendor and assigned a CVE number.
+SSH-MITM was originally developed as a research tool — not just a proxy.
+The Man-in-the-Middle position makes it possible to observe SSH client
+behavior that is invisible from either endpoint: how clients negotiate
+algorithms, which authentication methods they accept, and how they respond
+to unexpected server behavior.
+
+This research approach led to the discovery of **6 previously unknown
+vulnerabilities** in widely-deployed SSH software — including PuTTY,
+OpenSSH, Dropbear, Midnight Commander, and MobaXterm. Each was reported
+to the vendor and assigned a CVE number.
 
 :bdg-link-primary-line:`CVE-2021-36367 <vulnerabilities/CVE-2021-36367.html>`
 :bdg-link-primary-line:`CVE-2021-36368 <vulnerabilities/CVE-2021-36368.html>`

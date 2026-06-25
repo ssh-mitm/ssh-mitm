@@ -125,7 +125,7 @@ chapter describes the scenario and asks you to locate the intercepted
 value in the proxy output.
 
 All five chapters are set during an authorized assessment of
-**Meridian Systems** and cover the most common interception scenarios
+**Logfile Inc.** and cover the most common interception scenarios
 in a realistic order.
 
 .. card:: Chapter 1 — Password Authentication
@@ -169,6 +169,14 @@ in a realistic order.
    device configuration while the original session remains active.
 
    :doc:`→ Session interception </user_guide/sessions>`
+
+.. card:: To be continued...
+
+   The Logfile Inc. assessment is ongoing. More chapters are in
+   development — covering additional techniques and scenarios encountered
+   during the engagement.
+
+   :doc:`→ Audit Guide </user_guide/index>`
 
 
 Go deeper
