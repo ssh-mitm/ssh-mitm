@@ -49,8 +49,8 @@ Features
       :link: user_guide/authentication
       :link-type: doc
 
-      Supports password and public-key authentication with automatic
-      fallback. Redirect sessions without a forwarded agent to a honeypot.
+      Intercept passwords and public keys. Accept the same key as the
+      target server and fall back to password authentication automatically.
 
    .. grid-item-card:: :fas:`shield-halved` FIDO2 Token Phishing
       :link: user_guide/trivialauth
@@ -58,28 +58,6 @@ Features
 
       Intercept hardware token authentication via the trivial
       authentication attack (CVE-2021-36367, CVE-2021-36368).
-
-   .. grid-item-card:: :fab:`windows` PowerShell Remoting (PSRP)
-      :link: user_guide/powershell
-      :link-type: doc
-
-      Intercept PowerShell remoting sessions over SSH. Log executed commands,
-      output, errors, and state transitions. Write human-readable per-session
-      transcript files.
-
-   .. grid-item-card:: :fas:`graduation-cap` Interactive Tutorial
-      :link: get_started/index
-      :link-type: doc
-
-      Learn SSH-MITM step by step in a browser-based guide — no target
-      server needed. Run ``ssh-mitm tutorial`` to get started.
-
-   .. grid-item-card:: :fas:`puzzle-piece` Plugin Browser
-      :link: user_guide/plugin_browser
-      :link-type: doc
-
-      Explore all available plugins and their configuration options
-      interactively in the terminal — without editing any files.
 
 
 Security Research
