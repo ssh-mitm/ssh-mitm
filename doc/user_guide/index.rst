@@ -6,69 +6,55 @@ principles to advanced protocol-level attacks. Each section starts with
 a ready-to-run command and builds toward the technical depth needed for
 a thorough security audit.
 
-.. grid:: 1 2 3 3
+.. grid:: 1 1 2 2
    :gutter: 3
 
-   .. grid-item-card:: :fas:`terminal` Session Hijacking
-      :link: sessions
-      :link-type: doc
-
-      Mirror live SSH sessions and interact with them in real time.
-      Commands executed in either session appear in both.
-
-   .. grid-item-card:: :fas:`file-arrow-up` File Interception
-      :link: file_transfer
-      :link-type: doc
-
-      Intercept, store, or replace files during SCP and SFTP transfers
-      without interrupting the client.
-
-   .. grid-item-card:: :fas:`network-wired` Port Forwarding
-      :link: portforwarding
-      :link-type: doc
-
-      Intercept TCP tunnels and dynamic port forwarding with full
-      SOCKS 4/5 support.
-
    .. grid-item-card:: :fas:`key` Authentication
-      :link: authentication
-      :link-type: doc
+      :shadow: sm
 
-      Intercept passwords and public keys. Accept the same key as the
-      target server and fall back to password authentication automatically.
+      Intercept passwords and public keys. Accept the same key as the target
+      server, use the forwarded agent for full access, or redirect keyless
+      clients to a honeypot.
 
-   .. grid-item-card:: :fas:`shield-halved` FIDO2 Token Phishing
-      :link: trivialauth
-      :link-type: doc
+      :doc:`authentication` · :doc:`sshagent` · :doc:`trivialauth` · :doc:`publickey-hostbound`
 
-      Intercept hardware token authentication via the trivial
-      authentication attack (CVE-2021-36367, CVE-2021-36368).
+   .. grid-item-card:: :fas:`terminal` Interception
+      :shadow: sm
 
-   .. grid-item-card:: :fab:`windows` PowerShell Remoting
-      :link: powershell
-      :link-type: doc
+      Mirror live SSH sessions, inject commands via mirrorshell, and
+      capture or replace files during SCP and SFTP transfers.
 
-      Intercept PowerShell remoting sessions over SSH. Log commands,
-      output, errors, and state transitions.
+      :doc:`sessions` · :doc:`file_transfer` · :doc:`portforwarding`
 
-   .. grid-item-card:: :fas:`network-wired` NETCONF
-      :link: netconf
-      :link-type: doc
+   .. grid-item-card:: :fas:`network-wired` Protocols
+      :shadow: sm
 
-      Intercept NETCONF management sessions on network devices.
-      Log every RPC operation and reply transparently.
+      Intercept protocol-specific sessions — PowerShell Remoting over SSH,
+      NETCONF management sessions, and Mosh connections.
 
-   .. grid-item-card:: :fas:`puzzle-piece` Plugin Browser
-      :link: plugin_browser
-      :link-type: doc
+      :doc:`powershell` · :doc:`netconf` · :doc:`mosh`
 
-      Explore all available plugins and their configuration options
-      interactively in the terminal — without editing any files.
+   .. grid-item-card:: :fas:`magnifying-glass` Client Auditing
+      :shadow: sm
+
+      Identify SSH client software and version from key negotiation behavior.
+      Match observed patterns against known CVEs automatically.
+
+      :doc:`fingerprint` · :doc:`client_audit`
+
+   .. grid-item-card:: :fas:`gear` Reference
+      :shadow: sm
+
+      Plugin browser, full configuration reference, transparent proxy mode,
+      FAQ, and legal notice.
+
+      :doc:`plugin_browser` · :doc:`configuration` · :doc:`transparent` · :doc:`faq` · :doc:`legal`
 
 
 .. toctree::
    :caption: Authentication
    :maxdepth: 1
+   :hidden:
 
    authentication
    sshagent
@@ -78,6 +64,7 @@ a thorough security audit.
 .. toctree::
    :caption: Interception
    :maxdepth: 1
+   :hidden:
 
    sessions
    file_transfer
@@ -86,6 +73,7 @@ a thorough security audit.
 .. toctree::
    :caption: Protocols
    :maxdepth: 1
+   :hidden:
 
    powershell
    netconf
@@ -94,6 +82,7 @@ a thorough security audit.
 .. toctree::
    :caption: Client Auditing
    :maxdepth: 1
+   :hidden:
 
    fingerprint
    client_audit
@@ -101,6 +90,7 @@ a thorough security audit.
 .. toctree::
    :caption: Reference
    :maxdepth: 1
+   :hidden:
 
    plugin_browser
    configuration

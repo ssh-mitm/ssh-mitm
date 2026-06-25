@@ -25,6 +25,8 @@ Install
             $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
             $ chmod +x ssh-mitm-x86_64.AppImage
 
+        In all commands below, replace ``ssh-mitm`` with ``./ssh-mitm-x86_64.AppImage``.
+
     .. tab-item:: Snap
 
         .. code-block:: none

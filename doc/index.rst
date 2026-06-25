@@ -111,6 +111,5 @@ at **DeepSec 2021**:
 
    get_started/index
    Audit Guide <user_guide/index>
-   develop/index
    Vulnerability Research <vulnerabilities/index>
-   changelog
+   develop/index
