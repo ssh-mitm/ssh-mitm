@@ -212,11 +212,16 @@ laptop.  Without forwarding she would have to copy the key to ``dev-server``
 With ``ssh -A``, the SSH connection tunnels signing requests back to Alice's
 local agent:
 
-.. code-block:: none
-    :class: no-copybutton
+.. mermaid::
 
-    laptop ──(ssh -A)──► dev-server ──(ssh)──► git-server
-    [agent]                                     uses laptop's agent
+    sequenceDiagram
+        participant L as laptop [agent]
+        participant D as dev-server
+        participant G as git-server
+
+        L->>D: ssh -A
+        D->>G: ssh
+        note over G: uses laptop's agent
 
 Alice's private key never leaves her laptop.  ``dev-server`` only receives
 the signed authentication response, not the key itself.

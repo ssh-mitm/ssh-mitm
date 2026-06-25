@@ -30,12 +30,16 @@ and know something is wrong.
 
 That reasoning is correct for a straightforward proxy attack:
 
-.. code-block:: none
-    :class: no-copybutton
+.. mermaid::
 
-    Alice's laptop ──(ssh -A)──► SSH-MITM ──(agent)──► real server
-                    FIDO2 ①                             FIDO2 ②
-                                                   two confirmations — suspicious
+    sequenceDiagram
+        participant L as Alice's laptop
+        participant M as SSH-MITM
+        participant S as real server
+
+        L->>M: ssh -A  [FIDO2 ①]
+        M->>S: agent   [FIDO2 ②]
+        note over L,S: two confirmations — suspicious
 
 The trivial authentication attack eliminates the first confirmation.
 
@@ -54,12 +58,16 @@ server — and that is the only moment the FIDO2 token is activated.
 
 From Alice's perspective:
 
-.. code-block:: none
-    :class: no-copybutton
+.. mermaid::
 
-    Alice's laptop ──(trivial auth)──► SSH-MITM ──(agent)──► real server
-                    no FIDO2                                  FIDO2 ①
-                                                        one confirmation — expected
+    sequenceDiagram
+        participant L as Alice's laptop
+        participant M as SSH-MITM
+        participant S as real server
+
+        L->>M: trivial auth (no FIDO2)
+        M->>S: agent  [FIDO2 ①]
+        note over L,S: one confirmation — expected
 
 The confirmation that appears on Alice's screen looks like any normal key usage:
 
