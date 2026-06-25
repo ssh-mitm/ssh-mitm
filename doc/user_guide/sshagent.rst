@@ -1,6 +1,18 @@
 :fas:`user-secret` SSH Agent
 ============================
 
+.. tip:: **Try it first**
+
+   **Chapter 2** of the interactive tutorial shows how agent forwarding
+   exposes access beyond the first intercepted server — in a safe
+   environment with no real target needed.
+
+   .. code-block:: none
+
+       $ ssh-mitm tutorial
+
+   See :doc:`/get_started/tutorial` for the full tutorial list.
+
 .. _sshagent-quickstart:
 
 Quickstart

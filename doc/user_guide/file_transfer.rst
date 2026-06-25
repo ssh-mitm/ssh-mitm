@@ -2,6 +2,19 @@
 :fas:`copy` File transfers (SCP/SFTP)
 ======================================
 
+.. tip:: **Try it first**
+
+   **Chapter 3** of the interactive tutorial demonstrates SFTP interception:
+   a developer downloads a sensitive file and SSH-MITM logs the filename and
+   content in plaintext.
+
+   .. code-block:: none
+
+       $ ssh-mitm tutorial
+
+   See :doc:`/get_started/tutorial` for the full tutorial list.
+
+
 In this chapter, we will explore how to intercept and manipulate file transfers using
 Secure Copy (SCP) and Secure File Transfer Protocol (SFTP).
 
@@ -147,3 +160,46 @@ This can be done with another SCP-interface in SSH-MITM.
 .. code-block:: none
 
     $ ssh-mitm server --sftp-handler replace_file --sftp-replace /bin/ls
+
+
+Intercept git and rsync
+=======================
+
+SSH-MITM can also intercept SSH-based tools like ``git`` and ``rsync``, which
+run remote commands over SSH rather than using SFTP or SCP directly.
+Use the ``debug_traffic`` plugin to capture the full protocol exchange:
+
+.. code-block:: none
+
+    $ ssh-mitm server --scp-interface debug_traffic
+
+.. note::
+
+    SCP file transfers are executed as SSH commands, which is why the
+    ``debug_traffic`` plugin is implemented as a SCP interface plugin.
+
+
+Intercept git
+-------------
+
+In most cases git over SSH uses public-key authentication. The default
+``git`` command does not support agent forwarding, so pass it via the
+``GIT_SSH_COMMAND`` environment variable:
+
+.. code-block:: none
+
+    $ ssh-mitm server --remote-host github.com --scp-interface debug_traffic
+
+.. code-block:: none
+
+    $ GIT_SSH_COMMAND="ssh -A" git clone ssh://git@127.0.0.1:10022/ssh-mitm/ssh-mitm.git
+
+
+Intercept rsync
+---------------
+
+When intercepting rsync, pass the SSH-MITM port directly to rsync:
+
+.. code-block:: none
+
+    $ rsync -r -e 'ssh -p 10022 -A' /local/folder/ user@127.0.0.1:/remote/folder/

@@ -1,17 +1,25 @@
-## What you will learn
+## Chapter 1 — The First Connection
 
-SSH encrypts the connection between client and server — but encryption
-alone does not prevent a man-in-the-middle attack.  As long as the client
-accepts the wrong host key, an attacker positioned on the network path
-can intercept everything, including passwords.
+You are conducting an authorized red team assessment of **Meridian Systems**.
+Your objective: determine how much an attacker positioned on the internal
+network can learn from SSH sessions passing through.
 
-In this tutorial you take the role of the attacker.  You will position
-SSH-MITM between a developer and their SSH server, then watch the
-developer's password appear in plaintext in the proxy log — without
-breaking the session or alerting the developer.
+SSH-MITM is running as a transparent proxy between Meridian's developers
+and their servers. The first connection is coming in.
+
+It is Alice — a senior developer — connecting to the dev server the same way
+she does every morning. She types her password without thinking twice.
+
+She does not know you are listening.
 
 ---
 
-A target SSH server is already running in the background.
-In the next step you will start SSH-MITM and position it between the
-developer's client and that server.
+**What you will see**
+
+SSH encrypts the channel between client and server — but only against
+third parties. SSH-MITM terminates the client's handshake with its own
+host key, decrypts all traffic, and opens a separate encrypted connection
+to the real server. The password passes through the proxy in plaintext
+before being forwarded.
+
+In the next step, start SSH-MITM and wait for Alice to connect.

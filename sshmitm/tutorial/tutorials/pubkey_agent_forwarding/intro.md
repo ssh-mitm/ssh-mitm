@@ -1,22 +1,24 @@
-## What you will learn
+## Chapter 2 — The Security Upgrade
 
-Public key authentication is widely regarded as more secure than passwords
-because the private key never leaves the client.  However, SSH-MITM can
-still extract valuable information from a public key session:
+After the first session, Meridian Systems' IT department sent out a reminder:
+passwords are to be replaced with SSH keys. Alice updated her configuration and
+now connects with her private key and agent forwarding enabled.
 
-- **Which key was accepted** — SSH-MITM sees the exact public key used for
-  authentication and logs its fingerprint.  This fingerprint uniquely
-  identifies the key and can be used to track which key has access where.
-- **Agent forwarding** — when the client enables agent forwarding, the
-  forwarded agent travels through SSH-MITM.  An attacker in this position
-  can use the agent to authenticate to further systems as the victim,
-  without ever seeing or copying the private key.
+From her perspective, the change made things more secure.
 
-In this tutorial you take the role of the attacker.  A developer connects
-to the target server using their SSH key with agent forwarding enabled.
-You will intercept the session and identify the key that was accepted.
+From your position between her and the server, the change looks different.
+SSH-MITM no longer sees a password — but it sees the exact public key the
+server accepted, and if agent forwarding is enabled, Alice's agent travels
+through the proxy. That agent can be used to authenticate to further systems
+as Alice, without ever copying her private key.
 
 ---
 
-In the next step you will start SSH-MITM between the developer and the
-target server.
+**What you will see**
+
+- The **public key fingerprint** logged in SSH-MITM output — this uniquely
+  identifies Alice's key pair across the entire infrastructure.
+- A **forwarded agent** available while the session is open — any host you
+  can reach from SSH-MITM's position can be accessed with Alice's identity.
+
+In the next step, start SSH-MITM and wait for Alice to connect.

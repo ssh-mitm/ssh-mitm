@@ -1,32 +1,33 @@
-## What you will learn
+## Chapter 5 — The Open Terminal
 
-SSH-MITM does not only intercept credentials — it can also mirror every
-active shell session to a second connection in real time.  This feature
-is called **mirrorshell** and it is enabled by default.
+The network admin — responsible for Meridian Systems' core infrastructure —
+connects to the production router to check the running configuration.
+He authenticates, opens a shell, and then leaves to get coffee.
 
-When a developer connects through SSH-MITM and opens a shell, the proxy
-automatically opens a separate port.  Anyone who connects to that port
-sees a live copy of the session: every keystroke the developer types and
-every response the server sends.
+The terminal is unattended.
 
-More importantly, the attacker can **inject their own commands** into the
-open session.  If the developer steps away from their terminal, the
-attacker has full, unnoticed access to everything the developer could do —
-without any additional authentication.
+SSH-MITM is still in the middle. The admin is connected to the proxy, which
+is connected to the real router. SSH-MITM keeps the session open and
+exposes it via a local **mirrorshell** port — a live copy of every
+keystroke and every response from the device.
 
----
-
-**The scenario in this tutorial**
-
-A developer has connected to a production server through SSH-MITM and
-opened a shell.  They have just stepped away to get coffee, leaving the
-terminal unattended.
-
-You will connect to the mirrored session, explore the server, and
-retrieve a secret that is stored in a file on the developer's home
-directory — all without the developer noticing.
+You can attach to that port and explore the router as if you were sitting
+at the admin's terminal. If you type a command, it runs on the device.
+The admin cannot see what you are doing.
 
 ---
 
-In the next step you will start SSH-MITM.  Mirrorshell is always active;
-no additional flags are needed.
+**What you will see**
+
+When the admin's session starts, SSH-MITM prints the exact command to
+attach to the mirrored session. Look for a line starting with:
+
+```
+[i] created mirrorshell on port
+```
+
+Connect to that port with `ssh` and use `show running-config` to read the
+device configuration. The SNMP read-write community string is stored there.
+
+In the next step, start SSH-MITM — mirrorshell is always active, no
+additional flags are needed.

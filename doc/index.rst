@@ -15,7 +15,7 @@ session hijacking, file transfer interception, and port forwarding — through a
    SSH-MITM is intended for authorized security audits, penetration testing, and research only.
    Do not use it against systems you do not own or have explicit written permission to test.
    Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
-   See the :doc:`Legal Notice </get_started/legal>` for details.
+   See the :doc:`Legal Notice </user_guide/legal>` for details.
 
 
 Features
@@ -25,21 +25,21 @@ Features
    :gutter: 3
 
    .. grid-item-card:: :fas:`terminal` Session Hijacking
-      :link: get_started/terminal_session
+      :link: user_guide/sessions
       :link-type: doc
 
       Mirror live SSH sessions and interact with them in real time.
       Commands executed in either session appear in both.
 
    .. grid-item-card:: :fas:`file-arrow-up` File Interception
-      :link: get_started/file_transfer
+      :link: user_guide/file_transfer
       :link-type: doc
 
       Intercept, store, or replace files during SCP and SFTP transfers
       without interrupting the client.
 
    .. grid-item-card:: :fas:`network-wired` Port Forwarding
-      :link: get_started/portforwarding
+      :link: user_guide/portforwarding
       :link-type: doc
 
       Intercept TCP tunnels and dynamic port forwarding with full
@@ -75,7 +75,7 @@ Features
       server needed. Run ``ssh-mitm tutorial`` to get started.
 
    .. grid-item-card:: :fas:`puzzle-piece` Plugin Browser
-      :link: get_started/plugin_browser
+      :link: user_guide/plugin_browser
       :link-type: doc
 
       Explore all available plugins and their configuration options
@@ -177,7 +177,7 @@ and inject commands independently, without affecting the original connection.
    :hidden:
 
    get_started/index
-   user_guide/index
+   Audit Guide <user_guide/index>
    develop/index
-   vulnerabilities/index
+   Vulnerability Research <vulnerabilities/index>
    changelog

@@ -1,20 +1,23 @@
-## What you will learn
+## Chapter 3 — The File Transfer
 
-SFTP (SSH File Transfer Protocol) transfers files over an encrypted SSH
-channel — but encryption alone does not prevent interception by a
-man-in-the-middle positioned on the network path.
+Alice is preparing a quarterly review for management.
+She connects to the staging server and downloads a file via SFTP —
+the same encrypted channel she trusts for all her sensitive work.
 
-SSH-MITM terminates the client's handshake with its own host key, decrypts
-all traffic, and forwards it to the real server. This means every file
-transfer passes through the proxy in plaintext, including the filename,
-the direction of the transfer, and the file content itself.
+What she does not know: SSH encrypts the channel against third parties,
+not against the proxy she is talking to. SSH-MITM terminates Alice's
+handshake with its own host key, decrypts all traffic, and forwards it
+to the real server.
 
-In this tutorial you take the role of the attacker. A developer will
-connect to the target server and download a sensitive file via SFTP.
-You will intercept the session with SSH-MITM and identify which file was
-transferred — without the developer noticing anything unusual.
+Every file that passes through is visible in plaintext — including the
+filename, the direction of the transfer, and the file content.
 
 ---
 
-In the next step you will start SSH-MITM between the developer's SFTP
-client and the target server.
+**What you will see**
+
+SSH-MITM logs every SFTP operation it intercepts: `open`, `read`,
+`write`, `close`. You will find the filename in the proxy output
+as soon as Alice's client sends the first `open` request.
+
+In the next step, start SSH-MITM and wait for Alice's SFTP session.

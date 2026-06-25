@@ -1,6 +1,21 @@
 :fas:`users` Authentication
 ===========================
 
+.. tip:: **Try it first**
+
+   The interactive tutorial demonstrates both password and public-key
+   interception in a safe environment:
+
+   - **Chapter 1** intercepts Alice's password as it passes through the proxy.
+   - **Chapter 2** shows how agent forwarding exposes access beyond the first server.
+
+   .. code-block:: none
+
+       $ ssh-mitm tutorial
+
+   See :doc:`/get_started/tutorial` for the full tutorial list.
+
+
 The choice of the right authentication method against SSH-MITM can have a decisive influence on the success of a Man in the Middle attack.
 
 The most popular authentication methods are "password" and "publickey" authentication. However, there are others, such as "none" and "keyboard-interactive".

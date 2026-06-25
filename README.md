@@ -124,15 +124,15 @@ and inject commands independently, without affecting the original connection.
 
 | Feature | Description |
 | ------- | ----------- |
-| [Interactive session monitoring](https://docs.ssh-mitm.at/get_started/terminal_session.html) | Attach to any intercepted session via a mirror shell — observe and inject commands in real time |
-| [File transfer manipulation](https://docs.ssh-mitm.at/get_started/file_transfer.html) | Intercept SCP/SFTP transfers, store copies, or replace files on the fly |
-| [Port forwarding interception](https://docs.ssh-mitm.at/get_started/portforwarding.html) | Intercept TCP tunnels and dynamic SOCKS 4/5 forwarding |
+| [Interactive session monitoring](https://docs.ssh-mitm.at/user_guide/sessions.html) | Attach to any intercepted session via a mirror shell — observe and inject commands in real time |
+| [File transfer manipulation](https://docs.ssh-mitm.at/user_guide/file_transfer.html) | Intercept SCP/SFTP transfers, store copies, or replace files on the fly |
+| [Port forwarding interception](https://docs.ssh-mitm.at/user_guide/portforwarding.html) | Intercept TCP tunnels and dynamic SOCKS 4/5 forwarding |
 | [FIDO2 token phishing](https://docs.ssh-mitm.at/user_guide/trivialauth.html) | Intercept hardware token authentication via the trivial auth attack ([OpenSSH info](https://www.openssh.com/agent-restrict.html)) |
 | [Authentication interception](https://docs.ssh-mitm.at/user_guide/authentication.html) | Capture passwords; accept the same public key as the target server and fall back to password auth automatically |
 | [MOSH session monitoring](https://docs.ssh-mitm.at/user_guide/mosh.html) | Intercept and decrypt MOSH (Mobile Shell) UDP sessions; view the live terminal via a built-in VT100/ANSI emulator |
 | [PowerShell remoting (PSRP)](https://docs.ssh-mitm.at/user_guide/powershell.html) | Intercept PowerShell remoting sessions over SSH; log commands, output, errors, and state transitions; write per-session transcripts |
 | [Client auditing](https://docs.ssh-mitm.at/vulnerabilities/index.html) | Identify known vulnerabilities in connecting SSH clients |
-| [Plugin support](https://docs.ssh-mitm.at/get_started/plugin_browser.html) | Extend and customize all interception behavior with plugins |
+| [Plugin support](https://docs.ssh-mitm.at/user_guide/plugin_browser.html) | Extend and customize all interception behavior with plugins |
 
 ## Use Cases
 
