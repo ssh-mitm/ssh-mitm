@@ -59,11 +59,11 @@ full visibility into the session without disrupting it.
 
    * - :fas:`key`
      - Read **passwords and public keys** in cleartext as they pass through the proxy —
-       even when the client uses key-based auth, SSH-MITM falls back to password automatically.
+       clients without a forwarded agent can be redirected to a honeypot.
        :doc:`→ Authentication </user_guide/authentication>`
    * - :fas:`terminal`
-     - **Attach to any live SSH session** and inject commands invisibly via mirrorshell —
-       the original user sees nothing.
+     - **Mirror live SSH sessions** and inject commands in real time —
+       both the auditor and the original user see the session.
        :doc:`→ Session Hijacking </user_guide/sessions>`
    * - :fas:`file-arrow-up`
      - **Intercept or silently replace** every file transferred via SCP or SFTP
