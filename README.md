@@ -63,7 +63,7 @@ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_
 chmod +x ssh-mitm-x86_64.AppImage
 ```
 
-For other installation options (pip, Flatpak, Snap) see the [installation guide](https://docs.ssh-mitm.at/get_started/installation.html).
+For other installation options (pip, Flatpak, Snap) see the [installation guide](https://docs.ssh-mitm.at/develop/installation.html).
 
 > **⚡ Get the latest version**
 >
@@ -131,7 +131,7 @@ and inject commands independently, without affecting the original connection.
 | [Authentication interception](https://docs.ssh-mitm.at/user_guide/authentication.html) | Capture passwords; accept the same public key as the target server and fall back to password auth automatically |
 | [MOSH session monitoring](https://docs.ssh-mitm.at/user_guide/mosh.html) | Intercept and decrypt MOSH (Mobile Shell) UDP sessions; view the live terminal via a built-in VT100/ANSI emulator |
 | [PowerShell remoting (PSRP)](https://docs.ssh-mitm.at/user_guide/powershell.html) | Intercept PowerShell remoting sessions over SSH; log commands, output, errors, and state transitions; write per-session transcripts |
-| [Client auditing](https://docs.ssh-mitm.at/vulnerabilities/index.html) | Identify known vulnerabilities in connecting SSH clients |
+| [Client auditing](https://docs.ssh-mitm.at/user_guide/client_audit.html) | Identify known vulnerabilities in connecting SSH clients from key negotiation behavior alone |
 | [Plugin support](https://docs.ssh-mitm.at/user_guide/plugin_browser.html) | Extend and customize all interception behavior with plugins |
 
 ## Use Cases

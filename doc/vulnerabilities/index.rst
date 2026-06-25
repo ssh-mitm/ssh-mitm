@@ -1,5 +1,5 @@
-:fas:`skull` Vulnerability Research
-=====================================
+Security Research
+=================
 
 The following section provides an overview of recent vulnerabilities in
 SSH clients, servers, and related programs. This information is crucial

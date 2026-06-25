@@ -58,19 +58,33 @@ full visibility into the session without disrupting it.
    :class: feature-list
 
    * - :fas:`key`
-     - Intercept **passwords and public keys** — including fallback from key to password auth
+     - Read **passwords and public keys** in cleartext as they pass through the proxy —
+       even when the client uses key-based auth, SSH-MITM falls back to password automatically.
+       :doc:`→ Authentication </user_guide/authentication>`
    * - :fas:`terminal`
-     - **Mirror live sessions** and inject commands via mirrorshell
+     - **Attach to any live SSH session** and inject commands invisibly via mirrorshell —
+       the original user sees nothing.
+       :doc:`→ Session Hijacking </user_guide/sessions>`
    * - :fas:`file-arrow-up`
-     - Capture or replace **SCP and SFTP file transfers**
+     - **Intercept or silently replace** every file transferred via SCP or SFTP
+       without interrupting the client.
+       :doc:`→ File Transfers </user_guide/file_transfer>`
    * - :fas:`network-wired`
-     - Intercept **TCP tunnels** and SOCKS dynamic forwarding
+     - Intercept every **TCP tunnel and SOCKS connection** routed through the proxy.
+       :doc:`→ Port Forwarding </user_guide/portforwarding>`
    * - :fas:`shield-halved`
-     - Detect and demonstrate **FIDO2 token phishing** (trivial authentication attack)
+     - **Bypass hardware token authentication** without touching the token —
+       using the trivial authentication attack (CVE-2021-36367, CVE-2021-36368).
+       :doc:`→ FIDO2 Token Phishing </user_guide/trivialauth>`
    * - :fas:`magnifying-glass`
-     - Audit **SSH client behavior** — version fingerprinting, key negotiation, CVE matching
+     - **Identify SSH client software and known CVEs** from key negotiation behavior alone —
+       no active probing required.
+       :doc:`→ Client Auditing </user_guide/client_audit>`
    * - :fab:`windows`
-     - Intercept **PowerShell Remoting (PSRP)** and **NETCONF** sessions
+     - Full visibility into **PowerShell Remoting (PSRP)** and **NETCONF** management sessions.
+       :doc:`→ Protocols </user_guide/powershell>`
+
+:doc:`→ Audit Guide </user_guide/index>`
 
 
 Security Research
@@ -109,7 +123,7 @@ at **DeepSec 2021**:
    :maxdepth: 1
    :hidden:
 
-   get_started/index
+   Get Started <get_started/index>
    Audit Guide <user_guide/index>
-   Vulnerability Research <vulnerabilities/index>
-   develop/index
+   Security Research <vulnerabilities/index>
+   Development <develop/index>
