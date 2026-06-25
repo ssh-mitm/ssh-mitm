@@ -76,9 +76,9 @@ MobaXterm. Each was reported to the vendor and assigned a CVE number.
 :bdg-link-primary-line:`CVE-2022-38336 <vulnerabilities/CVE-2022-38336.html>`
 :bdg-link-primary-line:`CVE-2022-38337 <vulnerabilities/CVE-2022-38337.html>`
 
-The research was presented at **DeepSec 2021**. The talk explains the trivial
-authentication attack and demonstrates how FIDO2 hardware tokens can be
-phished through a positioned proxy.
+The initial findings — the trivial authentication attack and how FIDO2
+hardware tokens can be phished through a positioned proxy — were presented
+at **DeepSec 2021**:
 
 .. figure:: images/ds2021-video-small.png
    :target: https://vimeo.com/showcase/9059922/video/651517195
