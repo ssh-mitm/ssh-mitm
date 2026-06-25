@@ -271,6 +271,11 @@ signature replay attacks: the client's signature is cryptographically bound
 to the host key of the server it is connecting to, so a captured signature
 cannot be used against a different server.
 
+.. tip::
+
+    For protocol details, wire formats, and a full walkthrough of destination
+    constraints, see :doc:`publickey-hostbound`.
+
 In a proxy scenario this works exactly as designed.  The client connects to
 SSH-MITM and produces a signature bound to SSH-MITM's host key — correct
 behaviour, because SSH-MITM is the server it is talking to.  SSH-MITM then
@@ -286,6 +291,11 @@ for the real server — which is suspicious.  This is where the
 authenticating the client to SSH-MITM without using the private key at all,
 the attacker reduces the number of confirmations to exactly one — the one the
 user expects.
+
+.. seealso::
+
+    :doc:`publickey-hostbound` — full protocol details, wire formats, and a
+    complete walkthrough of the destination-constraint mechanism.
 
 SSH-Agent Breaking
 """""""""""""""""""

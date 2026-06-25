@@ -6,8 +6,10 @@ to SSH public-key authentication that binds a login credential to a specific
 server.  SSH-MITM supports this method on the server side so that modern
 OpenSSH clients can authenticate transparently through an interception proxy.
 
-This page starts with the concept, builds up to the protocol details, and
-finishes with the MITM implications.
+This page is a technical companion to :doc:`sshagent`.  It starts with the
+concept, builds up to the protocol details, and finishes with the MITM
+implications in the context of the tutorial scenario (Alice connecting to the
+dev server with ``ssh -A``, Chapter 2).
 
 
 The problem with standard public-key authentication
@@ -81,12 +83,12 @@ OpenSSH 8.9 added the ``-h`` flag to ``ssh-add``.  It lets you tell the agent
 
 .. code-block:: bash
 
-    # This key may only be used to log in to prod.example.com
-    ssh-add -h prod.example.com ~/.ssh/id_ed25519
+    # This key may only be used to log in to <target-host>
+    ssh-add -h <target-host> ~/.ssh/id_ed25519
 
 The agent stores this constraint alongside the private key.  From this point on
 it will refuse to sign anything with that key unless it can verify that the
-current SSH connection really goes to ``prod.example.com``.
+current SSH connection really goes to ``<target-host>``.
 
 For the agent to verify this, two things must happen:
 
@@ -106,8 +108,8 @@ allowed forwarding path with the ``>`` notation:
 
 .. code-block:: bash
 
-    # Key may be forwarded through jumphost to reach prod
-    ssh-add -h "jumphost.example.com>user@prod.example.com" ~/.ssh/id_ed25519
+    # Key may be forwarded through a jump host to reach the target
+    ssh-add -h "<hop-host>><username>@<target-host>" ~/.ssh/id_ed25519
 
 The agent tracks each hop in the forwarding chain and verifies the full path
 before signing.
@@ -121,7 +123,7 @@ constraints, remove the key first and re-add it:
 .. code-block:: bash
 
     ssh-add -d ~/.ssh/id_ed25519
-    ssh-add -h prod.example.com ~/.ssh/id_ed25519
+    ssh-add -h <target-host> ~/.ssh/id_ed25519
 
 
 How the three pieces fit together
@@ -137,7 +139,7 @@ The full mechanism relies on three protocol extensions that work together:
         participant C as SSH Client
         participant S as Server
 
-        U->>A: ssh-add -h prod.example.com key<br/>(stores constraint + resolves host key)
+        U->>A: ssh-add -h <target-host> key<br/>(stores constraint + resolves host key)
 
         C->>S: TCP connect + SSH handshake (key exchange)
         note over C,S: session_id established,<br/>server signs it with its host key
@@ -444,7 +446,7 @@ perspective:
 2. The client connects for the first time and accepts SSH-MITM's host key
    (TOFU — Trust On First Use).  The key is stored in ``known_hosts`` under
    the target hostname.
-3. ``ssh-add -h targetserver.example.com`` resolves ``targetserver.example.com``
+3. ``ssh-add -h <target-host>`` resolves ``<target-host>``
    via ``known_hosts`` and finds SSH-MITM's key — that key becomes the
    constraint.
 4. On the next connection the session-bind uses SSH-MITM's key, which matches
@@ -455,7 +457,7 @@ perspective:
 .. code-block:: bash
 
     ssh-mitm server --listen-port 10022 \
-        --remote-host honeypot.internal --remote-port 22
+        --remote-host <honeypot-host> --remote-port 22
 
 In this scenario ``publickey-hostbound`` and ``ssh-add -h`` do **not** protect
 the client, because SSH-MITM is the accepted destination.  The protection only
@@ -477,7 +479,7 @@ key.
     ssh-mitm server --listen-port 10022 --remote-host localhost --remote-port 22 &
 
     # First connection: accept and store SSH-MITM's host key
-    ssh -o StrictHostKeyChecking=no -p 10022 user@localhost exit
+    ssh -o StrictHostKeyChecking=no -p 10022 alice@localhost exit
 
 **Step 2 — reload the key with a destination constraint:**
 
@@ -493,16 +495,16 @@ key.
 
 .. code-block:: bash
 
-    ssh -o StrictHostKeyChecking=yes -A -p 10022 user@localhost
+    ssh -o StrictHostKeyChecking=yes -A -p 10022 alice@localhost
 
 SSH-MITM's log confirms that the hostbound method was used:
 
 .. code-block:: none
     :class: no-copybutton
 
-    INFO  Auth request using publickey-hostbound-v00@openssh.com for user <user>
-    DEBUG check_auth_publickey: username=<user>, sig_attached=False   ← probe
-    DEBUG check_auth_publickey: username=<user>, sig_attached=True    ← auth
+    INFO  Auth request using publickey-hostbound-v00@openssh.com for user alice
+    DEBUG check_auth_publickey: username=alice, sig_attached=False   ← probe
+    DEBUG check_auth_publickey: username=alice, sig_attached=True    ← auth
 
 Without the ``publickey-hostbound`` advertisement, the client would fall back
 to plain ``publickey``.  The agent — holding only a destination-constrained
