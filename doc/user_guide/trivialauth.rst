@@ -8,30 +8,117 @@
 :fas:`handshake-slash` Trivial Authentication
 =============================================
 
-The "trivial authentication" phishing attack was found by **Manfred Kaiser (AUT-milCERT)**
-in cooperation with **Simon Tatham (PuTTY)** and **Matt Johnston (Dropbear)** during an security audit.
+Trivial authentication is a phishing attack that exploits the ambiguity of
+FIDO2 hardware token confirmations during an SSH man-in-the-middle attack
+with agent forwarding.
 
-Trivial authentication is a special form of phishing attack that exploits authentication methods to force a client to log in.
+In :doc:`Chapter 2 of the tutorial </get_started/index>`, Alice connects to
+the dev server with ``ssh -A`` and SSH-MITM intercepts her forwarded agent.
+A natural follow-up question is: *does a FIDO2 token protect against this?*
 
-Trivial authentication methods are those that do not require any interaction from the client.
-"none" is an example of a trivial authentication method because it allows an immediate login to a server and
-in most cases the client simply accepts it if the login was successful.
+The answer depends on how the attacker approaches the authentication step.
 
-SSH keys can be additionally protected with a FIDO2 token as of OpenSSH 8.2,
-thus protecting against misuse should the private key be compromised.
 
-In this way, it is possible to bypass confirmation of the FIDO2 token for login to the Man in the Middle server.
-If SSH Agent Forwarding is enabled, an attacker can use the FIDO2 protected key to login to another server.
-The phishing attack is not noticeable in this case because the user only has to confirm the key once.
-For which server the confirmation is done is not shown, which is why the user has no way to check anything.
+The assumption
+--------------
 
-From the user's point of view, the user expects that exactly one confirmation of the key must take place.
-However, the login on the Man in the Middle server was done with an authentication method that did not
-require access to the private key. Only the abusive login of the attacker requires a confirmation.
-Thus, the user's expectation is met and in most cases access to the private key is allowed.
+Alice uses a FIDO2 hardware token to protect her SSH key.  She reasons that
+even if someone intercepts her connection, she would notice: a proxy would
+have to authenticate her twice — once to the MITM server and once to the
+real server.  She would see two FIDO2 confirmation requests instead of one
+and know something is wrong.
 
-If the client has phishing detection, as it has since PuTTY 0.71, a user can detect that the
-confirmation is for another server, provided that the trust sigils are appropriately controlled.
+That reasoning is correct for a straightforward proxy attack:
+
+.. code-block:: none
+    :class: no-copybutton
+
+    Alice's laptop ──(ssh -A)──► SSH-MITM ──(agent)──► real server
+                    FIDO2 ①                             FIDO2 ②
+                                                   two confirmations — suspicious
+
+The trivial authentication attack eliminates the first confirmation.
+
+
+How it works
+------------
+
+The attack exploits authentication methods that require no client interaction
+to succeed — so-called *trivial* authentication methods.
+
+Instead of asking Alice to authenticate with her public key (which would
+trigger the FIDO2 token), SSH-MITM accepts her login using a method that
+needs no key at all.  Alice's session is established without her token being
+touched.  SSH-MITM then uses her forwarded agent to authenticate to the real
+server — and that is the only moment the FIDO2 token is activated.
+
+From Alice's perspective:
+
+.. code-block:: none
+    :class: no-copybutton
+
+    Alice's laptop ──(trivial auth)──► SSH-MITM ──(agent)──► real server
+                    no FIDO2                                  FIDO2 ①
+                                                        one confirmation — expected
+
+The confirmation that appears on Alice's screen looks like any normal key usage:
+
+.. code-block:: none
+    :class: no-copybutton
+
+    Confirm user presence for key ED25519-SK SHA256:...
+
+Alice confirms — reasonably assuming it is for the server she just connected
+to.  In fact, it authorises SSH-MITM's connection to the real server on her
+behalf.  There is no reliable way for Alice to determine which server is
+actually prompting, because the confirmation request itself carries no
+information about the destination.
+
+
+.. _protection:
+
+Protection: destination constraints
+-------------------------------------
+
+OpenSSH 8.9 introduced *destination constraints* for ``ssh-add`` as the
+response to :doc:`CVE-2021-36368 </vulnerabilities/CVE-2021-36368>`.  Keys
+can be loaded with explicit restrictions on which hosts they may be used at
+and through which forwarding hops they may pass.
+
+.. code-block:: bash
+
+    ssh-add -h <target-host> ~/.ssh/id_ed25519
+
+With this constraint, the key may only be used directly from Alice's own
+machine to ``<target-host>``.  If SSH-MITM receives the forwarded agent and
+tries to authenticate to the real server, the agent checks the full hop chain
+— and refuses, because SSH-MITM is not listed as an authorised intermediate
+host.
+
+For a key to be usable through an intermediate host, every hop must be
+listed explicitly:
+
+.. code-block:: bash
+
+    ssh-add -h <hop-host> -h <hop-host>><target-host> ~/.ssh/id_ed25519
+
+.. note::
+
+    Destination constraints require support in both the SSH client and the
+    server on each hop (OpenSSH 8.9 or later).  An attacker with direct
+    access to the agent socket can still attempt to use it — but the agent
+    will only honour authentication requests for explicitly permitted
+    destinations.
+
+
+Discovery
+---------
+
+The trivial authentication attack was identified by **Manfred Kaiser
+(AUT-milCERT)** during a security audit, in cooperation with **Simon Tatham**
+(PuTTY) and **Matt Johnston** (Dropbear).  All three projects were notified
+and coordinated their responses before the findings were published.
+
 
 Assigned CVEs
 -------------
@@ -41,121 +128,154 @@ Assigned CVEs
 * Dropbear: :doc:`CVE-2021-36369 </vulnerabilities/CVE-2021-36369>`
 
 
-Authentication methods
-----------------------
+Reactions
+---------
 
-none authentication
-"""""""""""""""""""
+**PuTTY**
 
-The easiest way for a phishing attack is to use "none" authentication.
-This is used to grant a client access to a server without a login.
-For a Man in the Middle attacker, this is interesting in that no other authentication methods are executed.
+PuTTY responded in two stages, each addressing a different level of
+protection:
 
-However, using "none" authentication has several disadvantages. The client is forced to log in immediately.
-As a result, an attacker loses the opportunity to test other authentication methods.
+- **0.71**: introduced *trust sigils* — a visual marker (``(!)``) that
+  appears in the terminal or title bar when the server accepted the session
+  without substantive authentication.  The connection is still established,
+  but the user is given a visible signal that no real authentication took
+  place.
+- **0.76**: added ``-o RejectTrivialAuth=yes``.  When set, PuTTY terminates
+  the connection immediately if the server accepts a trivial authentication
+  method, rather than proceeding with the session.
 
-It could be that a user wants to connect to a server that requires "publickey" authentication
-only for selected users and only a password is sufficient for all others. In such a case,
-the attacker would no longer have the possibility to ask for the password and a login would no longer be possible for the attacker.
+.. list-table::
+    :widths: 25 75
+    :header-rows: 1
+
+    * - PuTTY version
+      - Behaviour
+    * - < 0.71
+      - Trivial auth accepted silently — no indicator shown.  Attack
+        completely invisible to the user.
+    * - 0.71 – 0.75
+      - Trust sigil displayed.  Connection still established; attack works
+        if the user does not notice or understand the sigil.
+    * - ≥ 0.76
+      - ``-o RejectTrivialAuth=yes`` available.  Connection is terminated
+        if the server accepts trivial auth.
+
+Simon Tatham's position is that the trust sigil system already defends
+against every known spoofing attack a server could attempt this way;
+``RejectTrivialAuth`` is an additional option for users who prefer a stricter
+policy rather than a visual warning.
+
+**OpenSSH**
+
+OpenSSH's position is that the behaviour is not an authentication bypass,
+since no credential is being forged — the server simply does not require one.
+The core issue, as described in the CVE, is the **ambiguity of the FIDO2
+confirmation**: when a client uses public-key authentication with agent
+forwarding, there is no reliable way to determine from the confirmation prompt
+alone whether the key is being used to authenticate to the directly connected
+server or to a further server reached through the forwarded agent.
+
+This ambiguity was addressed in OpenSSH 8.9 by introducing *agent restriction
+keys* (destination constraints, see `protection`_ above).  These bind the use
+of a forwarded agent key to explicitly authorised destinations — the agent
+itself enforces where the key may be used, so the FIDO2 confirmation is
+unambiguous: it can only be triggered for a destination Alice explicitly
+approved.
+
+**Dropbear**
+
+Dropbear is a lightweight SSH implementation widely used on embedded systems
+and IoT devices (routers, OpenWRT, Buildroot).  This makes the vulnerability
+particularly relevant in scenarios where users connect to network devices
+through jump hosts with agent forwarding enabled — a common setup on managed
+network infrastructure.
+
+Dropbear 2022.82 added the client option ``-o DisableTrivialAuth``.  When
+set, the client rejects connections where the server accepted a trivial
+authentication method and terminates with an error rather than proceeding
+silently.
+
+From the release announcement:
+
+.. code-block:: none
+    :class: no-copybutton
+
+    Added client option "-o DisableTrivialAuth". This can be used to prevent
+    the server immediately accepting successful authentication (before any auth
+    request) which could cause UI confusion and security issues with agent
+    forwarding - it isn't clear which host is prompting to use a key.
+    Thanks to Manfred Kaiser from Austrian MilCERT
 
 
-Publickey authentication
-""""""""""""""""""""""""
+SSH-MITM — proof of concept
+-----------------------------
 
-Publickey authentication is a non-trivial authentication method.
-The reason is that the client creates a signature with the private key, which should be validated by the server.
+SSH-MITM supports the trivial authentication attack via the
+``--enable-trivial-auth`` flag.  Agent forwarding should be enabled on the
+client side to complete the attack:
 
-However, an attacker cannot make a client bypass the signature process.
-The attacker only has the option to fully perform or reject an authentication using Publickey.
+.. code-block:: bash
 
-Nevertheless, publickey authentication is an essential part of a phishing attack on FIDO2/SSH-Askpass protected keys.
+    ssh-mitm server --remote-host <target-host> --enable-trivial-auth
 
-As described in the Man in the Middle attack on public key authentication chapter,
-it is necessary to check all public keys against the actual target server.
-This is necessary to find out which key would have been used for the login.
+Connect as Alice with agent forwarding:
 
-Once the key is known, potentially better targets can be searched for.
+.. code-block:: bash
 
+    ssh -A -p 10022 alice@<mitm-host>
 
-After the key is known, the publickey authentication of the client can be terminated.
-The actual phishing attack then takes place using a different authentication method.
+To verify the default behaviour without the bypass — where two FIDO2
+confirmations are required — omit the flag:
 
-It is essential that an authentication using publickey authentication against the Man in
-the Middle server must never be successful. Otherwise, there is a risk that the phishing attack will be noticed.
+.. code-block:: bash
 
+    ssh-mitm server --remote-host <target-host>
 
-"keyboard-interactive" authentication
-"""""""""""""""""""""""""""""""""""""
-
-The actual phishing attack takes place in the "keyboard-interactive" authentication method.
-With "keyboard-interactive" any number of prompts can be sent to the client. The number of prompts must therefore be >=0.
-
-If 0 (zero) prompts are sent to the client, no client interaction is necessary.
-However, if at least 1 prompt is sent to the client, the user must make an input.
-
-If 0 prompts are sent to the client, "keyboard-interactive" is a trivial authentication.
-Only if at least 1 prompt is sent, it is no longer considered trivial.
-
-For the phishing attack it is necessary that 0 (zero) prompts are sent to the client to force a login on the server.
-Once the session is established, the attacker can access the passed agent and connect to its target server.
-
-
-SSH-MITM - PoC to phish FIDO2 tokens
-------------------------------------
-
-When using SSH-Askpass and/or a FIDO2 key, it is necessary that the usage of a private key always gets manually approved.
-If a MitM attack occurs that requires two authentifications (one on the MitM server and one on the remote server),
-the user has to confirm the usage of his private key twice.
-
-However, the user knows that there should only be one confirmation process,
-as he is connecting to only one server. Therefore it is very likely, that he accepts the first confirmation and declines the second one.
-If that happens, the MitM server can‘t authenticate itself to the remote server.
+In this case Alice must authenticate to SSH-MITM using publickey, triggering
+a first FIDO2 confirmation.  The agent is then used to authenticate to the
+real server, triggering a second.  Two confirmations — the difference is
+immediately noticeable.
 
 .. note::
 
-    It's recommended to use Agent forwarding, when trying out the bypass!
-
-    If you need to handle clients without a forwarded agent, you can configure a fallback host.
-
-
-Phishing FIDO2 tokens / SSH-Askpass
-"""""""""""""""""""""""""""""""""""
-
-Since version 1.0.0 SSH-MITM has full support for phishing FIDO2 tokens.
-
-.. code-block:: none
-
-    $ ssh-mitm server --remote-host TARGET --enable-trivial-auth
+    If the client does not use agent forwarding, a fallback host can be
+    configured to handle those sessions separately.
 
 
-Connect the client to SSH-MITM with agent forwarding:
+Technical details: the three authentication methods
+----------------------------------------------------
 
-.. code-block:: none
+The attack combines three authentication methods in sequence.
 
-    $ ssh -A -p 10022 localhost
+**1. Publickey — probing only**
 
+SSH-MITM first checks Alice's public keys against the real server to find out
+which key she would use for login.  This step must never result in a
+successful login on the SSH-MITM side — a successful publickey authentication
+would trigger a FIDO2 confirmation and alert Alice.
 
-Verification without bypass
-"""""""""""""""""""""""""""
+**2. Trivial authentication — establishing the session**
 
-To verify the default behavior for a login using publickey authentication on the MitM server and on the remote server,
-SSH-MITM can be started with following parameters:
+Once the key is known, SSH-MITM rejects the publickey attempt and switches to
+a trivial authentication method:
 
-.. code-block:: none
+- **none**: grants access immediately without any credentials.  Simple to
+  implement, but the client is forced into a session immediately, which
+  prevents testing further authentication methods.
+- **keyboard-interactive with zero prompts**: sends no prompts to the client,
+  so no user interaction is required.  The session is established silently
+  and other authentication methods can still be tested beforehand.
 
-    $ ssh-mitm server --remote-host TARGET
+In both cases, Alice's private key and FIDO2 token are not involved.
 
+**3. Agent forwarding — reaching the real server**
 
-Connect the client to SSH-MITM with agent forwarding:
+With Alice's session established and her agent forwarded, SSH-MITM
+authenticates to the real server using the forwarded agent.  This is the
+only step that requires Alice's key — triggering exactly one FIDO2
+confirmation, the one she expected all along.
 
-.. code-block:: none
-
-    $ ssh -A -p 10022 localhost
-
-
-In this case, the client must authenticate to the SSH-MITM server using "publickey", which requires a confirmation.
-
-After the user has successfully logged in to the MitM server, the agent is requested and logging in to the remote host is started, which requires a 2nd confirmation by ssh-askpass.
 
 .. rubric:: Permalink
 

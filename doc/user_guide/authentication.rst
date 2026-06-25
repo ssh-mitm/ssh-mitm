@@ -3,17 +3,13 @@
 
 .. tip:: **Try it first**
 
-   The interactive tutorial demonstrates both password and public-key
-   interception in a safe environment:
-
-   - **Chapter 1** intercepts Alice's password as it passes through the proxy.
-   - **Chapter 2** shows how agent forwarding exposes access beyond the first server.
+   The interactive tutorial covers all major authentication scenarios in a safe environment:
 
    .. code-block:: none
 
        $ ssh-mitm tutorial
 
-   See :doc:`/get_started/index` for the full tutorial list.
+   See :doc:`/get_started/index` for the full list of tutorial chapters.
 
 
 The choice of the right authentication method against SSH-MITM can have a decisive influence on the success of a Man in the Middle attack.
@@ -52,12 +48,14 @@ However, it can also be used to give a user access to a system without requiring
 Support in SSH-MITM
 """""""""""""""""""
 
-**none** authentication is fully supported but disabled by default. The reason is, that this authentication method can
-break ssh-mitm attacks, if the remote server does not allow logins with **none** authentication
+**none** authentication is fully supported. SSH-MITM automatically accepts it when the remote server also offers it —
+no extra flag is needed in that case.
+
+To force acceptance of **none** authentication regardless of what the remote server supports, use ``--force-none-auth``:
 
 .. code-block::
 
-    $ ssh-mitm server --remote-host 192.168.0.x --enable-none-auth
+    $ ssh-mitm server --remote-host <target-host> --force-none-auth
 
 
 **publickey** authentication - `RFC-4252/7 <https://datatracker.ietf.org/doc/html/rfc4252#section-7>`_
@@ -97,13 +95,13 @@ All you have to do is to start the server:
 
 .. code-block:: none
 
-    $ ssh-mitm server --remote-host 192.168.0.x
+    $ ssh-mitm server --remote-host <target-host>
 
 To do a full mitm attack, the client should use agent forwarding.
 
 .. code-block:: none
 
-    $ ssh -A -p 10022 user@proxyserver
+    $ ssh -A -p 10022 alice@<mitm-host>
 
 **Redirecting client to a honeypot**
 
@@ -112,7 +110,7 @@ SSH-MITM can redirect the session to a honeypot.
 
 .. code-block:: none
 
-    $ ssh-mitm server --remote-host 192.168.0.x \
+    $ ssh-mitm server --remote-host <target-host> \
         --enable-auth-fallback \
         --fallback-host HONEYPOT \
         --fallback-username HONEYPOT_USER \
@@ -143,16 +141,12 @@ Example SSH-MITM session intercepting password authentication:
 
 .. code-block:: none
 
-    $ ssh-mitm server --remote-host 192.168.0.x
-    2021-09-02 09:51:35,354 [INFO]  starting SSH-MITM 0.5.13
-    2021-09-02 09:51:38,590 [INFO]  connected client version: SSH-2.0-OpenSSH_8.2p1 Ubuntu-4ubuntu0.3
-    2021-09-02 09:51:48,629 [INFO]  Client connection established with parameters:
-        Remote Address: 192.168.0.x
-        Port: 22
-        Username: testuser
-        Password: secret
-        Key: None
-        Agent: no agent
+    $ ssh-mitm server --remote-host <target-host>
+    INFO     Client connection established with parameters:
+                 Remote Address: <target-host>:22
+                 Username:       alice
+                 Password:       secret
+                 Agent:          no agent
 
 
 **keyboard-interactive** authentication - `RFC-4256 <https://datatracker.ietf.org/doc/html/rfc4256>`_
@@ -167,8 +161,12 @@ Unless special tools are used to create cryptographically secured input, all inp
 Support in SSH-MITM
 """""""""""""""""""
 
-The current version of SSH-MITM does not support man in the middle attacks using keyboard-interactive authentication.
+**keyboard-interactive** authentication is fully supported and enabled by default. All prompts sent by the remote server
+are forwarded to the client and the responses are proxied back — including multi-step flows such as a password followed
+by a TOTP token.
 
-At the moment only one prompt is sent to the client and the answer is used for password authentication on the remote server.
+To disable keyboard-interactive authentication, use ``--disable-keyboard-interactive-auth``:
 
-It's planned, that the upcoming release of SSH-MITM 1.0, has full support for keyboard-interactive authentication.
+.. code-block::
+
+    $ ssh-mitm server --remote-host <target-host> --disable-keyboard-interactive-auth
