@@ -68,7 +68,7 @@ Features
       transcript files.
 
    .. grid-item-card:: :fas:`graduation-cap` Interactive Tutorial
-      :link: get_started/tutorial
+      :link: get_started/index
       :link-type: doc
 
       Learn SSH-MITM step by step in a browser-based guide — no target
@@ -96,24 +96,6 @@ Security Research
    :bdg-link-primary-line:`CVE-2021-36367 <vulnerabilities/CVE-2021-36367.html>` :bdg-link-primary-line:`CVE-2021-36368 <vulnerabilities/CVE-2021-36368.html>` :bdg-link-primary-line:`CVE-2021-36369 <vulnerabilities/CVE-2021-36369.html>` :bdg-link-primary-line:`CVE-2021-36370 <vulnerabilities/CVE-2021-36370.html>` :bdg-link-primary-line:`CVE-2022-38336 <vulnerabilities/CVE-2022-38336.html>` :bdg-link-primary-line:`CVE-2022-38337 <vulnerabilities/CVE-2022-38337.html>`
    +++
    :doc:`→ Security Research Findings <vulnerabilities/findings>`
-
-.. grid:: 1 1 2 2
-   :gutter: 3
-
-   .. grid-item-card:: :fas:`rocket` Get Started
-      :link: get_started/index
-      :link-type: doc
-
-      Download SSH-MITM and run the interactive tutorial — no target server
-      needed. Five hands-on exercises walk through credential interception,
-      agent forwarding, file transfers, command execution, and session mirroring.
-
-   .. grid-item-card:: :fas:`book` Audit Guide
-      :link: user_guide/index
-      :link-type: doc
-
-      All interception techniques in depth — authentication, file transfers,
-      port forwarding, protocol-specific interception, and client auditing.
 
 
 .. toctree::

@@ -1,30 +1,14 @@
 :fas:`rocket` Get Started
 =========================
 
-.. code-block:: none
-    :class: no-copybutton
+SSH-MITM acts as a transparent proxy between an SSH client and its server.
+Placed on the network path, it terminates both connections and forwards
+all traffic — giving the auditor full visibility while the session
+continues normally from the user's perspective.
 
-    INFO     Client connection established with parameters:
-                 Remote Address: 192.168.1.42:22
-                 Username:       alice
-                 Password:       Tr0ub4dor&3
-                 Agent:          no agent
-
-SSH-MITM intercepts SSH sessions by terminating both connections — towards
-the client and towards the server. Credentials, file transfers, commands,
-and live sessions are visible in plaintext, while the proxied connection
-continues uninterrupted.
-
-The interactive tutorial demonstrates these techniques with a built-in
-mock SSH server. No target, no lab setup, no additional configuration.
-
-.. code-block:: none
-
-    $ ssh-mitm tutorial
-
-.. image:: ../_static/ssh-mitm-tutorial.png
+.. image:: ../_static/ssh-mitm-setup.svg
     :class: dark-light
-    :alt: SSH-MITM interactive tutorial UI
+    :alt: SSH-MITM proxy setup diagram
 
 
 Install
@@ -40,55 +24,107 @@ Install
 
             $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
             $ chmod +x ssh-mitm-x86_64.AppImage
-            $ ./ssh-mitm-x86_64.AppImage tutorial
 
     .. tab-item:: Snap
 
         .. code-block:: none
 
             $ sudo snap install ssh-mitm
-            $ ssh-mitm tutorial
 
     .. tab-item:: Flatpak
 
         .. code-block:: none
 
             $ flatpak install flathub at.ssh_mitm.server
-            $ flatpak run at.ssh_mitm.server tutorial
 
     .. tab-item:: pip
 
         .. code-block:: none
 
             $ pip install ssh-mitm
-            $ ssh-mitm tutorial
 
 For a full list of installation options see :doc:`/develop/installation`.
 
 
-How the tutorial works
-----------------------
+Start SSH-MITM
+--------------
 
-The tutorial runs across two windows simultaneously.
+Point SSH-MITM at the target host — use a system you are authorized to test:
 
-In the **terminal**, SSH-MITM intercepts simulated SSH sessions and logs
-what it captured: credentials, key fingerprints, filenames, command
-strings, mirrorshell ports. The interception mechanism is identical to
-what SSH-MITM uses against real targets.
+.. code-block:: none
 
-In the **browser**, each chapter describes the scenario and asks you to
-locate a specific value in the SSH-MITM output. The value is not provided
-— you identify it from the proxy log. Each chapter concludes with a
-technical explanation of why the interception is possible.
+    $ ssh-mitm server --remote-host <target-host>
 
 
-The scenario
-------------
+Route a client connection
+--------------------------
+
+Have the SSH client connect through SSH-MITM on port 10022:
+
+.. code-block:: none
+
+    $ ssh -p 10022 user@<mitm-host>
+
+SSH-MITM intercepts the session and logs the credentials immediately:
+
+.. code-block:: none
+    :class: no-copybutton
+
+    INFO     Client connection established with parameters:
+                 Remote Address: <target-host>:22
+                 Username:       user
+                 Password:       secret
+                 Agent:          no agent
+
+.. image:: ../_static/ssh-mitm-password.png
+    :class: dark-light
+    :alt: SSH-MITM intercepting credentials
+
+
+Attach to the live session
+---------------------------
+
+For every intercepted connection, SSH-MITM opens a mirrorshell on a
+local port:
+
+.. code-block:: none
+    :class: no-copybutton
+
+    INFO     ℹ created mirrorshell on port 34463. connect with: ssh -p 34463 127.0.0.1
+
+Connect to it from a second terminal — no password required:
+
+.. code-block:: none
+
+    $ ssh -p 34463 127.0.0.1
+
+The mirror shell reflects the session in real time. Commands typed in
+either window appear in both. The auditor can also inject commands
+independently, without the user noticing.
+
+
+Interactive tutorial
+--------------------
+
+No target server available? The interactive tutorial simulates all five
+scenarios using a built-in mock SSH server:
+
+.. code-block:: none
+
+    $ ssh-mitm tutorial
+
+.. image:: ../_static/ssh-mitm-tutorial.png
+    :class: dark-light
+    :alt: SSH-MITM interactive tutorial UI
+
+The tutorial runs across two windows. In the **terminal**, SSH-MITM logs
+what it captures from each simulated session. In the **browser**, each
+chapter describes the scenario and asks you to locate the intercepted
+value in the proxy output.
 
 All five chapters are set during an authorized assessment of
-**Meridian Systems**. SSH-MITM is running as a transparent proxy on the
-internal development network. The chapters cover the most common
-interception scenarios in a realistic order.
+**Meridian Systems** and cover the most common interception scenarios
+in a realistic order.
 
 .. card:: Chapter 1 — Password Authentication
 
@@ -100,12 +136,10 @@ interception scenarios in a realistic order.
 
 .. card:: Chapter 2 — Public Key Auth & Agent Forwarding
 
-   The same developer switches to key-based authentication after a
-   security reminder. SSH-MITM can no longer capture a reusable
-   password, but it records the public key fingerprint that the server
-   accepted. With agent forwarding enabled, the forwarded agent is
-   accessible through the proxy and can be used to authenticate to
-   further systems as the connecting user.
+   The same developer switches to key-based authentication. SSH-MITM
+   records the accepted public key fingerprint. With agent forwarding
+   enabled, the forwarded agent is accessible through the proxy and can
+   authenticate to further systems as the connecting user.
 
    :doc:`→ SSH Agent </user_guide/sshagent>`
 
@@ -113,32 +147,30 @@ interception scenarios in a realistic order.
 
    The developer downloads a file from a staging server via SFTP.
    SSH-MITM logs every SFTP operation, including the file path and
-   the transferred content. File replacements or modifications in
-   transit are also possible without disrupting the session.
+   the transferred content.
 
    :doc:`→ File transfers </user_guide/file_transfer>`
 
 .. card:: Chapter 4 — SSH Command Execution
 
-   An automated script runs a single non-interactive command on a
-   production server via SSH exec. SSH-MITM captures the exact command
-   string and the server response before either reaches its destination.
+   An automated script runs a non-interactive command on a production
+   server via SSH exec. SSH-MITM captures the exact command string and
+   the server response.
 
    :doc:`→ Session interception </user_guide/sessions>`
 
 .. card:: Chapter 5 — Session Mirroring
 
    A network administrator opens an SSH session to a router and leaves
-   the terminal unattended. SSH-MITM creates a local mirrorshell port
-   that mirrors the session in real time. An auditor can attach to that
-   port, execute commands, and read the device configuration — all while
-   the original session remains active.
+   the terminal unattended. SSH-MITM exposes the session via a local
+   mirrorshell port. An auditor attaches to the port and reads the
+   device configuration while the original session remains active.
 
    :doc:`→ Session interception </user_guide/sessions>`
 
 
-After the tutorial
-------------------
+Go deeper
+---------
 
 The :doc:`Audit Guide </user_guide/index>` covers all interception
 techniques in depth — authentication, file transfers, port forwarding,
@@ -156,5 +188,3 @@ tutorial class under the ``sshmitm.Tutorial`` entry point in
 
     [project.entry-points."sshmitm.Tutorial"]
     my-tutorial = "my_package.my_module:MyTutorial"
-
-
