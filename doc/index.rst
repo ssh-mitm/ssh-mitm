@@ -63,17 +63,33 @@ Features
 Security Research
 =================
 
-.. card:: :fas:`magnifying-glass` Vulnerabilities discovered through SSH-MITM research
+Operating from the Man-in-the-Middle position makes it possible to observe
+SSH client behavior that is invisible from either endpoint. SSH-MITM was used
+to discover **6 previously unknown vulnerabilities** in widely-deployed SSH
+software — including PuTTY, OpenSSH, Dropbear, Midnight Commander, and
+MobaXterm. Each was reported to the vendor and assigned a CVE number.
 
-   Operating from the Man-in-the-Middle position makes it possible to observe SSH client
-   behavior that is invisible from either endpoint. During security audits using SSH-MITM,
-   **6 previously unknown vulnerabilities** were discovered in widely-deployed SSH software —
-   including PuTTY, OpenSSH, Dropbear, Midnight Commander, and MobaXterm. Each was reported
-   to the vendor and assigned a CVE number.
+:bdg-link-primary-line:`CVE-2021-36367 <vulnerabilities/CVE-2021-36367.html>`
+:bdg-link-primary-line:`CVE-2021-36368 <vulnerabilities/CVE-2021-36368.html>`
+:bdg-link-primary-line:`CVE-2021-36369 <vulnerabilities/CVE-2021-36369.html>`
+:bdg-link-primary-line:`CVE-2021-36370 <vulnerabilities/CVE-2021-36370.html>`
+:bdg-link-primary-line:`CVE-2022-38336 <vulnerabilities/CVE-2022-38336.html>`
+:bdg-link-primary-line:`CVE-2022-38337 <vulnerabilities/CVE-2022-38337.html>`
 
-   :bdg-link-primary-line:`CVE-2021-36367 <vulnerabilities/CVE-2021-36367.html>` :bdg-link-primary-line:`CVE-2021-36368 <vulnerabilities/CVE-2021-36368.html>` :bdg-link-primary-line:`CVE-2021-36369 <vulnerabilities/CVE-2021-36369.html>` :bdg-link-primary-line:`CVE-2021-36370 <vulnerabilities/CVE-2021-36370.html>` :bdg-link-primary-line:`CVE-2022-38336 <vulnerabilities/CVE-2022-38336.html>` :bdg-link-primary-line:`CVE-2022-38337 <vulnerabilities/CVE-2022-38337.html>`
-   +++
-   :doc:`→ Security Research Findings <vulnerabilities/findings>`
+The research was presented at **DeepSec 2021**. The talk explains the trivial
+authentication attack and demonstrates how FIDO2 hardware tokens can be
+phished through a positioned proxy.
+
+.. figure:: images/ds2021-video-small.png
+   :target: https://vimeo.com/showcase/9059922/video/651517195
+   :class: dark-light
+   :alt: DeepSec 2021 talk — click to watch on Vimeo
+   :width: 80%
+
+   `Watch on Vimeo <https://vimeo.com/showcase/9059922/video/651517195>`_ ·
+   `Download slides <https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf>`_
+
+:doc:`→ Security Research Findings <vulnerabilities/findings>`
 
 
 .. toctree::
