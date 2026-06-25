@@ -1,10 +1,10 @@
 :fas:`rocket` Get Started
 =========================
 
-SSH-MITM acts as a transparent proxy between an SSH client and its server.
-Placed on the network path, it terminates both connections and forwards
-all traffic — giving the auditor full visibility while the session
-continues normally from the user's perspective.
+SSH-MITM acts as a proxy between an SSH client and its server.
+Placed on the network path, it terminates both connections independently
+and forwards all traffic — giving the auditor full visibility while the
+session continues normally from the user's perspective.
 
 .. image:: ../_static/ssh-mitm-setup.svg
     :class: dark-light

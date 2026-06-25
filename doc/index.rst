@@ -2,31 +2,16 @@
 SSH-MITM - ssh audits made simple
 =================================
 
+.. div:: sd-fs-5 sd-font-weight-bold
+
+   SSH-MITM is an open-source man-in-the-middle SSH server for security audits and malware analysis.
+   Placed on the network path between client and server, it intercepts SSH sessions in real time
+   through a flexible plugin system.
+
 .. image:: _static/intro.png
     :class: dark-light
-
-**SSH-MITM** is an open-source man-in-the-middle SSH server for security audits and malware analysis.
-Placed on the network path between client and server, it intercepts SSH sessions in real time
-through a flexible plugin system.
-
-.. list-table::
-   :widths: 1 99
-   :class: feature-list
-
-   * - :fas:`key`
-     - Intercept **passwords and public keys** — including fallback from key to password auth
-   * - :fas:`terminal`
-     - **Mirror live sessions** and inject commands via mirrorshell
-   * - :fas:`file-arrow-up`
-     - Capture or replace **SCP and SFTP file transfers**
-   * - :fas:`network-wired`
-     - Intercept **TCP tunnels** and SOCKS dynamic forwarding
-   * - :fas:`shield-halved`
-     - Detect and demonstrate **FIDO2 token phishing** (trivial authentication attack)
-   * - :fas:`magnifying-glass`
-     - Audit **SSH client behavior** — version fingerprinting, key negotiation, CVE matching
-   * - :fab:`windows`
-     - Intercept **PowerShell Remoting (PSRP)** and **NETCONF** sessions
+    :width: 60%
+    :align: center
 
 .. admonition:: :fas:`scale-balanced` Legal Notice
    :class: legal-notice
@@ -56,6 +41,36 @@ through a flexible plugin system.
       transfers, port forwarding, NETCONF, PowerShell, and client
       auditing.
 
+
+Features
+========
+
+SSH-MITM acts as a proxy between SSH client and server — it terminates both
+connections independently and forwards all traffic. This gives the auditor
+full visibility into the session without disrupting it.
+
+.. image:: _static/ssh-mitm-setup.svg
+    :class: dark-light
+    :alt: SSH-MITM proxy setup diagram
+
+.. list-table::
+   :widths: 1 99
+   :class: feature-list
+
+   * - :fas:`key`
+     - Intercept **passwords and public keys** — including fallback from key to password auth
+   * - :fas:`terminal`
+     - **Mirror live sessions** and inject commands via mirrorshell
+   * - :fas:`file-arrow-up`
+     - Capture or replace **SCP and SFTP file transfers**
+   * - :fas:`network-wired`
+     - Intercept **TCP tunnels** and SOCKS dynamic forwarding
+   * - :fas:`shield-halved`
+     - Detect and demonstrate **FIDO2 token phishing** (trivial authentication attack)
+   * - :fas:`magnifying-glass`
+     - Audit **SSH client behavior** — version fingerprinting, key negotiation, CVE matching
+   * - :fab:`windows`
+     - Intercept **PowerShell Remoting (PSRP)** and **NETCONF** sessions
 
 
 Security Research

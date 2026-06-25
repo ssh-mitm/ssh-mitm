@@ -47,8 +47,8 @@ Five built-in tutorials cover password interception, public-key auth, SFTP trans
 
 ## Quick Start
 
-Placed between a client and its SSH server, SSH-MITM intercepts the connection transparently —
-forwarding it to the target while giving the auditor full visibility and control:
+Placed between a client and its SSH server, SSH-MITM intercepts the connection —
+terminating both sides independently and forwarding all traffic while giving the auditor full visibility and control:
 
 <p align="center">
   <img alt="SSH-MITM setup" src="https://docs.ssh-mitm.at/_images/ssh-mitm-setup.svg" width="90%">
