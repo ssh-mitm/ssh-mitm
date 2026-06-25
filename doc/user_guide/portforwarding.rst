@@ -2,220 +2,393 @@
 :fas:`network-wired` Port Forwarding
 ====================================
 
-Port forwarding via SSH (SSH tunneling) creates a secure connection between a local computer
-and a remote machine through which services can be relayed. Because the connection is encrypted,
-SSH tunneling is useful for transmitting information that uses an unencrypted protocol, such as IMAP, VNC, or IRC.
+SSH port forwarding (SSH tunneling) routes TCP traffic through an encrypted
+SSH connection.  The core idea: if your machine cannot reach a service
+directly — because it sits behind a firewall or in a separate network segment
+— but an SSH server *can*, you can borrow that connectivity by tunneling
+through the SSH connection.
+
+In an audit, this matters in two directions: understanding what traffic the
+intercepted client is tunneling, and using those tunnels yourself to reach
+internal services that are otherwise inaccessible.
 
 Types of Port Forwarding
 ========================
 
-SSH's port forwarding feature can smuggle various types of Internet traffic into or out of a network.
-This can be used to avoid network monitoring or sniffers, or bypass badly configured routers on the Internet.
-Note: You might also need to change the settings in other programs (like your web browser) in order to circumvent these filters.
+There are three types of port forwarding with SSH:
+
+* **Local port forwarding:** opens a port on *your* machine; connections to
+  that port are forwarded through the SSH server to a destination.
+  Useful for reaching services that are only reachable from the server side.
+* **Remote port forwarding:** opens a port on the *SSH server*; connections
+  to that port are forwarded back through the tunnel to your machine.
+  Useful for exposing a local service to anyone on the server side.
+* **Dynamic port forwarding:** turns the SSH client into a SOCKS proxy.
+  Each application request is forwarded through the server to its own
+  destination — no fixed target required.
+
+The names refer to *where the port is opened*: **local** means on your own
+machine, **remote** means on the SSH server.
 
 .. warning::
 
-  Filtering and monitoring is usually implemented for a reason. Even if you don't agree with that reason, your IT department might not take kindly to you flouting their rules.
-
-There are three types of port forwarding with SSH:
-
-* **Local port forwarding:** connections from the SSH client are forwarded via the SSH server, then to a destination server
-  For example, local port forwarding lets you bypass a company firewall that blocks specific websites.
-* **Remote port forwarding:** connections from the SSH server are forwarded via the SSH client, then to a destination server
-  For example, remote port forwarding lets you connect from your SSH server to a computer on your company's intranet.
-* **Dynamic port forwarding:** connections from various programs are forwarded via the SSH client, then via the SSH server, and finally to several destination servers
+    Traffic monitoring and filtering is usually in place for a reason.
+    Only use port forwarding in audits that explicitly authorise it.
 
 
 Local Port Forwarding
 ---------------------
 
-Local port forwarding lets you connect **from your local computer** to another server.
+Local port forwarding opens a port on Alice's laptop.  Any connection to that
+port travels through the SSH tunnel to ``dev-server`` and from there to the
+destination — which only needs to be reachable from ``dev-server``, not from
+Alice's laptop directly.
 
-For example, say you wanted to connect from your laptop to :samp:`http://docs.ssh-mitm.at` using an SSH tunnel.
-You would use source port number :samp:`8443` (the alternate https port), destination port :samp:`443` (the http port), and destination server :samp:`docs.ssh-mitm.at`. :
+**Scenario:** Logfile Inc.'s internal employee portal (``portal.logfile.internal``)
+runs on plain HTTP — it is only reachable from within the corporate network, so
+no one bothered adding TLS.  Alice opens a local tunnel so she can access it
+from her laptop:
 
-.. code-block::
+.. code-block:: bash
 
-  $ ssh -L 8443:docs.ssh-mitm.at:443 <host>
+    ssh -L 8080:portal.logfile.internal:80 alice@dev-server
 
-Where <host> should be replaced by the name of your ssh server. The -L option specifies local port forwarding.
-For the duration of the SSH session, pointing your browser at :samp:`https://localhost:8443/` would send you to :samp:`https://docs.ssh-mitm.at/`.
+The ``-L`` format is ``LOCAL_PORT:DESTINATION_HOST:DESTINATION_PORT``:
 
-In the above example, we used port 8443 for the source port.
-Ports numbers less than 1024 or greater than 49151 are reserved for the system,
-and some programs will only work with specific source ports, but otherwise you can use any source port number.
+* ``8080`` — port opened on Alice's laptop
+* ``portal.logfile.internal`` — destination host, resolved by ``dev-server``
+* ``80`` — destination port on that host
 
-.. figure:: /images/ssh_local_port_forward.png
-  :scale: 100
+For the duration of the session, ``http://localhost:8080/`` in Alice's browser
+connects to the internal portal through the tunnel.
 
-  ..
+.. mermaid::
+
+    flowchart TD
+        classDef client fill:#dae8fc,stroke:#6c8ebf
+        classDef server fill:#d5e8d4,stroke:#82b366
+        classDef external fill:#fff2cc,stroke:#d6b656
+        classDef dest fill:#e1d5e7,stroke:#9673a6
+
+        subgraph alice["Alice's laptop"]
+            B(["Browser"])
+            L["SSH client"]
+        end
+
+        subgraph corp["Logfile Inc. network"]
+            D["dev-server"]
+            P(["portal.logfile.internal:80"])
+        end
+
+        B -.->|"request localhost:8080"| L
+        L -->|"SSH tunnel · -L 8080:portal.logfile.internal:80"| D
+        D -.->|"plain HTTP"| P
+
+        class L client
+        class D server
+        class B external
+        class P dest
+
 
 Remote Port Forwarding
 ----------------------
 
-Remote port forwarding lets you connect **from the remote SSH server** to another server.
+Remote port forwarding opens a port on ``dev-server``.  Connections to that
+port travel back through the tunnel to Alice's laptop and from there to the
+destination.
 
-For example, say you wanted to let a developer access your internal file storage (e.g. Nextcloud), using the command-line SSH client.
+**Scenario:** Alice is running a local development server on her laptop
+(port 3000) and wants to show it to a colleague who is logged in on
+``dev-server``.  She opens a remote tunnel:
 
-.. code-block::
+.. code-block:: bash
 
-  $ ssh -R 8443:filestorage:443 remoteuser@remoteserver
+    ssh -R 8000:localhost:3000 alice@dev-server
 
-The -R option specifies remote port forwarding.
-For the duration of the SSH session, the developer would be able to access
-your filestorage (Nextcloud) by connecting the web browser to port 8443 on the remoteserver.
+The ``-R`` format is ``REMOTE_PORT:DESTINATION_HOST:DESTINATION_PORT``:
 
+* ``8000`` — port opened on ``dev-server``
+* ``localhost`` — destination host, resolved by Alice's laptop (herself)
+* ``3000`` — destination port on that host
 
+For the duration of the session, anyone on ``dev-server`` can reach
+``localhost:8000`` and the request is forwarded to Alice's laptop on port 3000.
 
-.. figure:: /images/ssh_remote_port_forward.png
-  :scale: 100
+.. mermaid::
 
-  ..
+    flowchart LR
+        classDef client fill:#dae8fc,stroke:#6c8ebf
+        classDef server fill:#d5e8d4,stroke:#82b366
+        classDef external fill:#fff2cc,stroke:#d6b656
+
+        subgraph alice["Alice's laptop"]
+            L["SSH client<br/>(localhost:3000)"]
+        end
+
+        subgraph corp["Logfile Inc. network"]
+            direction TB
+            D["dev-server"]
+            C(["Colleague"])
+        end
+
+        L -->|"SSH tunnel<br/>-R 8000:localhost:3000"| D
+        C -.->|"request localhost:8000"| D
+        D -.->|"forwarded via tunnel<br/>to localhost:3000"| L
+
+        class L client
+        class D server
+        class C external
+
 
 Dynamic Port Forwarding
 -----------------------
 
-Dynamic port forwarding turns your SSH client into a SOCKS proxy server.
-SOCKS is a little-known but widely-implemented protocol for programs to request any Internet connection through a proxy server.
-Each program that uses the proxy server needs to be configured specifically, and reconfigured when you stop using the proxy server.
+Dynamic port forwarding turns the SSH connection into a SOCKS proxy.  Unlike
+local port forwarding, there is no fixed destination — each application
+request is forwarded individually, so Alice can reach any host that
+``dev-server`` can reach.
 
 .. note::
 
-  Dynamic port forwarding is implemented in the ssh client. The server receives a normal local portforwarding request
-  and does not need to know anything about dynamic port forwarding.
+    The SOCKS protocol never reaches the server.  The OpenSSH client handles
+    it locally: it accepts SOCKS5 connections from applications and converts
+    each one into a standard ``direct-tcpip`` channel — the same mechanism
+    used for local port forwarding.  ``dev-server`` sees individual connection
+    requests with explicit destinations; it never processes SOCKS.
 
-  The only difference between local port forwarding and dynamic portforwarding is how the port forwarding is configured.
-  With local portforwarding you have to know each connection when the ssh client is started.
-  Dynamic port forwarding allows you to add new connections, while the client is already connected to the server.
+**Scenario:** Alice needs to reach several internal services during an audit
+session.  Instead of opening a separate local tunnel for each one, she opens
+a single SOCKS proxy:
 
-For example, say you wanted Firefox to connect to every web page through your SSH server. First you would use dynamic port forwarding with the default SOCKS port:
+.. code-block:: bash
 
-.. code-block::
+    ssh -D 1080 alice@dev-server
 
-  $ ssh -D 1080 laptop
+Any application that supports SOCKS5 (browser, curl, vulnerability scanner)
+can now route traffic through ``dev-server`` to the internal network.  The
+tunnel closes when Alice closes the SSH session.
 
-The -D option specifies dynamic port forwarding. 1080 is the standard SOCKS port.
-Although you can use any port number, some programs will only work if you use 1080.
+.. mermaid::
 
-Next you would tell Firefox to use your proxy:
+    flowchart LR
+        classDef client fill:#dae8fc,stroke:#6c8ebf
+        classDef server fill:#d5e8d4,stroke:#82b366
+        classDef external fill:#fff2cc,stroke:#d6b656
+        classDef dest fill:#e1d5e7,stroke:#9673a6
 
-* go to Edit -> Preferences -> Advanced -> Network -> Connection -> Settings...
-* check "Manual proxy configuration"
-* make sure "Use this proxy server for all protocols" is cleared
-* clear "HTTP Proxy", "SSL Proxy", "FTP Proxy", and "Gopher Proxy" fields
-* enter "127.0.0.1" for "SOCKS Host"
-* enter "1080" (or whatever port you chose) for Port.
+        subgraph alice["Alice's laptop (SOCKS proxy: localhost:1080)"]
+            direction TB
+            L["SSH client"]
+            B1(["Browser"])
+            B2(["curl / scanner"])
+        end
 
-The SOCKS proxy will stop working when you close your SSH session. You will need to change these settings back to normal in order for Firefox to work again.
+        subgraph corp["Logfile Inc. network"]
+            direction TB
+            D["dev-server"]
+            P1(["portal.logfile.internal"])
+            P2(["any internal host"])
+        end
 
-To make other programs use your SSH proxy server, you will need to configure each program in a similar way.
+        B1 -.->|"via SOCKS"| L
+        B2 -.->|"via SOCKS"| L
+        L -->|"SSH tunnel<br/>-D 1080"| D
+        D -.-> P1
+        D -.-> P2
 
-If you want to use an application which does not support the SOCKS protocol, you can use :samp:`socat` to create a plain socket for a specific connection.
+        class L client
+        class D server
+        class B1,B2 external
+        class P1,P2 dest
 
 
 Bastion hosts
 =============
 
-The concept of bastion hosts is nothing new to computing.
-Baston hosts are usually public-facing, hardened systems that serve as an entrypoint to systems
-behind a firewall or other restricted location, and they are especially popular with the rise of cloud computing.
+A bastion host is a hardened, publicly reachable machine that acts as the
+entry point to a network.  SSH's ``ProxyJump`` (``-J``) chains the connection
+through the bastion transparently.
 
-The ssh command has an easy way to make use of bastion hosts to connect to a remote host with a single command.
-Instead of first SSHing to the bastion host and then using ssh on the bastion to connect to the remote host,
-ssh can create the initial and second connections itself by using ProxyJump.
+**Scenario:** ``dev-server`` is the only machine at Logfile Inc. reachable
+from outside.  Alice needs to connect directly to an internal database server
+(``db-server.logfile.internal``) that is firewalled from the internet.
+``ProxyJump`` lets her do it in one command:
 
-ProxyJump
----------
+.. code-block:: bash
 
-The ``ProxyJump``, or the ``-J`` flag, was introduced in ssh version 7.3.
-To use it, specify the bastion host to connect through after the ``-J`` flag, plus the remote host:
+    ssh -J alice@dev-server alice@db-server.logfile.internal
 
+SSH establishes the first connection to ``dev-server`` and uses it as a relay
+to ``db-server.logfile.internal``.  Alice needs only one command; ``dev-server``
+sees an encrypted relay channel, not a shell session.
 
-.. code-block::
+You can also specify different users and ports:
 
-  $ ssh -J <bastion-host> <remote-host>
+.. code-block:: bash
 
-You can also set specific usernames and ports if they differ between the hosts:
-
-.. code-block::
-
-  $ ssh -J user@<bastion:port> <user@remote:port>
+    ssh -J alice@dev-server:22 alice@db-server.logfile.internal:2222
 
 .. note::
 
-  ProxyJump is a variation of a local port forward assumes that the
-  to-be established connection over the port forward is a ssh connection and therefore uses the master channel
-  as a direct-tcpip channel to the jumphost (stdin and stdout are connected to the direct-tcpip channel).
-  The jumphost will therefore not receive a formal shell-session channel request.
-
-SSH-MITM is able to intercept those connections and rewrites which allows SSH-MITM to intercept the forwarded connection.
-Since the forwarded connection is encrypted it is not possible to read the data sent between the client and the server.
-
-.. note::
-
-  It's possible to rewrite the connection to another SSH-MITM instance. This allows to read the data when using ProxyJump.
-  Note: At the moment this is not implemented and requires some code changes and special configuration.
+    ``ProxyJump`` uses a ``direct-tcpip`` channel on the bastion rather than
+    a full shell session.  SSH-MITM intercepts and rewrites these channels, so
+    the forwarded connection remains visible at the proxy layer — but because
+    the payload is an independent SSH session, its contents are encrypted from
+    SSH-MITM's point of view unless a second SSH-MITM instance is chained.
 
 
 Port forwarding in SSH-MITM
 ===========================
 
-SSH-MITM supports both local and remote port forwarding.
-No further configuration is required for this.
+SSH-MITM intercepts both local and remote port forwarding requests from the
+client and surfaces them as usable tunnels for the auditor.  No extra
+configuration is needed — SSH-MITM handles this automatically.
 
 
 Local port forwarding
 ---------------------
 
-.. figure:: /images/ssh-mitm_client_port_inject.png
-  :scale: 100
+When Alice opens a local port forward (``-L``), SSH-MITM receives the
+``direct-tcpip`` channel from her client.  At the same time, SSH-MITM starts
+a local SOCKS server that the auditor can use independently to reach the same
+destination.
 
-  ..
+.. mermaid::
 
+    flowchart LR
+        classDef client fill:#dae8fc,stroke:#6c8ebf
+        classDef mitm fill:#f8cecc,stroke:#b85450
+        classDef server fill:#d5e8d4,stroke:#82b366
+        classDef external fill:#fff2cc,stroke:#d6b656
+        classDef dest fill:#e1d5e7,stroke:#9673a6
 
-Local port forwarding can be established at any time by the man in the middle server.
-The corresponding commands are displayed in the output of SSH-MITM.
+        subgraph alice["Alice's laptop"]
+            direction TB
+            L["SSH client<br/>-L 8080:portal.logfile.internal:80"]
+            B(["Browser"])
+        end
+
+        subgraph intercept["Interception"]
+            direction TB
+            M["SSH-MITM"]
+            A(["Auditor"])
+        end
+
+        subgraph corp["Logfile Inc. network"]
+            direction TB
+            D["dev-server"]
+            P(["portal.logfile.internal:80"])
+        end
+
+        B -.->|"request localhost:8080"| L
+        L -->|"SSH tunnel"| M
+        M -->|"relay"| D
+        M -.->|"plain HTTP visible"| P
+        A -.->|"via SOCKS<br/>localhost:PORT"| M
+
+        class L client
+        class M mitm
+        class D server
+        class B,A external
+        class P dest
+
+SSH-MITM prints the SOCKS details to its log as soon as the tunnel is opened:
 
 .. code-block:: none
-  :class: no-copybutton
+    :class: no-copybutton
 
-  INFO     ℹ a9ed77c5-ef1b-42ec-b0f7-57594f4a7b42 - local port forwarding
-      SOCKS port: 39859
-        SOCKS4:
-          * socat: socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport=39859
-          * netcat: nc -X 4 -x localhost:39859 address port
-        SOCKS5:
-          * netcat: nc -X 5 -x localhost:39859 address port
+    INFO     ℹ a9ed77c5-ef1b-42ec-b0f7-57594f4a7b42 - local port forwarding
+        SOCKS port: 39859
+          SOCKS4:
+            * socat: socat TCP-LISTEN:LISTEN_PORT,fork socks4:127.0.0.1:DESTINATION_ADDR:DESTINATION_PORT,socksport=39859
+            * netcat: nc -X 4 -x localhost:39859 address port
+          SOCKS5:
+            * netcat: nc -X 5 -x localhost:39859 address port
 
-Using local port forwarding in SSH-MITM works similarly to OpenSSH's dynamic port forwarding. A SOCKS server is started via which the connections to the remote host are established.
+The log shows a template — fill in the values for the intercepted tunnel:
 
-This allows to use an already initiated SSH session to access e.g. an internal network or local services on the remote host.
+* ``LISTEN_PORT`` — any free local port, e.g. ``8080``
+* ``DESTINATION_ADDR`` — the tunneled destination, e.g. ``portal.logfile.internal``
+* ``DESTINATION_PORT`` — the destination port, e.g. ``80``
 
-The easiest way is to use ``socat``. ``socat`` opens a port locally and takes care that the connection via the SOCKS server is established accordingly.
+For the portal scenario:
 
-This makes it possible to use any proram over a passed through port with SSH-MITM.
+.. code-block:: bash
 
+    socat TCP-LISTEN:8080,fork socks5:127.0.0.1:portal.logfile.internal:80,socksport=39859
 
-However, it is also possible to let a vulnerability scanner that can communicate via SOCKS scan a network behind it via the connection established by SSH-MITM.
+Because ``portal.logfile.internal`` uses plain HTTP, the traffic is
+unencrypted — the auditor can read every request and response in full, even
+though it arrived over an SSH tunnel.
 
 
 Remote port forwarding
 ----------------------
 
-.. figure:: /images/ssh-mitm_server_port_inject.png
-  :scale: 100
+When Alice opens a remote port forward (``-R``), she is asking ``dev-server``
+to listen on a port and forward connections back to her.  SSH-MITM sits in
+the middle and also exposes that connection locally.
 
-  ..
+.. mermaid::
 
-With remote port forwarding it is only possible to connect to the same destination that was defined in the client's remote port forwarding request.
+    flowchart LR
+        classDef client fill:#dae8fc,stroke:#6c8ebf
+        classDef mitm fill:#f8cecc,stroke:#b85450
+        classDef server fill:#d5e8d4,stroke:#82b366
+        classDef external fill:#fff2cc,stroke:#d6b656
 
-The reason for this is that the client manages the connections and only the already defined connection is known to it. Unlike a server, the client does not allow new connections.
+        subgraph alice["Alice's laptop"]
+            direction TB
+            L["SSH client<br/>-R 8000:localhost:3000"]
+            S(["Dev server<br/>localhost:3000"])
+        end
 
-If SSH-MITM detects that a remote port forwarding request has been made, appropriate connection information is output. This information can then be used to establish the connection itself and to use this connection for further tests.
+        subgraph intercept["Interception"]
+            direction TB
+            M["SSH-MITM"]
+            A(["Auditor"])
+        end
 
-.. code-block::
-  :class: no-copybutton
+        subgraph corp["Logfile Inc. network"]
+            direction TB
+            D["dev-server"]
+            C(["Colleague"])
+        end
 
-  created server tunnel injector for host 127.0.0.1 on port 38763 to destination ('google.com', 80)
+        L -->|"SSH tunnel"| M
+        M --> D
+        C -.->|"request localhost:8000"| D
+        A -.->|"request<br/>localhost:PORT injector"| M
+        M -.->|"forwarded via tunnel"| L
+        L -.->|"localhost:3000"| S
 
-Any number of connections to the defined destination can be established. Thus, it is possible that the connection can be used by the intercepted client as well as by a vulnerability scanner during an audit.
+        class L client
+        class S dest
+        class M mitm
+        class D server
+        class C,A external
+
+SSH-MITM prints the injector details to its log:
+
+.. code-block:: none
+    :class: no-copybutton
+
+    created server tunnel injector for host 127.0.0.1 on port 38763 to destination ('localhost', 3000)
+
+The auditor can connect to the injector port alongside the original client.
+This makes it possible to inspect or interact with Alice's exposed service
+during an audit without disrupting her session.
+
+
+ProxyJump
+---------
+
+SSH-MITM intercepts ``ProxyJump`` (``-J``) connections and rewrites the
+forwarded channel.  From the client's perspective the jump succeeds normally;
+SSH-MITM sees and controls the relay.
+
+Because the payload of a ``ProxyJump`` is an independent SSH session, its
+contents are encrypted end-to-end — SSH-MITM cannot read the inner session
+without chaining a second SSH-MITM instance as the final target.  However,
+metadata is visible: SSH-MITM knows that a jump occurred, to which
+destination, and can log or redirect the connection.

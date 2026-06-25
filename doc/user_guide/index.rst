@@ -21,18 +21,19 @@ a thorough security audit.
    .. grid-item-card:: :fas:`terminal` Interception
       :shadow: sm
 
-      Mirror live SSH sessions, inject commands via mirrorshell, and
-      capture or replace files during SCP and SFTP transfers.
+      Mirror live SSH sessions, inject commands via mirrorshell, capture or
+      replace files during SCP and SFTP transfers, and intercept port
+      forwarding tunnels to reach internal services.
 
       :doc:`sessions` · :doc:`file_transfer` · :doc:`portforwarding`
 
    .. grid-item-card:: :fas:`network-wired` Protocols
       :shadow: sm
 
-      Intercept protocol-specific sessions — PowerShell Remoting over SSH,
-      NETCONF management sessions, and Mosh connections.
+      Intercept tools and protocols that use SSH as a transport — Git and
+      rsync over SSH, PowerShell Remoting, NETCONF, and Mosh.
 
-      :doc:`powershell` · :doc:`netconf` · :doc:`mosh`
+      :doc:`git` · :doc:`rsync` · :doc:`powershell` · :doc:`netconf` · :doc:`mosh`
 
    .. grid-item-card:: :fas:`magnifying-glass` Client Auditing
       :shadow: sm
@@ -75,6 +76,8 @@ a thorough security audit.
    :maxdepth: 1
    :hidden:
 
+   git
+   rsync
    powershell
    netconf
    mosh
