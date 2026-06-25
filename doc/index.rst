@@ -18,46 +18,25 @@ session hijacking, file transfer interception, and port forwarding — through a
    See the :doc:`Legal Notice </user_guide/legal>` for details.
 
 
-Features
-========
-
-.. grid:: 1 2 3 3
+.. grid:: 1 1 2 2
    :gutter: 3
 
-   .. grid-item-card:: :fas:`terminal` Session Hijacking
-      :link: user_guide/sessions
+   .. grid-item-card:: :fas:`rocket` Get Started
+      :link: get_started/index
       :link-type: doc
 
-      Mirror live SSH sessions and interact with them in real time.
-      Commands executed in either session appear in both.
+      New to SSH-MITM? The interactive tutorial walks through five
+      real interception scenarios — no target server needed.
+      Up and running in under two minutes.
 
-   .. grid-item-card:: :fas:`file-arrow-up` File Interception
-      :link: user_guide/file_transfer
+   .. grid-item-card:: :fas:`book` Audit Guide
+      :link: user_guide/index
       :link-type: doc
 
-      Intercept, store, or replace files during SCP and SFTP transfers
-      without interrupting the client.
+      All interception techniques in depth — authentication, file
+      transfers, port forwarding, NETCONF, PowerShell, and client
+      auditing.
 
-   .. grid-item-card:: :fas:`network-wired` Port Forwarding
-      :link: user_guide/portforwarding
-      :link-type: doc
-
-      Intercept TCP tunnels and dynamic port forwarding with full
-      SOCKS 4/5 support.
-
-   .. grid-item-card:: :fas:`key` Authentication
-      :link: user_guide/authentication
-      :link-type: doc
-
-      Intercept passwords and public keys. Accept the same key as the
-      target server and fall back to password authentication automatically.
-
-   .. grid-item-card:: :fas:`shield-halved` FIDO2 Token Phishing
-      :link: user_guide/trivialauth
-      :link-type: doc
-
-      Intercept hardware token authentication via the trivial
-      authentication attack (CVE-2021-36367, CVE-2021-36368).
 
 
 Security Research
