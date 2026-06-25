@@ -32,6 +32,7 @@ By the end of this chapter, you will have a comprehensive understanding of the d
    :maxdepth: 1
    :hidden:
 
+   installation
    contributing
    plugins
    api

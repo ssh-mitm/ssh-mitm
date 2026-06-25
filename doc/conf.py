@@ -55,6 +55,7 @@ html_title = "SSH-MITM"
 html_theme = "pydata_sphinx_theme"
 html_sidebars = {
     "index": [],
+    "get_started/index": [],
     "changelog": [],
     "**": ["sidebar-nav-bs"],
 }
