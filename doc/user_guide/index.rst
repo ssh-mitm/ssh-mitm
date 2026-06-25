@@ -44,5 +44,6 @@ a thorough security audit.
 
    plugin_browser
    configuration
+   transparent
    faq
    legal

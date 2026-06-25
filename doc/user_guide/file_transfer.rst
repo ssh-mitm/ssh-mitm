@@ -12,7 +12,7 @@
 
        $ ssh-mitm tutorial
 
-   See :doc:`/get_started/tutorial` for the full tutorial list.
+   See :doc:`/get_started/index` for the full tutorial list.
 
 
 In this chapter, we will explore how to intercept and manipulate file transfers using

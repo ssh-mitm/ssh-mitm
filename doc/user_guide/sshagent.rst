@@ -11,7 +11,7 @@
 
        $ ssh-mitm tutorial
 
-   See :doc:`/get_started/tutorial` for the full tutorial list.
+   See :doc:`/get_started/index` for the full tutorial list.
 
 .. _sshagent-quickstart:
 

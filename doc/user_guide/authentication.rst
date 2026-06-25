@@ -13,7 +13,7 @@
 
        $ ssh-mitm tutorial
 
-   See :doc:`/get_started/tutorial` for the full tutorial list.
+   See :doc:`/get_started/index` for the full tutorial list.
 
 
 The choice of the right authentication method against SSH-MITM can have a decisive influence on the success of a Man in the Middle attack.
