@@ -16,7 +16,7 @@ a thorough security audit.
       connection, ARP spoofing, DNS hijacking, rogue access point, or
       transparent proxy at a gateway.
 
-      :doc:`attack_scenarios`
+      :doc:`attack_scenarios` · :doc:`transparent`
 
    .. grid-item-card:: :fas:`key` Authentication
       :shadow: sm
@@ -58,7 +58,7 @@ a thorough security audit.
       Plugin browser, full configuration reference, transparent proxy mode,
       FAQ, and legal notice.
 
-      :doc:`plugin_browser` · :doc:`configuration` · :doc:`transparent` · :doc:`faq` · :doc:`legal`
+      :doc:`plugin_browser` · :doc:`configuration` · :doc:`faq` · :doc:`legal`
 
 
 .. toctree::
@@ -67,6 +67,7 @@ a thorough security audit.
    :hidden:
 
    attack_scenarios
+   transparent
 
 .. toctree::
    :caption: Authentication
@@ -113,6 +114,5 @@ a thorough security audit.
 
    plugin_browser
    configuration
-   transparent
    faq
    legal
