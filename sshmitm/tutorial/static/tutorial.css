@@ -8,9 +8,9 @@ header img{height:32px;width:auto}
 header h1{font-size:1.05rem;color:#fff;font-weight:700;flex:1}
 .hlink{color:#fff;text-decoration:none;font-size:.85rem;font-weight:600;
        display:flex;align-items:center;gap:6px;padding:7px 16px;
-       border:1.5px solid rgba(255,255,255,.55);border-radius:99px;white-space:nowrap;
-       background:rgba(255,255,255,.12);transition:background .15s,border-color .15s}
-.hlink:hover{background:rgba(255,255,255,.28);border-color:#fff}
+       border:1.5px solid rgba(255,255,255,.85);border-radius:99px;white-space:nowrap;
+       background:rgba(255,255,255,.22);transition:background .15s,border-color .15s}
+.hlink:hover{background:rgba(255,255,255,.38);border-color:#fff}
 .hlink svg{width:15px;height:15px;fill:currentColor;flex-shrink:0}
 main{display:flex;flex:1;overflow:hidden}
 #sidebar-wrap{width:256px;display:flex;flex-direction:column;background:#fff;
