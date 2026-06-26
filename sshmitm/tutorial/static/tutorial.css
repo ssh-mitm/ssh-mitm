@@ -36,7 +36,7 @@ main{display:flex;flex:1;overflow:hidden}
 .home-avatar{max-width:380px;width:100%;border-radius:10px;
              box-shadow:0 4px 24px rgba(69,80,230,.15);margin-bottom:6px}
 .home-title{font-size:1.45rem;color:#1e2030;font-weight:700}
-.home-desc{color:#555c7d;font-size:.88rem;line-height:1.65}
+.home-desc{color:#555c7d;font-size:.93rem;line-height:1.8}
 .home-links{display:flex;flex-direction:column;gap:10px;width:100%}
 .home-btn-primary{display:block;padding:12px 20px;background:#f4d150;color:#1a1a2e;
                   font-weight:700;text-decoration:none;border-radius:8px;font-size:.9rem}
