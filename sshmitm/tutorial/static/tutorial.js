@@ -101,11 +101,55 @@ function render() {
   if (state.selected) {
     document.getElementById('placeholder').style.display = 'none';
     document.getElementById('tview').style.display = 'flex';
-    renderSteps(); renderBtns();
+    renderSteps(); renderBtns(); renderTutInfo();
   } else {
     document.getElementById('placeholder').style.display = 'flex';
     document.getElementById('tview').style.display = 'none';
   }
+}
+
+function renderTutInfo() {
+  const el = document.getElementById('tut-info');
+  if (!state || !state.selected) { el.innerHTML = ''; return; }
+  const tut = state.tutorials.find(t => t.id === state.selected);
+  if (!tut) { el.innerHTML = ''; return; }
+  let h = '<div class="tut-info-card">';
+  if (tut.category) {
+    h += '<div class="tut-info-label">Category</div>';
+    h += `<div class="tut-info-value">${_esc(tut.category)}</div>`;
+  }
+  if (tut.tags && tut.tags.length) {
+    h += '<div class="tut-info-section"><div class="tut-info-label">Topics</div>';
+    h += '<div class="tut-tags">';
+    for (const tag of tut.tags) {
+      const cls = tag.startsWith('CVE-') ? 'tag tag-cve' : 'tag';
+      h += `<span class="${cls}">${_esc(tag)}</span>`;
+    }
+    h += '</div></div>';
+  }
+  if (tut.docs && Object.keys(tut.docs).length) {
+    h += '<div class="tut-info-section"><div class="tut-info-label">Documentation</div>';
+    for (const [label, url] of Object.entries(tut.docs)) {
+      h += `<a class="tut-info-link" href="${_esc(url)}" target="_blank" rel="noopener">${_esc(label)}</a>`;
+    }
+    h += '</div>';
+  }
+  const svcs = state.lab_services || [];
+  if (svcs.length) {
+    h += '<div class="tut-info-section"><div class="tut-info-label">Infrastructure</div>';
+    for (const svc of svcs) {
+      if (svc.is_url) {
+        h += `<div class="tut-lab-service"><span class="tut-lab-name">${_esc(svc.label)}</span>`
+           + `<a href="${_esc(svc.value)}" target="_blank" rel="noopener" class="tut-lab-value tut-lab-link">${_esc(svc.value)}</a></div>`;
+      } else {
+        h += `<div class="tut-lab-service"><span class="tut-lab-name">${_esc(svc.label)}</span>`
+           + `<span class="tut-lab-value">${_esc(svc.value)}</span></div>`;
+      }
+    }
+    h += '</div>';
+  }
+  h += '</div>';
+  el.innerHTML = h;
 }
 
 function renderSidebar() {
@@ -130,13 +174,17 @@ function renderSteps() {
   for (const s of state.steps) {
     const cls = 'step' + (s.done ? ' done' : s.active ? ' active' : '');
     const icon = s.done ? '&#10003;' : s.active ? '&#9654;' : '&#9675;';
-    h += `<div class="${cls}"><span>${icon}</span>${s.title}</div>`;
+    h += `<div class="${cls}"><span class="step-icon">${icon}</span><span class="step-title">${s.title}</span></div>`;
   }
   document.getElementById('step-list').innerHTML = h;
   const fallback = state.steps[Math.min(state.current_step, state.steps.length - 1)];
   const active = state.steps.find(s => s.active) || fallback;
   if (active) {
     document.getElementById('step-content').innerHTML = active.content_html;
+    if (active.id !== _lastScrolledStepId) {
+      _lastScrolledStepId = active.id;
+      document.querySelector('.tview-body').scrollTop = 0;
+    }
     const hintEl = document.getElementById('hint');
     const hint = active.hint || '';
     hintEl.className = 'hint hint-' + (active.hint_type || 'info');
@@ -155,6 +203,7 @@ function renderSteps() {
 }
 
 let _renderedStepId = null;
+let _lastScrolledStepId = null;
 
 function renderInteractionArea(isActive) {
   const area = document.getElementById('interaction-area');
@@ -271,6 +320,7 @@ function renderBtns() {
   document.getElementById('completion-banner').style.display = done ? 'block' : 'none';
   document.getElementById('btn-start').disabled = !sel || s === 'running';
   document.getElementById('btn-stop').disabled = s !== 'running';
+  document.getElementById('tview').classList.toggle('pre-start', s !== 'running' && !done);
   if (done && !_completionShown) {
     _completionShown = true;
     document.getElementById('completion-dialog').style.display = 'flex';

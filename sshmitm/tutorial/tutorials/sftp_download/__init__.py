@@ -64,6 +64,12 @@ class SFTPDownloadTutorial(Tutorial):
     title       = "SFTP File Download Interception"
     category    = "File Transfer"
     description = "Learn how SSH-MITM intercepts SFTP downloads and reveals which files a client copies from a server."
+    tags = ["SFTP", "File Interception"]
+    docs = {
+        "Logfile Inc. Assessment": "https://docs.ssh-mitm.at/get_started/scenario.html",
+        "File Transfers": "https://docs.ssh-mitm.at/user_guide/file_transfer.html",
+    }
+    lab_service_labels = {"mock_port": "files.logfileinc.internal"}
 
     steps = [
         Step(

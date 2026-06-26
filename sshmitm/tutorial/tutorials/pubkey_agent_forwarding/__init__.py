@@ -11,6 +11,13 @@ class PubkeyAgentForwardingTutorial(Tutorial):
     title       = "Public Key Auth & Agent Forwarding"
     category    = "Authentication"
     description = "Learn what SSH-MITM can see when public key auth and agent forwarding are used."
+    tags = ["Public Key", "Agent Forwarding", "Lateral Movement"]
+    docs = {
+        "Logfile Inc. Assessment": "https://docs.ssh-mitm.at/get_started/scenario.html",
+        "Authentication": "https://docs.ssh-mitm.at/user_guide/authentication.html",
+        "SSH Agent Forwarding": "https://docs.ssh-mitm.at/user_guide/sshagent.html",
+    }
+    lab_service_labels = {"mock_port": "web01.logfileinc.internal"}
 
     server = MockServerConfig(users=[UserConfig(auth=PublicKeyAuth())])
 

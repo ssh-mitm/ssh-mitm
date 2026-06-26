@@ -1,25 +1,21 @@
-## Chapter 1 — The First Connection
+<div class="objectives-box" markdown="1">
 
-You are conducting an authorized red team assessment of **Logfile Inc.**
-Your objective: determine how much an attacker positioned on the internal
-network can learn from SSH sessions passing through.
+- See how SSH-MITM captures cleartext credentials even inside an encrypted SSH session
+- Understand why SSH encryption does not protect passwords from a proxy that terminates the connection
+- Recognise that host key verification is the only mechanism that would have prevented this attack
 
-SSH-MITM is running as a proxy between Logfile Inc.'s developers
-and their servers. The first connection is coming in.
+</div>
 
-It is Alice — a senior developer — connecting to the dev server the same way
-she does every morning. She types her password without thinking twice.
+<div class="note-box" markdown="1">
+SSH encrypts the channel between client and server — but only against parties outside the connection. A MITM proxy terminates the client's session with its own key and re-encrypts it toward the real server. The password crosses the proxy in cleartext, inside what looks like a perfectly normal SSH connection.
+</div>
 
-She does not know you are listening.
+<div class="scenario-box" markdown="1">
+Max Morgan, a developer at **Logfile Inc.**, connects to `web01.logfileinc.internal` as he does every morning. He opens a terminal, types `ssh mmorgan@web01.logfileinc.internal`, and enters his password when prompted. From his point of view, the session looks identical to every previous one.
+
+SSH-MITM sits between Max and the server. It logs the username and password the moment Max authenticates — before forwarding them to the real server. The session continues normally; Max sees no error and no warning.
+</div>
 
 ---
 
-**What you will see**
-
-SSH encrypts the channel between client and server — but only against
-third parties. SSH-MITM terminates the client's handshake with its own
-host key, decrypts all traffic, and opens a separate encrypted connection
-to the real server. The password passes through the proxy in plaintext
-before being forwarded.
-
-In the next step, start SSH-MITM and wait for Alice to connect.
+> **Further reading:** [Authentication](https://docs.ssh-mitm.at/user_guide/authentication.html)

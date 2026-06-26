@@ -102,11 +102,13 @@ socks = "sshmitm.plugins.tunnel.socks:SOCKSTunnelForwarder"
 mosh = "sshmitm.apps.mosh.forwarder:MoshForwarder"
 
 [project.entry-points."sshmitm.Tutorial"]
+00-host-key-verification = "sshmitm.tutorial.tutorials.host_key_verification:HostKeyVerificationTutorial"
 01-password-auth = "sshmitm.tutorial.tutorials.password_auth:PasswordAuthTutorial"
 02-pubkey-agent-forwarding = "sshmitm.tutorial.tutorials.pubkey_agent_forwarding:PubkeyAgentForwardingTutorial"
 03-sftp-download = "sshmitm.tutorial.tutorials.sftp_download:SFTPDownloadTutorial"
 04-ssh-exec = "sshmitm.tutorial.tutorials.ssh_exec:SSHExecTutorial"
 05-mirrorshell = "sshmitm.tutorial.tutorials.mirrorshell:MirrorshellTutorial"
+06-pubkey-enumeration = "sshmitm.tutorial.tutorials.pubkey_enumeration:PubkeyEnumerationTutorial"
 
 [tool.hatch.version]
 path = "sshmitm/__init__.py"

@@ -1,33 +1,27 @@
-## Chapter 5 — The Open Terminal
+<div class="objectives-box" markdown="1">
 
-The network admin — responsible for Logfile Inc.'s core infrastructure —
-connects to the production router to check the running configuration.
-He authenticates, opens a shell, and then leaves to get coffee.
+- See how SSH-MITM's mirrorshell feature exposes a live interactive session to a second terminal
+- Understand why an unattended authenticated session is a significant attack surface
+- Learn how to attach to a mirrored session and interact with the remote device as the legitimate user
 
-The terminal is unattended.
+</div>
 
-SSH-MITM is still in the middle. The admin is connected to the proxy, which
-is connected to the real router. SSH-MITM keeps the session open and
-exposes it via a local **mirrorshell** port — a live copy of every
-keystroke and every response from the device.
+<div class="note-box" markdown="1">
+Most security thinking focuses on the moment of authentication. Once authenticated, the session itself is rarely considered. SSH-MITM can expose an active session as a mirrorshell: a live copy of the terminal, open for the duration of the connection. If the legitimate user steps away, the session remains open — and so does the attacker's window.
+</div>
 
-You can attach to that port and explore the router as if you were sitting
-at the admin's terminal. If you type a command, it runs on the device.
-The admin cannot see what you are doing.
+<div class="scenario-box" markdown="1">
+Thomas Webb, **Logfile Inc.'s** network administrator, connects to `router01.logfileinc.internal` to check the running configuration — a routine task he has done dozens of times. He authenticates through SSH, the router prompt appears, and then his phone rings. He gets up to take the call and walks away from the terminal.
+
+The session is still open.
+
+SSH-MITM sits between Thomas and the router. It exposes the live session via a **mirrorshell** port: a local port you can connect to with a standard SSH client. Once connected, you see exactly what Thomas's terminal shows. Any command you type is sent to the router. Any output the router sends appears in both terminals.
+
+Thomas has no indication that a second party is in his session.
+
+Your goal: attach to the mirrorshell, read the router's running configuration, and extract the SNMP read-write community string stored there.
+</div>
 
 ---
 
-**What you will see**
-
-When the admin's session starts, SSH-MITM prints the exact command to
-attach to the mirrored session. Look for a line starting with:
-
-```
-[i] created mirrorshell on port
-```
-
-Connect to that port with `ssh` and use `show running-config` to read the
-device configuration. The SNMP read-write community string is stored there.
-
-In the next step, start SSH-MITM — mirrorshell is always active, no
-additional flags are needed.
+> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/user_guide/sessions.html)

@@ -1,6 +1,19 @@
 :fas:`crosshairs` Positioning SSH-MITM
 =======================================
 
+.. tip:: **Try it first**
+
+   The **Prologue** of the interactive tutorial positions SSH-MITM between
+   Alice and a dev server using a direct connection — the simplest case
+   described on this page:
+
+   .. code-block:: none
+
+       $ ssh-mitm tutorial
+
+   See :doc:`/get_started/index` for the full tutorial list.
+
+
 SSH-MITM intercepts connections between an SSH client and a server.  For the
 interception to work, the client must connect to SSH-MITM instead of the real
 server.  Achieving this is the central challenge in every real-world audit.
@@ -22,6 +35,13 @@ the SSH-MITM process.  It does **not** require:
 
 The interception is entirely at the network or naming layer — which is what
 the strategies below address.
+
+.. note::
+
+    SSH itself is not broken.  SSH-MITM can only intercept a session if the
+    client accepted its host key.  A client that rejects the fingerprint
+    cannot be intercepted — SSH-MITM cannot read or modify any data if the
+    key was not trusted.
 
 
 Direct connection

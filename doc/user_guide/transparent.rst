@@ -2,6 +2,12 @@
 :fas:`route` Transparent Proxy Mode
 ===================================
 
+.. note::
+
+   Transparent proxy mode is experimental and requires familiarity with
+   Linux networking concepts — kernel routing, TProxy, and firewall rules.
+   It is not needed for most audit scenarios.
+
 SSH-MITM is capable of advanced man-in-the-middle attacks. It
 can be used in scenarios where the remote host is not known or a single
 remote host is not sufficient.

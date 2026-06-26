@@ -1,23 +1,23 @@
-## Chapter 3 — The File Transfer
+<div class="objectives-box" markdown="1">
 
-Alice is preparing a quarterly review for management.
-She connects to the staging server and downloads a file via SFTP —
-the same encrypted channel she trusts for all her sensitive work.
+- See how SSH-MITM intercepts SFTP file transfers and logs file paths in cleartext
+- Understand why SFTP encryption does not protect file metadata or content from a proxy
+- Learn what an attacker can do beyond logging — including reading or modifying file content in transit
 
-What she does not know: SSH encrypts the channel against third parties,
-not against the proxy she is talking to. SSH-MITM terminates Alice's
-handshake with its own host key, decrypts all traffic, and forwards it
-to the real server.
+</div>
 
-Every file that passes through is visible in plaintext — including the
-filename, the direction of the transfer, and the file content.
+<div class="note-box" markdown="1">
+SFTP runs as a subsystem on top of SSH. Users often assume that because the transport is encrypted, file names and contents are protected from any observer on the network. That is true for passive eavesdroppers — but not for a MITM proxy that terminates the SSH session. SSH-MITM parses every SFTP protocol message before forwarding it, so it sees every operation: which files are opened, read, written, or deleted, and their full content.
+</div>
+
+<div class="scenario-box" markdown="1">
+**Logfile Inc.** stores shared project files on `files.logfileinc.internal`, an internal file server accessible via SFTP.
+
+Max Morgan opens an SFTP connection to retrieve a file as part of his regular workflow. He navigates to the directory, downloads the file, and closes the connection. The transfer completes successfully. The file arrives intact.
+
+SSH-MITM sits between Max and the file server. The proxy logs the filename and path as soon as Max's client sends the first `open` request.
+</div>
 
 ---
 
-**What you will see**
-
-SSH-MITM logs every SFTP operation it intercepts: `open`, `read`,
-`write`, `close`. You will find the filename in the proxy output
-as soon as Alice's client sends the first `open` request.
-
-In the next step, start SSH-MITM and wait for Alice's SFTP session.
+> **Further reading:** [File Transfers](https://docs.ssh-mitm.at/user_guide/file_transfer.html)

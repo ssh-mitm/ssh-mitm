@@ -30,6 +30,20 @@ _log = logging.getLogger(__name__)
 _LOGO_PATH = pathlib.Path(__file__).parent.parent / "data" / "ssh-mitm-logo.png"
 _STATIC = _resources.files("sshmitm.tutorial.static")
 
+_SERVICE_LABELS: dict[str, str] = {
+    "sshmitm": "SSH-MITM",
+    "git_server": "LogfileGit",
+}
+
+def _format_service_name(key: str) -> str:
+    for suffix in ("_port", "_url"):
+        if key.endswith(suffix):
+            name = key[: -len(suffix)]
+            break
+    else:
+        name = key
+    return _SERVICE_LABELS.get(name, " ".join(w.capitalize() for w in name.split("_")))
+
 _STATIC_TYPES: dict[str, tuple[str, str]] = {
     "tutorial.html": ("text/html", "utf-8"),
     "tutorial.css":  ("text/css", "utf-8"),
@@ -46,11 +60,17 @@ def _read_static(name: str) -> bytes:
 # ---------------------------------------------------------------------------
 
 def _md_to_html(text: str) -> str:
+    import re
     try:
         import markdown  # type: ignore[import-untyped]
-        return markdown.markdown(text)
+        html = markdown.markdown(text, extensions=["tables", "md_in_html"])
     except ImportError:
-        pass
+        return text
+    return re.sub(
+        r'<a href="(https?://[^"]*)"',
+        r'<a href="\1" target="_blank" rel="noopener noreferrer"',
+        html,
+    )
     return _simple_md(text)
 
 
@@ -197,6 +217,8 @@ class TutorialWebServer:
                     "title": t.title,
                     "category": t.category,
                     "completed": t.id in self._completed,
+                    "tags": list(getattr(t.__class__, "tags", [])),
+                    "docs": dict(getattr(t.__class__, "docs", {})),
                 }
                 for t in self._tutorials
             ],
@@ -207,6 +229,7 @@ class TutorialWebServer:
             "sshmitm_running": self._sshmitm_running,
             "user_inputs": self._runner.get_active_user_inputs() if self._runner else [],
             "step_ready": self._runner.is_step_ready() if self._runner else False,
+            "lab_services": self._build_lab_services(),
         }
 
     # Actions
@@ -252,6 +275,18 @@ class TutorialWebServer:
                 await self.broadcast("state", self.get_state())
             return advanced
         return False
+
+    def _build_lab_services(self) -> list[dict]:
+        if not self._runner:
+            return []
+        labels: dict[str, str] = getattr(self._selected, "lab_service_labels", {}) if self._selected else {}
+        services = []
+        for key, val in sorted(self._runner.tutorial_session_data.items()):
+            if key.endswith("_url"):
+                services.append({"label": labels.get(key, _format_service_name(key)), "value": str(val), "is_url": True})
+            elif key.endswith("_port"):
+                services.append({"label": labels.get(key, _format_service_name(key)), "value": f"127.0.0.1:{val}", "is_url": False})
+        return services
 
     def _make_runner(self) -> TutorialRunner:
         assert self._selected is not None
@@ -375,6 +410,11 @@ class TutorialWebServer:
             _app["status_task"] = asyncio.create_task(self._status_check_loop())
 
         async def on_cleanup(_app: web.Application) -> None:
+            # Stop the tutorial runner first — this shuts down the mock server
+            # thread so the port is released before the process exits.
+            if self._runner:
+                self._runner.stop()
+                self._runner = None
             task: asyncio.Task = _app.get("status_task")
             if task:
                 task.cancel()
@@ -416,7 +456,7 @@ async def _run_async(port: int, open_browser: bool) -> None:
 
     runner = web.AppRunner(app, access_log=None)
     await runner.setup()
-    site = web.TCPSite(runner, "127.0.0.1", port)
+    site = web.TCPSite(runner, "127.0.0.1", port, shutdown_timeout=0.5)
     await site.start()
 
     # resolve actual port when port=0 was requested
@@ -440,7 +480,7 @@ async def _run_async(port: int, open_browser: bool) -> None:
     except asyncio.CancelledError:
         pass
     finally:
-        await runner.cleanup()
+        await runner.cleanup()  # triggers on_cleanup → stops runner + mock server
 
 
 def run(port: int = 0, open_browser: bool = True) -> None:

@@ -54,6 +54,12 @@ class SSHExecTutorial(Tutorial):
     title       = "SSH Command Execution Interception"
     category    = "Command Execution"
     description = "Learn how SSH-MITM intercepts commands executed non-interactively via ssh."
+    tags = ["SSH Exec", "CI/CD"]
+    docs = {
+        "Logfile Inc. Assessment": "https://docs.ssh-mitm.at/get_started/scenario.html",
+        "Terminal Sessions": "https://docs.ssh-mitm.at/user_guide/sessions.html",
+    }
+    lab_service_labels = {"mock_port": "web01.logfileinc.internal"}
 
     steps = [
         Step(

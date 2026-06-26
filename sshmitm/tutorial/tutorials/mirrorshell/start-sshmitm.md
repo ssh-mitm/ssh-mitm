@@ -1,10 +1,7 @@
-## Start SSH-MITM
+<div class="scenario-box" markdown="1">
+Thomas Webb is about to connect to `router01.logfileinc.internal`. SSH-MITM will intercept his session and expose it via mirrorshell — a local port you can attach to with a standard SSH client. Mirrorshell is always active; no additional flags are needed.
+</div>
 
-Run the command below to position SSH-MITM between the developer and the
-target server.
+Run the command below in a **new terminal** and leave it open.
 
-SSH-MITM will listen on port **{sshmitm_port}** and forward all traffic
-to the mock server on port **{mock_port}**.  Mirrorshell is enabled
-automatically — no additional flags needed.
-
-Once it is running, continue to the next step.
+Once running, continue to the next step.

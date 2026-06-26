@@ -1,9 +1,7 @@
-## Start SSH-MITM
+<div class="scenario-box" markdown="1">
+Max's automated deployment script is about to run. It connects to `web01.logfileinc.internal` via SSH exec, runs a command, and disconnects. SSH-MITM will intercept the exec channel and log the exact command string.
+</div>
 
-Run the command below in a terminal to position SSH-MITM between the
-developer and the target server.
+Run the command below in a **new terminal** and leave it open.
 
-SSH-MITM will listen on port **{sshmitm_port}** and forward all traffic
-to the mock server on port **{mock_port}**.
-
-Once it is running, continue to the next step.
+Once running, continue to the next step.

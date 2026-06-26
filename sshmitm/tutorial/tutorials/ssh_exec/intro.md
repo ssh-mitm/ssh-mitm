@@ -1,25 +1,23 @@
-## Chapter 4 — The Automated Script
+<div class="objectives-box" markdown="1">
 
-Alice's deployment pipeline runs a command automatically via SSH at the end
-of each build cycle. A single non-interactive command, executing on the
-production server. No shell is opened — just one exec call, one response.
+- See how SSH-MITM intercepts non-interactive SSH exec commands and logs the full command string
+- Understand why automated scripts using SSH exec are just as exposed as interactive sessions
+- Learn what an attacker can do beyond logging — including command and output modification
 
-She has never thought twice about it. It has always worked.
+</div>
 
-But the command travels through the encrypted channel the same way every
-other SSH traffic does. SSH-MITM intercepts the exec channel before it
-reaches the real server — which means it sees the exact command string
-in plaintext, along with the output the server sends back.
+<div class="note-box" markdown="1">
+Developers often assume that automated scripts using SSH exec are harder to intercept than interactive shells — because there is no terminal, no prompt, and the connection closes immediately. In practice, the exec channel passes through the same MITM proxy as any other SSH traffic. SSH-MITM sees the full command string and the server's response, in cleartext, before either side receives it.
+</div>
+
+<div class="scenario-box" markdown="1">
+**Logfile Inc.'s** deployment pipeline runs automatically at the end of each build cycle. The final step is a single SSH exec command: Max Morgan's build server connects to `web01.logfileinc.internal`, runs a deployment hook, and disconnects. No interactive shell. No human at the keyboard.
+
+SSH-MITM sits between the build server and the web server. The proxy logs the exact command string the moment the client sends it. The deployment continues normally — nothing on either side indicates that the command was observed.
+
+An attacker in this position can also modify the command before it reaches the server, or alter the output the client receives to conceal what actually ran.
+</div>
 
 ---
 
-**What you will see**
-
-The proxy logs every SSH exec request it intercepts, including the full
-command string. You will find it in the SSH-MITM output immediately after
-Alice's client connects.
-
-A real attacker in this position can also modify the command before it
-reaches the server, or intercept and alter the output returned to the client.
-
-In the next step, start SSH-MITM and wait for Alice's automated script to run.
+> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/user_guide/sessions.html)

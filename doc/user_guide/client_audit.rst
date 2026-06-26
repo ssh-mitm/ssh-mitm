@@ -1,6 +1,19 @@
 :fas:`magnifying-glass` SSH Client Auditing
 ===========================================
 
+.. tip:: **Try it first**
+
+   The **Prologue** of the interactive tutorial shows client version
+   detection and cached fingerprint detection in practice — no target
+   server needed:
+
+   .. code-block:: none
+
+       $ ssh-mitm tutorial
+
+   See :doc:`/get_started/index` for the full tutorial list.
+
+
 Every SSH connection begins with a key exchange message that reveals the
 client's version string and its ordered list of supported algorithms.
 SSH-MITM reads this information automatically on every connection and

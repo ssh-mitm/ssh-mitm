@@ -36,6 +36,12 @@ class MirrorshellTutorial(Tutorial):
         "Learn how SSH-MITM mirrors a live shell session to the attacker, "
         "allowing command injection into an unattended terminal."
     )
+    tags = ["Mirrorshell", "Session Hijacking"]
+    docs = {
+        "Logfile Inc. Assessment": "https://docs.ssh-mitm.at/get_started/scenario.html",
+        "Terminal Sessions": "https://docs.ssh-mitm.at/user_guide/sessions.html",
+    }
+    lab_service_labels = {"mock_port": "router01.logfileinc.internal"}
 
     server = MockServerConfig(users=[UserConfig(auth=PublicKeyAuth())])
 

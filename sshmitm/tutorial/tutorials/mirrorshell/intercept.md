@@ -1,51 +1,39 @@
-## The admin stepped away
+<div class="scenario-box" markdown="1">
+Thomas connected to `router01.logfileinc.internal` through SSH-MITM, authenticated, and left the session unattended. The terminal is open. The router is waiting.
+</div>
 
-A network administrator just connected to a production router through
-SSH-MITM and left the session unattended — you have approximately
-**10 minutes** before they return.
+### What to look for
 
-**Step 1 — Find the mirrorshell port**
+Switch to the **SSH-MITM terminal**. When Thomas's session started, SSH-MITM printed the command to attach to the mirrored session:
 
-Check the **SSH-MITM terminal**. When the admin's session started,
-SSH-MITM printed the exact command you need to connect. Look for a line
-starting with `[i] created mirrorshell on port`.
+```
+[i] created mirrorshell on port ...
+```
 
-**Step 2 — Connect to the mirrored session**
+SSH-MITM shows the exact `ssh` command to run. Use it to connect to the mirrored session.
 
-Run the `ssh` command shown by SSH-MITM to attach to the live session.
+### Navigating the mirrored session
 
-> **Note:** The terminal may appear blank at first — the prompt was
-> already shown before you connected. Just start typing. A good first
-> command is `help`, which lists everything the device supports.
-> The prompt and output will appear as soon as you press Enter.
+Once connected, the terminal may appear blank — the router prompt was already shown before you joined. Press Enter to trigger a new prompt and confirm you are connected.
 
-**Step 3 — Read the router configuration**
+Run the following command to read the device configuration:
 
-Use `show running-config` to display the device configuration. Look for
-the SNMP read-write community string.
+```
+show running-config
+```
 
-**Step 4 — Enter the SNMP community string below**
+Scroll through the output and locate the SNMP configuration section. The read-write community string is defined there.
 
-When you are done, type `exit` to leave the session and enter the value
-you found in the field below.
+When you are done, type `exit` to leave the mirrorshell session. Thomas's session on the router is unaffected.
 
----
+### Why does this work?
 
-**Why does this work?**
+Thomas authenticated to what appears to be `router01.logfileinc.internal` — but the device he is talking to is SSH-MITM. The proxy decrypts his session, forwards all traffic to the real router, and simultaneously exposes the session via a local port.
 
-The administrator authenticated to the router — but the router they are
-talking to is SSH-MITM. The proxy decrypts the session, exposes it via
-the mirrorshell port, and forwards all traffic to the real device. The
-admin has no indication that the session is being observed or that
-commands can be injected.
+Connecting to that port gives a second party a live view of the terminal: every character Thomas types and every response from the router passes through the mirrorshell. An attacker can read, copy, or inject commands without leaving any trace in the legitimate session's output.
 
----
+<div class="task-box" markdown="1">
+Attach to the mirrorshell session, run `show running-config`, and find the SNMP read-write community string. Enter it in the field above.
+</div>
 
-**To be continued...**
-
-The Logfile Inc. assessment is not over. More chapters are in development —
-covering additional techniques and scenarios encountered during the engagement.
-
-In the meantime, the [Audit Guide](https://docs.ssh-mitm.at/user_guide/index.html)
-covers every technique shown here in depth, including configuration options,
-plugin customization, and how to apply them in real authorized engagements.
+> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/user_guide/sessions.html)

@@ -10,6 +10,12 @@ class PasswordAuthTutorial(Tutorial):
     title       = "Password Authentication"
     category    = "Authentication"
     description = "Learn how SSH-MITM intercepts plaintext passwords."
+    tags = ["Password Auth", "Credential Theft"]
+    docs = {
+        "Logfile Inc. Assessment": "https://docs.ssh-mitm.at/get_started/scenario.html",
+        "Authentication": "https://docs.ssh-mitm.at/user_guide/authentication.html",
+    }
+    lab_service_labels = {"mock_port": "web01.logfileinc.internal"}
 
     steps = [
         Step(

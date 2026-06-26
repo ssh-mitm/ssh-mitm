@@ -58,7 +58,7 @@ a thorough security audit.
       Plugin browser, full configuration reference, transparent proxy mode,
       FAQ, and legal notice.
 
-      :doc:`plugin_browser` · :doc:`configuration` · :doc:`faq` · :doc:`legal`
+      :doc:`plugin_browser` · :doc:`configuration` · :doc:`legal`
 
 
 .. toctree::
@@ -114,5 +114,4 @@ a thorough security audit.
 
    plugin_browser
    configuration
-   faq
    legal

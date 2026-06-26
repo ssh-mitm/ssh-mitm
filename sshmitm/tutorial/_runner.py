@@ -24,6 +24,7 @@ from sshmitm.tutorial._server_config import (
     NoneAuth,
     PasswordAuth,
     PublicKeyAuth,
+    TargetServerConfig,
 )
 
 _log = logging.getLogger(__name__)
@@ -272,6 +273,8 @@ class TutorialRunner:
         self._prev_ready = False   # last broadcast value; reset on step change so re-broadcast fires
         self._mock_stop: threading.Event | None = None
         self._mock_closed: threading.Event | None = None
+        self._target_stops: list[tuple[threading.Event, threading.Event]] = []
+        self._git_server: object | None = None
 
     # ------------------------------------------------------------------
     # Backward-compat property used by _web.py
@@ -496,7 +499,58 @@ class TutorialRunner:
         self._mock_stop = stop
         self._mock_closed = closed
         session_data["mock_port"] = actual_port
+
+        self._setup_target_servers(session_data)
+        self._setup_git_server(session_data)
+
         self._ctx = TutorialContext(session_data)
+
+    def _setup_target_servers(self, session_data: dict[str, object]) -> None:
+        """Start additional target SSH servers defined by the tutorial."""
+        self._target_stops = []
+        for target_cfg in self._tutorial.get_target_servers():
+            users: dict[str, _UserConfig] = {}
+            used_names: set[str] = set()
+            for user_cfg in target_cfg.users:
+                username = user_cfg.username or _unique_username(used_names)
+                used_names.add(username)
+                auth = user_cfg.auth
+                if isinstance(auth, PasswordAuth):
+                    pw = auth.password or _random_password()
+                    users[username] = MultiUserMockServer.password_user(pw)
+                elif isinstance(auth, PublicKeyAuth):
+                    key = auth.key or paramiko.ECDSAKey.generate()
+                    users[username] = MultiUserMockServer.pubkey_user([key])
+                elif isinstance(auth, NoneAuth):
+                    users[username] = MultiUserMockServer.none_user()
+                elif isinstance(auth, KeyboardInteractiveAuth):
+                    users[username] = MultiUserMockServer.kbdint_iterative_user(auth.rounds)
+
+            captured_users = users
+
+            def _factory(u: dict[str, _UserConfig] = captured_users) -> MultiUserMockServer:
+                return MultiUserMockServer(u)
+
+            actual_port, stop, closed = start_server_thread(
+                _factory,
+                host_key=paramiko.ECDSAKey.generate(),
+                bind="127.0.0.1",
+                port=target_cfg.port,
+            )
+            self._target_stops.append((stop, closed))
+            session_data[f"{target_cfg.name}_port"] = actual_port
+
+    def _setup_git_server(self, session_data: dict[str, object]) -> None:
+        """Start the fake Git hosting server if the tutorial defines one."""
+        git_cfg = self._tutorial.get_git_server()
+        if git_cfg is None:
+            return
+        from sshmitm.tutorial.gitserver import GitServer
+        srv = GitServer(git_cfg)
+        srv.start()
+        self._git_server = srv
+        session_data["git_server_port"] = srv.port
+        session_data["git_server_url"] = srv.url
 
     def _teardown(self) -> None:
         if self._mock_stop:
@@ -505,6 +559,11 @@ class TutorialRunner:
                 self._mock_closed.wait(timeout=2.0)
             self._mock_stop = None
             self._mock_closed = None
+        for stop, closed in self._target_stops:
+            stop.set()
+            closed.wait(timeout=2.0)
+        self._target_stops = []
+        self._git_server = None
 
     def _handle_auth_event(self, method: str, username: str, ok: bool) -> None:
         with self._auth_lock:

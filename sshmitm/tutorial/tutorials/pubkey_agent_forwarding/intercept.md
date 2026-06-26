@@ -1,34 +1,33 @@
-## Alice's key fingerprint
+<div class="scenario-box" markdown="1">
+Sarah connected to `web01.logfileinc.internal` using public key authentication with agent forwarding enabled. Her private key never left her laptop — but SSH-MITM still captured everything it needs.
+</div>
 
-Alice just connected to the dev server through SSH-MITM using public key
-authentication with agent forwarding enabled.
+### What to look for
 
-Switch to the **SSH-MITM terminal**. Look for a line containing a `SHA256:`
-identifier — this is the **public key fingerprint** of the client key the
-server accepted.
+Switch to the **SSH-MITM terminal**. After Sarah authenticated, SSH-MITM logged the public key fingerprint the server accepted:
 
-Enter that fingerprint in the field below to confirm you found it.
+```
+INFO     Public key: SHA256:...
+```
 
----
+This fingerprint uniquely identifies Sarah's key pair. If the same key is authorized on other servers in the infrastructure, that single value maps her entire access footprint.
 
-**Why the fingerprint matters**
+SSH-MITM also reports whether agent forwarding is active:
 
-The fingerprint uniquely identifies Alice's key pair. An attacker who has
-observed it can:
+```
+INFO     Agent forwarding is enabled
+```
 
-- Confirm which key has access to which server.
-- Search for the same fingerprint across other systems to map Alice's
-  access across the infrastructure.
-- Use the captured agent (available via agent forwarding) to authenticate
-  to those systems without ever touching her private key.
+While that line appears in the output, Sarah's agent is available to the proxy — and can be used to authenticate to any host reachable from SSH-MITM's network position.
 
-**Avoid agent forwarding in production**
+### Why does this work?
 
-`ssh -A` (agent forwarding) should only be used when every host in the
-chain is fully trusted. Once a host has access to the agent, it can use
-Alice's keys for the duration of the session — from any process on that host.
+Public key authentication proves to the server that the client holds the private key — but that proof happens inside the session that SSH-MITM controls. The proxy can observe which public key the server accepted. And when the client requests agent forwarding, it opens an agent channel back to the client: SSH-MITM sits on that channel and can use it to initiate new authentications to other servers as Sarah, without the private key ever being transferred.
 
----
+This is why `ssh -A` (agent forwarding) should only be used when every host in the chain is fully trusted. Once agent forwarding is established through an intercepted session, an attacker has Sarah's credentials for the duration of the connection.
 
-*The engagement continues. In the next tutorial, Alice transfers a file
-from the staging server.*
+<div class="task-box" markdown="1">
+Find the public key fingerprint (`SHA256:...`) in the SSH-MITM terminal output and enter it in the field above.
+</div>
+
+> **Further reading:** [Authentication](https://docs.ssh-mitm.at/user_guide/authentication.html) · [SSH Agent Forwarding](https://docs.ssh-mitm.at/user_guide/sshagent.html)

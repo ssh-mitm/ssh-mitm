@@ -1,26 +1,31 @@
-## The command Alice's script ran
+<div class="scenario-box" markdown="1">
+Max's build server connected to `web01.logfileinc.internal`, executed a single command via SSH exec, and disconnected. The deployment completed successfully from both sides. SSH-MITM captured the command string before it reached the server.
+</div>
 
-Alice's deployment pipeline just executed a command on the production server
-through SSH-MITM — without realising the connection was intercepted.
+### What to look for
 
-Switch to the **SSH-MITM terminal**. The proxy logs every SSH exec request
-it intercepts, including the full command string.
+Switch to the **SSH-MITM terminal**. When the exec channel opened, SSH-MITM logged the full command:
 
-Find the **command** in the SSH-MITM output and enter it in the field below.
+```
+INFO     ssh exec: ...
+```
 
----
+The command appears exactly as Max's build server sent it — no shell expansion, no interpretation.
 
-**Why does this work?**
+### Why does this work?
 
-Non-interactive SSH commands use the exec channel type instead of a shell.
-SSH-MITM intercepts this channel before forwarding it to the real server,
-so it sees the exact command string in plaintext — regardless of SSH
-encryption.
+SSH exec is a channel type within the SSH protocol, used for non-interactive command execution. It follows the same path as any other SSH traffic: through SSH-MITM's termination of the client session, decrypted, then re-encrypted and forwarded to the real server.
 
-Beyond logging, a real attacker in this position could rewrite the command
-before it reaches the server, or alter the output the client receives.
+At the moment SSH-MITM intercepts the exec channel request, the proxy has:
 
----
+- The full command string as sent by the client
+- The ability to modify the command before it reaches the server
+- The ability to alter the output returned to the client
 
-*The engagement continues. In the final tutorial, a different person
-connects to the network router — and steps away from the terminal.*
+From Max's build system's perspective, the deployment completed normally. There is no indication in the client output that the command was observed or modified.
+
+<div class="task-box" markdown="1">
+Find the command that Max's deployment script executed in the SSH-MITM terminal and enter it in the field above.
+</div>
+
+> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/user_guide/sessions.html)

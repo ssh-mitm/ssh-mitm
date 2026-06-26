@@ -1,9 +1,7 @@
-## Start SSH-MITM
+<div class="scenario-box" markdown="1">
+Max is about to connect to `files.logfileinc.internal` via SFTP. SSH-MITM will intercept the session and log every file operation — file names, transfer direction, and full content — before forwarding each request to the real server.
+</div>
 
-Run the command below in a terminal to position SSH-MITM between the
-developer's SFTP client and the target server.
+Run the command below in a **new terminal** and leave it open.
 
-SSH-MITM will listen on port **{sshmitm_port}** and forward all traffic
-to the mock server on port **{mock_port}**.
-
-Once it is running, continue to the next step.
+Once running, continue to the next step.

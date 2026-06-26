@@ -19,12 +19,15 @@ from __future__ import annotations
 
 import logging
 import os
+import re
 import subprocess
 import tempfile
 import time
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
 
 import paramiko
+
+from sshmitm.plugins.session.cve202014145 import SERVER_HOST_KEY_ALGORITHMS as _OPENSSH_KEY_ALGO_LISTS
 
 if TYPE_CHECKING:
     from sshmitm.tutorial._context import TutorialContext
@@ -407,6 +410,99 @@ class SFTPDownloadAction:
                     time.sleep(_RETRY_DELAY)
                 else:
                     _log.debug("SFTPDownloadAction failed after %d attempts", attempt + 1, exc_info=True)
+
+
+# ---------------------------------------------------------------------------
+# CVE-2020-14145 simulation (for fingerprint / host-key tutorials)
+# ---------------------------------------------------------------------------
+
+class SimulatedCVE2020Action:
+    """Simulate CVE-2020-14145 fingerprint state via a Paramiko client connection.
+
+    The CVE is about the ORDER of ``server_host_key_algorithms`` in the SSH
+    client's KEXINIT: when a client has a cached host key it moves the
+    matching algorithm type to the front of its proposal.
+
+    Rather than relying on the OpenSSH binary and parsing ``-vvv`` output
+    (which differs across versions), this action uses Paramiko as the SSH
+    client and sets ``transport._preferred_keys`` to a controlled order
+    before connecting.  The first algorithm is therefore known in advance
+    and SSH-MITM will log exactly that value under
+    "Preferred server host key algorithm:".
+
+    *fingerprint_state* must be ``"new"`` or ``"cached"``:
+
+    * ``"new"``    — known OpenSSH default order (cert types first); SSH-MITM
+                     recognises this as "client connecting for the first time".
+    * ``"cached"`` — same list but with the plain ``ecdsa-sha2-nistp256`` key
+                     (the type SSH-MITM generates) moved to the front; SSH-MITM
+                     recognises this as "client has a cached remote fingerprint".
+
+    Both *fingerprint_state* and *algorithm_var* are written to
+    ``ctx.tutorial_session_data`` so that :class:`FingerprintState` and
+    :class:`UserInput` conditions can validate them.
+    """
+
+    # Use the known OpenSSH 8.9 default list.  SSH-MITM compares the full list
+    # against _OPENSSH_KEY_ALGO_LISTS and reports "first time" when it matches.
+    _DEFAULT_KEY_ORDER: list[str] = list(_OPENSSH_KEY_ALGO_LISTS[0])
+
+    # Same list with the plain ECDSA key (the type SSH-MITM generates) moved
+    # to the front.  The list no longer matches any known default → SSH-MITM
+    # reports "client has a locally cached remote fingerprint".
+    _CACHED_KEY_ORDER: list[str] = [
+        "ecdsa-sha2-nistp256",
+        *[k for k in _OPENSSH_KEY_ALGO_LISTS[0] if k != "ecdsa-sha2-nistp256"],
+    ]
+
+    def __init__(
+        self,
+        fingerprint_state: str,
+        algorithm_var: str = "preferred_algorithm",
+    ) -> None:
+        if fingerprint_state not in ("new", "cached"):
+            msg = "fingerprint_state must be 'new' or 'cached'"
+            raise ValueError(msg)
+        self.fingerprint_state = fingerprint_state
+        self.algorithm_var = algorithm_var
+
+    def run(self, ctx: TutorialContext) -> None:
+        key_order = (
+            self._DEFAULT_KEY_ORDER
+            if self.fingerprint_state == "new"
+            else self._CACHED_KEY_ORDER
+        )
+        host = "127.0.0.1"
+        port = int(ctx.tutorial_session_data["sshmitm_port"])
+        username = str(ctx.tutorial_session_data.get("none_user", "user"))
+
+        time.sleep(_INITIAL_DELAY)
+
+        for attempt in range(_RETRIES):
+            try:
+                transport = paramiko.Transport((host, port))
+                # Simulate OpenSSH: match banner to algorithm list version.
+                transport.local_version = "SSH-2.0-OpenSSH_8.9p1"  # type: ignore[attr-defined]
+                # Override the instance's preferred key order so KEXINIT
+                # carries exactly the algorithms we want at the front.
+                transport._preferred_keys = list(key_order)  # type: ignore[attr-defined]
+                transport.start_client(timeout=10)
+                try:
+                    transport.auth_none(username)
+                except Exception:  # noqa: BLE001
+                    pass
+                try:
+                    transport.close()
+                except Exception:  # noqa: BLE001
+                    pass
+                ctx.tutorial_session_data["fingerprint_state"] = self.fingerprint_state
+                ctx.tutorial_session_data[self.algorithm_var] = key_order[0]
+                return
+            except Exception:
+                if attempt < _RETRIES - 1:
+                    time.sleep(_RETRY_DELAY)
+                else:
+                    _log.debug("SimulatedCVE2020Action failed", exc_info=True)
 
 
 # ---------------------------------------------------------------------------

@@ -256,12 +256,15 @@ Technical details: the three authentication methods
 
 The attack combines three authentication methods in sequence.
 
-**1. Publickey — probing only**
+**1. Publickey — probing only (user validity oracle)**
 
-SSH-MITM first checks Alice's public keys against the real server to find out
-which key she would use for login.  This step must never result in a
-successful login on the SSH-MITM side — a successful publickey authentication
-would trigger a FIDO2 confirmation and alert Alice.
+SSH-MITM queries the real server's :doc:`user validity oracle
+</vulnerabilities/CVE-2016-20012>` for each public key Alice offers.
+The server answers whether that username/key combination would be accepted —
+without SSH-MITM completing authentication.
+This step must never result in a successful login on the SSH-MITM side — a
+successful publickey authentication would trigger a FIDO2 confirmation and
+alert Alice.
 
 **2. Trivial authentication — establishing the session**
 

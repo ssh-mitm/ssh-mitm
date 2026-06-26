@@ -65,7 +65,8 @@ from typing import TYPE_CHECKING, ClassVar
 if TYPE_CHECKING:
     from sshmitm.tutorial._conditions import Condition
     from sshmitm.tutorial._client_actions import ClientAction
-    from sshmitm.tutorial._server_config import MockServerConfig
+    from sshmitm.tutorial._server_config import MockServerConfig, TargetServerConfig
+    from sshmitm.tutorial.gitserver import GitServerConfig
 
 
 def _default_condition() -> "Condition":
@@ -148,6 +149,8 @@ class Tutorial:
     title: ClassVar[str] = ""
     category: ClassVar[str] = "General"
     description: ClassVar[str] = ""
+    tags: ClassVar[list[str]] = []
+    docs: ClassVar[dict[str, str]] = {}  # {"Label": "https://..."}
 
     # Subclasses set these as class variables.
     # `steps` is shadowed by an instance variable populated in __init__.
@@ -223,10 +226,21 @@ class Tutorial:
         """
         return {}
 
+    target_servers: ClassVar[list["TargetServerConfig"]] = []
+    git_server: ClassVar["GitServerConfig | None"] = None
+
     def get_server(self) -> "MockServerConfig":
         """Return the mock server config, falling back to the default."""
         from sshmitm.tutorial._server_config import MockServerConfig
         return getattr(self.__class__, "server", None) or MockServerConfig()
+
+    def get_target_servers(self) -> "list[TargetServerConfig]":
+        """Return the list of additional target SSH servers."""
+        return list(getattr(self.__class__, "target_servers", []))
+
+    def get_git_server(self) -> "GitServerConfig | None":
+        """Return the git server config, or None if not configured."""
+        return getattr(self.__class__, "git_server", None)
 
     @property
     def sshmitm_port(self) -> int:

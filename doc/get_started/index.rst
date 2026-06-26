@@ -10,6 +10,20 @@ session continues normally from the user's perspective.
     :class: dark-light
     :alt: SSH-MITM proxy setup diagram
 
+.. important::
+
+    **SSH is not broken.**  SSH-MITM can only intercept a session if the
+    client accepted SSH-MITM's host key — either by trusting it for the
+    first time, or because fingerprint verification was skipped.
+
+    When you connect a client to SSH-MITM for the first time, SSH will
+    display a fingerprint prompt.  Accepting it is what enables the
+    interception.  In a real attack scenario, this is the moment a careful
+    user would detect that something is wrong.
+
+    See :doc:`/user_guide/fingerprint` for a full explanation of the
+    fingerprint mechanism and when users accept it anyway.
+
 
 Install
 -------
@@ -67,6 +81,10 @@ Have the SSH client connect through SSH-MITM on port 10022:
 
     $ ssh -p 10022 user@<mitm-host>
 
+SSH will display a host key fingerprint prompt — accept it to continue.
+See :doc:`/user_guide/fingerprint` for a full explanation of the
+fingerprint mechanism and why it matters.
+
 SSH-MITM intercepts the session and logs the credentials immediately:
 
 .. code-block:: none
@@ -74,7 +92,7 @@ SSH-MITM intercepts the session and logs the credentials immediately:
 
     INFO     Client connection established with parameters:
                  Remote Address: <target-host>:22
-                 Username:       alice
+                 Username:       mmorgan
                  Password:       secret
                  Agent:          no agent
 
@@ -108,7 +126,7 @@ independently, without the user noticing.
 Interactive tutorial
 --------------------
 
-No target server available? The interactive tutorial simulates all five
+No target server available? The interactive tutorial simulates all
 scenarios using a built-in mock SSH server:
 
 .. code-block:: none
@@ -124,30 +142,56 @@ what it captures from each simulated session. In the **browser**, each
 chapter describes the scenario and asks you to locate the intercepted
 value in the proxy output.
 
-All five chapters are set during an authorized assessment of
-**Logfile Inc.** and cover the most common interception scenarios
-in a realistic order.
+All chapters are set during an authorized assessment of **Logfile Inc.**
+
+.. toctree::
+   :hidden:
+
+   scenario
+
+.. card::
+   :class-card: sd-shadow-md sd-border-2 sd-border-primary
+   :class-header: sd-bg-primary sd-text-white
+
+   :fas:`building` About the Assessment — Logfile Inc.
+   ^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^^
+
+   Before starting, read about the company, the staff members you will
+   encounter, and the internal infrastructure that connects them.
+   Every chapter builds on the same story.
+
+   :doc:`→ The Logfile Inc. Assessment <scenario>`
+
+.. card:: Prologue — Host Key Verification
+
+   Max Morgan connects to the web server for the first time. SSH-MITM
+   inserts itself in the connection, Max accepts its host key without
+   checking the fingerprint, and a second connection reveals his
+   fingerprint state through CVE-2020-14145 — before any credential
+   is entered.
+
+   :doc:`→ SSH Fingerprints </user_guide/fingerprint>`
 
 .. card:: Chapter 1 — Password Authentication
 
-   A developer connects to the internal dev server using password
-   authentication. SSH-MITM logs the username and password in plaintext.
+   Max connects to the web server using password authentication.
+   SSH-MITM logs the username and password in cleartext.
    The proxied session continues normally on the remote server.
 
    :doc:`→ Authentication </user_guide/authentication>`
 
 .. card:: Chapter 2 — Public Key Auth & Agent Forwarding
 
-   The same developer switches to key-based authentication. SSH-MITM
-   records the accepted public key fingerprint. With agent forwarding
-   enabled, the forwarded agent is accessible through the proxy and can
-   authenticate to further systems as the connecting user.
+   Sarah King switches to key-based authentication with agent forwarding.
+   SSH-MITM records the accepted public key fingerprint. The forwarded
+   agent is accessible through the proxy and can authenticate to further
+   systems as Sarah.
 
    :doc:`→ SSH Agent </user_guide/sshagent>`
 
 .. card:: Chapter 3 — SFTP File Download
 
-   The developer downloads a file from a staging server via SFTP.
+   Max downloads a file from the internal file server via SFTP.
    SSH-MITM logs every SFTP operation, including the file path and
    the transferred content.
 
@@ -155,20 +199,30 @@ in a realistic order.
 
 .. card:: Chapter 4 — SSH Command Execution
 
-   An automated script runs a non-interactive command on a production
-   server via SSH exec. SSH-MITM captures the exact command string and
-   the server response.
+   Max's automated deployment script runs a non-interactive command
+   on the web server via SSH exec. SSH-MITM captures the exact command
+   string and the server response.
 
    :doc:`→ Session interception </user_guide/sessions>`
 
 .. card:: Chapter 5 — Session Mirroring
 
-   A network administrator opens an SSH session to a router and leaves
-   the terminal unattended. SSH-MITM exposes the session via a local
+   Thomas Webb opens an SSH session to the core router and leaves the
+   terminal unattended. SSH-MITM exposes the session via a local
    mirrorshell port. An auditor attaches to the port and reads the
    device configuration while the original session remains active.
 
    :doc:`→ Session interception </user_guide/sessions>`
+
+.. card:: Chapter 6 — SSH Key Enumeration
+
+   An intercepted git clone reveals an internal Git platform —
+   LogfileGit. User profiles list registered SSH public keys — the
+   same keys developers use to log in to servers. ``check-publickey``
+   queries the SSH user validity oracle (CVE-2016-20012) for each key,
+   mapping mmorgan's lateral movement paths across the infrastructure.
+
+   :doc:`→ Authentication </user_guide/authentication>`
 
 .. card:: To be continued...
 

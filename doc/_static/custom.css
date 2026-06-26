@@ -1,0 +1,25 @@
+/* ── Tutorial back-link ──────────────────────────────────────────────── */
+
+.tutorial-backlink {
+    display: inline-block;
+    margin: 0.25rem 0 1.75rem 0;
+    padding: 0.35rem 0.75rem;
+    border: 1px solid var(--pst-color-border);
+    border-radius: 0.375rem;
+    font-size: 0.875rem;
+    transition: border-color 0.15s, background-color 0.15s;
+}
+
+.tutorial-backlink:hover {
+    border-color: var(--pst-color-primary);
+    background-color: var(--pst-color-surface);
+}
+
+.tutorial-backlink a {
+    text-decoration: none;
+    color: var(--pst-color-text-base);
+}
+
+.tutorial-backlink a:hover {
+    color: var(--pst-color-primary);
+}

@@ -246,6 +246,24 @@ def _walk_continue(node: object, out: list[Continue]) -> None:
 
 
 # ---------------------------------------------------------------------------
+# Fingerprint-state check (CVE-2020-14145)
+# ---------------------------------------------------------------------------
+
+class FingerprintState:
+    """True when ``tutorial_session_data["fingerprint_state"]`` equals *expected*.
+
+    Used together with :class:`~sshmitm.tutorial._client_actions.SSHOpenSSHKnownHostsAction`
+    which sets the value to ``"new"`` or ``"cached"`` after each connection.
+    """
+
+    def __init__(self, expected: str) -> None:
+        self.expected = expected
+
+    def __call__(self, ctx: "TutorialContext") -> bool:
+        return ctx.tutorial_session_data.get("fingerprint_state") == self.expected
+
+
+# ---------------------------------------------------------------------------
 # SSH-MITM process check
 # ---------------------------------------------------------------------------
 

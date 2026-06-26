@@ -1,6 +1,18 @@
 :fas:`fingerprint` SSH Fingerprints
 ===================================
 
+.. tip:: **Try it first**
+
+   The **Prologue** of the interactive tutorial demonstrates TOFU and
+   CVE-2020-14145 in a safe environment — no target server needed:
+
+   .. code-block:: none
+
+       $ ssh-mitm tutorial
+
+   See :doc:`/get_started/index` for the full tutorial list.
+
+
 With SSH, unlike HTTPS secured websites, there are no central certificate providers to ensure that you are connecting to the correct server.
 
 In most cases, a new key is automatically generated during installation. When a client connects to this server for the first time, the offered key is still unknown and you are asked if you want to connect to the server.

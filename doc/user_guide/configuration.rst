@@ -137,7 +137,7 @@ Authentication-Plugins
       fallback-password =
 
    :option boolean close-pubkey-enumerator-with-session: :bdg-primary-line:`True` :bdg-primary:`False` |br|
-      Closes the public key enumerator when the session is closed. Useful for hiding traces of enumeration activities.
+      Closes the public key enumerator when the session is closed. Useful for hiding traces of user validity oracle queries.
    :option string remote-host: |br|
       Specifies the remote host to connect to for authentication. Default is ``127.0.0.1``.
    :option integer remote-port: |br|

@@ -109,3 +109,27 @@ class MockServerConfig:
     allow_exec: bool = True
     mock_port: int = 2200
     sshmitm_port: int = 10022
+
+
+@dataclasses.dataclass
+class TargetServerConfig:
+    """Additional SSH server reachable directly (no MITM proxy).
+
+    Used for lateral-movement targets probed with ``check-publickey`` or
+    direct SSH connections.  Each target is started as an independent mock
+    SSH server bound on its own port.
+
+    Parameters
+    ----------
+    name:
+        Short identifier (e.g. ``"web"``, ``"database"``).  The actual port
+        is stored in the tutorial session data under the key
+        ``"{name}_port"``.
+    users:
+        User accounts accepted by this target server.
+    port:
+        TCP port to listen on.  ``0`` lets the OS pick a free port.
+    """
+    name: str
+    users: list[UserConfig] = dataclasses.field(default_factory=list)
+    port: int = 0

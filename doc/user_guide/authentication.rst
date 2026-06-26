@@ -3,13 +3,18 @@
 
 .. tip:: **Try it first**
 
-   The interactive tutorial covers all major authentication scenarios in a safe environment:
+   The interactive tutorial covers both authentication scenarios in a safe
+   environment — no target server needed:
+
+   - **Chapter 1** intercepts a password authentication session.
+   - **Chapter 2** uses public key authentication with agent forwarding.
+   - **Chapter 6** uses the user validity oracle (CVE-2016-20012) to discover which keys grant access to which servers using ``check-publickey``.
 
    .. code-block:: none
 
        $ ssh-mitm tutorial
 
-   See :doc:`/get_started/index` for the full list of tutorial chapters.
+   See :doc:`/get_started/index` for the full tutorial list.
 
 
 The choice of the right authentication method against SSH-MITM can have a decisive influence on the success of a Man in the Middle attack.
