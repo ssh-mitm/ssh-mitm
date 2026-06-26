@@ -1,2 +1,5 @@
 User-agent: *
+Disallow: /_sources/
+Disallow: /genindex.html
+Disallow: /search.html
 Sitemap: https://docs.ssh-mitm.at/sitemap-docs.xml

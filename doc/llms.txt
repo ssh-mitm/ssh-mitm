@@ -1,0 +1,47 @@
+# SSH-MITM
+
+> Open-source man-in-the-middle SSH proxy for security audits and penetration testing.
+
+SSH-MITM intercepts live SSH sessions in real time. Placed between SSH client and server,
+it logs credentials, mirrors interactive sessions, and intercepts file transfers through
+a plugin system. The tool was used to discover 6 CVEs in PuTTY, OpenSSH, Dropbear,
+Midnight Commander, and MobaXterm.
+
+## Get Started
+
+- [Overview](https://docs.ssh-mitm.at/): Feature list and project description
+- [Tutorial](https://docs.ssh-mitm.at/get_started/index.html): Interactive 7-chapter lab using the Logfile Inc. scenario — no target server needed
+- [Scenario: Logfile Inc.](https://docs.ssh-mitm.at/get_started/scenario.html): Background story and infrastructure for the tutorial
+
+## Audit Guide
+
+- [Index](https://docs.ssh-mitm.at/audit_guide/index.html)
+- [Authentication](https://docs.ssh-mitm.at/audit_guide/authentication.html): Password and public-key interception
+- [Sessions](https://docs.ssh-mitm.at/audit_guide/sessions.html): Session mirroring and hijacking (mirrorshell)
+- [File Transfers](https://docs.ssh-mitm.at/audit_guide/file_transfer.html): SCP and SFTP interception
+- [Port Forwarding](https://docs.ssh-mitm.at/audit_guide/portforwarding.html): TCP tunnel and SOCKS interception
+- [FIDO2 Token Phishing](https://docs.ssh-mitm.at/audit_guide/trivialauth.html): Trivial authentication attack (CVE-2021-36367, CVE-2021-36368)
+- [SSH Agent Forwarding](https://docs.ssh-mitm.at/audit_guide/sshagent.html): Risks of ForwardAgent and how to exploit them
+- [Host Key Verification](https://docs.ssh-mitm.at/audit_guide/fingerprint.html): TOFU, known_hosts, strict host key checking
+- [Client Auditing](https://docs.ssh-mitm.at/audit_guide/client_audit.html): Identify SSH clients by key negotiation behavior
+- [Attack Scenarios](https://docs.ssh-mitm.at/audit_guide/attack_scenarios.html): ARP spoofing, DNS poisoning, direct connections
+- [Transparent Proxy](https://docs.ssh-mitm.at/audit_guide/transparent.html): Transparent network-level interception
+
+## Security Research
+
+- [All Findings](https://docs.ssh-mitm.at/vulnerabilities/findings.html)
+- [CVE-2021-36367](https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36367.html): PuTTY — FIDO2 hardware token phishing via SSH proxy
+- [CVE-2021-36368](https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36368.html): OpenSSH — trivial authentication enables FIDO2 bypass
+- [CVE-2021-36369](https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36369.html): Dropbear — trivial authentication
+- [CVE-2021-36370](https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36370.html): MobaXterm — trivial authentication
+- [CVE-2016-20012](https://docs.ssh-mitm.at/vulnerabilities/CVE-2016-20012.html): OpenSSH — user validity oracle (public-key enumeration without authentication)
+- [CVE-2020-14145](https://docs.ssh-mitm.at/vulnerabilities/CVE-2020-14145.html): OpenSSH — algorithm-preference side-channel reveals cached host keys
+- [CVE-2020-14002](https://docs.ssh-mitm.at/vulnerabilities/CVE-2020-14002.html): PuTTY — algorithm-preference side-channel
+- [CVE-2022-38336](https://docs.ssh-mitm.at/vulnerabilities/CVE-2022-38336.html): MobaXterm — credential disclosure
+- [CVE-2022-38337](https://docs.ssh-mitm.at/vulnerabilities/CVE-2022-38337.html): MobaXterm — credential disclosure (variant)
+- [CVE-2022-29154](https://docs.ssh-mitm.at/vulnerabilities/CVE-2022-29154.html): rsync — man-in-the-middle attack
+
+## Development
+
+- [Plugin API](https://docs.ssh-mitm.at/develop/plugins.html): Writing custom SSH-MITM plugins
+- [API Reference](https://docs.ssh-mitm.at/develop/api/): Auto-generated module documentation

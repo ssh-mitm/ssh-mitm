@@ -1,4 +1,5 @@
 myst-parser
+sphinxext-opengraph
 pydata-sphinx-theme
 sphinx
 sphinx-autodoc-typehints
