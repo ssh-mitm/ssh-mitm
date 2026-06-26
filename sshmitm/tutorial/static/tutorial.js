@@ -14,6 +14,14 @@ function act(name) {
     body: JSON.stringify({action: name})});
 }
 
+function goHome() {
+  if (state && state.runner_state === 'running') {
+    if (!confirm('A tutorial is still running.\nReturn to home anyway?')) return;
+  }
+  if (state) state.selected = null;
+  render();
+}
+
 function selectTut(id) {
   if (state && state.runner_state === 'running' && id !== state.selected) {
     if (!confirm('A tutorial is still running.\nSwitch anyway?')) return;
