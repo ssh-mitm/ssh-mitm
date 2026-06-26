@@ -33,8 +33,8 @@ main{display:flex;flex:1;overflow:hidden}
 #placeholder{display:flex;align-items:center;justify-content:center;flex:1}
 .home-hero{display:flex;flex-direction:column;align-items:center;text-align:center;
            gap:18px;max-width:420px;padding:40px 20px}
-.home-avatar{width:130px;height:130px;border-radius:50%;object-fit:cover;
-             box-shadow:0 4px 24px rgba(69,80,230,.2)}
+.home-avatar{max-width:300px;width:100%;border-radius:10px;
+             box-shadow:0 4px 24px rgba(69,80,230,.15)}
 .home-title{font-size:1.45rem;color:#1e2030;font-weight:700}
 .home-desc{color:#555c7d;font-size:.88rem;line-height:1.65}
 .home-links{display:flex;flex-direction:column;gap:10px;width:100%}

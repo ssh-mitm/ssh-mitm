@@ -44,10 +44,11 @@ def _format_service_name(key: str) -> str:
         name = key
     return _SERVICE_LABELS.get(name, " ".join(w.capitalize() for w in name.split("_")))
 
-_STATIC_TYPES: dict[str, tuple[str, str]] = {
+_STATIC_TYPES: dict[str, tuple[str, str | None]] = {
     "tutorial.html": ("text/html", "utf-8"),
     "tutorial.css":  ("text/css", "utf-8"),
     "tutorial.js":   ("application/javascript", "utf-8"),
+    "intro.png":     ("image/png", None),
 }
 
 
@@ -383,7 +384,9 @@ class TutorialWebServer:
         name = request.match_info["name"]
         if name in _STATIC_TYPES:
             ct, charset = _STATIC_TYPES[name]
-            return web.Response(body=_read_static(name), content_type=ct, charset=charset)
+            if charset:
+                return web.Response(body=_read_static(name), content_type=ct, charset=charset)
+            return web.Response(body=_read_static(name), content_type=ct)
         return web.Response(status=404)
 
     async def _handle_action(self, request: web.Request) -> web.Response:
