@@ -37,4 +37,5 @@ By the end of this chapter, you will have a comprehensive understanding of the d
    plugins
    api
    auth-testing
+   scenario
    changelog
