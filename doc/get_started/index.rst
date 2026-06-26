@@ -10,20 +10,6 @@ session continues normally from the user's perspective.
     :class: dark-light
     :alt: SSH-MITM proxy setup diagram
 
-.. important::
-
-    **SSH is not broken.**  SSH-MITM can only intercept a session if the
-    client accepted SSH-MITM's host key — either by trusting it for the
-    first time, or because fingerprint verification was skipped.
-
-    When you connect a client to SSH-MITM for the first time, SSH will
-    display a fingerprint prompt.  Accepting it is what enables the
-    interception.  In a real attack scenario, this is the moment a careful
-    user would detect that something is wrong.
-
-    See :doc:`/user_guide/fingerprint` for a full explanation of the
-    fingerprint mechanism and when users accept it anyway.
-
 
 Install
 -------

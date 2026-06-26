@@ -12,6 +12,8 @@ header h1{font-size:1.05rem;color:#fff;font-weight:700;flex:1}
        transition:background .15s,border-color .15s}
 .hlink:hover{background:rgba(255,255,255,.18);color:#fff;border-color:rgba(255,255,255,.65)}
 .hlink svg{width:14px;height:14px;fill:currentColor;flex-shrink:0}
+.hlink-scenario{background:#f4d150;border-color:#f4d150;color:#1a1a2e;font-weight:700}
+.hlink-scenario:hover{background:#ffe066;border-color:#ffe066;color:#1a1a2e}
 main{display:flex;flex:1;overflow:hidden}
 #sidebar{width:256px;background:#fff;border-right:1px solid #e2e4f3;
          overflow-y:auto;padding:10px 0;flex-shrink:0}
