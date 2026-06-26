@@ -244,7 +244,7 @@ Agent forwarding is available for interactive shell sessions and, since
     press that a remote attacker cannot trigger.
 
 Security considerations
-""""""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~~~~
 
 The security risks of agent forwarding are specified in
 `draft-ietf-secsh-agent-02 §6 <https://datatracker.ietf.org/doc/html/draft-ietf-secsh-agent-02>`_.
@@ -269,7 +269,7 @@ normal while the agent is fully accessible to the auditor.
 
 
 Host-bound public key authentication
-""""""""""""""""""""""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~~
 
 OpenSSH 8.9 introduced ``publickey-hostbound-v00@openssh.com`` to prevent
 signature replay attacks: the client's signature is cryptographically bound
@@ -303,7 +303,7 @@ user expects.
     complete walkthrough of the destination-constraint mechanism.
 
 SSH-Agent Breaking
-"""""""""""""""""""
+~~~~~~~~~~~~~~~~~~~
 
 When a client connects without agent forwarding enabled, SSH-MITM can
 send an unsolicited request asking the client to forward its agent anyway.

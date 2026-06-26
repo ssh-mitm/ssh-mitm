@@ -248,7 +248,7 @@ SSH-MITM log excerpt:
           Agent: available
 
 Without agent forwarding SSH-MITM cannot complete the remote authentication.  In that
-case configure a honeypot fallback (see :doc:`authentication`).
+case configure a honeypot fallback (see :doc:`/user_guide/authentication`).
 
 
 .. _auth-testing-kbdint:

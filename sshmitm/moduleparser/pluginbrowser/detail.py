@@ -91,6 +91,7 @@ class DetailPane(Widget):
         self._top_lines = max(5, min(50, self._top_lines + delta))
 
     def compose(self) -> ComposeResult:
+        """Build the detail pane layout."""
         yield Static(
             "[dim]Select a plugin from the tree on the left.[/dim]",
             id="placeholder",

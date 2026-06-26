@@ -1,6 +1,6 @@
-===================================
+========================================
 :fas:`network-wired` NETCONF (RFC 6242)
-===================================
+========================================
 
 NETCONF is the network management protocol used to configure routers,
 switches, and other managed devices. It runs as an SSH subsystem — the
