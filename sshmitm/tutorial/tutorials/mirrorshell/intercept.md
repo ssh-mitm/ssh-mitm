@@ -36,4 +36,4 @@ Connecting to that port gives a second party a live view of the terminal: every 
 Attach to the mirrorshell session, run `show running-config`, and find the SNMP read-write community string. Enter it in the field above.
 </div>
 
-> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/user_guide/sessions.html)
+> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/audit_guide/sessions.html)

@@ -6,9 +6,10 @@
    The interactive tutorial covers both authentication scenarios in a safe
    environment — no target server needed:
 
-   - **Chapter 1** intercepts a password authentication session.
-   - **Chapter 2** uses public key authentication with agent forwarding.
-   - **Chapter 6** uses the user validity oracle (CVE-2016-20012) to discover which keys grant access to which servers using ``check-publickey``.
+   - **Chapter 1** intercepts a password authentication session (mmorgan on ``web01``).
+   - **Chapter 2** uses public key authentication with agent forwarding (sking on ``web01``).
+   - **Chapter 6** uses the user validity oracle (CVE-2016-20012) to map mmorgan's
+     three SSH keys across ``web01``, ``db01``, and ``files`` using ``check-publickey``.
 
    .. code-block:: none
 

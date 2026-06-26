@@ -24,4 +24,4 @@ The only mechanism that would have prevented this is **host key verification**: 
 Find the username and password in the SSH-MITM terminal output and enter both values in the fields above.
 </div>
 
-> **Further reading:** [Authentication](https://docs.ssh-mitm.at/user_guide/authentication.html)
+> **Further reading:** [Authentication](https://docs.ssh-mitm.at/audit_guide/authentication.html)

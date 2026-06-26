@@ -11,7 +11,7 @@ SSH servers must answer "would this key be valid for this user?" before asking t
 </div>
 
 <div class="scenario-box" markdown="1">
-Three weeks into the Logfile Inc. assessment, you spot this command in an intercepted developer session:
+In an earlier chapter you intercepted an SSH exec command from mmorgan on web01:
 
     git clone git@logfilegit.logfileinc.internal:mmorgan/dev-server-config.git
 

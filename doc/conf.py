@@ -157,9 +157,17 @@ html_css_files = ["custom.css"]
 
 redirects = {
     # trivialauth.html was the original root-level URL before the page was moved to
-    # user_guide/trivialauth.rst. Do not remove — this URL is referenced by:
-    # NVD (CVE-2021-36368), SentinelOne, OpenCVE, Ubuntu Security, Debian Security Tracker
-    "trivialauth": "user_guide/trivialauth.html",
+    # user_guide/trivialauth.rst (now audit_guide/trivialauth.rst). Do not remove — this
+    # URL is referenced by: NVD (CVE-2021-36368), SentinelOne, OpenCVE, Ubuntu Security,
+    # Debian Security Tracker.
+    "trivialauth": "audit_guide/trivialauth.html",
+
+    # user_guide/trivialauth was the intermediate destination of the "trivialauth" shortlink.
+    # Suchmaschinen könnten diesen Pfad indexiert haben.
+    "user_guide/trivialauth": "audit_guide/trivialauth.html",
+    # user_guide/sshagent is printed live in SSH-MITM log output (forwarders/agent.py).
+    # Old URLs in already-distributed binaries will keep working.
+    "user_guide/sshagent": "audit_guide/sshagent.html",
 
     # puttydos was the preliminary page name before CVE-2021-33500 was assigned.
     "puttydos": "vulnerabilities/CVE-2021-33500.html",

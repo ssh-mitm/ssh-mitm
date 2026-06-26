@@ -28,4 +28,4 @@ From Max's build system's perspective, the deployment completed normally. There 
 Find the command that Max's deployment script executed in the SSH-MITM terminal and enter it in the field above.
 </div>
 
-> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/user_guide/sessions.html)
+> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/audit_guide/sessions.html)

@@ -20,4 +20,4 @@ An attacker in this position can also modify the command before it reaches the s
 
 ---
 
-> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/user_guide/sessions.html)
+> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/audit_guide/sessions.html)

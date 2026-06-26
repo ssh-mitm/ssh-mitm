@@ -25,5 +25,5 @@ All of this happens before Max enters a single credential.
 ---
 
 > **Further reading:**
-> [Attack Scenarios](https://docs.ssh-mitm.at/user_guide/attack_scenarios.html) ·
+> [Attack Scenarios](https://docs.ssh-mitm.at/audit_guide/attack_scenarios.html) ·
 > [CVE-2020-14145](https://docs.ssh-mitm.at/vulnerabilities/CVE-2020-14145.html)

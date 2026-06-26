@@ -28,5 +28,5 @@ Find the line `Preferred server host key algorithm:` in the SSH-MITM terminal an
 </div>
 
 > **Further reading:**
-> [Attack Scenarios](https://docs.ssh-mitm.at/user_guide/attack_scenarios.html) ·
+> [Attack Scenarios](https://docs.ssh-mitm.at/audit_guide/attack_scenarios.html) ·
 > [CVE-2020-14145](https://docs.ssh-mitm.at/vulnerabilities/CVE-2020-14145.html)

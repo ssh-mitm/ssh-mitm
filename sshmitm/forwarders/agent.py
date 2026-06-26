@@ -189,7 +189,7 @@ class AgentForwarder(AgentBaseForwarder):
                 "Expose the client's forwarded SSH agent as a local Unix socket. "
                 "Prints ready-to-use SSH_AUTH_SOCK commands to the log. "
                 "Works for SSH, SCP, and SFTP sessions (OpenSSH 8.4+). "
-                "See https://docs.ssh-mitm.at/user_guide/sshagent.html"
+                "See https://docs.ssh-mitm.at/audit_guide/sshagent.html"
             ),
         )
 
@@ -237,7 +237,7 @@ class AgentForwarder(AgentBaseForwarder):
             )
 
         logging.info(
-            "%s %s - agent socket ready - docs: https://docs.ssh-mitm.at/user_guide/sshagent.html",
+            "%s %s - agent socket ready - docs: https://docs.ssh-mitm.at/audit_guide/sshagent.html",
             Colors.emoji("information"),
             sid,
         )

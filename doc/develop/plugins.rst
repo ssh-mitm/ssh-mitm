@@ -481,7 +481,7 @@ bidirectional, framed-by-PowerShell stream that must be relayed verbatim.
 
 The default ``log-session`` plugin parses the PSRP wire format on the fly
 and logs commands, output, errors, and state transitions without modifying the
-stream.  See :doc:`../user_guide/powershell` for usage and transcript format.
+stream.  See :doc:`../audit_guide/powershell` for usage and transcript format.
 
 .. mermaid::
 

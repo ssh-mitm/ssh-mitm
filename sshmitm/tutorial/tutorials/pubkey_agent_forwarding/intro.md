@@ -22,4 +22,4 @@ SSH-MITM sits between Sarah and the server. You no longer capture a password —
 
 ---
 
-> **Further reading:** [Authentication](https://docs.ssh-mitm.at/user_guide/authentication.html) · [SSH Agent Forwarding](https://docs.ssh-mitm.at/user_guide/sshagent.html)
+> **Further reading:** [Authentication](https://docs.ssh-mitm.at/audit_guide/authentication.html) · [SSH Agent Forwarding](https://docs.ssh-mitm.at/audit_guide/sshagent.html)

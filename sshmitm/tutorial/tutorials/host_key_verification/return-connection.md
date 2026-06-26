@@ -41,4 +41,4 @@ Find the `Preferred server host key algorithm:` line for this second connection 
 
 > **Further reading:**
 > [CVE-2020-14145](https://docs.ssh-mitm.at/vulnerabilities/CVE-2020-14145.html) ·
-> [Attack Scenarios](https://docs.ssh-mitm.at/user_guide/attack_scenarios.html)
+> [Attack Scenarios](https://docs.ssh-mitm.at/audit_guide/attack_scenarios.html)

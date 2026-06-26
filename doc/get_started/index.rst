@@ -68,7 +68,7 @@ Have the SSH client connect through SSH-MITM on port 10022:
     $ ssh -p 10022 user@<mitm-host>
 
 SSH will display a host key fingerprint prompt — accept it to continue.
-See :doc:`/user_guide/fingerprint` for a full explanation of the
+See :doc:`/audit_guide/fingerprint` for a full explanation of the
 fingerprint mechanism and why it matters.
 
 SSH-MITM intercepts the session and logs the credentials immediately:
@@ -156,7 +156,7 @@ All chapters are set during an authorized assessment of **Logfile Inc.**
    fingerprint state through CVE-2020-14145 — before any credential
    is entered.
 
-   :doc:`→ SSH Fingerprints </user_guide/fingerprint>`
+   :doc:`→ SSH Fingerprints </audit_guide/fingerprint>`
 
 .. card:: Chapter 1 — Password Authentication
 
@@ -164,7 +164,7 @@ All chapters are set during an authorized assessment of **Logfile Inc.**
    SSH-MITM logs the username and password in cleartext.
    The proxied session continues normally on the remote server.
 
-   :doc:`→ Authentication </user_guide/authentication>`
+   :doc:`→ Authentication </audit_guide/authentication>`
 
 .. card:: Chapter 2 — Public Key Auth & Agent Forwarding
 
@@ -173,7 +173,7 @@ All chapters are set during an authorized assessment of **Logfile Inc.**
    agent is accessible through the proxy and can authenticate to further
    systems as Sarah.
 
-   :doc:`→ SSH Agent </user_guide/sshagent>`
+   :doc:`→ SSH Agent </audit_guide/sshagent>`
 
 .. card:: Chapter 3 — SFTP File Download
 
@@ -181,7 +181,7 @@ All chapters are set during an authorized assessment of **Logfile Inc.**
    SSH-MITM logs every SFTP operation, including the file path and
    the transferred content.
 
-   :doc:`→ File transfers </user_guide/file_transfer>`
+   :doc:`→ File transfers </audit_guide/file_transfer>`
 
 .. card:: Chapter 4 — SSH Command Execution
 
@@ -189,7 +189,7 @@ All chapters are set during an authorized assessment of **Logfile Inc.**
    on the web server via SSH exec. SSH-MITM captures the exact command
    string and the server response.
 
-   :doc:`→ Session interception </user_guide/sessions>`
+   :doc:`→ Session interception </audit_guide/sessions>`
 
 .. card:: Chapter 5 — Session Mirroring
 
@@ -198,7 +198,7 @@ All chapters are set during an authorized assessment of **Logfile Inc.**
    mirrorshell port. An auditor attaches to the port and reads the
    device configuration while the original session remains active.
 
-   :doc:`→ Session interception </user_guide/sessions>`
+   :doc:`→ Session interception </audit_guide/sessions>`
 
 .. card:: Chapter 6 — SSH Key Enumeration
 
@@ -208,7 +208,7 @@ All chapters are set during an authorized assessment of **Logfile Inc.**
    queries the SSH user validity oracle (CVE-2016-20012) for each key,
    mapping mmorgan's lateral movement paths across the infrastructure.
 
-   :doc:`→ Authentication </user_guide/authentication>`
+   :doc:`→ Authentication </audit_guide/authentication>`
 
 .. card:: To be continued...
 
@@ -216,12 +216,12 @@ All chapters are set during an authorized assessment of **Logfile Inc.**
    development — covering additional techniques and scenarios encountered
    during the engagement.
 
-   :doc:`→ Audit Guide </user_guide/index>`
+   :doc:`→ Audit Guide </audit_guide/index>`
 
 
 Go deeper
 ---------
 
-The :doc:`Audit Guide </user_guide/index>` covers all interception
+The :doc:`Audit Guide </audit_guide/index>` covers all interception
 techniques in depth — authentication, file transfers, port forwarding,
 protocol-specific interception, and client auditing.

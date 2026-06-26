@@ -34,7 +34,7 @@ prints ready-to-use commands to the log:
 .. code-block:: none
     :class: no-copybutton
 
-    ℹ <session-id> - agent socket ready - docs: https://docs.ssh-mitm.at/user_guide/sshagent.html
+    ℹ <session-id> - agent socket ready - docs: https://docs.ssh-mitm.at/audit_guide/sshagent.html
     ℹ <session-id> - ssh-add:  SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh-add -l
     ℹ <session-id> - ssh:      SSH_AUTH_SOCK=/tmp/ssh-mitm-abc12345.agent ssh alice@<target-host>
 
@@ -204,27 +204,36 @@ SSH Agent Forwarding
 Agent forwarding lets you use your **local** SSH agent on a **remote** server
 — without ever copying your private key there.
 
-**A typical scenario:** Alice logs in to a ``dev-server`` at work.  From there
-she wants to push code to a ``git-server``.  Her private key lives on her
-laptop.  Without forwarding she would have to copy the key to ``dev-server``
-(a security risk) or create a separate key just for that server.
+**A typical scenario:** A developer logs in to a ``dev-server`` at work.
+From there they want to push code to a ``git-server``.  Their private key
+lives on their workstation.  Without forwarding they would have to copy the
+key to ``dev-server`` (a security risk) or create a separate key just for
+that server.
 
-With ``ssh -A``, the SSH connection tunnels signing requests back to Alice's
+With ``ssh -A``, the SSH connection tunnels signing requests back to the
 local agent:
 
 .. mermaid::
 
     sequenceDiagram
-        participant L as laptop [agent]
+        participant L as workstation [agent]
         participant D as dev-server
         participant G as git-server
 
         L->>D: ssh -A
         D->>G: ssh
-        note over G: uses laptop's agent
+        note over G: uses workstation's agent
 
-Alice's private key never leaves her laptop.  ``dev-server`` only receives
+The private key never leaves the workstation.  ``dev-server`` only receives
 the signed authentication response, not the key itself.
+
+.. admonition:: Logfile Inc. assessment
+
+   In the Logfile Inc. scenario, this is **Sarah King** (``sking``) connecting
+   to ``web01`` and then on to ``LogfileGit``.  The company-wide SSH config
+   template — introduced by Lisa Chen (``lchen``) without fully understanding
+   the implications — sets ``ForwardAgent yes`` for all connections.  Chapter 2
+   demonstrates the interception.
 
 **The security risk:** While Alice's session is active, the forwarded agent
 socket on ``dev-server`` is accessible to the root user — and to any attacker
@@ -262,10 +271,10 @@ forwards its agent, SSH-MITM receives it and uses it to authenticate against
 the real server on the client's behalf — making a complete man-in-the-middle
 attack possible even with public-key authentication.
 
-In the tutorial scenario (Chapter 2), Alice connects to the dev server with
-``ssh -A``.  SSH-MITM intercepts the connection, receives the forwarded agent,
-and authenticates to the real server as Alice.  Her session continues as
-normal while the agent is fully accessible to the auditor.
+In the tutorial scenario (Chapter 2), Sarah King (``sking``) connects to
+``web01`` with ``ssh -A``.  SSH-MITM intercepts the connection, receives
+the forwarded agent, and authenticates to the real server as sking.  Her
+session continues as normal while the agent is fully accessible to the auditor.
 
 
 Host-bound public key authentication
@@ -292,7 +301,7 @@ takes place on either leg.
 operation requires a physical button press.  With a straightforward proxy
 attack, the user would have to confirm **twice**: once for SSH-MITM and once
 for the real server — which is suspicious.  This is where the
-:doc:`trivial authentication attack </user_guide/trivialauth>` comes in: by
+:doc:`trivial authentication attack </audit_guide/trivialauth>` comes in: by
 authenticating the client to SSH-MITM without using the private key at all,
 the attacker reduces the number of confirmations to exactly one — the one the
 user expects.

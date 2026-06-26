@@ -38,4 +38,5 @@ By the end of this chapter, you will have a comprehensive understanding of the d
    api
    auth-testing
    scenario
+   scenario_framework
    changelog

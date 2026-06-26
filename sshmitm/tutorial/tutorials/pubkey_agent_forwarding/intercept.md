@@ -30,4 +30,4 @@ This is why `ssh -A` (agent forwarding) should only be used when every host in t
 Find the public key fingerprint (`SHA256:...`) in the SSH-MITM terminal output and enter it in the field above.
 </div>
 
-> **Further reading:** [Authentication](https://docs.ssh-mitm.at/user_guide/authentication.html) · [SSH Agent Forwarding](https://docs.ssh-mitm.at/user_guide/sshagent.html)
+> **Further reading:** [Authentication](https://docs.ssh-mitm.at/audit_guide/authentication.html) · [SSH Agent Forwarding](https://docs.ssh-mitm.at/audit_guide/sshagent.html)

@@ -28,4 +28,4 @@ The integrity guarantees of SSH apply to the transport layer only. They do not p
 Find the filename Max downloaded in the SSH-MITM terminal output and enter it in the field above.
 </div>
 
-> **Further reading:** [File Transfers](https://docs.ssh-mitm.at/user_guide/file_transfer.html)
+> **Further reading:** [File Transfers](https://docs.ssh-mitm.at/audit_guide/file_transfer.html)

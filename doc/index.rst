@@ -19,7 +19,7 @@ SSH-MITM - ssh audits made simple
    SSH-MITM is intended for authorized security audits, penetration testing, and research only.
    Do not use it against systems you do not own or have explicit written permission to test.
    Unauthorized interception of SSH traffic may be illegal in your jurisdiction.
-   See the :doc:`Legal Notice </user_guide/legal>` for details.
+   See the :doc:`Legal Notice </audit_guide/legal>` for details.
 
 
 .. grid:: 1 1 2 2
@@ -34,7 +34,7 @@ SSH-MITM - ssh audits made simple
       Up and running in under two minutes.
 
    .. grid-item-card:: :fas:`book` Audit Guide
-      :link: user_guide/index
+      :link: audit_guide/index
       :link-type: doc
 
       All interception techniques in depth — authentication, file
@@ -60,31 +60,31 @@ full visibility into the session without disrupting it.
    * - :fas:`key`
      - Read **passwords and public keys** in cleartext as they pass through the proxy —
        clients without a forwarded agent can be redirected to a honeypot.
-       :doc:`→ Authentication </user_guide/authentication>`
+       :doc:`→ Authentication </audit_guide/authentication>`
    * - :fas:`terminal`
      - **Mirror live SSH sessions** and inject commands in real time —
        both the auditor and the original user see the session.
-       :doc:`→ Session Hijacking </user_guide/sessions>`
+       :doc:`→ Session Hijacking </audit_guide/sessions>`
    * - :fas:`file-arrow-up`
      - **Intercept or silently replace** every file transferred via SCP or SFTP
        without interrupting the client.
-       :doc:`→ File Transfers </user_guide/file_transfer>`
+       :doc:`→ File Transfers </audit_guide/file_transfer>`
    * - :fas:`network-wired`
      - Intercept every **TCP tunnel and SOCKS connection** routed through the proxy.
-       :doc:`→ Port Forwarding </user_guide/portforwarding>`
+       :doc:`→ Port Forwarding </audit_guide/portforwarding>`
    * - :fas:`shield-halved`
      - **Bypass hardware token authentication** without touching the token —
        using the trivial authentication attack (CVE-2021-36367, CVE-2021-36368).
-       :doc:`→ FIDO2 Token Phishing </user_guide/trivialauth>`
+       :doc:`→ FIDO2 Token Phishing </audit_guide/trivialauth>`
    * - :fas:`magnifying-glass`
      - **Identify SSH client software and known CVEs** from key negotiation behavior alone —
        no active probing required.
-       :doc:`→ Client Auditing </user_guide/client_audit>`
+       :doc:`→ Client Auditing </audit_guide/client_audit>`
    * - :fab:`windows`
      - Full visibility into **PowerShell Remoting (PSRP)** and **NETCONF** management sessions.
-       :doc:`→ Protocols </user_guide/powershell>`
+       :doc:`→ Protocols </audit_guide/powershell>`
 
-:doc:`→ Audit Guide </user_guide/index>`
+:doc:`→ Audit Guide </audit_guide/index>`
 
 
 Security Research
@@ -129,6 +129,6 @@ at **DeepSec 2021**:
    :hidden:
 
    Get Started <get_started/index>
-   Audit Guide <user_guide/index>
+   Audit Guide <audit_guide/index>
    Security Research <vulnerabilities/index>
    Development <develop/index>

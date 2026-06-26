@@ -20,6 +20,14 @@
 Mirror a live SSH session
 =========================
 
+.. admonition:: Logfile Inc. assessment
+
+   Thomas Webb (``twebb``), the network administrator, often leaves his SSH
+   session to ``router01`` open for hours while away from his desk. Attaching
+   to the mirrorshell gives the auditor access to the device configuration —
+   including a read-write SNMP community string — without Webb noticing.
+   Chapter 5 demonstrates this.
+
 When a client connects through SSH-MITM and opens a shell, the proxy
 automatically creates a **mirrorshell** — a live copy of the session on a
 local port. The port number is printed immediately when the connection arrives:
@@ -50,6 +58,13 @@ connected.
 
 Intercept non-interactive commands
 ===================================
+
+.. admonition:: Logfile Inc. assessment
+
+   In the Logfile Inc. scenario, Max Morgan (``mmorgan``) runs deployment
+   scripts on ``web01`` using non-interactive SSH commands — common in CI/CD
+   pipelines and automated maintenance tasks. Chapter 4 demonstrates the
+   interception.
 
 Non-interactive SSH commands (``ssh user@host "command"``) use the
 *exec channel* type. SSH-MITM intercepts the exec channel before it

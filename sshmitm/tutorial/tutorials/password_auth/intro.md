@@ -18,4 +18,4 @@ SSH-MITM sits between Max and the server. It logs the username and password the 
 
 ---
 
-> **Further reading:** [Authentication](https://docs.ssh-mitm.at/user_guide/authentication.html)
+> **Further reading:** [Authentication](https://docs.ssh-mitm.at/audit_guide/authentication.html)

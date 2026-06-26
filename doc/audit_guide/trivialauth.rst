@@ -1,5 +1,5 @@
-.. Old URL: /trivialauth.html (root level, before move to user_guide/)
-.. Redirect in conf.py: "trivialauth" → "user_guide/trivialauth.html"
+.. Old URL: /trivialauth.html (root level, before move to audit_guide/)
+.. Redirect in conf.py: "trivialauth" → "audit_guide/trivialauth.html"
 .. External backlinks: NVD (CVE-2021-36368), SentinelOne, OpenCVE,
 ..                     Ubuntu Security, Debian Security Tracker
 
@@ -12,8 +12,9 @@ Trivial authentication is a phishing attack that exploits the ambiguity of
 FIDO2 hardware token confirmations during an SSH man-in-the-middle attack
 with agent forwarding.
 
-In :doc:`Chapter 2 of the tutorial </get_started/index>`, Alice connects to
-the dev server with ``ssh -A`` and SSH-MITM intercepts her forwarded agent.
+In :doc:`Chapter 2 of the tutorial </get_started/index>`, Sarah King
+(``sking``) connects to ``web01`` with ``ssh -A`` and SSH-MITM intercepts
+her forwarded agent.
 A natural follow-up question is: *does a FIDO2 token protect against this?*
 
 The answer depends on how the attacker approaches the authentication step.
@@ -227,11 +228,11 @@ client side to complete the attack:
 
     ssh-mitm server --remote-host <target-host> --enable-trivial-auth
 
-Connect as Alice with agent forwarding:
+Connect with agent forwarding — using the Logfile Inc. victim as an example:
 
 .. code-block:: bash
 
-    ssh -A -p 10022 alice@<mitm-host>
+    ssh -A -p 10022 sking@<mitm-host>
 
 To verify the default behaviour without the bypass — where two FIDO2
 confirmations are required — omit the flag:
@@ -290,5 +291,5 @@ confirmation, the one she expected all along.
 
 .. rubric:: Permalink
 
-- Current: https://docs.ssh-mitm.at/user_guide/trivialauth.html
+- Current: https://docs.ssh-mitm.at/audit_guide/trivialauth.html
 - Previous: https://docs.ssh-mitm.at/trivialauth.html

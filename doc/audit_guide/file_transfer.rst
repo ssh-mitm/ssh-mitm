@@ -5,14 +5,17 @@
 .. tip:: **Try it first**
 
    **Chapter 3** of the interactive tutorial demonstrates SFTP interception:
-   a developer downloads a sensitive file and SSH-MITM logs the filename and
-   content in plaintext.
+   a developer downloads a file and SSH-MITM logs the filename and content
+   in plaintext.
 
    .. code-block:: none
 
        $ ssh-mitm tutorial
 
    See :doc:`/get_started/index` for the full tutorial list.
+
+   In the Logfile Inc. scenario, that developer is Max Morgan (``mmorgan``)
+   downloading a deployment artifact from ``files.logfileinc.internal``.
 
 
 In this chapter, we will explore how to intercept and manipulate file transfers using

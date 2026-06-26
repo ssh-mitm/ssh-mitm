@@ -18,9 +18,11 @@ Register via the ``sshmitm.Tutorial`` entry point::
 
 Minimal ``__init__.py``::
 
-    from sshmitm.tutorial._definitions import Tutorial, Step
-    from sshmitm.tutorial._conditions import PortOpen, UserInput
-    from sshmitm.tutorial._client_actions import SSHPasswordAction
+    from sshmitm.tutorial._definitions import Step, Tutorial
+    from sshmitm.tutorial._conditions import PortOpen, UserInput, TRUE
+    from sshmitm.tutorial._requirements import RandomPassword
+    from sshmitm.tutorial.hosts.logfile_inc import LogfileIncScenario, MaxMorgan
+    from sshmitm.tutorial.hosts.logfile_inc.web01 import Web01
 
     class MyTutorial(Tutorial):
         id          = "01-my-tutorial"
@@ -28,21 +30,24 @@ Minimal ``__init__.py``::
         category    = "Authentication"
         description = "Short description shown in the tutorial list."
 
+        scenario     = LogfileIncScenario
+        proxy_target = Web01
+        victim       = MaxMorgan
+        requires     = [RandomPassword(MaxMorgan, Web01)]
+
         steps = [
-            Step("intro", "What you will learn",
-                 condition=Continue()),
+            Step("intro", "What you will learn", condition=TRUE()),
 
             Step("start-sshmitm", "Start SSH-MITM",
                  condition=PortOpen("sshmitm_port"),
-                 command="ssh-mitm server --remote-host 127.0.0.1 "
-                         "--remote-port {mock_port} --listen-port {sshmitm_port}",
-                 hint_waiting="Waiting for SSH-MITM on port {sshmitm_port}…",
-                 hint_done="SSH-MITM is running. ✓"),
+                 command="ssh-mitm server"
+                         " --remote-host {proxy_target_address}"
+                         " --remote-port {proxy_target_port}"
+                         " --listen-port {sshmitm_port}"),
 
             Step("intercept", "Enter intercepted password",
-                 condition=UserInput("password_value",
-                                     prompt="Enter the password from the SSH-MITM terminal:"),
-                 victim_action=SSHPasswordAction()),
+                 condition=UserInput("web01_mmorgan_password",
+                                     prompt="Enter the password from the SSH-MITM terminal:")),
         ]
 
 Step content
@@ -52,8 +57,7 @@ directory as the tutorial's ``__init__.py``.  Inline *content* on a
 :class:`Step` takes precedence if provided.
 
 ``{variable}`` placeholders in Markdown and command strings are substituted
-at render time with values from the runtime credentials (ports, usernames,
-passwords, …).
+at render time with values from :meth:`ScenarioSession.template_vars`.
 """
 
 from __future__ import annotations
@@ -65,7 +69,8 @@ from typing import TYPE_CHECKING, ClassVar
 if TYPE_CHECKING:
     from sshmitm.tutorial._conditions import Condition
     from sshmitm.tutorial._client_actions import ClientAction
-    from sshmitm.tutorial._server_config import MockServerConfig, TargetServerConfig
+    from sshmitm.tutorial._requirements import Requirement
+    from sshmitm.tutorial.hosts import Host, Scenario, User
     from sshmitm.tutorial.gitserver import GitServerConfig
 
 
@@ -94,66 +99,83 @@ class Step:
         Defaults to :class:`~sshmitm.tutorial._conditions.TRUE` (instant).
     victim_action:
         Automated client action started in a background thread when the step
-        becomes active.  ``None`` means the step waits for the user or an
-        external event without any automated traffic.
+        becomes active.
     command:
-        Shell command shown as a copyable code block.  Supports
-        ``{variable}`` placeholders.
+        Shell command shown as a copyable code block.
     copyable:
-        Credential keys displayed as individual copy-boxes (e.g.
-        ``["password_value"]``).
+        Credential keys displayed as individual copy-boxes.
     hint_waiting:
         Short text shown while the step is active but not yet complete.
     hint_done:
         Short text shown after the step has been completed.
     """
 
-    id: str
-    title: str
-    content: str = ""
-    condition: "Condition" = dataclasses.field(default_factory=_default_condition)
+    id:            str
+    title:         str
+    content:       str = ""
+    condition:     "Condition" = dataclasses.field(default_factory=_default_condition)
     victim_action: "ClientAction | None" = None
-    command: str | None = None
-    copyable: list[str] = dataclasses.field(default_factory=list)
-    hint_waiting: str = ""
-    hint_done: str = ""
+    command:       str | None = None
+    copyable:      list[str] = dataclasses.field(default_factory=list)
+    hint_waiting:  str = ""
+    hint_done:     str = ""
 
 
 class Tutorial:
     """Base class for SSH-MITM tutorials.
 
     Subclass this, set the class variables, and register via the
-    ``sshmitm.Tutorial`` entry point.  See the module docstring for a
-    complete example.
+    ``sshmitm.Tutorial`` entry point.
 
-    Class variables
-    ---------------
-    id:
-        Unique tutorial identifier (prefix with ``"01-"``, ``"02-"`` etc.
-        to control display order).
-    title:
-        Display name shown in the sidebar.
-    category:
-        Groups tutorials (e.g. ``"Authentication"``).
-    description:
-        One-line summary shown in the tutorial list.
-    server:
-        :class:`~sshmitm.tutorial._server_config.MockServerConfig`.
-        Defaults to a single user with an auto-generated password.
-    steps:
-        Ordered list of :class:`Step` objects.  Markdown content for each
-        step is loaded automatically from ``{step.id}.md`` at instantiation.
+    Scenario API
+    ------------
+    scenario:
+        The :class:`~sshmitm.tutorial.hosts.Scenario` this tutorial belongs
+        to.  Used for documentation and consistency checks.
+    proxy_target:
+        The :class:`~sshmitm.tutorial.hosts.Host` SSH-MITM connects to as
+        its backend.  The runner starts a mock SSH server for this host.
+        ``None`` for tutorials that only use direct connections (e.g.
+        ``check-publickey``).
+    victim:
+        The :class:`~sshmitm.tutorial.hosts.User` whose client the victim
+        action impersonates.  The runner bridges legacy credential keys
+        (``password_user``, ``_client_key``, etc.) from this user.
+    requires:
+        Ordered list of :class:`~sshmitm.tutorial._requirements.Requirement`
+        objects that generate session data (passwords, key pairs, secrets)
+        and configure host instances.
+    direct_targets:
+        Additional hosts started as standalone SSH mock servers for direct
+        connections (not via SSH-MITM).  Alias → host class.  The runner
+        sets ``session_data["{alias}_port"]`` after startup.
+    sshmitm_port:
+        Port SSH-MITM listens on for this tutorial (default: 10022).
+    lab_service_labels:
+        Maps session-data keys to human-readable labels for the web UI
+        (e.g. ``{"mock_port": "web01.logfileinc.internal"}``).
     """
 
-    id: ClassVar[str] = ""
-    title: ClassVar[str] = ""
-    category: ClassVar[str] = "General"
+    id:          ClassVar[str] = ""
+    title:       ClassVar[str] = ""
+    category:    ClassVar[str] = "General"
     description: ClassVar[str] = ""
-    tags: ClassVar[list[str]] = []
-    docs: ClassVar[dict[str, str]] = {}  # {"Label": "https://..."}
+    tags:        ClassVar[list[str]] = []
+    docs:        ClassVar[dict[str, str]] = {}
 
-    # Subclasses set these as class variables.
-    # `steps` is shadowed by an instance variable populated in __init__.
+    # ── Scenario API ───────────────────────────────────────────────────
+
+    scenario:       ClassVar[type[Scenario] | None] = None
+    proxy_target:   ClassVar[type[Host] | None] = None
+    victim:         ClassVar[type[User] | None] = None
+    requires:       ClassVar[list[Requirement]] = []
+    direct_targets: ClassVar[dict[str, type[Host]]] = {}
+    sshmitm_port:   ClassVar[int] = 10022
+
+    lab_service_labels: ClassVar[dict[str, str]] = {}
+
+    # ── Steps ──────────────────────────────────────────────────────────
+
     steps: list[Step] = []
 
     def __init__(self) -> None:
@@ -181,71 +203,24 @@ class Tutorial:
         return result
 
     # ------------------------------------------------------------------
-    # Server config helpers
+    # Optional overrides
     # ------------------------------------------------------------------
 
-    def generate_tutorial_session_data(self) -> dict[str, object]:
-        """Return tutorial-specific values merged into the session data at start.
+    def generate_tutorial_session_data(self) -> dict:
+        """Return extra session data merged in after :class:`ScenarioGenerator`.
 
-        Override in subclasses to inject randomized values (e.g. filenames,
-        commands) that :class:`~sshmitm.tutorial._conditions.UserInput`
-        conditions check against.
+        Override to inject values not covered by *requires* — for example
+        a dynamic choice where the tutorial needs explicit control over the
+        session-data key name.
         """
         return {}
 
-    def shell_prompt(self) -> bytes:
-        """Prompt shown by the mock interactive shell.  Override to customise."""
-        return b"$ "
+    def get_git_server(self, session_data: dict) -> "GitServerConfig | None":
+        """Return a git server config built from *session_data*, or ``None``.
 
-    def generate_shell_outputs(self, session_data: dict[str, object]) -> dict[str, bytes]:
-        """Return mock shell outputs ``{command: output}`` for this session.
-
-        Override in subclasses that use a :class:`ShellSessionAction`.  The
-        mock shell shows :meth:`shell_prompt` and returns predefined output for
-        each registered command without spawning any subprocess.
+        Transitional hook: override in tutorials that need a standalone git
+        server not yet modelled as a :class:`~sshmitm.tutorial.hosts.Host`.
+        Prefer implementing git functionality in the host's
+        :meth:`~sshmitm.tutorial.hosts.Host.start_services` instead.
         """
-        return {}
-
-    def generate_exec_outputs(self, session_data: dict[str, object]) -> dict[str, bytes]:
-        """Return mock exec outputs ``{command: stdout}`` for this session.
-
-        Override in subclasses that use an SSH exec victim action.  Only
-        registered commands return output; all others return an empty response
-        with exit status 1 — no real subprocess is ever spawned on the mock
-        server.
-        """
-        return {}
-
-    def generate_sftp_files(self, session_data: dict[str, object]) -> dict[str, bytes]:
-        """Return the in-memory SFTP filesystem ``{path: content}`` for this session.
-
-        Override in subclasses that use an SFTP victim action.  Only the
-        returned paths are accessible via SFTP; all other requests are rejected
-        with ``SFTP_NO_SUCH_FILE``.  Return an empty dict (default) to disable
-        SFTP on the mock server.
-        """
-        return {}
-
-    target_servers: ClassVar[list["TargetServerConfig"]] = []
-    git_server: ClassVar["GitServerConfig | None"] = None
-
-    def get_server(self) -> "MockServerConfig":
-        """Return the mock server config, falling back to the default."""
-        from sshmitm.tutorial._server_config import MockServerConfig
-        return getattr(self.__class__, "server", None) or MockServerConfig()
-
-    def get_target_servers(self) -> "list[TargetServerConfig]":
-        """Return the list of additional target SSH servers."""
-        return list(getattr(self.__class__, "target_servers", []))
-
-    def get_git_server(self) -> "GitServerConfig | None":
-        """Return the git server config, or None if not configured."""
-        return getattr(self.__class__, "git_server", None)
-
-    @property
-    def sshmitm_port(self) -> int:
-        return self.get_server().sshmitm_port
-
-    @property
-    def mock_port(self) -> int:
-        return self.get_server().mock_port
+        return None

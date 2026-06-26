@@ -20,4 +20,4 @@ SSH-MITM sits between Max and the file server. The proxy logs the filename and p
 
 ---
 
-> **Further reading:** [File Transfers](https://docs.ssh-mitm.at/user_guide/file_transfer.html)
+> **Further reading:** [File Transfers](https://docs.ssh-mitm.at/audit_guide/file_transfer.html)

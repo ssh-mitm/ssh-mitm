@@ -4,8 +4,8 @@
 .. tip:: **Try it first**
 
    The **Prologue** of the interactive tutorial positions SSH-MITM between
-   Alice and a dev server using a direct connection — the simplest case
-   described on this page:
+   mmorgan and ``web01.logfileinc.internal`` using a direct connection —
+   the simplest case described on this page:
 
    .. code-block:: none
 

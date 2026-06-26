@@ -24,4 +24,4 @@ Your goal: attach to the mirrorshell, read the router's running configuration, a
 
 ---
 
-> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/user_guide/sessions.html)
+> **Further reading:** [Terminal Sessions](https://docs.ssh-mitm.at/audit_guide/sessions.html)

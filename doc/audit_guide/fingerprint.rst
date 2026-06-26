@@ -12,6 +12,11 @@
 
    See :doc:`/get_started/index` for the full tutorial list.
 
+   In the Logfile Inc. scenario, ``web01`` recently had its host keys
+   regenerated after a disk replacement.  Max Morgan (``mmorgan``) is known
+   to dismiss the unknown-fingerprint warning rather than verifying the new
+   key — a habit that lets SSH-MITM intercept his sessions undetected.
+
 
 With SSH, unlike HTTPS secured websites, there are no central certificate providers to ensure that you are connecting to the correct server.
 
