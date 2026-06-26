@@ -7,8 +7,8 @@
 </head>
 <body>
 <header>
-  <img src="/logo.png" alt="SSH-MITM">
-  <h1>SSH-MITM Tutorial</h1>
+  <img src="/logo.png" alt="SSH-MITM" onclick="goHome()" style="cursor:pointer" title="Home">
+  <h1 onclick="goHome()" style="cursor:pointer">SSH-MITM Tutorial</h1>
   <div id="sshmitm-status" title="SSH-MITM connection status">
     <span class="status-dot"></span>
     <span class="status-label">SSH-MITM</span>
@@ -26,7 +26,7 @@
 </header>
 <main>
   <div id="sidebar-wrap">
-    <a id="sidebar-home" href="#" onclick="goHome(); return false;">
+    <a id="sidebar-home" href="https://docs.ssh-mitm.at/get_started/scenario.html" target="_blank" rel="noopener">
       &#127970; Logfile Inc. Scenario
     </a>
     <nav id="sidebar"></nav>
