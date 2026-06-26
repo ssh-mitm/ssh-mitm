@@ -110,6 +110,37 @@ The lab uses the ``127.0.0.0/8`` loopback range subdivided into
        read-write community string stored in the running config.
        Thomas's sessions stay open for hours.
 
+.. mermaid::
+
+   flowchart LR
+       mitm["SSH-MITM Proxy<br/>127.0.0.1:10022"]
+
+       subgraph devlan["Developer LAN · 127.1.0.0/24"]
+           ws(["Workstations<br/>127.1.0.1"])
+       end
+
+       subgraph appnet["Application servers · 127.2.0.0/24"]
+           direction TB
+           web["web01 · 127.2.0.1<br/>SSH :20022  HTTP :20080  HTTPS :20443"]
+           files["files · 127.2.0.2<br/>SFTP :20022"]
+           git["logfilegit · 127.2.0.3<br/>SSH :20022  HTTPS :20443"]
+       end
+
+       subgraph dbnet["Database · 127.3.0.0/24"]
+           db["db01 · 127.3.0.1<br/>PostgreSQL :25432"]
+       end
+
+       subgraph mgmt["Management · 127.4.0.0/24"]
+           router["router01 · 127.4.0.1<br/>SSH :20022  SNMP :20161"]
+       end
+
+       ws -->|"via :10022"| mitm
+       mitm -->|"SSH :20022"| web
+       mitm -->|"SFTP :20022"| files
+       mitm -->|"SSH :20022"| router
+       web -->|"PostgreSQL :25432"| db
+       files -->|"PostgreSQL :25432"| db
+
 
 Chapter Map
 -----------
@@ -174,27 +205,18 @@ Story Arc
 The chapters form a single coherent engagement.  Each one hands
 something to the next:
 
-.. code-block:: none
+.. mermaid::
 
-   Prologue ─ auditor in position, Max connects without checking fingerprint
-       │
-       ▼
-   Ch 1 ── Max's password captured → auditor has credentials for web01
-       │
-       ▼
-   Ch 2 ── Sarah's agent captured → lateral movement beyond web01 possible
-       │
-       ▼
-   Ch 3 ── file download intercepted → sensitive artefacts visible in transit
-       │
-       ▼
-   Ch 4 ── deployment command captured → automation scripts exposed
-       │
-       ▼
-   Ch 5 ── Thomas's router session mirrored → SNMP read-write secret extracted
-       │
-       ▼
-   Ch 6 ── LogfileGit key enumeration → Max's access mapped across infrastructure
+   flowchart TD
+       P["**Prologue** · Host Key Verification<br/>mmorgan connects without checking fingerprint<br/>CVE-2020-14145 reveals fingerprint state"]
+       C1["**Ch 1** · Password Authentication<br/>mmorgan's password captured<br/>→ auditor has credentials for web01"]
+       C2["**Ch 2** · Public Key Auth & Agent Forwarding<br/>sking's agent captured<br/>→ lateral movement beyond web01 possible"]
+       C3["**Ch 3** · SFTP File Download<br/>mmorgan downloads from files server<br/>→ filename and contents visible in transit"]
+       C4["**Ch 4** · SSH Command Execution<br/>mmorgan's deployment script intercepted<br/>→ automation commands exposed"]
+       C5["**Ch 5** · Session Mirroring<br/>twebb leaves router01 session open<br/>→ SNMP read-write secret extracted"]
+       C6["**Ch 6** · SSH Key Enumeration<br/>LogfileGit exposes mmorgan's public keys<br/>CVE-2016-20012 maps access across infrastructure"]
+
+       P --> C1 --> C2 --> C3 --> C4 --> C5 --> C6
 
 
 Known Inconsistencies
