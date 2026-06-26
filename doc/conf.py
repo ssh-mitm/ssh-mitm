@@ -125,8 +125,8 @@ html_extra_path = ["robots.txt", "llms.txt", "_static/codeberg-logo_icon_blue.sv
 # -- OpenGraph ---------------------------------------------------------------
 
 ogp_site_url = "https://docs.ssh-mitm.at/"
-ogp_description_length = 200
-ogp_image = "https://docs.ssh-mitm.at/_static/ssh-mitm-256.png"
+ogp_description_length = 230
+ogp_image = "https://docs.ssh-mitm.at/_static/intro.png"
 ogp_type = "website"
 ogp_enable_meta_description = True
 ogp_social_cards = {"enable": False}
