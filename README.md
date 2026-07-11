@@ -159,17 +159,20 @@ ssh-mitm server --enable-trivial-auth
 ```
 
 Operating from the Man-in-the-Middle position makes it possible to observe SSH client behavior
-that is invisible from either endpoint. SSH-MITM has been used to discover **[6 previously unknown
+that is invisible from either endpoint. SSH-MITM has been used to discover **[7 previously unknown
 vulnerabilities](https://docs.ssh-mitm.at/vulnerabilities/findings.html)** in widely-deployed SSH software:
 
 <p align="center">
-  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36367.html"><img src="https://img.shields.io/badge/CVE--2021--36367-CVSS%208.1-important?style=flat-square" alt="CVE-2021-36367"></a>
-  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36368.html"><img src="https://img.shields.io/badge/CVE--2021--36368-CVSS%203.7-informational?style=flat-square" alt="CVE-2021-36368"></a>
-  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36369.html"><img src="https://img.shields.io/badge/CVE--2021--36369-CVSS%208.1-important?style=flat-square" alt="CVE-2021-36369"></a>
-  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36370.html"><img src="https://img.shields.io/badge/CVE--2021--36370-CVSS%207.5-important?style=flat-square" alt="CVE-2021-36370"></a>
-  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2022-38336.html"><img src="https://img.shields.io/badge/CVE--2022--38336-CVSS%205.4-yellow?style=flat-square" alt="CVE-2022-38336"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2026-60000.html"><img src="https://img.shields.io/badge/CVE--2026--60000-CVSS%203.7-informational?style=flat-square" alt="CVE-2026-60000"></a>
   <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2022-38337.html"><img src="https://img.shields.io/badge/CVE--2022--38337-CVSS%205.4-yellow?style=flat-square" alt="CVE-2022-38337"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2022-38336.html"><img src="https://img.shields.io/badge/CVE--2022--38336-CVSS%205.4-yellow?style=flat-square" alt="CVE-2022-38336"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36370.html"><img src="https://img.shields.io/badge/CVE--2021--36370-CVSS%207.5-important?style=flat-square" alt="CVE-2021-36370"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36369.html"><img src="https://img.shields.io/badge/CVE--2021--36369-CVSS%208.1-important?style=flat-square" alt="CVE-2021-36369"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36368.html"><img src="https://img.shields.io/badge/CVE--2021--36368-CVSS%203.7-informational?style=flat-square" alt="CVE-2021-36368"></a>
+  <a href="https://docs.ssh-mitm.at/vulnerabilities/CVE-2021-36367.html"><img src="https://img.shields.io/badge/CVE--2021--36367-CVSS%208.1-important?style=flat-square" alt="CVE-2021-36367"></a>
 </p>
+
+> **Latest: [CVE-2026-60000](https://docs.ssh-mitm.at/vulnerabilities/CVE-2026-60000.html)** — OpenSSH's GSSAPI authentication violated RFC 4462 in ways that let an attacker bypass `MaxAuthTries` entirely, causing a pre-authentication denial of service. The same root cause also produced a username validity oracle and a privileged-process crash, all fixed in OpenSSH 10.4.
 
 <p align="center">
   <b>Talk at DeepSec 2021 — full explanation of the attack:</b><br/>
@@ -182,6 +185,10 @@ vulnerabilities](https://docs.ssh-mitm.at/vulnerabilities/findings.html)** in wi
 <p align="center">
   <a href="https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf">Download presentation slides</a>
 </p>
+
+Not every result of this research is a vulnerability — see
+[Upstream Contributions](https://docs.ssh-mitm.at/vulnerabilities/upstream_contributions.html)
+for hardening fixes contributed directly to OpenSSH.
 
 <p align="right">(<a href="#top">back to top</a>)</p>
 

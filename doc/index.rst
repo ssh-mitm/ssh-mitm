@@ -96,17 +96,18 @@ behavior that is invisible from either endpoint: how clients negotiate
 algorithms, which authentication methods they accept, and how they respond
 to unexpected server behavior.
 
-This research approach led to the discovery of **6 previously unknown
+This research approach led to the discovery of **7 previously unknown
 vulnerabilities** in widely-deployed SSH software — including PuTTY,
 OpenSSH, Dropbear, Midnight Commander, and MobaXterm. Each was reported
 to the vendor and assigned a CVE number.
 
-:bdg-link-primary-line:`CVE-2021-36367 <vulnerabilities/CVE-2021-36367.html>`
-:bdg-link-primary-line:`CVE-2021-36368 <vulnerabilities/CVE-2021-36368.html>`
-:bdg-link-primary-line:`CVE-2021-36369 <vulnerabilities/CVE-2021-36369.html>`
-:bdg-link-primary-line:`CVE-2021-36370 <vulnerabilities/CVE-2021-36370.html>`
-:bdg-link-primary-line:`CVE-2022-38336 <vulnerabilities/CVE-2022-38336.html>`
+:bdg-link-primary-line:`CVE-2026-60000 <vulnerabilities/CVE-2026-60000.html>`
 :bdg-link-primary-line:`CVE-2022-38337 <vulnerabilities/CVE-2022-38337.html>`
+:bdg-link-primary-line:`CVE-2022-38336 <vulnerabilities/CVE-2022-38336.html>`
+:bdg-link-primary-line:`CVE-2021-36370 <vulnerabilities/CVE-2021-36370.html>`
+:bdg-link-primary-line:`CVE-2021-36369 <vulnerabilities/CVE-2021-36369.html>`
+:bdg-link-primary-line:`CVE-2021-36368 <vulnerabilities/CVE-2021-36368.html>`
+:bdg-link-primary-line:`CVE-2021-36367 <vulnerabilities/CVE-2021-36367.html>`
 
 The initial findings — the trivial authentication attack and how FIDO2
 hardware tokens can be phished through a positioned proxy — were presented
@@ -121,7 +122,8 @@ at **DeepSec 2021**:
    `Watch on Vimeo <https://vimeo.com/showcase/9059922/video/651517195>`_ ·
    `Download slides <https://github.com/ssh-mitm/ssh-mitm/files/7568291/deepsec.pdf>`_
 
-:doc:`→ Security Research Findings <vulnerabilities/findings>`
+:doc:`→ Security Research Findings <vulnerabilities/findings>` ·
+:doc:`→ Upstream Contributions <vulnerabilities/upstream_contributions>`
 
 
 .. toctree::

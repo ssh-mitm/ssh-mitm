@@ -33,6 +33,7 @@ of a successful attack.
    :titlesonly:
 
    findings
+   upstream_contributions
    openssh
    putty
    dropbear
