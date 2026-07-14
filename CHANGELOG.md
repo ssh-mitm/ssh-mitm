@@ -7,6 +7,23 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- **GSSAPI username validity oracle audit tool**: New `ssh-mitm audit
+  gssapi-usercheck` subcommand enumerates usernames against a target's
+  GSSAPI pre-authentication username validity oracle (CVE-2026-60000
+  background). New `ssh-mitm audit gssapi-usercheck-verify-patch` checks
+  whether a target has applied the upstream fix or a vendor backport,
+  without requiring any target-specific usernames — it compares built-in
+  near-universal candidates (`root`, `daemon`) against an automatically
+  generated, guaranteed-nonexistent control username and reports a
+  PATCHED / VULNERABLE / INCONCLUSIVE verdict. Both usernames and the
+  control username can be overridden.
+- **Audit guide / test setup**: Documented `gssapi-with-mic` alongside the
+  other authentication methods in `doc/audit_guide/authentication.rst`, and
+  added a matching local test environment section (with and without a full
+  Kerberos deployment) to `doc/develop/auth-testing.rst`.
+
 ### Fixed
 
 - **CVE-2023-48795 (Terrapin) detection**: Fixed a bug where the vulnerability

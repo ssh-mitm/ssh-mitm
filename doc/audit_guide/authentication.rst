@@ -176,3 +176,21 @@ To disable keyboard-interactive authentication, use ``--disable-keyboard-interac
 .. code-block::
 
     $ ssh-mitm server --remote-host <target-host> --disable-keyboard-interactive-auth
+
+
+**gssapi-with-mic** authentication - `RFC-4462 <https://www.rfc-editor.org/rfc/rfc4462>`_
+--------------------------------------------------------------------------------------------
+
+GSSAPI authentication (typically Kerberos-backed) only matters in
+environments with an existing Kerberos/Active Directory infrastructure —
+it is off by default and lets a client with a valid ticket skip passwords
+and keys entirely.
+
+Support in SSH-MITM
+""""""""""""""""""""
+
+**gssapi-with-mic** is not proxied for a full man-in-the-middle attack.
+SSH-MITM does provide a standalone audit tool for a specific,
+pre-authentication username validity oracle affecting several OpenSSH
+versions — background and command usage: :doc:`/vulnerabilities/CVE-2026-60000`.
+Local test environment setup: :ref:`auth-testing-gssapi`.

@@ -312,6 +312,127 @@ Via SSH-MITM:
     authentication for testing.
 
 
+.. _auth-testing-gssapi:
+
+**gssapi-with-mic** authentication
+-------------------------------------
+
+GSSAPI authentication (RFC 4462, typically Kerberos-backed) is not proxied
+by SSH-MITM for interception — it only matters here as the target of the
+standalone audit tool documented at :doc:`/vulnerabilities/CVE-2026-60000`
+(``ssh-mitm audit gssapi-usercheck`` / ``gssapi-usercheck-verify-patch``).
+The setup below configures a local ``sshd`` to test against directly; there
+is no passthrough-mode step.
+
+Two configurations are possible depending on whether a full Kerberos
+infrastructure is available. Both produce identical results for the audit
+commands — the underlying oracle triggers before any keytab is consulted.
+
+Simple setup (no Kerberos infrastructure)
+""""""""""""""""""""""""""""""""""""""""""
+
+Sufficient to reproduce the username-validity signal itself:
+
+.. code-block:: none
+
+    # /etc/ssh/sshd_config.d/gssapi-test.conf
+    GSSAPIAuthentication yes
+    GSSAPIStrictAcceptorCheck no
+
+.. code-block:: none
+
+    $ sudo systemctl restart sshd
+
+Install ``libkrb5`` so the Kerberos OID is offered as a mechanism (no KDC or
+keytab needed):
+
+.. code-block:: none
+
+    # Debian / Ubuntu
+    $ sudo apt install libkrb5-3
+    # RHEL / Fedora
+    $ sudo dnf install krb5-libs
+    # openSUSE
+    $ sudo zypper install krb5
+
+Full Kerberos setup
+""""""""""""""""""""
+
+Reflects a production Kerberos environment (``GSSAPIStrictAcceptorCheck
+yes`` with a working keytab):
+
+.. code-block:: none
+
+    $ MYHOSTNAME=$(hostname)
+
+    $ sudo tee /etc/krb5.conf <<EOF
+    [libdefaults]
+        default_realm = TEST.LOCAL
+        dns_lookup_realm = false
+        dns_lookup_kdc = false
+
+    [realms]
+        TEST.LOCAL = {
+            kdc = localhost
+            admin_server = localhost
+        }
+
+    [domain_realm]
+        localhost = TEST.LOCAL
+        .localhost = TEST.LOCAL
+        ${MYHOSTNAME} = TEST.LOCAL
+        .${MYHOSTNAME} = TEST.LOCAL
+    EOF
+
+    $ sudo kdb5_util create -s -r TEST.LOCAL -P changeme
+    $ sudo kadmin.local -q "addprinc -randkey host/localhost@TEST.LOCAL"
+    $ sudo kadmin.local -q "addprinc -randkey host/${MYHOSTNAME}@TEST.LOCAL"
+    $ sudo kadmin.local -q "ktadd -k /etc/krb5.keytab host/localhost@TEST.LOCAL"
+    $ sudo kadmin.local -q "ktadd -k /etc/krb5.keytab host/${MYHOSTNAME}@TEST.LOCAL"
+    $ sudo chmod 640 /etc/krb5.keytab
+    $ sudo systemctl enable --now krb5kdc
+
+.. code-block:: none
+
+    # /etc/ssh/sshd_config.d/gssapi-test.conf
+    GSSAPIAuthentication yes
+    GSSAPIStrictAcceptorCheck yes
+
+.. code-block:: none
+
+    $ sudo systemctl restart sshd
+
+.. note::
+
+    ``sshd`` uses ``gethostname()`` to look up its own service principal in
+    the keytab — a mismatch between the configured realm and the actual
+    hostname causes ``gss_acquire_cred()`` to fail for every user, making
+    the audit commands report every username as ``NOT FOUND`` regardless of
+    validity.
+
+Testing
+"""""""
+
+.. code-block:: none
+
+    $ ssh-mitm audit gssapi-usercheck --host 127.0.0.1 --username sshtest nonexistent
+
+    $ ssh-mitm audit gssapi-usercheck-verify-patch --host 127.0.0.1
+
+See :doc:`/vulnerabilities/CVE-2026-60000` for what the results mean.
+
+GSSAPI cleanup
+""""""""""""""
+
+.. code-block:: none
+
+    $ sudo systemctl stop krb5kdc
+    $ sudo systemctl disable krb5kdc
+    $ sudo rm -f /etc/krb5.keytab /etc/krb5.conf
+    $ sudo rm -f /etc/ssh/sshd_config.d/gssapi-test.conf
+    $ sudo systemctl restart sshd
+
+
 Cleanup
 -------
 
