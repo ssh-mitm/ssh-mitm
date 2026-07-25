@@ -23,6 +23,7 @@
 [![PRs Welcome](https://img.shields.io/badge/PRs-welcome-brightgreen.svg?style=flat-square)](http://makeapullrequest.com)
 [![GitHub](https://img.shields.io/github/license/ssh-mitm/ssh-mitm?color=%23434ee6)](https://github.com/ssh-mitm/ssh-mitm/blob/master/LICENSE)
 <a href="https://github.com/manfred-kaiser"><img alt="Follow me on GitHub" src="https://img.shields.io/badge/-Follow%20me%20on%20GitHub-181717?style=for-the-badge&logo=github&logoColor=white"></a>
+<a rel="me" href="https://defcon.social/@sshmitm"><img src="https://img.shields.io/mastodon/follow/109597663767801251?color=%236364FF&domain=https%3A%2F%2Fdefcon.social&label=Mastodon&style=plastic"></a>
 
 **Legal notice:** SSH-MITM is intended for authorized security audits, penetration testing, and research only.
 Do not use it against systems you do not own or have explicit written permission to test.
