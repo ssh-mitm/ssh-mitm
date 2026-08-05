@@ -28,7 +28,7 @@ charset-normalizer==3.4.7
     # via requests
 colored==2.3.2
     # via -r requirements.in
-cryptography==49.0.0
+cryptography==50.0.0
     # via
     #   -r requirements.in
     #   paramiko
