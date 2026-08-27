@@ -42,7 +42,7 @@ class ExecForwarder(BaseForwarder):
     def handle_error(self, data: bytes) -> bytes:
         return data
 
-    def _run_traffic_loop(self) -> None:  # noqa: C901, PLR0915
+    def _run_traffic_loop(self) -> None:  # noqa: C901
         try:
             while self.session.running:
                 if self.client_channel is None:

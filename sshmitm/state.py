@@ -89,7 +89,7 @@ def _candidates() -> list[Path]:
         result.append(Path("/var/lib/ssh-mitm"))
 
     # 5. Last resort: writable temp directory scoped to the current UID
-    result.append(Path(f"/tmp/ssh-mitm-{os.getuid()}"))  # noqa: S108
+    result.append(Path(f"/tmp/ssh-mitm-{os.getuid()}"))  # noqa: S108 # nosec B108
 
     return result
 
@@ -112,7 +112,7 @@ def get_state_dir() -> Path | None:
             continue
 
         if os.access(candidate, os.W_OK):
-            if str(candidate).startswith("/tmp/"):
+            if str(candidate).startswith("/tmp/"):  # noqa: S108 # nosec B108
                 log.warning(
                     "no persistent state directory available, "
                     "using temporary path %s — host key will not survive restarts",

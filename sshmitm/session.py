@@ -423,13 +423,16 @@ class Session(BaseSession):
             return False
 
         # Connect method end
-        if (
-            not self.scp.requested
-            and not self.ssh.requested
-            and not self.sftp.requested
-            and not self.netconf.requested
-            and not self.powershell.requested
-        ) and self.transport.is_active():
+        any_requested = any(
+            (
+                self.scp.requested,
+                self.ssh.requested,
+                self.sftp.requested,
+                self.netconf.requested,
+                self.powershell.requested,
+            )
+        )
+        if not any_requested and self.transport.is_active():
             self.transport.close()
             return False
 
@@ -514,7 +517,7 @@ class Session(BaseSession):
                 tunnel_forwarder.join()
         self.transport.close()
         self.authenticator.on_session_close()
-        event_extra: dict = {"event": "session_closed"}
+        event_extra: dict[str, str] = {"event": "session_closed"}
         if not self._started and self.auth.username_provided is None:
             # Client disconnected before any auth attempt — likely a fingerprint warning
             event_extra["event"] = "session_rejected_early"

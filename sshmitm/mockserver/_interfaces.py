@@ -4,18 +4,17 @@ from __future__ import annotations
 
 import contextlib
 import dataclasses
+import logging
 import shlex
 import subprocess  # nosec B404
 import threading
 import time
-from typing import TYPE_CHECKING
 
 import paramiko
 import paramiko.common
 import paramiko.server
 
-if TYPE_CHECKING:
-    pass
+log = logging.getLogger(__name__)
 
 
 @dataclasses.dataclass
@@ -69,6 +68,7 @@ class NoneAuthServer(paramiko.ServerInterface):
         )
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del kind, chanid
         return paramiko.common.OPEN_SUCCEEDED
 
     def check_channel_exec_request(
@@ -95,9 +95,11 @@ class PublicKeyServer(paramiko.ServerInterface):
         self._accepted_key = accepted_key
 
     def get_allowed_auths(self, username: str) -> str:
+        del username
         return "publickey"
 
     def check_auth_publickey(self, username: str, key: paramiko.PKey) -> int:
+        del username
         return (
             paramiko.common.AUTH_SUCCESSFUL
             if key.get_base64() == self._accepted_key.get_base64()
@@ -105,6 +107,7 @@ class PublicKeyServer(paramiko.ServerInterface):
         )
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del kind, chanid
         return paramiko.common.OPEN_SUCCEEDED
 
     def check_channel_exec_request(
@@ -132,9 +135,11 @@ class PasswordServer(paramiko.ServerInterface):
         self._username = username
 
     def get_allowed_auths(self, username: str) -> str:
+        del username
         return "password"
 
     def check_auth_password(self, username: str, password: str) -> int:
+        del username
         return (
             paramiko.common.AUTH_SUCCESSFUL
             if password == self._password
@@ -142,6 +147,7 @@ class PasswordServer(paramiko.ServerInterface):
         )
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del kind, chanid
         return paramiko.common.OPEN_SUCCEEDED
 
     def check_channel_exec_request(
@@ -168,15 +174,18 @@ class RecordingServer(paramiko.ServerInterface):
     that the SSH-MITM proxy (or any other layer) forwarded them correctly.
     """
 
-    def __init__(self, password: str = "testpass") -> None:
+    # "testpass" is a mock-server test fixture default, not a real credential.
+    def __init__(self, password: str = "testpass") -> None:  # noqa: S107 # nosec B107
         self._password = password
         self.pty_modes: bytes | None = None
         self.signals: list[str] = []
 
     def get_allowed_auths(self, username: str) -> str:
+        del username
         return "password"
 
     def check_auth_password(self, username: str, password: str) -> int:
+        del username
         return (
             paramiko.common.AUTH_SUCCESSFUL
             if password == self._password
@@ -184,9 +193,10 @@ class RecordingServer(paramiko.ServerInterface):
         )
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del kind, chanid
         return paramiko.common.OPEN_SUCCEEDED
 
-    def check_channel_pty_request(
+    def check_channel_pty_request(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.Channel,
         term: bytes,
@@ -196,6 +206,7 @@ class RecordingServer(paramiko.ServerInterface):
         pixelheight: int,
         modes: bytes,
     ) -> bool:
+        del channel, term, width, height, pixelwidth, pixelheight
         self.pty_modes = modes
         return True
 
@@ -204,8 +215,11 @@ class RecordingServer(paramiko.ServerInterface):
         return True
 
     def check_channel_signal_request(
-        self, channel: paramiko.Channel, signame: str
+        self,
+        channel: paramiko.Channel,
+        signame: str,
     ) -> bool:
+        del channel
         self.signals.append(signame)
         return True
 
@@ -218,8 +232,10 @@ class RecordingServer(paramiko.ServerInterface):
                     channel.recv(256)
                 else:
                     time.sleep(0.05)
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception:  # pylint: disable=broad-exception-caught
+            # Any error here just means the channel died mid-read (e.g. the
+            # peer disconnected); the finally block below closes it either way.
+            log.debug("RecordingServer shell loop ended", exc_info=True)
         finally:
             with contextlib.suppress(Exception):
                 channel.close()
@@ -248,17 +264,21 @@ class KeyboardInteractiveServer(paramiko.ServerInterface):
         self._instructions = instructions
 
     def get_allowed_auths(self, username: str) -> str:
+        del username
         return "keyboard-interactive"
 
     def check_auth_none(self, username: str) -> int:
+        del username
         return paramiko.common.AUTH_FAILED
 
     def check_auth_password(self, username: str, password: str) -> int:
+        del username, password
         return paramiko.common.AUTH_FAILED
 
     def check_auth_interactive(
         self, username: str, submethods: str
     ) -> paramiko.server.InteractiveQuery:
+        del username, submethods
         query = paramiko.server.InteractiveQuery(self._name, self._instructions)
         for label, echo in self._prompts:
             query.add_prompt(label, echo)
@@ -270,9 +290,10 @@ class KeyboardInteractiveServer(paramiko.ServerInterface):
         return paramiko.common.AUTH_FAILED
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del kind, chanid
         return paramiko.common.OPEN_SUCCEEDED
 
-    def check_channel_pty_request(
+    def check_channel_pty_request(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.Channel,
         term: bytes,
@@ -282,9 +303,11 @@ class KeyboardInteractiveServer(paramiko.ServerInterface):
         pixelheight: int,
         modes: bytes,
     ) -> bool:
+        del channel, term, width, height, pixelwidth, pixelheight, modes
         return True
 
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
+        del channel
         return True
 
 
@@ -317,17 +340,21 @@ class IterativeKbdintServer(paramiko.ServerInterface):
         self._current = 0
 
     def get_allowed_auths(self, username: str) -> str:
+        del username
         return "keyboard-interactive"
 
     def check_auth_none(self, username: str) -> int:
+        del username
         return paramiko.common.AUTH_FAILED
 
     def check_auth_password(self, username: str, password: str) -> int:
+        del username, password
         return paramiko.common.AUTH_FAILED
 
     def check_auth_interactive(
         self, username: str, submethods: str
     ) -> paramiko.server.InteractiveQuery:
+        del username, submethods
         self._current = 0
         return _make_round_query(self._rounds[0])
 
@@ -343,9 +370,10 @@ class IterativeKbdintServer(paramiko.ServerInterface):
         return paramiko.common.AUTH_SUCCESSFUL
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del kind, chanid
         return paramiko.common.OPEN_SUCCEEDED
 
-    def check_channel_pty_request(
+    def check_channel_pty_request(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.Channel,
         term: bytes,
@@ -355,9 +383,11 @@ class IterativeKbdintServer(paramiko.ServerInterface):
         pixelheight: int,
         modes: bytes,
     ) -> bool:
+        del channel, term, width, height, pixelwidth, pixelheight, modes
         return True
 
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
+        del channel
         return True
 
 
@@ -429,9 +459,10 @@ class MockServerInterface(paramiko.ServerInterface):
         return paramiko.common.AUTH_FAILED
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del kind, chanid
         return paramiko.common.OPEN_SUCCEEDED
 
-    def check_channel_pty_request(
+    def check_channel_pty_request(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.Channel,
         term: bytes,
@@ -573,7 +604,9 @@ class MultiUserMockServer(paramiko.ServerInterface):
         self._kbdint_round = 0
         if cfg.kbdint_rounds:
             return _make_round_query(cfg.kbdint_rounds[0])
-        query = paramiko.server.InteractiveQuery(cfg.kbdint_name, cfg.kbdint_instructions)
+        query = paramiko.server.InteractiveQuery(
+            cfg.kbdint_name, cfg.kbdint_instructions
+        )
         for label, echo in cfg.kbdint_prompts:
             query.add_prompt(label, echo)
         return query
@@ -597,9 +630,10 @@ class MultiUserMockServer(paramiko.ServerInterface):
         return paramiko.common.AUTH_FAILED
 
     def check_channel_request(self, kind: str, chanid: int) -> int:
+        del kind, chanid
         return paramiko.common.OPEN_SUCCEEDED
 
-    def check_channel_pty_request(
+    def check_channel_pty_request(  # pylint: disable=too-many-arguments
         self,
         channel: paramiko.Channel,
         term: bytes,
@@ -636,7 +670,7 @@ def _make_round_query(round_: KbdintRound) -> paramiko.server.InteractiveQuery:
 
 def _run_exec(channel: paramiko.Channel, command: bytes) -> None:
     try:
-        result = subprocess.run(  # noqa: S603  # nosec B603
+        result = subprocess.run(  # noqa: S603 # nosec B603
             shlex.split(command.decode("utf-8", errors="replace")),
             capture_output=True,
             timeout=30,
@@ -646,7 +680,7 @@ def _run_exec(channel: paramiko.Channel, command: bytes) -> None:
         if result.stderr:
             channel.sendall_stderr(result.stderr)
         channel.send_exit_status(result.returncode)
-    except Exception as exc:  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001  # pylint: disable=broad-exception-caught
         channel.sendall_stderr(f"mock-server exec error: {exc}\n".encode())
         channel.send_exit_status(1)
     finally:
@@ -672,7 +706,7 @@ def _run_shell(channel: paramiko.Channel) -> None:
                     channel.sendall(b"$ ")
                     continue
                 try:
-                    result = subprocess.run(  # noqa: S603  # nosec B603
+                    result = subprocess.run(  # noqa: S603 # nosec B603
                         shlex.split(cmd.decode("utf-8", errors="replace")),
                         capture_output=True,
                         timeout=10,
@@ -682,11 +716,14 @@ def _run_shell(channel: paramiko.Channel) -> None:
                         channel.sendall(result.stdout)
                     if result.stderr:
                         channel.sendall(result.stderr)
-                except Exception as exc:  # noqa: BLE001
+                except (
+                    Exception  # noqa: BLE001  # pylint: disable=broad-exception-caught
+                ) as exc:
                     channel.sendall(f"error: {exc}\n".encode())
                 channel.sendall(b"$ ")
-    except Exception:  # noqa: BLE001, S110  # nosec B110
-        pass
+    except Exception:  # pylint: disable=broad-exception-caught
+        # Best-effort mock shell loop; the channel likely died mid-read.
+        log.debug("mock shell loop ended", exc_info=True)
     finally:
         channel.send_exit_status(0)
         channel.close()

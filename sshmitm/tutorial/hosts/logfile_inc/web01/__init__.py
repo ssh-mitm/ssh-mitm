@@ -3,20 +3,26 @@
 Application server running the company's Django customer portal.
 Accepts both password and public-key SSH authentication.
 """
+
 from __future__ import annotations
 
-import asyncio
 import random
+from typing import TYPE_CHECKING, ClassVar
 
 import paramiko
 
-from sshmitm.tutorial.hosts import Host, HTTPService, SSHService
+from sshmitm.tutorial.hosts import Host, HTTPService, Service, SSHService, User
 from sshmitm.tutorial.hosts.logfile_inc import (
     ApplicationServers,
     LisaChen,
     MaxMorgan,
     SarahKing,
 )
+
+if TYPE_CHECKING:
+    import asyncio
+
+    from sshmitm.tutorial._events import Event
 
 _EXEC_OUTPUTS: dict[str, bytes] = {
     # Narrative anchor for Ch6: discovering LogfileGit
@@ -54,12 +60,12 @@ EXEC_COMMANDS = list(_EXEC_OUTPUTS)
 class Web01(Host):
     """web01.logfileinc.internal — application server, Django customer portal."""
 
-    label    = "web01"
+    label = "web01"
     hostname = "web01.logfileinc.internal"
-    address  = "127.2.0.1"
-    segment  = ApplicationServers
-    users    = [MaxMorgan, SarahKing, LisaChen]
-    services = [
+    address = "127.2.0.1"
+    segment = ApplicationServers
+    users: ClassVar[list[type[User]]] = [MaxMorgan, SarahKing, LisaChen]
+    services: ClassVar[list[Service]] = [
         SSHService(port=20022, auth=["password", "publickey"]),
         HTTPService(port=20080),
         HTTPService(port=20443, tls=True),
@@ -71,25 +77,25 @@ class Web01(Host):
         self._authorized_keys: dict[str, list[paramiko.PKey]] = {}
         self._exec_command: str | None = None
 
-    def configure(self, session_data: dict) -> None:
+    def configure(self, session_data: dict[str, object]) -> None:
         for user in self.__class__.users:
-            pw_key   = f"web01_{user.username}_password"
+            pw_key = f"web01_{user.username}_password"
             auth_key = f"authorize_key_{user.username}"
             if pw_key in session_data:
                 self._passwords[user.username] = str(session_data[pw_key])
-            if auth_key in session_data:
-                self._authorized_keys.setdefault(user.username, []).append(
-                    session_data[auth_key]
-                )
+            key = session_data.get(auth_key)
+            if isinstance(key, paramiko.PKey):
+                self._authorized_keys.setdefault(user.username, []).append(key)
         if "web01_exec_command" in session_data:
             self._exec_command = str(session_data["web01_exec_command"])
 
     # ── behavior ────────────────────────────────────────────────────────
 
     def random_exec_command(self) -> str:
-        return random.choice(EXEC_COMMANDS)
+        # Non-cryptographic: picks a plausible demo command for the tutorial.
+        return random.choice(EXEC_COMMANDS)  # noqa: S311 # nosec B311
 
-    def exec_outputs(self, session_data: dict) -> dict[str, bytes]:
+    def exec_outputs(self, session_data: dict[str, object]) -> dict[str, bytes]:
         cmd = str(session_data.get("web01_exec_command", ""))
         if not cmd:
             return {}
@@ -98,7 +104,7 @@ class Web01(Host):
 
     # ── lifecycle ────────────────────────────────────────────────────────
 
-    async def start(self, events: asyncio.Queue) -> None:
+    async def start(self, events: asyncio.Queue[Event]) -> None:
         await super().start(events)
 
     async def stop(self) -> None:

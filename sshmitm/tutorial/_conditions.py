@@ -36,7 +36,10 @@ Example — common patterns::
 
 from __future__ import annotations
 
+from pathlib import Path
 from typing import TYPE_CHECKING, Protocol, runtime_checkable
+
+from sshmitm.tutorial._context import as_int
 
 if TYPE_CHECKING:
     from sshmitm.tutorial._context import TutorialContext
@@ -46,7 +49,7 @@ if TYPE_CHECKING:
 class Condition(Protocol):
     """Protocol for step-completion conditions."""
 
-    def __call__(self, ctx: "TutorialContext") -> bool: ...
+    def __call__(self, ctx: TutorialContext) -> bool: ...
 
 
 class TRUE:
@@ -56,7 +59,8 @@ class TRUE:
     action as soon as it becomes active.
     """
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
+        del ctx
         return True
 
 
@@ -74,7 +78,7 @@ class Continue:
     def reset(self) -> None:
         pass  # state lives in ctx.acknowledged, cleared by the runner
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
         return ctx.acknowledged
 
 
@@ -97,17 +101,15 @@ class PortOpen:
     def reset(self) -> None:
         self._was_open_at_start = None
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
-        port = int(ctx.tutorial_session_data.get(self.var, 0))
+    def __call__(self, ctx: TutorialContext) -> bool:
+        port = as_int(ctx.tutorial_session_data.get(self.var))
         open_ = ctx.port_open(port)
 
         if self._was_open_at_start is None:
             self._was_open_at_start = open_
             if open_:
                 ctx.hint_override = (
-                    "SSH-MITM is already running on port {"
-                    + self.var
-                    + "}. "
+                    "SSH-MITM is already running on port {" + self.var + "}. "
                     "If you started it with the command shown below, click **Continue**."
                 )
                 ctx.hint_override_type = "info"
@@ -126,7 +128,7 @@ class AuthEvent:
         self.method = method
         self.success = success
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
         return ctx.has_auth_event(self.method, self.success)
 
 
@@ -137,7 +139,7 @@ class SFTPEvent:
         self.operation = operation
         self.path_pattern = path_pattern
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
         return ctx.has_sftp_event(self.operation, self.path_pattern)
 
 
@@ -147,7 +149,7 @@ class ShellInput:
     def __init__(self, pattern: str) -> None:
         self.pattern = pattern
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
         return ctx.has_shell_input(self.pattern)
 
 
@@ -157,7 +159,7 @@ class ExecCommand:
     def __init__(self, pattern: str) -> None:
         self.pattern = pattern
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
         return ctx.has_exec_command(self.pattern)
 
 
@@ -176,7 +178,7 @@ class UserInput:
     def reset(self) -> None:
         pass  # state lives in ctx.user_inputs, cleared by the runner
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
         expected = str(ctx.tutorial_session_data.get(self.key, ""))
         return ctx.user_inputs.get(self.key) == expected
 
@@ -190,9 +192,9 @@ class All:
     def reset(self) -> None:
         for c in self.conditions:
             if hasattr(c, "reset"):
-                c.reset()  # type: ignore[union-attr]
+                c.reset()
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
         return all(c(ctx) for c in self.conditions)
 
 
@@ -205,15 +207,16 @@ class Any:
     def reset(self) -> None:
         for c in self.conditions:
             if hasattr(c, "reset"):
-                c.reset()  # type: ignore[union-attr]
+                c.reset()
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
         return any(c(ctx) for c in self.conditions)
 
 
 # ---------------------------------------------------------------------------
 # Helpers for inspecting condition trees
 # ---------------------------------------------------------------------------
+
 
 def collect_user_inputs(condition: object) -> list[UserInput]:
     """Return all :class:`UserInput` instances found anywhere in *condition*."""
@@ -249,6 +252,7 @@ def _walk_continue(node: object, out: list[Continue]) -> None:
 # Fingerprint-state check (CVE-2020-14145)
 # ---------------------------------------------------------------------------
 
+
 class FingerprintState:
     """True when ``tutorial_session_data["fingerprint_state"]`` equals *expected*.
 
@@ -259,13 +263,14 @@ class FingerprintState:
     def __init__(self, expected: str) -> None:
         self.expected = expected
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
+    def __call__(self, ctx: TutorialContext) -> bool:
         return ctx.tutorial_session_data.get("fingerprint_state") == self.expected
 
 
 # ---------------------------------------------------------------------------
 # SSH-MITM process check
 # ---------------------------------------------------------------------------
+
 
 class SSHMitmRunning:
     """Wait for ssh-mitm to start with the correct arguments.
@@ -294,8 +299,8 @@ class SSHMitmRunning:
         self.port_var = port_var
         self.required = required
 
-    def __call__(self, ctx: "TutorialContext") -> bool:
-        port = int(ctx.tutorial_session_data.get(self.port_var, 0))
+    def __call__(self, ctx: TutorialContext) -> bool:
+        port = as_int(ctx.tutorial_session_data.get(self.port_var))
         if not ctx.port_open(port):
             ctx.hint_override = None
             return False
@@ -338,13 +343,16 @@ class SSHMitmRunning:
 
 def _find_sshmitm_cmdlines() -> list[list[str]]:
     """Return command-line argument lists for all running ssh-mitm processes."""
-    import glob
     results: list[list[str]] = []
     try:
-        for path in glob.glob("/proc/[0-9]*/cmdline"):
+        for path in Path("/proc").glob("[0-9]*/cmdline"):
             try:
-                data = open(path, "rb").read()  # noqa: WPS515
-                parts = [p.decode("utf-8", errors="replace") for p in data.split(b"\x00") if p]
+                data = path.read_bytes()
+                parts = [
+                    p.decode("utf-8", errors="replace")
+                    for p in data.split(b"\x00")
+                    if p
+                ]
                 if parts and any("ssh-mitm" in a or "sshmitm" in a for a in parts):
                     results.append(parts)
             except OSError:
@@ -354,9 +362,7 @@ def _find_sshmitm_cmdlines() -> list[list[str]]:
     return results
 
 
-def _check_args(
-    cmdline: list[str], required: dict[str, str]
-) -> tuple[bool, list[str]]:
+def _check_args(cmdline: list[str], required: dict[str, str]) -> tuple[bool, list[str]]:
     """Return (all_match, list_of_mismatch_descriptions).
 
     Handles both ``--flag value`` and ``--flag=value`` forms.

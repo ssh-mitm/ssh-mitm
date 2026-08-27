@@ -6,6 +6,7 @@ import logging
 from typing import TYPE_CHECKING
 
 from sshmitm.moduleparser import SubCommand
+from sshmitm.tutorial._web import run
 
 if TYPE_CHECKING:
     import argparse
@@ -45,7 +46,5 @@ class Tutorial(SubCommand):
                 filename=args.log_file,
                 filemode="w",
             )
-
-        from sshmitm.tutorial._web import run
 
         run(port=args.port, open_browser=not args.no_browser)

@@ -66,16 +66,17 @@ import dataclasses
 import importlib.resources
 from typing import TYPE_CHECKING, ClassVar
 
+from sshmitm.tutorial._conditions import TRUE
+
 if TYPE_CHECKING:
-    from sshmitm.tutorial._conditions import Condition
     from sshmitm.tutorial._client_actions import ClientAction
+    from sshmitm.tutorial._conditions import Condition
     from sshmitm.tutorial._requirements import Requirement
-    from sshmitm.tutorial.hosts import Host, Scenario, User
     from sshmitm.tutorial.gitserver import GitServerConfig
+    from sshmitm.tutorial.hosts import Host, Scenario, User
 
 
-def _default_condition() -> "Condition":
-    from sshmitm.tutorial._conditions import TRUE
+def _default_condition() -> Condition:
     return TRUE()
 
 
@@ -110,15 +111,15 @@ class Step:
         Short text shown after the step has been completed.
     """
 
-    id:            str
-    title:         str
-    content:       str = ""
-    condition:     "Condition" = dataclasses.field(default_factory=_default_condition)
-    victim_action: "ClientAction | None" = None
-    command:       str | None = None
-    copyable:      list[str] = dataclasses.field(default_factory=list)
-    hint_waiting:  str = ""
-    hint_done:     str = ""
+    id: str
+    title: str
+    content: str = ""
+    condition: Condition = dataclasses.field(default_factory=_default_condition)
+    victim_action: ClientAction | None = None
+    command: str | None = None
+    copyable: list[str] = dataclasses.field(default_factory=list)
+    hint_waiting: str = ""
+    hint_done: str = ""
 
 
 class Tutorial:
@@ -156,27 +157,33 @@ class Tutorial:
         (e.g. ``{"mock_port": "web01.logfileinc.internal"}``).
     """
 
-    id:          ClassVar[str] = ""
-    title:       ClassVar[str] = ""
-    category:    ClassVar[str] = "General"
+    id: ClassVar[str] = ""
+    title: ClassVar[str] = ""
+    category: ClassVar[str] = "General"
     description: ClassVar[str] = ""
-    tags:        ClassVar[list[str]] = []
-    docs:        ClassVar[dict[str, str]] = {}
+    tags: ClassVar[list[str]] = []
+    docs: ClassVar[dict[str, str]] = {}
 
     # ── Scenario API ───────────────────────────────────────────────────
 
-    scenario:       ClassVar[type[Scenario] | None] = None
-    proxy_target:   ClassVar[type[Host] | None] = None
-    victim:         ClassVar[type[User] | None] = None
-    requires:       ClassVar[list[Requirement]] = []
+    scenario: ClassVar[type[Scenario] | None] = None
+    proxy_target: ClassVar[type[Host] | None] = None
+    victim: ClassVar[type[User] | None] = None
+    requires: ClassVar[list[Requirement]] = []
     direct_targets: ClassVar[dict[str, type[Host]]] = {}
-    sshmitm_port:   ClassVar[int] = 10022
+    sshmitm_port: ClassVar[int] = 10022
 
     lab_service_labels: ClassVar[dict[str, str]] = {}
 
     # ── Steps ──────────────────────────────────────────────────────────
 
-    steps: list[Step] = []
+    # Deliberately NOT a ClassVar: subclasses declare their step list here
+    # as a class-level template, but __init__ below reads it and assigns
+    # the (possibly content-loaded) result to the instance attribute
+    # `self.steps`, which mypy disallows for a ClassVar-annotated name.
+    # The class-level list itself is only ever read, never mutated in
+    # place, so this is not a shared-mutable-state bug.
+    steps: list[Step] = []  # noqa: RUF012
 
     def __init__(self) -> None:
         self.steps = self._load_steps()
@@ -206,7 +213,7 @@ class Tutorial:
     # Optional overrides
     # ------------------------------------------------------------------
 
-    def generate_tutorial_session_data(self) -> dict:
+    def generate_tutorial_session_data(self) -> dict[str, object]:
         """Return extra session data merged in after :class:`ScenarioGenerator`.
 
         Override to inject values not covered by *requires* — for example
@@ -215,7 +222,9 @@ class Tutorial:
         """
         return {}
 
-    def get_git_server(self, session_data: dict) -> "GitServerConfig | None":
+    def get_git_server(  # pylint: disable=useless-return
+        self, session_data: dict[str, object]
+    ) -> GitServerConfig | None:
         """Return a git server config built from *session_data*, or ``None``.
 
         Transitional hook: override in tutorials that need a standalone git
@@ -223,4 +232,8 @@ class Tutorial:
         Prefer implementing git functionality in the host's
         :meth:`~sshmitm.tutorial.hosts.Host.start_services` instead.
         """
+        del session_data
+        # Explicit return required: mypy strict mode flags "Missing return
+        # statement" for a function typed `-> X | None` without one, even
+        # though pylint considers it redundant.
         return None

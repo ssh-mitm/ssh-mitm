@@ -64,4 +64,3 @@ class PlainJsonFormatter(JsonFormatter):
 
         log_data["timestamp"] = datetime.now(UTC).strftime("%Y-%m-%dT%H:%M:%S.%fZ")
         log_data["level"] = record.levelname
-

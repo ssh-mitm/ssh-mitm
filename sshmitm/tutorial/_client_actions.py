@@ -17,17 +17,22 @@ Example usage in a tutorial step::
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import os
-import re
-import subprocess
+import shutil
+import subprocess  # nosec B404
 import tempfile
 import time
-from typing import TYPE_CHECKING, Protocol, runtime_checkable
+from pathlib import Path
+from typing import TYPE_CHECKING, ClassVar, Protocol, runtime_checkable
 
 import paramiko
 
-from sshmitm.plugins.session.cve202014145 import SERVER_HOST_KEY_ALGORITHMS as _OPENSSH_KEY_ALGO_LISTS
+from sshmitm.plugins.session.cve202014145 import (
+    SERVER_HOST_KEY_ALGORITHMS as _OPENSSH_KEY_ALGO_LISTS,
+)
+from sshmitm.tutorial._context import as_int
 
 if TYPE_CHECKING:
     from sshmitm.tutorial._context import TutorialContext
@@ -39,16 +44,67 @@ _RETRY_DELAY = 1.0
 _INITIAL_DELAY = 1.0
 
 
+def _resolve_binary(name: str) -> str:
+    """Resolve *name* to an absolute path via ``PATH``.
+
+    Falls back to the bare name (subprocess will then raise
+    ``FileNotFoundError`` on launch) if it cannot be found — this only
+    changes *how* the executable is looked up, not the trust boundary.
+    """
+    return shutil.which(name) or name
+
+
+class _TutorialTofuPolicy(paramiko.MissingHostKeyPolicy):
+    """Trust-on-first-use host key policy for the simulated victim client.
+
+    The victim connects to a real, separately-launched SSH-MITM proxy on
+    ``127.0.0.1`` whose host key the tutorial process has no reliable way to
+    learn in advance (different deployments — venv/AppImage/Snap/Flatpak/
+    sudo — resolve their state directory differently, and the key may be
+    generated fresh in-memory with no persistent state dir at all). Using
+    ``paramiko.AutoAddPolicy()`` would blindly trust a *new* key on every
+    single connection, silently accepting a key-substitution attack against
+    the tutorial's own MITM proxy on every retry.
+
+    Instead this accepts the *first* key seen for a given tutorial session
+    (real TOFU, like a normal SSH client's first-ever connection to a host)
+    and then rejects any *different* key on a later connection within that
+    same session — exactly what a real client's ``known_hosts`` pinning
+    would do.  Since a tutorial run talks to exactly one proxy instance for
+    its whole duration, this never rejects a legitimate reconnect while
+    still catching an actual key substitution.
+    """
+
+    def __init__(
+        self, ctx: TutorialContext, session_key: str = "_sshmitm_host_key"
+    ) -> None:
+        self._ctx = ctx
+        self._session_key = session_key
+
+    def missing_host_key(
+        self, client: paramiko.SSHClient, hostname: str, key: paramiko.PKey
+    ) -> None:
+        fingerprint = key.get_base64()
+        trusted = self._ctx.tutorial_session_data.get(self._session_key)
+        if trusted is None:
+            self._ctx.tutorial_session_data[self._session_key] = fingerprint
+        elif trusted != fingerprint:
+            msg = f"host key for {hostname} changed since first connection"
+            raise paramiko.SSHException(msg)
+        client.get_host_keys().add(hostname, key.get_name(), key)
+
+
 @runtime_checkable
 class ClientAction(Protocol):
     """Protocol for automated victim-client actions."""
 
-    def run(self, ctx: "TutorialContext") -> None: ...
+    def run(self, ctx: TutorialContext) -> None: ...
 
 
 # ---------------------------------------------------------------------------
 # SSH actions
 # ---------------------------------------------------------------------------
+
 
 class SSHPasswordAction:
     """Connect via SSH with password authentication through the MITM proxy.
@@ -62,10 +118,12 @@ class SSHPasswordAction:
         for attempt in range(_RETRIES):
             try:
                 client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                # Trust-on-first-use: see _TutorialTofuPolicy for why
+                # AutoAddPolicy() would be unsafe here.
+                client.set_missing_host_key_policy(_TutorialTofuPolicy(ctx))
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    port=as_int(ctx.tutorial_session_data["sshmitm_port"]),
                     username=str(ctx.tutorial_session_data["password_user"]),
                     password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
@@ -74,11 +132,15 @@ class SSHPasswordAction:
                 )
                 client.close()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                 else:
-                    _log.debug("SSHPasswordAction failed after %d attempts", attempt + 1, exc_info=True)
+                    _log.debug(
+                        "SSHPasswordAction failed after %d attempts",
+                        attempt + 1,
+                        exc_info=True,
+                    )
 
 
 class SSHPublicKeyAction:
@@ -94,50 +156,79 @@ class SSHPublicKeyAction:
         if key is None:
             _log.error("SSHPublicKeyAction: no _client_key in credentials")
             return
-        keyfile = tempfile.mktemp(prefix="sshmitm-tutorial-key-", suffix=".pem")
+        with tempfile.NamedTemporaryFile(
+            prefix="sshmitm-tutorial-key-", suffix=".pem", delete=False
+        ) as keyfile_handle:
+            keyfile = keyfile_handle.name
         agent_env: dict[str, str] = {}
         try:
             key.write_private_key_file(keyfile)
-            os.chmod(keyfile, 0o600)
-            result = subprocess.run(
-                ["ssh-agent", "-s"], capture_output=True, text=True, check=True
+            Path(keyfile).chmod(0o600)
+            result = subprocess.run(  # noqa: S603 # nosec B603
+                [_resolve_binary("ssh-agent"), "-s"],
+                capture_output=True,
+                text=True,
+                check=True,
             )
             for line in result.stdout.splitlines():
                 for var in ("SSH_AUTH_SOCK", "SSH_AGENT_PID"):
                     if line.startswith(var + "="):
                         agent_env[var] = line.split("=", 1)[1].split(";")[0]
             env = {**os.environ, **agent_env}
-            subprocess.run(["ssh-add", keyfile], env=env, capture_output=True, check=True)
+            subprocess.run(  # noqa: S603 # nosec B603
+                [_resolve_binary("ssh-add"), keyfile],
+                env=env,
+                capture_output=True,
+                check=True,
+            )
             for attempt in range(_RETRIES):
                 try:
-                    subprocess.run(
+                    subprocess.run(  # noqa: S603 # nosec B603
                         [
-                            "ssh", "-A",
-                            "-o", "StrictHostKeyChecking=no",
-                            "-o", "UserKnownHostsFile=/dev/null",
-                            "-o", "BatchMode=yes",
-                            "-o", "ConnectTimeout=10",
-                            "-p", str(int(ctx.tutorial_session_data["sshmitm_port"])),
+                            _resolve_binary("ssh"),
+                            "-A",
+                            "-o",
+                            "StrictHostKeyChecking=no",
+                            "-o",
+                            "UserKnownHostsFile=/dev/null",
+                            "-o",
+                            "BatchMode=yes",
+                            "-o",
+                            "ConnectTimeout=10",
+                            "-p",
+                            str(as_int(ctx.tutorial_session_data["sshmitm_port"])),
                             f"{ctx.tutorial_session_data['pubkey_user']}@127.0.0.1",
                             "exit",
                         ],
                         env=env,
                         capture_output=True,
                         timeout=15,
+                        check=True,
                     )
                     return
-                except Exception:
+                except (
+                    Exception  # noqa: BLE001  # pylint: disable=broad-exception-caught
+                ):
                     if attempt < _RETRIES - 1:
                         time.sleep(_RETRY_DELAY)
                     else:
-                        _log.debug("SSHPublicKeyAction failed after %d attempts", attempt + 1, exc_info=True)
+                        _log.debug(
+                            "SSHPublicKeyAction failed after %d attempts",
+                            attempt + 1,
+                            exc_info=True,
+                        )
         finally:
             if "SSH_AGENT_PID" in agent_env:
-                subprocess.run(["kill", agent_env["SSH_AGENT_PID"]], capture_output=True)
-            try:
-                os.unlink(keyfile)
-            except OSError:
-                pass
+                subprocess.run(  # noqa: S603 # nosec B603
+                    [_resolve_binary("kill"), agent_env["SSH_AGENT_PID"]],
+                    capture_output=True,
+                    # Best-effort cleanup: the agent process may already be
+                    # gone; failure here must not mask an exception from the
+                    # try block above.
+                    check=False,
+                )
+            with contextlib.suppress(OSError):
+                Path(keyfile).unlink()
 
 
 class SSHKeyboardInteractiveAction:
@@ -154,29 +245,39 @@ class SSHKeyboardInteractiveAction:
         time.sleep(_INITIAL_DELAY)
         answers = iter(self.answers)
 
-        def handler(title: str, instructions: str, prompts: list) -> list[str]:
+        def handler(
+            title: str, instructions: str, prompts: list[tuple[str, bool]]
+        ) -> list[str]:
+            # title/instructions are part of paramiko's interactive-auth
+            # handler signature and unused here.
+            del title, instructions
             return [next(answers, "") for _ in prompts]
 
         for attempt in range(_RETRIES):
             try:
-                client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
-                client.connect(
-                    "127.0.0.1",
-                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
-                    username=str(ctx.tutorial_session_data["kbdint_user"]),
-                    auth_strategy=None,
-                    allow_agent=False,
-                    look_for_keys=False,
+                # SSHClient.connect() has no way to plug in a custom
+                # keyboard-interactive handler, so auth is driven directly
+                # through Transport.auth_interactive() (same low-level
+                # approach as SimulatedCVE2020Action above).
+                transport = paramiko.Transport(
+                    ("127.0.0.1", as_int(ctx.tutorial_session_data["sshmitm_port"]))
                 )
-                client.close()
+                transport.start_client(timeout=10)
+                transport.auth_interactive(
+                    str(ctx.tutorial_session_data["kbdint_user"]), handler
+                )
+                transport.close()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                     answers = iter(self.answers)
                 else:
-                    _log.debug("SSHKeyboardInteractiveAction failed after %d attempts", attempt + 1, exc_info=True)
+                    _log.debug(
+                        "SSHKeyboardInteractiveAction failed after %d attempts",
+                        attempt + 1,
+                        exc_info=True,
+                    )
 
 
 class ShellAction:
@@ -195,10 +296,12 @@ class ShellAction:
         for attempt in range(_RETRIES):
             try:
                 client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                # Trust-on-first-use: see _TutorialTofuPolicy for why
+                # AutoAddPolicy() would be unsafe here.
+                client.set_missing_host_key_policy(_TutorialTofuPolicy(ctx))
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    port=as_int(ctx.tutorial_session_data["sshmitm_port"]),
                     username=str(ctx.tutorial_session_data["password_user"]),
                     password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
@@ -214,11 +317,15 @@ class ShellAction:
                 time.sleep(0.5)
                 client.close()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                 else:
-                    _log.debug("ShellAction failed after %d attempts", attempt + 1, exc_info=True)
+                    _log.debug(
+                        "ShellAction failed after %d attempts",
+                        attempt + 1,
+                        exc_info=True,
+                    )
 
 
 class KeepAliveShellAction:
@@ -242,54 +349,82 @@ class KeepAliveShellAction:
         if key is None:
             _log.error("KeepAliveShellAction: no _client_key in tutorial_session_data")
             return
-        keyfile = tempfile.mktemp(prefix="sshmitm-tutorial-key-", suffix=".pem")
+        with tempfile.NamedTemporaryFile(
+            prefix="sshmitm-tutorial-key-", suffix=".pem", delete=False
+        ) as keyfile_handle:
+            keyfile = keyfile_handle.name
         agent_env: dict[str, str] = {}
         try:
             key.write_private_key_file(keyfile)
-            os.chmod(keyfile, 0o600)
-            result = subprocess.run(
-                ["ssh-agent", "-s"], capture_output=True, text=True, check=True
+            Path(keyfile).chmod(0o600)
+            result = subprocess.run(  # noqa: S603 # nosec B603
+                [_resolve_binary("ssh-agent"), "-s"],
+                capture_output=True,
+                text=True,
+                check=True,
             )
             for line in result.stdout.splitlines():
                 for var in ("SSH_AUTH_SOCK", "SSH_AGENT_PID"):
                     if line.startswith(var + "="):
                         agent_env[var] = line.split("=", 1)[1].split(";")[0]
             env = {**os.environ, **agent_env}
-            subprocess.run(["ssh-add", keyfile], env=env, capture_output=True, check=True)
+            subprocess.run(  # noqa: S603 # nosec B603
+                [_resolve_binary("ssh-add"), keyfile],
+                env=env,
+                capture_output=True,
+                check=True,
+            )
             for attempt in range(_RETRIES):
                 try:
-                    proc = subprocess.Popen(
+                    with subprocess.Popen(  # noqa: S603 # nosec B603
                         [
-                            "ssh", "-A",
-                            "-o", "StrictHostKeyChecking=no",
-                            "-o", "UserKnownHostsFile=/dev/null",
-                            "-o", "BatchMode=yes",
-                            "-o", "ConnectTimeout=10",
-                            "-p", str(int(ctx.tutorial_session_data["sshmitm_port"])),
+                            _resolve_binary("ssh"),
+                            "-A",
+                            "-o",
+                            "StrictHostKeyChecking=no",
+                            "-o",
+                            "UserKnownHostsFile=/dev/null",
+                            "-o",
+                            "BatchMode=yes",
+                            "-o",
+                            "ConnectTimeout=10",
+                            "-p",
+                            str(as_int(ctx.tutorial_session_data["sshmitm_port"])),
                             f"{ctx.tutorial_session_data['pubkey_user']}@127.0.0.1",
                         ],
                         env=env,
                         stdin=subprocess.DEVNULL,
                         stdout=subprocess.DEVNULL,
                         stderr=subprocess.DEVNULL,
-                    )
-                    try:
-                        proc.wait(timeout=self.duration)
-                    except subprocess.TimeoutExpired:
-                        proc.terminate()
+                    ) as proc:
+                        try:
+                            proc.wait(timeout=self.duration)
+                        except subprocess.TimeoutExpired:
+                            proc.terminate()
                     return
-                except Exception:
+                except (
+                    Exception  # noqa: BLE001  # pylint: disable=broad-exception-caught
+                ):
                     if attempt < _RETRIES - 1:
                         time.sleep(_RETRY_DELAY)
                     else:
-                        _log.debug("KeepAliveShellAction failed after %d attempts", attempt + 1, exc_info=True)
+                        _log.debug(
+                            "KeepAliveShellAction failed after %d attempts",
+                            attempt + 1,
+                            exc_info=True,
+                        )
         finally:
             if "SSH_AGENT_PID" in agent_env:
-                subprocess.run(["kill", agent_env["SSH_AGENT_PID"]], capture_output=True)
-            try:
-                os.unlink(keyfile)
-            except OSError:
-                pass
+                subprocess.run(  # noqa: S603 # nosec B603
+                    [_resolve_binary("kill"), agent_env["SSH_AGENT_PID"]],
+                    capture_output=True,
+                    # Best-effort cleanup: the agent process may already be
+                    # gone; failure here must not mask an exception from the
+                    # try block above.
+                    check=False,
+                )
+            with contextlib.suppress(OSError):
+                Path(keyfile).unlink()
 
 
 class ShellSessionAction:
@@ -305,16 +440,20 @@ class ShellSessionAction:
     def run(self, ctx: TutorialContext) -> None:
         command = str(ctx.tutorial_session_data.get(self.cred_key, ""))
         if not command:
-            _log.error("ShellSessionAction: %r not in tutorial_session_data", self.cred_key)
+            _log.error(
+                "ShellSessionAction: %r not in tutorial_session_data", self.cred_key
+            )
             return
         time.sleep(_INITIAL_DELAY)
         for attempt in range(_RETRIES):
             try:
                 client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                # Trust-on-first-use: see _TutorialTofuPolicy for why
+                # AutoAddPolicy() would be unsafe here.
+                client.set_missing_host_key_policy(_TutorialTofuPolicy(ctx))
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    port=as_int(ctx.tutorial_session_data["sshmitm_port"]),
                     username=str(ctx.tutorial_session_data["password_user"]),
                     password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
@@ -329,16 +468,21 @@ class ShellSessionAction:
                 time.sleep(0.3)
                 client.close()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                 else:
-                    _log.debug("ShellSessionAction failed after %d attempts", attempt + 1, exc_info=True)
+                    _log.debug(
+                        "ShellSessionAction failed after %d attempts",
+                        attempt + 1,
+                        exc_info=True,
+                    )
 
 
 # ---------------------------------------------------------------------------
 # SFTP actions
 # ---------------------------------------------------------------------------
+
 
 class SFTPUploadAction:
     """Upload *filename* via SFTP through the MITM proxy.
@@ -356,10 +500,12 @@ class SFTPUploadAction:
         for attempt in range(_RETRIES):
             try:
                 client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                # Trust-on-first-use: see _TutorialTofuPolicy for why
+                # AutoAddPolicy() would be unsafe here.
+                client.set_missing_host_key_policy(_TutorialTofuPolicy(ctx))
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    port=as_int(ctx.tutorial_session_data["sshmitm_port"]),
                     username=str(ctx.tutorial_session_data["password_user"]),
                     password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
@@ -372,11 +518,15 @@ class SFTPUploadAction:
                 sftp.close()
                 client.close()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                 else:
-                    _log.debug("SFTPUploadAction failed after %d attempts", attempt + 1, exc_info=True)
+                    _log.debug(
+                        "SFTPUploadAction failed after %d attempts",
+                        attempt + 1,
+                        exc_info=True,
+                    )
 
 
 class SFTPDownloadAction:
@@ -390,10 +540,12 @@ class SFTPDownloadAction:
         for attempt in range(_RETRIES):
             try:
                 client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                # Trust-on-first-use: see _TutorialTofuPolicy for why
+                # AutoAddPolicy() would be unsafe here.
+                client.set_missing_host_key_policy(_TutorialTofuPolicy(ctx))
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    port=as_int(ctx.tutorial_session_data["sshmitm_port"]),
                     username=str(ctx.tutorial_session_data["password_user"]),
                     password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
@@ -401,20 +553,26 @@ class SFTPDownloadAction:
                     look_for_keys=False,
                 )
                 sftp = client.open_sftp()
-                sftp.getfo(self.remote_path, open(os.devnull, "wb"))
+                with Path(os.devnull).open("wb") as devnull_f:
+                    sftp.getfo(self.remote_path, devnull_f)
                 sftp.close()
                 client.close()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                 else:
-                    _log.debug("SFTPDownloadAction failed after %d attempts", attempt + 1, exc_info=True)
+                    _log.debug(
+                        "SFTPDownloadAction failed after %d attempts",
+                        attempt + 1,
+                        exc_info=True,
+                    )
 
 
 # ---------------------------------------------------------------------------
 # CVE-2020-14145 simulation (for fingerprint / host-key tutorials)
 # ---------------------------------------------------------------------------
+
 
 class SimulatedCVE2020Action:
     """Simulate CVE-2020-14145 fingerprint state via a Paramiko client connection.
@@ -445,12 +603,12 @@ class SimulatedCVE2020Action:
 
     # Use the known OpenSSH 8.9 default list.  SSH-MITM compares the full list
     # against _OPENSSH_KEY_ALGO_LISTS and reports "first time" when it matches.
-    _DEFAULT_KEY_ORDER: list[str] = list(_OPENSSH_KEY_ALGO_LISTS[0])
+    _DEFAULT_KEY_ORDER: ClassVar[list[str]] = list(_OPENSSH_KEY_ALGO_LISTS[0])
 
     # Same list with the plain ECDSA key (the type SSH-MITM generates) moved
     # to the front.  The list no longer matches any known default → SSH-MITM
     # reports "client has a locally cached remote fingerprint".
-    _CACHED_KEY_ORDER: list[str] = [
+    _CACHED_KEY_ORDER: ClassVar[list[str]] = [
         "ecdsa-sha2-nistp256",
         *[k for k in _OPENSSH_KEY_ALGO_LISTS[0] if k != "ecdsa-sha2-nistp256"],
     ]
@@ -473,7 +631,7 @@ class SimulatedCVE2020Action:
             else self._CACHED_KEY_ORDER
         )
         host = "127.0.0.1"
-        port = int(ctx.tutorial_session_data["sshmitm_port"])
+        port = as_int(ctx.tutorial_session_data["sshmitm_port"])
         username = str(ctx.tutorial_session_data.get("none_user", "user"))
 
         time.sleep(_INITIAL_DELAY)
@@ -482,23 +640,28 @@ class SimulatedCVE2020Action:
             try:
                 transport = paramiko.Transport((host, port))
                 # Simulate OpenSSH: match banner to algorithm list version.
-                transport.local_version = "SSH-2.0-OpenSSH_8.9p1"  # type: ignore[attr-defined]
+                transport.local_version = "SSH-2.0-OpenSSH_8.9p1"
                 # Override the instance's preferred key order so KEXINIT
                 # carries exactly the algorithms we want at the front.
+                # pylint: disable-next=protected-access
                 transport._preferred_keys = list(key_order)  # type: ignore[attr-defined]
                 transport.start_client(timeout=10)
-                try:
+                # We only need the KEXINIT exchange above; the auth itself
+                # is expected/allowed to fail.
+                with contextlib.suppress(Exception):  # nosec B110
                     transport.auth_none(username)
-                except Exception:  # noqa: BLE001
-                    pass
+                # Best-effort cleanup; the fingerprint has already been
+                # captured above regardless of close() succeeding.
                 try:
                     transport.close()
-                except Exception:  # noqa: BLE001
-                    pass
+                except (
+                    Exception  # noqa: BLE001  # pylint: disable=broad-exception-caught
+                ):
+                    _log.debug("SimulatedCVE2020Action: transport close failed")
                 ctx.tutorial_session_data["fingerprint_state"] = self.fingerprint_state
                 ctx.tutorial_session_data[self.algorithm_var] = key_order[0]
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                 else:
@@ -509,6 +672,7 @@ class SimulatedCVE2020Action:
 # SCP actions
 # ---------------------------------------------------------------------------
 
+
 class SCPUploadAction:
     """Upload *filename* via SCP through the MITM proxy (uses the ``scp`` binary)."""
 
@@ -518,33 +682,45 @@ class SCPUploadAction:
 
     def run(self, ctx: TutorialContext) -> None:
         time.sleep(_INITIAL_DELAY)
-        tmp = tempfile.NamedTemporaryFile(delete=False, suffix=f"_{self.filename}")
-        try:
+        with tempfile.NamedTemporaryFile(
+            delete=False, suffix=f"_{self.filename}"
+        ) as tmp:
             tmp.write(self.content)
-            tmp.close()
+            tmp_name = tmp.name
+        try:
             for attempt in range(_RETRIES):
                 try:
-                    subprocess.run(
+                    subprocess.run(  # noqa: S603 # nosec B603
                         [
-                            "scp",
-                            "-o", "StrictHostKeyChecking=no",
-                            "-o", "UserKnownHostsFile=/dev/null",
-                            "-P", str(int(ctx.tutorial_session_data["sshmitm_port"])),
-                            tmp.name,
+                            _resolve_binary("scp"),
+                            "-o",
+                            "StrictHostKeyChecking=no",
+                            "-o",
+                            "UserKnownHostsFile=/dev/null",
+                            "-P",
+                            str(as_int(ctx.tutorial_session_data["sshmitm_port"])),
+                            tmp_name,
                             f"{ctx.tutorial_session_data['password_user']}@127.0.0.1:{self.filename}",
                         ],
                         input=f"{ctx.tutorial_session_data['password_value']}\n".encode(),
                         capture_output=True,
                         timeout=15,
+                        check=True,
                     )
                     return
-                except Exception:
+                except (
+                    Exception  # noqa: BLE001  # pylint: disable=broad-exception-caught
+                ):
                     if attempt < _RETRIES - 1:
                         time.sleep(_RETRY_DELAY)
                     else:
-                        _log.debug("SCPUploadAction failed after %d attempts", attempt + 1, exc_info=True)
+                        _log.debug(
+                            "SCPUploadAction failed after %d attempts",
+                            attempt + 1,
+                            exc_info=True,
+                        )
         finally:
-            os.unlink(tmp.name)
+            Path(tmp_name).unlink()
 
 
 class SCPDownloadAction:
@@ -557,30 +733,39 @@ class SCPDownloadAction:
         time.sleep(_INITIAL_DELAY)
         for attempt in range(_RETRIES):
             try:
-                subprocess.run(
+                subprocess.run(  # noqa: S603 # nosec B603
                     [
-                        "scp",
-                        "-o", "StrictHostKeyChecking=no",
-                        "-o", "UserKnownHostsFile=/dev/null",
-                        "-P", str(int(ctx.tutorial_session_data["sshmitm_port"])),
+                        _resolve_binary("scp"),
+                        "-o",
+                        "StrictHostKeyChecking=no",
+                        "-o",
+                        "UserKnownHostsFile=/dev/null",
+                        "-P",
+                        str(as_int(ctx.tutorial_session_data["sshmitm_port"])),
                         f"{ctx.tutorial_session_data['password_user']}@127.0.0.1:{self.remote_path}",
                         os.devnull,
                     ],
                     input=f"{ctx.tutorial_session_data['password_value']}\n".encode(),
                     capture_output=True,
                     timeout=15,
+                    check=True,
                 )
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                 else:
-                    _log.debug("SCPDownloadAction failed after %d attempts", attempt + 1, exc_info=True)
+                    _log.debug(
+                        "SCPDownloadAction failed after %d attempts",
+                        attempt + 1,
+                        exc_info=True,
+                    )
 
 
 # ---------------------------------------------------------------------------
 # Session-data-driven actions (filename/command chosen at runtime)
 # ---------------------------------------------------------------------------
+
 
 class SFTPDownloadSessionAction:
     """Download the file named by ``tutorial_session_data[cred_key]`` via SFTP.
@@ -595,16 +780,21 @@ class SFTPDownloadSessionAction:
     def run(self, ctx: TutorialContext) -> None:
         remote_path = str(ctx.tutorial_session_data.get(self.cred_key, ""))
         if not remote_path:
-            _log.error("SFTPDownloadSessionAction: %r not in tutorial_session_data", self.cred_key)
+            _log.error(
+                "SFTPDownloadSessionAction: %r not in tutorial_session_data",
+                self.cred_key,
+            )
             return
         time.sleep(_INITIAL_DELAY)
         for attempt in range(_RETRIES):
             try:
                 client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                # Trust-on-first-use: see _TutorialTofuPolicy for why
+                # AutoAddPolicy() would be unsafe here.
+                client.set_missing_host_key_policy(_TutorialTofuPolicy(ctx))
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    port=as_int(ctx.tutorial_session_data["sshmitm_port"]),
                     username=str(ctx.tutorial_session_data["password_user"]),
                     password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
@@ -612,15 +802,20 @@ class SFTPDownloadSessionAction:
                     look_for_keys=False,
                 )
                 sftp = client.open_sftp()
-                sftp.getfo(remote_path, open(os.devnull, "wb"))
+                with Path(os.devnull).open("wb") as devnull_f:
+                    sftp.getfo(remote_path, devnull_f)
                 sftp.close()
                 client.close()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                 else:
-                    _log.debug("SFTPDownloadSessionAction failed after %d attempts", attempt + 1, exc_info=True)
+                    _log.debug(
+                        "SFTPDownloadSessionAction failed after %d attempts",
+                        attempt + 1,
+                        exc_info=True,
+                    )
 
 
 class SSHExecAction:
@@ -643,22 +838,31 @@ class SSHExecAction:
         for attempt in range(_RETRIES):
             try:
                 client = paramiko.SSHClient()
-                client.set_missing_host_key_policy(paramiko.AutoAddPolicy())
+                # Trust-on-first-use: see _TutorialTofuPolicy for why
+                # AutoAddPolicy() would be unsafe here.
+                client.set_missing_host_key_policy(_TutorialTofuPolicy(ctx))
                 client.connect(
                     "127.0.0.1",
-                    port=int(ctx.tutorial_session_data["sshmitm_port"]),
+                    port=as_int(ctx.tutorial_session_data["sshmitm_port"]),
                     username=str(ctx.tutorial_session_data["password_user"]),
                     password=str(ctx.tutorial_session_data["password_value"]),
                     timeout=10.0,
                     allow_agent=False,
                     look_for_keys=False,
                 )
-                _, stdout, _ = client.exec_command(command)
+                # `command` comes from the tutorial's own internally
+                # generated session data (see generate_tutorial_session_data),
+                # never from the user or remote input.
+                _, stdout, _ = client.exec_command(command)  # nosec B601
                 stdout.read()
                 client.close()
                 return
-            except Exception:
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 if attempt < _RETRIES - 1:
                     time.sleep(_RETRY_DELAY)
                 else:
-                    _log.debug("SSHExecAction failed after %d attempts", attempt + 1, exc_info=True)
+                    _log.debug(
+                        "SSHExecAction failed after %d attempts",
+                        attempt + 1,
+                        exc_info=True,
+                    )

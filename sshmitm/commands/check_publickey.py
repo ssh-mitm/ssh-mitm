@@ -60,25 +60,50 @@ class CheckPublickey(SubCommand):
                     ssh_key.comment or "",
                 )
 
+    @staticmethod
+    def _read_keys(file_path: str) -> list[str]:
+        """Return non-comment, non-blank lines from a local file or http(s) URL."""
+        if file_path.startswith(("http://", "https://")):
+            with urllib.request.urlopen(  # noqa: S310
+                file_path
+            ) as resp:  # nosec B310 - scheme restricted to http(s) above
+                content = resp.read().decode("utf-8", errors="replace")
+            lines: list[str] = content.splitlines()
+        else:
+            with (
+                Path(file_path).expanduser().open("rt", encoding="utf-8") as key_handle
+            ):
+                lines = list(key_handle)
+        return [
+            stripped
+            for line in lines
+            if (stripped := line.strip()) and not stripped.startswith("#")
+        ]
+
+    @staticmethod
+    def _print_results(results: list[tuple[bool, str, str]]) -> None:
+        # print accepted keys first, then rejected — grouped with section headers
+        accepted_results = [(ki, src) for ok, ki, src in results if ok]
+        rejected_results = [(ki, src) for ok, ki, src in results if not ok]
+
+        if accepted_results:
+            console.rule("[bold green]Accepted[/bold green]", style="green")
+            for key_info, _ in accepted_results:
+                rich_print()
+                rich_print(f"[green]:heavy_check_mark:[/green]  {key_info}")
+
+        if rejected_results:
+            rich_print()
+            console.rule("[bold red]Not accepted[/bold red]", style="red")
+            for key_info, _ in rejected_results:
+                rich_print()
+                rich_print(f"[red]:cross_mark:[/red]  {key_info}")
+
     def execute(self, args: argparse.Namespace) -> None:
         keys: dict[str, list[str]] = defaultdict(list)
         try:
             for file_path in args.public_keys:
-                if file_path.startswith("http://") or file_path.startswith("https://"):
-                    with urllib.request.urlopen(file_path) as resp:  # noqa: S310
-                        content = resp.read().decode("utf-8", errors="replace")
-                    lines: list[str] = content.splitlines()
-                else:
-                    with (
-                        Path(file_path)
-                        .expanduser()
-                        .open("rt", encoding="utf-8") as key_handle
-                    ):
-                        lines = list(key_handle)
-                for line in lines:
-                    stripped_line = line.strip()
-                    if stripped_line and not stripped_line.startswith("#"):
-                        keys[file_path].append(stripped_line)
+                keys[file_path].extend(self._read_keys(file_path))
         except FileNotFoundError as exc:
             sys.exit(str(exc))
 
@@ -92,7 +117,8 @@ class CheckPublickey(SubCommand):
 
         valid_keys: dict[str, list[str]] = defaultdict(list)
 
-        # (accepted, key_info_markup, source, raw_pubkey)
+        # Each entry: whether the key was accepted, its rich-markup info
+        # string, and the source file/URL it came from.
         results: list[tuple[bool, str, str]] = []
 
         try:
@@ -120,22 +146,7 @@ class CheckPublickey(SubCommand):
             print(exc)
             sys.exit(1)
         finally:
-            # print accepted keys first, then rejected — grouped with section headers
-            accepted_results = [(ki, src) for ok, ki, src in results if ok]
-            rejected_results = [(ki, src) for ok, ki, src in results if not ok]
-
-            if accepted_results:
-                console.rule("[bold green]Accepted[/bold green]", style="green")
-                for key_info, _ in accepted_results:
-                    rich_print()
-                    rich_print(f"[green]:heavy_check_mark:[/green]  {key_info}")
-
-            if rejected_results:
-                rich_print()
-                console.rule("[bold red]Not accepted[/bold red]", style="red")
-                for key_info, _ in rejected_results:
-                    rich_print()
-                    rich_print(f"[red]:cross_mark:[/red]  {key_info}")
+            self._print_results(results)
 
             valid_count = sum(1 for r in results if r[0])
             checked_count = len(results)

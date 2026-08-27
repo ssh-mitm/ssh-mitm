@@ -2,12 +2,18 @@
 
 from __future__ import annotations
 
+import contextlib
+import logging
 import socket
 import struct
 import threading
+from typing import TYPE_CHECKING
 
-import paramiko
-from paramiko.message import Message
+if TYPE_CHECKING:
+    import paramiko
+    from paramiko.message import Message
+
+log = logging.getLogger(__name__)
 
 
 class MockAgent:
@@ -48,20 +54,17 @@ class MockAgent:
         """Stop the agent."""
         self._stop.set()
         if self._sock:
-            try:
+            with contextlib.suppress(OSError):
                 self._sock.close()
-            except OSError:
-                pass
 
     def _serve(self) -> None:
-        assert self._sock is not None
+        # set by start() before this thread runs
+        assert self._sock is not None  # noqa: S101 # nosec B101
         while not self._stop.is_set():
             try:
                 conn, _ = self._sock.accept()
-                threading.Thread(
-                    target=self._handle, args=(conn,), daemon=True
-                ).start()
-            except (OSError, socket.timeout):
+                threading.Thread(target=self._handle, args=(conn,), daemon=True).start()
+            except (TimeoutError, OSError):
                 continue
 
     @staticmethod
@@ -99,37 +102,48 @@ class MockAgent:
                     body = (
                         bytes([self._AGENT_IDENTITIES_ANSWER])
                         + struct.pack(">I", 1)
-                        + struct.pack(">I", len(key_blob)) + key_blob
-                        + struct.pack(">I", len(comment)) + comment
+                        + struct.pack(">I", len(key_blob))
+                        + key_blob
+                        + struct.pack(">I", len(comment))
+                        + comment
                     )
                     self._send(conn, body)
 
                 elif msg_type == self._AGENTC_SIGN_REQUEST:
                     off = 1
-                    kb_len = struct.unpack(">I", msg[off:off + 4])[0]
+                    kb_len = struct.unpack(">I", msg[off : off + 4])[0]
                     off += 4 + kb_len
-                    data_len = struct.unpack(">I", msg[off:off + 4])[0]
+                    data_len = struct.unpack(">I", msg[off : off + 4])[0]
                     off += 4
-                    data_to_sign = msg[off:off + data_len]
+                    data_to_sign = msg[off : off + data_len]
                     off += data_len
-                    flags = struct.unpack(">I", msg[off:off + 4])[0] if off + 4 <= len(msg) else 0
+                    flags = (
+                        struct.unpack(">I", msg[off : off + 4])[0]
+                        if off + 4 <= len(msg)
+                        else 0
+                    )
 
                     # Paramiko 5.x dropped SHA-1 for RSA — always request SHA-2.
                     algorithm: str | None = None
                     if self._key.get_name() == "ssh-rsa":
                         algorithm = "rsa-sha2-512" if (flags & 4) else "rsa-sha2-256"
 
-                    sig: Message = self._key.sign_ssh_data(data_to_sign, algorithm=algorithm)
+                    sig: Message = self._key.sign_ssh_data(
+                        data_to_sign, algorithm=algorithm
+                    )
                     sig_blob = sig.asbytes()
                     body = (
                         bytes([self._AGENT_SIGN_RESPONSE])
-                        + struct.pack(">I", len(sig_blob)) + sig_blob
+                        + struct.pack(">I", len(sig_blob))
+                        + sig_blob
                     )
                     self._send(conn, body)
 
                 else:
                     self._send(conn, bytes([self._AGENT_FAILURE]))
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception:  # pylint: disable=broad-exception-caught
+            # Best-effort mock agent connection handler: log and drop the
+            # connection rather than crashing the listener thread.
+            log.debug("mock agent connection handler failed", exc_info=True)
         finally:
             conn.close()

@@ -11,15 +11,23 @@ from typing import TYPE_CHECKING
 from aiohttp import web
 
 if TYPE_CHECKING:
-    from sshmitm.tutorial.gitserver import GitServerConfig, GitUser, GitRepo
+    from sshmitm.tutorial.gitserver import GitRepo, GitServerConfig, GitUser
 
 # ---------------------------------------------------------------------------
 # Colour palette for avatar circles (GitLab-like)
 # ---------------------------------------------------------------------------
 
 _AVATAR_COLOURS = [
-    "#6e49cb", "#1f75cb", "#0e8c6c", "#c5483c", "#c97a20",
-    "#5f6a7d", "#d44d8c", "#387d41", "#8e6b3e", "#1f78a3",
+    "#6e49cb",
+    "#1f75cb",
+    "#0e8c6c",
+    "#c5483c",
+    "#c97a20",
+    "#5f6a7d",
+    "#d44d8c",
+    "#387d41",
+    "#8e6b3e",
+    "#1f78a3",
 ]
 
 
@@ -44,7 +52,7 @@ def _key_fingerprint(pubkey_line: str) -> str:
         digest = hashlib.sha256(raw).digest()
         b64 = base64.b64encode(digest).decode().rstrip("=")
         return f"SHA256:{b64}"
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
         return "invalid key"
 
 
@@ -68,17 +76,17 @@ def _key_bits(pubkey_line: str) -> str:
         # Skip the algorithm name length-prefix, then read the first MPI (modulus for RSA)
         pos = 0
         # Read algo name
-        name_len = struct.unpack(">I", data[pos:pos+4])[0]
+        name_len = struct.unpack(">I", data[pos : pos + 4])[0]
         pos += 4 + name_len
         # For RSA: next MPI is exponent, then modulus
         # For DSA: next is p
-        exp_len = struct.unpack(">I", data[pos:pos+4])[0]
+        exp_len = struct.unpack(">I", data[pos : pos + 4])[0]
         pos += 4 + exp_len
-        mod_len = struct.unpack(">I", data[pos:pos+4])[0]
+        mod_len = struct.unpack(">I", data[pos : pos + 4])[0]
         # modulus in bytes → bits (first byte may be 0x00 padding)
-        bits = (mod_len - 1) * 8 if data[pos+4] == 0 else mod_len * 8
+        bits = (mod_len - 1) * 8 if data[pos + 4] == 0 else mod_len * 8
         return str(bits)
-    except Exception:  # noqa: BLE001
+    except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
         return ""
 
 
@@ -298,7 +306,8 @@ def _base(brand: str, title: str, content: str) -> web.Response:
 # Route handlers
 # ---------------------------------------------------------------------------
 
-def _handle_home(config: "GitServerConfig") -> web.Response:
+
+def _handle_home(config: GitServerConfig) -> web.Response:
     """Home page: list all users."""
     if not config.users:
         cards = '<div class="empty-state"><div class="icon">&#x1F3E0;</div><p>No users yet.</p></div>'
@@ -309,7 +318,8 @@ def _handle_home(config: "GitServerConfig") -> web.Response:
             color = _avatar_color(user.username)
             fullname = user.fullname or user.username
             bio_html = f'<div class="ubio">{_esc(user.bio)}</div>' if user.bio else ""
-            items.append(f"""
+            items.append(
+                f"""
 <a href="/{_esc(user.username)}" style="text-decoration:none">
   <div class="user-card">
     <div class="avatar-sm" style="background:{color}">{_esc(initial)}</div>
@@ -320,7 +330,8 @@ def _handle_home(config: "GitServerConfig") -> web.Response:
     </div>
     <span style="color:#888;font-size:13px">{len(user.repos)} repo{"s" if len(user.repos) != 1 else ""}</span>
   </div>
-</a>""")
+</a>"""
+            )
         cards = '<div class="user-list">' + "".join(items) + "</div>"
 
     content = f"""
@@ -331,7 +342,7 @@ def _handle_home(config: "GitServerConfig") -> web.Response:
     return _base(config.brand, "Users", content)
 
 
-def _handle_user(config: "GitServerConfig", user: "GitUser", tab: str) -> web.Response:
+def _handle_user(config: GitServerConfig, user: GitUser, tab: str) -> web.Response:
     """User profile page with Repositories or SSH Keys tab."""
     initial = (user.fullname or user.username)[0].upper()
     color = _avatar_color(user.username)
@@ -352,7 +363,7 @@ def _handle_user(config: "GitServerConfig", user: "GitUser", tab: str) -> web.Re
     # Tab navigation
     base_url = f"/{_esc(user.username)}"
     repos_active = "active" if tab == "repos" else ""
-    keys_active  = "active" if tab == "ssh_keys" else ""
+    keys_active = "active" if tab == "ssh_keys" else ""
     tab_nav = f"""
 <div class="tab-nav">
   <a href="{base_url}" class="{repos_active}">
@@ -364,10 +375,7 @@ def _handle_user(config: "GitServerConfig", user: "GitUser", tab: str) -> web.Re
 </div>"""
 
     # Tab content
-    if tab == "ssh_keys":
-        tab_content = _render_ssh_keys(user)
-    else:
-        tab_content = _render_repos(user)
+    tab_content = _render_ssh_keys(user) if tab == "ssh_keys" else _render_repos(user)
 
     content = f"""
 <div class="container">
@@ -380,7 +388,7 @@ def _handle_user(config: "GitServerConfig", user: "GitUser", tab: str) -> web.Re
     return _base(config.brand, title, content)
 
 
-def _render_repos(user: "GitUser") -> str:
+def _render_repos(user: GitUser) -> str:
     if not user.repos:
         return '<div class="empty-state"><div class="icon">&#x1F4C1;</div><p>No repositories yet.</p></div>'
     items = []
@@ -394,8 +402,13 @@ def _render_repos(user: "GitUser") -> str:
         stars_html = f"&#11088; {repo.stars}" if repo.stars else ""
         forks_html = f"&#x1F374; {repo.forks}" if repo.forks else ""
         updated_html = _esc(repo.updated) if repo.updated else ""
-        desc_html = f'<div class="repo-desc">{_esc(repo.description)}</div>' if repo.description else ""
-        items.append(f"""
+        desc_html = (
+            f'<div class="repo-desc">{_esc(repo.description)}</div>'
+            if repo.description
+            else ""
+        )
+        items.append(
+            f"""
 <div class="repo-card">
   <div class="repo-name">
     <a href="/{_esc(user.username)}/{_esc(repo.name)}">{_esc(repo.name)}</a>
@@ -409,30 +422,33 @@ def _render_repos(user: "GitUser") -> str:
     <span style="flex:1"></span>
     <span style="color:#999">{updated_html}</span>
   </div>
-</div>""")
+</div>"""
+        )
     return '<div class="repo-list">' + "".join(items) + "</div>"
 
 
-def _render_ssh_keys(user: "GitUser") -> str:
+def _render_ssh_keys(user: GitUser) -> str:
     if not user.pubkeys:
         return '<div class="no-keys">No SSH keys registered.</div>'
     rows = []
-    for i, key_line in enumerate(user.pubkeys):
-        key_line = key_line.strip()
+    for i, raw_key_line in enumerate(user.pubkeys):
+        key_line = raw_key_line.strip()
         parts = key_line.split()
-        comment = parts[2] if len(parts) >= 3 else f"key-{i+1}"
+        comment = parts[2] if len(parts) >= 3 else f"key-{i + 1}"
         algo = _key_type(key_line)
         fp = _key_fingerprint(key_line)
         bits = _key_bits(key_line)
         algo_label = f"{algo} {bits}".strip() if bits else algo
-        rows.append(f"""
+        rows.append(
+            f"""
 <tr>
   <td>
     <div class="key-title">{_esc(comment)}</div>
     <div class="key-fingerprint">{_esc(fp)}</div>
     <div class="key-algo">{_esc(algo_label)}</div>
   </td>
-</tr>""")
+</tr>"""
+        )
     return f"""
 <table class="key-table">
   <thead><tr><th>Key</th></tr></thead>
@@ -440,9 +456,7 @@ def _render_ssh_keys(user: "GitUser") -> str:
 </table>"""
 
 
-def _handle_repo(
-    config: "GitServerConfig", user: "GitUser", repo: "GitRepo"
-) -> web.Response:
+def _handle_repo(config: GitServerConfig, user: GitUser, repo: GitRepo) -> web.Response:
     """Repository page with fake commit history."""
     vis_cls = f"badge-{repo.visibility}"
     vis_label = repo.visibility.capitalize()
@@ -475,7 +489,8 @@ def _handle_repo(
         for commit in repo.commits:
             initial = commit.author[0].upper() if commit.author else "?"
             color = _avatar_color(commit.author)
-            rows.append(f"""
+            rows.append(
+                f"""
 <div class="commit-row">
   <div class="commit-avatar" style="background:{color}">{_esc(initial)}</div>
   <div class="commit-body">
@@ -483,7 +498,8 @@ def _handle_repo(
     <div class="commit-meta">{_esc(commit.author)} &middot; {_esc(commit.age)}</div>
   </div>
   <span class="commit-sha">{_esc(commit.sha)}</span>
-</div>""")
+</div>"""
+            )
         commits_html = f"""
 <div class="commit-list">
   <div class="commit-list-header">{len(repo.commits)} commit{"s" if len(repo.commits) != 1 else ""}</div>
@@ -498,7 +514,7 @@ def _handle_repo(
     return _base(config.brand, f"{user.username}/{repo.name}", content)
 
 
-def _handle_keys_txt(user: "GitUser") -> web.Response:
+def _handle_keys_txt(user: GitUser) -> web.Response:
     """Plain-text public keys endpoint (GitHub/GitLab format)."""
     body = "\n".join(k.strip() for k in user.pubkeys if k.strip())
     if body:
@@ -506,7 +522,7 @@ def _handle_keys_txt(user: "GitUser") -> web.Response:
     return web.Response(text=body, content_type="text/plain", charset="utf-8")
 
 
-def _handle_404(config: "GitServerConfig", message: str = "Not found") -> web.Response:
+def _handle_404(config: GitServerConfig, message: str = "Not found") -> web.Response:
     content = f'<div class="container"><div class="empty-state"><p>{_esc(message)}</p></div></div>'
     resp = _base(config.brand, "404 Not Found", content)
     resp.set_status(404)
@@ -517,9 +533,10 @@ def _handle_404(config: "GitServerConfig", message: str = "Not found") -> web.Re
 # App factory
 # ---------------------------------------------------------------------------
 
-def make_app(config: "GitServerConfig") -> web.Application:
+
+def make_app(config: GitServerConfig) -> web.Application:
     """Create and return the aiohttp Application."""
-    _user_map: dict[str, "GitUser"] = {u.username: u for u in config.users}
+    _user_map: dict[str, GitUser] = {u.username: u for u in config.users}
 
     async def handle_home(_req: web.Request) -> web.Response:
         return _handle_home(config)

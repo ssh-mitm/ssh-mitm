@@ -8,13 +8,15 @@ from collections import defaultdict
 from typing import cast
 
 from colored.colored import attr, fg
+
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 except ImportError as e:
-    raise ImportError(
+    _MSG = (
         "Mosh support requires cryptography>=38.0.0. "
         "Upgrade with: pip install --upgrade cryptography"
-    ) from e
+    )
+    raise ImportError(_MSG) from e
 
 from sshmitm.apps.mosh import hostinput_pb2, transportinstruction_pb2, userinput_pb2
 from sshmitm.moduleparser.colors import Colors
@@ -65,7 +67,10 @@ class MonitorServer:
                                 client.close()
                             continue
                     self._clients.append(client)
-            except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+            except Exception:  # pylint: disable=broad-exception-caught
+                # Typically the listening socket was closed during shutdown;
+                # stop the accept loop either way.
+                logging.debug("MOSH monitor accept loop stopped", exc_info=True)
                 break
 
     def send(self, data: bytes) -> None:
@@ -141,7 +146,7 @@ def _decode_diff(
             lines, keystroke_bytes = _decode_client_diff(diff)
         else:
             lines, host_output = _decode_host_diff(diff)
-    except Exception as exc:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 # pylint: disable=broad-exception-caught
         lines.append(f"  [diff parse error: {exc}]")
     return lines, host_output, keystroke_bytes
 
@@ -178,7 +183,7 @@ def _decode_transport_instruction(
                 instr.diff, is_client
             )
             lines += diff_lines
-    except Exception as exc:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+    except Exception as exc:  # noqa: BLE001 # pylint: disable=broad-exception-caught
         lines.append(f"  [Protobuf parse error: {exc}]")
     return lines, host_output, keystroke_bytes, old_num, new_num
 

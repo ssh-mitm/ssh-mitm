@@ -152,7 +152,7 @@ class Socks5Server:
         clientsock.sendall(Socks5Server.AUTH_PASSWORD_VERSION + b"\x01")
         return False
 
-    def _get_address(  # noqa: C901,PLR0915
+    def _get_address(  # noqa: C901
         self, clientsock: socket.socket | paramiko.Channel
     ) -> tuple[str, int] | None:
         """Ermittelt das Ziel aus der Socks Anfrage"""

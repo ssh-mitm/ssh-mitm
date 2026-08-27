@@ -2,13 +2,20 @@
 
 from __future__ import annotations
 
+import logging
 import socket
 import stat
 import threading
 import time
-from typing import Callable
+from typing import TYPE_CHECKING
 
 import paramiko
+from paramiko.sftp import SFTP_NO_SUCH_FILE, SFTP_OP_UNSUPPORTED
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+log = logging.getLogger(__name__)
 
 
 class _MockSFTPHandle(paramiko.SFTPHandle):
@@ -19,7 +26,7 @@ class _MockSFTPHandle(paramiko.SFTPHandle):
         self._content = content
 
     def read(self, offset: int, length: int) -> bytes:
-        return self._content[offset: offset + length]
+        return self._content[offset : offset + length]
 
     def stat(self) -> paramiko.SFTPAttributes:
         attr = paramiko.SFTPAttributes()
@@ -36,37 +43,43 @@ class _MockSFTPInterface(paramiko.SFTPServerInterface):
     ``SFTP_NO_SUCH_FILE``.
     """
 
-    def __init__(self, server: object, files: dict[str, bytes]) -> None:
-        super().__init__(server)  # type: ignore[call-arg]
+    def __init__(
+        self, server: paramiko.ServerInterface, files: dict[str, bytes]
+    ) -> None:
+        super().__init__(server)
         self._files = files
 
-    def open(self, path: str, flags: int, attr: paramiko.SFTPAttributes) -> "paramiko.SFTPHandle | int":
+    def open(
+        self, path: str, flags: int, attr: paramiko.SFTPAttributes
+    ) -> paramiko.SFTPHandle | int:
+        del attr
         content = self._files.get(path)
         if content is None:
-            return paramiko.SFTP_NO_SUCH_FILE
+            return SFTP_NO_SUCH_FILE
         return _MockSFTPHandle(content, flags)
 
-    def stat(self, path: str) -> "paramiko.SFTPAttributes | int":
+    def stat(self, path: str) -> paramiko.SFTPAttributes | int:
         content = self._files.get(path)
         if content is None:
-            return paramiko.SFTP_NO_SUCH_FILE
+            return SFTP_NO_SUCH_FILE
         attr = paramiko.SFTPAttributes()
         attr.st_size = len(content)
         attr.st_mtime = int(time.time())
         attr.st_mode = stat.S_IFREG | 0o644
         return attr
 
-    def lstat(self, path: str) -> "paramiko.SFTPAttributes | int":
+    def lstat(self, path: str) -> paramiko.SFTPAttributes | int:
         return self.stat(path)
 
     def canonicalize(self, path: str) -> str:
         return path
 
     def list_folder(self, path: str) -> int:
-        return paramiko.SFTP_OP_UNSUPPORTED  # type: ignore[return-value]
+        del path
+        return SFTP_OP_UNSUPPORTED
 
 
-def start_server_thread(
+def start_server_thread(  # pylint: disable=too-many-arguments
     interface_factory: Callable[[], paramiko.ServerInterface],
     host_key: paramiko.PKey | None = None,
     bind: str = "127.0.0.1",
@@ -116,8 +129,11 @@ def start_server_thread(
         try:
             transport.start_server(server=interface_factory())
             transport.join(timeout=connection_timeout)
-        except Exception:  # noqa: BLE001
-            pass
+        except Exception:  # pylint: disable=broad-exception-caught
+            # Best-effort per-connection handler thread for the mock SSH
+            # server; a failed/aborted handshake here just drops the
+            # connection rather than crashing the listener.
+            log.debug("mock server connection handler failed", exc_info=True)
 
     def _serve() -> None:
         ready.set()
@@ -125,7 +141,7 @@ def start_server_thread(
             try:
                 conn, _ = sock.accept()
                 threading.Thread(target=_handle, args=(conn,), daemon=True).start()
-            except socket.timeout:
+            except TimeoutError:
                 continue
         sock.close()
         closed.set()

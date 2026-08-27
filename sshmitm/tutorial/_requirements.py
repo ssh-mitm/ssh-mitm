@@ -10,12 +10,13 @@ Each :class:`Requirement` has two phases:
 Tutorials declare their requirements as a list; :class:`ScenarioGenerator`
 executes them in order.
 """
+
 from __future__ import annotations
 
-import secrets
-import random
 import base64
 import hashlib
+import random
+import secrets
 from typing import TYPE_CHECKING
 
 import paramiko
@@ -27,15 +28,16 @@ if TYPE_CHECKING:
 class Requirement:
     """Base class for tutorial requirements."""
 
-    def generate(self) -> dict:
+    def generate(self) -> dict[str, object]:
         """Return key→value entries to add to the session data."""
         return {}
 
-    def apply(self, hosts: dict[type[Host], Host], values: dict) -> None:
+    def apply(self, hosts: dict[type[Host], Host], values: dict[str, object]) -> None:
         """Configure host instances using the generated values."""
 
 
 # ── Password requirements ───────────────────────────────────────────────────
+
 
 class RandomPassword(Requirement):
     """Generate a random password for one user on one host.
@@ -47,12 +49,12 @@ class RandomPassword(Requirement):
     def __init__(self, user: type[User], host: type[Host]) -> None:
         self.user = user
         self.host = host
-        self.key  = f"{host.label}_{user.username}_password"
+        self.key = f"{host.label}_{user.username}_password"
 
-    def generate(self) -> dict:
+    def generate(self) -> dict[str, object]:
         return {self.key: secrets.token_hex(8)}
 
-    def apply(self, hosts: dict[type[Host], Host], values: dict) -> None:
+    def apply(self, hosts: dict[type[Host], Host], values: dict[str, object]) -> None:
         host_inst = hosts.get(self.host)
         if host_inst:
             host_inst.configure({self.key: values[self.key]})
@@ -65,21 +67,22 @@ class StaticPassword(Requirement):
     """
 
     def __init__(self, user: type[User], host: type[Host], password: str) -> None:
-        self.user     = user
-        self.host     = host
+        self.user = user
+        self.host = host
         self.password = password
-        self.key      = f"{host.label}_{user.username}_password"
+        self.key = f"{host.label}_{user.username}_password"
 
-    def generate(self) -> dict:
+    def generate(self) -> dict[str, object]:
         return {self.key: self.password}
 
-    def apply(self, hosts: dict[type[Host], Host], values: dict) -> None:
+    def apply(self, hosts: dict[type[Host], Host], values: dict[str, object]) -> None:
         host_inst = hosts.get(self.host)
         if host_inst:
             host_inst.configure({self.key: values[self.key]})
 
 
 # ── Key-pair requirements ───────────────────────────────────────────────────
+
 
 class RandomKeyPair(Requirement):
     """Generate a fresh ECDSA key pair and optionally authorise it on hosts.
@@ -104,35 +107,37 @@ class RandomKeyPair(Requirement):
 
     def __init__(
         self,
-        user:          type[User],
-        name:          str,
+        user: type[User],
+        name: str,
         authorized_on: list[type[Host]] | None = None,
     ) -> None:
-        self.user          = user
-        self.name          = name
+        self.user = user
+        self.name = name
         self.authorized_on = authorized_on or []
-        self.key_private   = f"keypair_{name}_private"
-        self.key_fp        = f"keypair_{name}_fingerprint"
+        self.key_private = f"keypair_{name}_private"
+        self.key_fp = f"keypair_{name}_fingerprint"
 
-    def generate(self) -> dict:
-        key    = paramiko.ECDSAKey.generate()
+    def generate(self) -> dict[str, object]:
+        key = paramiko.ECDSAKey.generate()
         digest = hashlib.sha256(key.asbytes()).digest()
-        fp     = "SHA256:" + base64.b64encode(digest).rstrip(b"=").decode()
+        fp = "SHA256:" + base64.b64encode(digest).rstrip(b"=").decode()
         return {
             self.key_private: key,
-            self.key_fp:      fp,
+            self.key_fp: fp,
         }
 
-    def apply(self, hosts: dict[type[Host], Host], values: dict) -> None:
+    def apply(self, hosts: dict[type[Host], Host], values: dict[str, object]) -> None:
         key = values.get(self.key_private)
         if not key:
             return
         for host_cls in self.authorized_on:
             host_inst = hosts.get(host_cls)
             if host_inst:
-                host_inst.configure({
-                    f"authorize_key_{self.user.username}": key,
-                })
+                host_inst.configure(
+                    {
+                        f"authorize_key_{self.user.username}": key,
+                    }
+                )
 
 
 class StaticKeyPair(Requirement):
@@ -140,67 +145,73 @@ class StaticKeyPair(Requirement):
 
     def __init__(
         self,
-        user:          type[User],
-        name:          str,
-        key:           paramiko.PKey,
+        user: type[User],
+        name: str,
+        key: paramiko.PKey,
         authorized_on: list[type[Host]] | None = None,
     ) -> None:
-        self.user          = user
-        self.name          = name
-        self._key          = key
+        self.user = user
+        self.name = name
+        self._key = key
         self.authorized_on = authorized_on or []
-        self.key_private   = f"keypair_{name}_private"
-        self.key_fp        = f"keypair_{name}_fingerprint"
+        self.key_private = f"keypair_{name}_private"
+        self.key_fp = f"keypair_{name}_fingerprint"
 
-    def generate(self) -> dict:
+    def generate(self) -> dict[str, object]:
         digest = hashlib.sha256(self._key.asbytes()).digest()
-        fp     = "SHA256:" + base64.b64encode(digest).rstrip(b"=").decode()
+        fp = "SHA256:" + base64.b64encode(digest).rstrip(b"=").decode()
         return {self.key_private: self._key, self.key_fp: fp}
 
-    def apply(self, hosts: dict[type[Host], Host], values: dict) -> None:
+    def apply(self, hosts: dict[type[Host], Host], values: dict[str, object]) -> None:
         key = values.get(self.key_private)
         if not key:
             return
         for host_cls in self.authorized_on:
             host_inst = hosts.get(host_cls)
             if host_inst:
-                host_inst.configure({
-                    f"authorize_key_{self.user.username}": key,
-                })
+                host_inst.configure(
+                    {
+                        f"authorize_key_{self.user.username}": key,
+                    }
+                )
 
 
 # ── Generic requirements ────────────────────────────────────────────────────
+
 
 class RandomSecret(Requirement):
     """A random hex string not tied to any host, stored by name."""
 
     def __init__(self, name: str, length: int = 8) -> None:
-        self.name   = name
+        self.name = name
         self.length = length
 
-    def generate(self) -> dict:
+    def generate(self) -> dict[str, object]:
         return {self.name: secrets.token_hex(self.length)}
 
 
 class RandomChoice(Requirement):
     """Pick one value at random from *choices*, stored by name."""
 
-    def __init__(self, name: str, choices: list) -> None:
-        self.name    = name
+    def __init__(self, name: str, choices: list[str]) -> None:
+        self.name = name
         self.choices = choices
 
-    def generate(self) -> dict:
-        return {self.name: random.choice(self.choices)}
+    def generate(self) -> dict[str, object]:
+        # Non-cryptographic: picks flavour/content variety for a tutorial
+        # (e.g. a filename or username), never a secret. See StaticSecret /
+        # RandomSecret above for actual secret generation via `secrets`.
+        return {self.name: random.choice(self.choices)}  # noqa: S311 # nosec B311
 
 
 class StaticValue(Requirement):
     """Store a fixed value in the session data under *name*."""
 
     def __init__(self, name: str, value: object) -> None:
-        self.name  = name
+        self.name = name
         self.value = value
 
-    def generate(self) -> dict:
+    def generate(self) -> dict[str, object]:
         return {self.name: self.value}
 
 
@@ -214,12 +225,13 @@ class NoneAuthAccess(Requirement):
     def __init__(self, user: type[User], host: type[Host]) -> None:
         self.user = user
         self.host = host
-        self.key  = f"{host.label}_{user.username}_none_auth"
+        self.key = f"{host.label}_{user.username}_none_auth"
 
-    def generate(self) -> dict:
+    def generate(self) -> dict[str, object]:
         return {self.key: True}
 
-    def apply(self, hosts: dict[type[Host], Host], values: dict) -> None:
+    def apply(self, hosts: dict[type[Host], Host], values: dict[str, object]) -> None:
+        del values
         host_inst = hosts.get(self.host)
         if host_inst:
             host_inst.configure({self.key: True})
@@ -252,18 +264,18 @@ class RegisterPublicKeys(Requirement):
 
     def __init__(
         self,
-        user:    type[User],
-        host:    type[Host],
-        entries: list[tuple[str, str]],   # (comment, keypair_name)
+        user: type[User],
+        host: type[Host],
+        entries: list[tuple[str, str]],  # (comment, keypair_name)
     ) -> None:
-        self.user    = user
-        self.host    = host
+        self.user = user
+        self.host = host
         self.entries = entries
 
-    def generate(self) -> dict:
+    def generate(self) -> dict[str, object]:
         return {}
 
-    def apply(self, hosts: dict[type[Host], Host], values: dict) -> None:
+    def apply(self, hosts: dict[type[Host], Host], values: dict[str, object]) -> None:
         host_inst = hosts.get(self.host)
         if not host_inst:
             return
@@ -273,6 +285,6 @@ class RegisterPublicKeys(Requirement):
             if key:
                 key_list.append((comment, key))
         if key_list:
-            host_inst.configure({
-                f"logfilegit_register_keys_{self.user.username}": key_list
-            })
+            host_inst.configure(
+                {f"logfilegit_register_keys_{self.user.username}": key_list}
+            )

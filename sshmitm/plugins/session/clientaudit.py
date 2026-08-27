@@ -101,8 +101,8 @@ class SSHClientAudit:
 
     def between_versions(
         self,
-        version_min: None | float | str,
-        version_max: None | float | str,
+        version_min: float | str | None,
+        version_max: float | str | None,
     ) -> bool:
         """
         This method returns `True` if the version string is between `version_min` and `version_max`.
@@ -154,10 +154,10 @@ class SSHClientAudit:
                 cvemessagelist.append(f"  * {cve_entry.cve}: {cve_entry.url}")
                 if cve_entry.cve in vulnerabilities:
                     if isinstance(vulnerabilities[cve_entry.cve], list):
-                        for vulnerability_entry in vulnerabilities[cve_entry.cve]:
-                            cvemessagelist.append(  # noqa: PERF401
-                                f"    - {vulnerability_entry}"
-                            )
+                        cvemessagelist.extend(
+                            f"    - {vulnerability_entry}"
+                            for vulnerability_entry in vulnerabilities[cve_entry.cve]
+                        )
                     else:
                         cvemessagelist.append(
                             "\n".join(
@@ -245,7 +245,10 @@ class SSHClientAudit:
         """
         Check if a key negotiation data is known.
         """
-        if any(isinstance(k, ECDSAKey) for k in self.key_negotiation_data.session.proxyserver.host_keys):
+        if any(
+            isinstance(k, ECDSAKey)
+            for k in self.key_negotiation_data.session.proxyserver.host_keys
+        ):
             logging.warning(
                 "%s: ecdsa-sha2 key is a bad choice; this will produce false positives!",
                 self.client_info.get("name", ""),
@@ -290,13 +293,17 @@ class SSHClientAudit:
         chacha20_algo = "chacha20-poly1305@openssh.com"
         chacha20_affected = [
             direction
-            for direction, algos in [("client-to-server", enc_c2s), ("server-to-client", enc_s2c)]
+            for direction, algos in [
+                ("client-to-server", enc_c2s),
+                ("server-to-client", enc_s2c),
+            ]
             if chacha20_algo in algos
         ]
 
         def _cbc_algos(algos: list[str]) -> list[str]:
             return [
-                a for a in algos
+                a
+                for a in algos
                 if a.endswith("-cbc") or a == "rijndael-cbc@lysator.liu.se"
             ]
 
@@ -312,10 +319,14 @@ class SSHClientAudit:
             if _cbc_algos(enc) and _etm_algos(mac)
         ]
 
-        vulnerable = (bool(chacha20_affected) or bool(cbc_etm_affected)) and not strict_kex
+        vulnerable = (
+            bool(chacha20_affected) or bool(cbc_etm_affected)
+        ) and not strict_kex
         status_color = "red" if vulnerable else "green"
 
-        report = ClientAuditReport("CVE-2023-48795 - Terrapin-Attack", vulnerable=vulnerable)
+        report = ClientAuditReport(
+            "CVE-2023-48795 - Terrapin-Attack", vulnerable=vulnerable
+        )
         report.messages.append(
             f"Strict key exchange: {'supported' if strict_kex else 'not supported'}"
         )

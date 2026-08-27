@@ -3,15 +3,21 @@
 Internal file server — SFTP only.  Holds deployment artefacts, configuration
 backups, and company documents.  Max and Lisa access it regularly.
 """
+
 from __future__ import annotations
 
-import asyncio
 import random
+from typing import TYPE_CHECKING, ClassVar
 
 import paramiko
 
-from sshmitm.tutorial.hosts import Host, SFTPService
+from sshmitm.tutorial.hosts import Host, Service, SFTPService, User
 from sshmitm.tutorial.hosts.logfile_inc import ApplicationServers, LisaChen, MaxMorgan
+
+if TYPE_CHECKING:
+    import asyncio
+
+    from sshmitm.tutorial._events import Event
 
 # Scenario-consistent files for Logfile Inc.
 _FILES: dict[str, bytes] = {
@@ -68,12 +74,12 @@ FILENAMES = list(_FILES)
 class Files(Host):
     """files.logfileinc.internal — internal SFTP file server."""
 
-    label    = "files"
+    label = "files"
     hostname = "files.logfileinc.internal"
-    address  = "127.2.0.2"
-    segment  = ApplicationServers
-    users    = [MaxMorgan, LisaChen]
-    services = [
+    address = "127.2.0.2"
+    segment = ApplicationServers
+    users: ClassVar[list[type[User]]] = [MaxMorgan, LisaChen]
+    services: ClassVar[list[Service]] = [
         SFTPService(port=20022),
     ]
 
@@ -83,25 +89,25 @@ class Files(Host):
         self._authorized_keys: dict[str, list[paramiko.PKey]] = {}
         self._sftp_filename: str | None = None
 
-    def configure(self, session_data: dict) -> None:
+    def configure(self, session_data: dict[str, object]) -> None:
         for user in self.__class__.users:
-            pw_key   = f"files_{user.username}_password"
+            pw_key = f"files_{user.username}_password"
             auth_key = f"authorize_key_{user.username}"
             if pw_key in session_data:
                 self._passwords[user.username] = str(session_data[pw_key])
-            if auth_key in session_data:
-                self._authorized_keys.setdefault(user.username, []).append(
-                    session_data[auth_key]
-                )
+            key = session_data.get(auth_key)
+            if isinstance(key, paramiko.PKey):
+                self._authorized_keys.setdefault(user.username, []).append(key)
         if "files_sftp_filename" in session_data:
             self._sftp_filename = str(session_data["files_sftp_filename"])
 
     # ── behavior ────────────────────────────────────────────────────────
 
     def random_filename(self) -> str:
-        return random.choice(FILENAMES)
+        # Non-cryptographic: picks a plausible filename for tutorial content.
+        return random.choice(FILENAMES)  # noqa: S311 # nosec B311
 
-    def sftp_files(self, session_data: dict) -> dict[str, bytes]:
+    def sftp_files(self, session_data: dict[str, object]) -> dict[str, bytes]:
         filename = str(session_data.get("files_sftp_filename", ""))
         if not filename:
             return {}
@@ -110,7 +116,7 @@ class Files(Host):
 
     # ── lifecycle ────────────────────────────────────────────────────────
 
-    async def start(self, events: asyncio.Queue) -> None:
+    async def start(self, events: asyncio.Queue[Event]) -> None:
         await super().start(events)
 
     async def stop(self) -> None:

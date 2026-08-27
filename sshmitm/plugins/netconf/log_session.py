@@ -10,7 +10,7 @@ Enable with::
 """
 
 import logging
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # nosec B405 - only used for type hints here
 
 from sshmitm.forwarders.netconf import NetconfBaseForwarder
 
@@ -18,21 +18,22 @@ from sshmitm.forwarders.netconf import NetconfBaseForwarder
 class NetconfLoggingForwarder(NetconfBaseForwarder):
     """Log all NETCONF RPC operations and replies; forward everything unchanged."""
 
-    def handle_rpc_request(
-        self,
-        message_id: str,
-        operation: str,
-        element: ET.Element,
+    def handle_rpc_request(  # pylint: disable=useless-return
+        self, message_id: str, operation: str, element: ET.Element
     ) -> ET.Element | None:
+        del element
         logging.info(
             "NETCONF RPC  [session=%s message-id=%s op=%s]",
             self.session.sessionid,
             message_id,
             operation,
         )
+        # Explicit return required: mypy strict mode flags "Missing return
+        # statement" for a function typed `-> X | None` without one, even
+        # though pylint considers it redundant.
         return None
 
-    def handle_rpc_reply(
+    def handle_rpc_reply(  # pylint: disable=useless-return
         self,
         message_id: str,
         element: ET.Element,

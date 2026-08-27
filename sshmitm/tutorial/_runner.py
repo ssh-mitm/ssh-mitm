@@ -2,10 +2,11 @@
 
 from __future__ import annotations
 
+import contextlib
 import logging
 import threading
 import time
-from typing import Callable
+from typing import TYPE_CHECKING
 
 import paramiko
 
@@ -13,7 +14,22 @@ from sshmitm.mockserver._interfaces import MultiUserMockServer, _UserConfig
 from sshmitm.mockserver._runner import start_server_thread
 from sshmitm.tutorial._conditions import collect_user_inputs
 from sshmitm.tutorial._context import AuthEventData, TutorialContext
-from sshmitm.tutorial._definitions import Tutorial
+from sshmitm.tutorial._requirements import (
+    NoneAuthAccess,
+    RandomKeyPair,
+    RandomPassword,
+    StaticKeyPair,
+    StaticPassword,
+)
+from sshmitm.tutorial._session import ScenarioGenerator
+from sshmitm.tutorial.gitserver import GitServer
+
+if TYPE_CHECKING:
+    from collections.abc import Callable
+
+    from sshmitm.tutorial._definitions import Tutorial
+    from sshmitm.tutorial._session import ScenarioSession
+    from sshmitm.tutorial.hosts import Host
 
 _log = logging.getLogger(__name__)
 
@@ -21,6 +37,7 @@ _log = logging.getLogger(__name__)
 # ---------------------------------------------------------------------------
 # Mock interactive shell
 # ---------------------------------------------------------------------------
+
 
 class _MockShell:
     """Fake interactive shell backed by an in-memory command→output dict."""
@@ -37,6 +54,39 @@ class _MockShell:
         self._prompt = prompt
         self._unknown = unknown
 
+    def _process_byte(
+        self, byte: int, buf: bytearray, in_escape: bool
+    ) -> tuple[bool, bool]:
+        """Handle one input byte of the mock terminal.
+
+        Returns ``(new_in_escape, should_exit)``.
+        """
+        if in_escape:
+            return (not (0x40 <= byte <= 0x7E), False)
+        if byte == 0x1B:
+            return (True, False)
+        if byte in (0x0D, 0x0A):
+            self._channel.sendall(b"\r\n")
+            cmd = buf.decode("utf-8", errors="replace").strip()
+            buf.clear()
+            if cmd in ("exit", "quit", "logout"):
+                return (False, True)
+            if cmd:
+                self._channel.sendall(self._response(cmd))
+            self._channel.sendall(self._prompt)
+        elif byte in (0x7F, 0x08):
+            if buf:
+                buf.pop()
+                self._channel.sendall(b"\x08 \x08")
+        elif byte == 0x03:
+            self._channel.sendall(b"^C\r\n")
+            buf.clear()
+            self._channel.sendall(self._prompt)
+        elif 0x20 <= byte < 0x7F:
+            buf.append(byte)
+            self._channel.sendall(bytes([byte]))
+        return (False, False)
+
     def run(self) -> None:
         try:
             self._channel.sendall(self._prompt)
@@ -47,36 +97,15 @@ class _MockShell:
                 if not data:
                     break
                 for byte in data:
-                    if in_escape:
-                        if 0x40 <= byte <= 0x7E:
-                            in_escape = False
-                        continue
-                    if byte == 0x1B:
-                        in_escape = True
-                    elif byte in (0x0D, 0x0A):
-                        self._channel.sendall(b"\r\n")
-                        cmd = buf.decode("utf-8", errors="replace").strip()
-                        buf.clear()
-                        if cmd in ("exit", "quit", "logout"):
-                            return
-                        if cmd:
-                            self._channel.sendall(self._response(cmd))
-                        self._channel.sendall(self._prompt)
-                    elif byte in (0x7F, 0x08):
-                        if buf:
-                            buf.pop()
-                            self._channel.sendall(b"\x08 \x08")
-                    elif byte == 0x03:
-                        self._channel.sendall(b"^C\r\n")
-                        buf.clear()
-                        self._channel.sendall(self._prompt)
-                    elif 0x20 <= byte < 0x7F:
-                        buf.append(byte)
-                        self._channel.sendall(bytes([byte]))
-        except Exception:  # noqa: BLE001
-            pass
+                    in_escape, should_exit = self._process_byte(byte, buf, in_escape)
+                    if should_exit:
+                        return
+        except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
+            # Best-effort mock shell loop: any error just means the channel
+            # died mid-read; the finally block below still tries to close it.
+            _log.debug("mock shell loop failed", exc_info=True)
         finally:
-            with __import__("contextlib").suppress(Exception):
+            with contextlib.suppress(Exception):
                 self._channel.send_exit_status(0)
                 self._channel.close()
 
@@ -93,13 +122,14 @@ class _MockShell:
 # Observable mock SSH server
 # ---------------------------------------------------------------------------
 
+
 class _TutorialServer(MultiUserMockServer):
     """MultiUserMockServer with auth-event callbacks and virtual exec/shell."""
 
     def __init__(
         self,
         users: dict[str, _UserConfig],
-        on_auth: Callable,
+        on_auth: Callable[[str, str, bool], None],
         exec_outputs: dict[str, bytes] | None = None,
         shell_outputs: dict[str, bytes] | None = None,
         shell_prompt: bytes = b"$ ",
@@ -110,10 +140,14 @@ class _TutorialServer(MultiUserMockServer):
         self._shell_outputs: dict[str, bytes] = shell_outputs or {}
         self._shell_prompt = shell_prompt
 
-    def check_channel_exec_request(self, channel: paramiko.Channel, command: bytes) -> bool:
+    def check_channel_exec_request(
+        self, channel: paramiko.Channel, command: bytes
+    ) -> bool:
         cmd = command.decode("utf-8", errors="replace")
         output = self._exec_outputs.get(cmd, b"")
-        threading.Thread(target=self._mock_exec, args=(channel, output), daemon=True).start()
+        threading.Thread(
+            target=self._mock_exec, args=(channel, output), daemon=True
+        ).start()
         return True
 
     def check_channel_shell_request(self, channel: paramiko.Channel) -> bool:
@@ -151,7 +185,9 @@ class _TutorialServer(MultiUserMockServer):
         self._notify("publickey", username, result)
         return result
 
-    def check_auth_interactive_response(self, responses: list[str]) -> "int | paramiko.server.InteractiveQuery":
+    def check_auth_interactive_response(
+        self, responses: list[str]
+    ) -> int | paramiko.server.InteractiveQuery:
         result = super().check_auth_interactive_response(responses)
         if isinstance(result, int):
             self._notify("keyboard-interactive", self._kbdint_username or "?", result)
@@ -162,16 +198,18 @@ class _TutorialServer(MultiUserMockServer):
 # Runner state
 # ---------------------------------------------------------------------------
 
+
 class TutorialState:
-    IDLE      = "idle"
-    RUNNING   = "running"
+    IDLE = "idle"
+    RUNNING = "running"
     COMPLETED = "completed"
-    STOPPED   = "stopped"
+    STOPPED = "stopped"
 
 
 # ---------------------------------------------------------------------------
 # Main runner
 # ---------------------------------------------------------------------------
+
 
 class TutorialRunner:
     """Manages one tutorial session: mock server lifecycle + step-condition polling."""
@@ -181,7 +219,7 @@ class TutorialRunner:
         tutorial: Tutorial,
         on_step_complete: Callable[[int], None],
         on_auth_event: Callable[[str, str, bool], None],
-        on_alert: Callable[[dict], None] | None = None,
+        on_alert: Callable[[dict[str, object]], None] | None = None,
         on_state_update: Callable[[], None] | None = None,
     ) -> None:
         self._tutorial = tutorial
@@ -202,7 +240,8 @@ class TutorialRunner:
         self._mock_stop: threading.Event | None = None
         self._mock_closed: threading.Event | None = None
         self._target_stops: list[tuple[threading.Event, threading.Event]] = []
-        self._service_hosts: list[Tutorial] = []  # hosts with start_services() running
+        self._service_hosts: list[Host] = []  # hosts with start_services() running
+        self._git_server: GitServer | None = None
 
     # ------------------------------------------------------------------
     # Backward-compat property
@@ -278,20 +317,20 @@ class TutorialRunner:
             return self.format(step.hint_waiting) if step.hint_waiting else "", "info"
         return "", "info"
 
-    def get_active_user_inputs(self) -> list[dict[str, str]]:
+    def get_active_user_inputs(self) -> list[dict[str, str | bool]]:
         steps = self._tutorial.steps
         if self.current_step >= len(steps):
             return []
         condition = steps[self.current_step].condition
-        result = []
-        for ui in collect_user_inputs(condition):
-            result.append({
+        return [
+            {
                 "key": ui.key,
                 "prompt": ui.prompt,
                 "satisfied": self._ctx.user_inputs.get(ui.key)
-                             == str(self._ctx.tutorial_session_data.get(ui.key, "")),
-            })
-        return result
+                == str(self._ctx.tutorial_session_data.get(ui.key, "")),
+            }
+            for ui in collect_user_inputs(condition)
+        ]
 
     # ------------------------------------------------------------------
     # Poll loop
@@ -327,7 +366,7 @@ class TutorialRunner:
         if idx < len(steps):
             cond = steps[idx].condition
             if hasattr(cond, "reset"):
-                cond.reset()  # type: ignore[union-attr]
+                cond.reset()
 
     def _complete_step(self) -> None:
         idx = self.current_step
@@ -343,13 +382,150 @@ class TutorialRunner:
     # Mock server setup (new scenario-based API)
     # ------------------------------------------------------------------
 
-    def _setup_mock_server(self) -> None:
-        from sshmitm.tutorial._requirements import (
-            NoneAuthAccess, RandomKeyPair, RandomPassword,
-            RegisterPublicKeys, StaticKeyPair, StaticPassword,
-        )
-        from sshmitm.tutorial._session import ScenarioGenerator
+    @staticmethod
+    def _users_for_host(
+        t: Tutorial, session_data: dict[str, object], host_cls: type
+    ) -> dict[str, _UserConfig]:
+        """Build the _UserConfig dict for one host from t.requires."""
+        users: dict[str, _UserConfig] = {}
+        for req in t.requires:
+            if (
+                isinstance(req, (RandomPassword, StaticPassword))
+                and req.host is host_cls
+            ):
+                pw = str(session_data.get(req.key, ""))
+                cfg = users.get(req.user.username)
+                if cfg is None:
+                    cfg = MultiUserMockServer.password_user(pw)
+                else:
+                    cfg.password = pw
+                users[req.user.username] = cfg
+            elif isinstance(req, (RandomKeyPair, StaticKeyPair)):
+                if host_cls in req.authorized_on:
+                    key = session_data.get(req.key_private)
+                    if isinstance(key, paramiko.PKey):
+                        cfg = users.get(req.user.username)
+                        if cfg is None:
+                            users[req.user.username] = MultiUserMockServer.pubkey_user(
+                                [key]
+                            )
+                        else:
+                            cfg.pubkeys.append(key)
+            elif isinstance(req, NoneAuthAccess) and req.host is host_cls:
+                if req.user.username not in users:
+                    users[req.user.username] = MultiUserMockServer.none_user()
+        return users
 
+    def _setup_proxy_target(
+        self, t: Tutorial, session: ScenarioSession, session_data: dict[str, object]
+    ) -> None:
+        if t.proxy_target is None:
+            session_data.setdefault("mock_port", 0)
+            return
+
+        proxy_inst = session.get_host("proxy_target")
+        proxy_cls = t.proxy_target
+        users = self._users_for_host(t, session_data, proxy_cls)
+
+        exec_out = _call_behavior(proxy_inst, "exec_outputs", session_data)
+        shell_out = _call_behavior(proxy_inst, "shell_outputs", session_data)
+        shell_pr = (
+            proxy_inst.shell_prompt() if hasattr(proxy_inst, "shell_prompt") else b"$ "
+        )
+        sftp_files = _call_behavior(proxy_inst, "sftp_files", session_data) or None
+
+        # The default-argument bindings below capture users/exec_out/
+        # shell_out/shell_pr by value at definition time (the standard
+        # Python idiom for factories that may be invoked later/repeatedly
+        # by start_server_thread), matching _target_factory below where
+        # this is required to avoid a late-binding bug across loop
+        # iterations.
+        def _proxy_factory(  # pylint: disable=dangerous-default-value
+            u: dict[str, _UserConfig] = users,
+            eo: dict[str, bytes] | None = exec_out,
+            so: dict[str, bytes] | None = shell_out,
+            sp: bytes = shell_pr,
+        ) -> _TutorialServer:
+            return _TutorialServer(
+                u,
+                self._handle_auth_event,
+                exec_outputs=eo,
+                shell_outputs=so,
+                shell_prompt=sp,
+            )
+
+        ssh_svc = proxy_inst.get_service("SSH") or proxy_inst.get_service("SFTP")
+        port = ssh_svc.port if ssh_svc else 0
+
+        actual, stop, closed = start_server_thread(
+            _proxy_factory,
+            host_key=paramiko.ECDSAKey.generate(),
+            bind=proxy_cls.address,
+            port=port,
+            sftp_files=sftp_files,
+        )
+        self._mock_stop = stop
+        self._mock_closed = closed
+        session_data["mock_port"] = actual
+
+        # Also call start_services for the proxy host (e.g. HTTP on web01)
+        extra = proxy_inst.start_services(session_data)
+        session_data.update(extra)
+        if extra:
+            self._service_hosts.append(proxy_inst)
+
+    def _setup_direct_targets(
+        self, t: Tutorial, session: ScenarioSession, session_data: dict[str, object]
+    ) -> None:
+        self._target_stops = []
+        for alias, host_cls in t.direct_targets.items():
+            host_inst = session.get_host(alias)
+
+            # Non-SSH services (Git, HTTP, …) go through start_services()
+            extra = host_inst.start_services(session_data)
+            session_data.update(extra)
+            if extra:
+                self._service_hosts.append(host_inst)
+
+            # SSH/SFTP services → start a mock server
+            ssh_svc = host_inst.get_service("SSH") or host_inst.get_service("SFTP")
+            if ssh_svc is None:
+                continue
+            users = self._users_for_host(t, session_data, host_cls)
+            if not users:
+                continue
+
+            # `u=users` intentionally captures this iteration's users dict by
+            # value; start_server_thread may invoke the factory later (once
+            # per incoming connection), by which point the loop variable
+            # `users` would otherwise hold the *last* iteration's value.
+            def _target_factory(  # pylint: disable=dangerous-default-value
+                u: dict[str, _UserConfig] = users,
+            ) -> MultiUserMockServer:
+                return MultiUserMockServer(u)
+
+            actual, stop, closed = start_server_thread(
+                _target_factory,
+                host_key=paramiko.ECDSAKey.generate(),
+                bind=host_cls.address,
+                port=ssh_svc.port,
+            )
+            self._target_stops.append((stop, closed))
+            session_data[f"{alias}_port"] = actual
+
+    def _setup_git_server(self, t: Tutorial, session_data: dict[str, object]) -> None:
+        """Transitional: standalone git server (via get_git_server)."""
+        git_cfg = t.get_git_server(session_data)
+        if git_cfg is not None:
+            srv = GitServer(git_cfg)
+            srv.start()
+            self._git_server = srv
+            session_data["git_server_port"] = srv.port
+            session_data["git_server_url"] = srv.url
+        else:
+            self._git_server = None
+
+    def _setup_mock_server(self) -> None:
         t = self._tutorial
 
         # Collect all host aliases: proxy target + direct targets
@@ -360,10 +536,10 @@ class TutorialRunner:
 
         # Build ScenarioSession
         session = ScenarioGenerator.build(
-            scenario     = t.scenario,
-            host_aliases = all_aliases,
-            requires     = t.requires,
-            sshmitm_port = t.sshmitm_port,
+            scenario=t.scenario,
+            host_aliases=all_aliases,
+            requires=t.requires,
+            sshmitm_port=t.sshmitm_port,
         )
 
         # Flatten template vars into session_data
@@ -372,123 +548,21 @@ class TutorialRunner:
         # Merge tutorial-specific extra values (random choices, etc.)
         session_data.update(t.generate_tutorial_session_data())
 
-        # Helper: build _UserConfig dict for one host from requires
-        def users_for_host(host_cls: type) -> dict[str, _UserConfig]:
-            users: dict[str, _UserConfig] = {}
-            for req in t.requires:
-                if isinstance(req, (RandomPassword, StaticPassword)) and req.host is host_cls:
-                    pw = str(session_data.get(req.key, ""))
-                    cfg = users.get(req.user.username)
-                    if cfg is None:
-                        cfg = MultiUserMockServer.password_user(pw)
-                    else:
-                        cfg.password = pw
-                    users[req.user.username] = cfg
-                elif isinstance(req, (RandomKeyPair, StaticKeyPair)):
-                    if host_cls in req.authorized_on:
-                        key = session_data.get(req.key_private)
-                        if key:
-                            cfg = users.get(req.user.username)
-                            if cfg is None:
-                                users[req.user.username] = MultiUserMockServer.pubkey_user([key])
-                            else:
-                                cfg.pubkeys.append(key)
-                elif isinstance(req, NoneAuthAccess) and req.host is host_cls:
-                    if req.user.username not in users:
-                        users[req.user.username] = MultiUserMockServer.none_user()
-            return users
-
-        # ── Start proxy target mock SSH server ─────────────────────────
-        if t.proxy_target is not None:
-            proxy_inst = session.get_host("proxy_target")
-            proxy_cls  = t.proxy_target
-            users = users_for_host(proxy_cls)
-
-            exec_out   = _call_behavior(proxy_inst, "exec_outputs", session_data)
-            shell_out  = _call_behavior(proxy_inst, "shell_outputs", session_data)
-            shell_pr   = proxy_inst.shell_prompt() if hasattr(proxy_inst, "shell_prompt") else b"$ "
-            sftp_files = _call_behavior(proxy_inst, "sftp_files", session_data) or None
-
-            def _proxy_factory(u=users, eo=exec_out, so=shell_out, sp=shell_pr) -> _TutorialServer:
-                return _TutorialServer(u, self._handle_auth_event,
-                                       exec_outputs=eo, shell_outputs=so, shell_prompt=sp)
-
-            ssh_svc = proxy_inst.get_service("SSH") or proxy_inst.get_service("SFTP")
-            port = ssh_svc.port if ssh_svc else 0
-
-            actual, stop, closed = start_server_thread(
-                _proxy_factory,
-                host_key = paramiko.ECDSAKey.generate(),
-                bind     = proxy_cls.address,
-                port     = port,
-                sftp_files = sftp_files,
-            )
-            self._mock_stop   = stop
-            self._mock_closed = closed
-            session_data["mock_port"] = actual
-
-            # Also call start_services for the proxy host (e.g. HTTP on web01)
-            extra = proxy_inst.start_services(session_data)
-            session_data.update(extra)
-            if extra:
-                self._service_hosts.append(proxy_inst)  # type: ignore[arg-type]
-        else:
-            session_data.setdefault("mock_port", 0)
-
-        # ── Start direct target servers ────────────────────────────────
-        self._target_stops = []
-        for alias, host_cls in t.direct_targets.items():
-            host_inst = session.get_host(alias)
-
-            # Non-SSH services (Git, HTTP, …) go through start_services()
-            extra = host_inst.start_services(session_data)
-            session_data.update(extra)
-            if extra:
-                self._service_hosts.append(host_inst)  # type: ignore[arg-type]
-
-            # SSH/SFTP services → start a mock server
-            ssh_svc = host_inst.get_service("SSH") or host_inst.get_service("SFTP")
-            if ssh_svc is None:
-                continue
-            users = users_for_host(host_cls)
-            if not users:
-                continue
-
-            def _target_factory(u=users) -> MultiUserMockServer:
-                return MultiUserMockServer(u)
-
-            actual, stop, closed = start_server_thread(
-                _target_factory,
-                host_key = paramiko.ECDSAKey.generate(),
-                bind     = host_cls.address,
-                port     = ssh_svc.port,
-            )
-            self._target_stops.append((stop, closed))
-            session_data[f"{alias}_port"] = actual
-
-        # ── Transitional: standalone git server (via get_git_server) ───
-        git_cfg = t.get_git_server(session_data)
-        if git_cfg is not None:
-            from sshmitm.tutorial.gitserver import GitServer
-            srv = GitServer(git_cfg)
-            srv.start()
-            self._git_server = srv
-            session_data["git_server_port"] = srv.port
-            session_data["git_server_url"]  = srv.url
-        else:
-            self._git_server = None
+        self._setup_proxy_target(t, session, session_data)
+        self._setup_direct_targets(t, session, session_data)
+        self._setup_git_server(t, session_data)
 
         # ── Bridge keys for client actions ─────────────────────────────
         self._bridge_client_action_keys(t, session_data)
 
         self._ctx = TutorialContext(session_data)
 
-    def _bridge_client_action_keys(self, t: Tutorial, session_data: dict) -> None:
+    def _bridge_client_action_keys(
+        self, t: Tutorial, session_data: dict[str, object]
+    ) -> None:
         """Set legacy credential keys used by client actions (SSHPasswordAction, etc.)."""
-        from sshmitm.tutorial._requirements import RandomKeyPair, StaticKeyPair
-
         victim = t.victim
-        proxy  = t.proxy_target
+        proxy = t.proxy_target
         if victim is None:
             return
 
@@ -503,16 +577,19 @@ class TutorialRunner:
 
         # Pubkey bridge (first key authorized on proxy target)
         for req in t.requires:
-            if isinstance(req, (RandomKeyPair, StaticKeyPair)) and req.user is victim:
-                if proxy in req.authorized_on:
-                    key = session_data.get(req.key_private)
-                    fp  = session_data.get(req.key_fp)
-                    if key:
-                        session_data.setdefault("pubkey_user", uname)
-                        session_data.setdefault("_client_key", key)
-                    if fp:
-                        session_data.setdefault("pubkey_fingerprint", fp)
-                    break
+            if (
+                isinstance(req, (RandomKeyPair, StaticKeyPair))
+                and req.user is victim
+                and proxy in req.authorized_on
+            ):
+                key = session_data.get(req.key_private)
+                fp = session_data.get(req.key_fp)
+                if key:
+                    session_data.setdefault("pubkey_user", uname)
+                    session_data.setdefault("_client_key", key)
+                if fp:
+                    session_data.setdefault("pubkey_fingerprint", fp)
+                break
 
         # None auth fallback
         session_data.setdefault("none_user", uname)
@@ -526,17 +603,17 @@ class TutorialRunner:
             self._mock_stop.set()
             if self._mock_closed:
                 self._mock_closed.wait(timeout=2.0)
-            self._mock_stop   = None
+            self._mock_stop = None
             self._mock_closed = None
         for stop, closed in self._target_stops:
             stop.set()
             closed.wait(timeout=2.0)
         self._target_stops = []
         for host in self._service_hosts:
-            try:
-                host.stop_services()  # type: ignore[union-attr]
-            except Exception:  # noqa: BLE001
-                pass
+            # Best-effort teardown: one host's stop_services() failing must
+            # not prevent the others from being torn down.
+            with contextlib.suppress(Exception):
+                host.stop_services()
         self._service_hosts = []
         self._git_server = None
 
@@ -550,10 +627,13 @@ class TutorialRunner:
 # Helpers
 # ---------------------------------------------------------------------------
 
-def _call_behavior(host: object, method: str, session_data: dict) -> dict | None:
+
+def _call_behavior(
+    host: object, method: str, session_data: dict[str, object]
+) -> dict[str, bytes] | None:
     """Call ``host.method(session_data)`` if the method exists, return result or None."""
     fn = getattr(host, method, None)
     if fn is not None:
         result = fn(session_data)
-        return result if result else None
+        return result or None
     return None

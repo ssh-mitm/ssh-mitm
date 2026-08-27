@@ -9,54 +9,75 @@ the built-in :class:`~sshmitm.tutorial.gitserver.GitServer`.  The session
 data returned contains ``git_server_url`` and ``git_server_port`` so that
 tutorial step templates can reference them.
 """
+
 from __future__ import annotations
 
-import asyncio
-from typing import Any
+from typing import TYPE_CHECKING, ClassVar, TypedDict
 
-import paramiko
-
-from sshmitm.tutorial.hosts import Host, HTTPService, SSHService
+from sshmitm.tutorial.gitserver import (
+    GitCommit,
+    GitRepo,
+    GitServer,
+    GitServerConfig,
+    GitUser,
+)
+from sshmitm.tutorial.hosts import Host, HTTPService, Service, SSHService, User
 from sshmitm.tutorial.hosts.logfile_inc import ApplicationServers, MaxMorgan
 
+if TYPE_CHECKING:
+    import asyncio
+
+    import paramiko
+
+    from sshmitm.tutorial._events import Event
 
 # ── Static git content for Logfile Inc. ───────────────────────────────────
 
-_MMORGAN_REPOS = [
+
+class _RepoData(TypedDict):
+    name: str
+    description: str
+    language: str
+    visibility: str
+    updated: str
+    commits: list[tuple[str, str, str]]
+
+
+_MMORGAN_REPOS: list[_RepoData] = [
     {
-        "name":        "dev-server-config",
+        "name": "dev-server-config",
         "description": "Internal server configuration and deployment scripts",
-        "language":    "YAML",
-        "visibility":  "internal",
-        "updated":     "Updated 3 days ago",
+        "language": "YAML",
+        "visibility": "internal",
+        "updated": "Updated 3 days ago",
         "commits": [
-            ("Update SSH host keys after reinstall",        "mmorgan", "3 days ago"),
-            ("Add Prometheus monitoring config",            "sking",   "1 week ago"),
-            ("Add SSH config template (ForwardAgent yes)",  "lchen",   "3 weeks ago"),
-            ("Initial commit",                              "mmorgan", "3 months ago"),
+            ("Update SSH host keys after reinstall", "mmorgan", "3 days ago"),
+            ("Add Prometheus monitoring config", "sking", "1 week ago"),
+            ("Add SSH config template (ForwardAgent yes)", "lchen", "3 weeks ago"),
+            ("Initial commit", "mmorgan", "3 months ago"),
         ],
     },
     {
-        "name":        "web-app",
+        "name": "web-app",
         "description": "Customer portal (Django)",
-        "language":    "Python",
-        "visibility":  "internal",
-        "updated":     "Updated 2 days ago",
+        "language": "Python",
+        "visibility": "internal",
+        "updated": "Updated 2 days ago",
         "commits": [
             ("Fix login redirect after session timeout", "mmorgan", "2 days ago"),
-            ("Update Django to 4.2.9",                  "mmorgan", "5 days ago"),
-            ("Add rate limiting middleware",             "mmorgan", "2 weeks ago"),
+            ("Update Django to 4.2.9", "mmorgan", "5 days ago"),
+            ("Add rate limiting middleware", "mmorgan", "2 weeks ago"),
         ],
     },
     {
-        "name":        "database-scripts",
+        "name": "database-scripts",
         "description": "Backup and maintenance scripts",
-        "language":    "Shell",
-        "visibility":  "private",
-        "updated":     "Updated 1 week ago",
+        "language": "Shell",
+        "visibility": "private",
+        "updated": "Updated 1 week ago",
         "commits": [
             ("Add weekly snapshot job", "mmorgan", "1 week ago"),
-            ("Fix backup rotation",     "mmorgan", "3 weeks ago"),
+            ("Fix backup rotation", "mmorgan", "3 weeks ago"),
         ],
     },
 ]
@@ -65,12 +86,12 @@ _MMORGAN_REPOS = [
 class LogfileGit(Host):
     """logfilegit.logfileinc.internal — self-hosted Git platform."""
 
-    label    = "logfilegit"
+    label = "logfilegit"
     hostname = "logfilegit.logfileinc.internal"
-    address  = "127.2.0.3"
-    segment  = ApplicationServers
-    users    = [MaxMorgan]
-    services = [
+    address = "127.2.0.3"
+    segment = ApplicationServers
+    users: ClassVar[list[type[User]]] = [MaxMorgan]
+    services: ClassVar[list[Service]] = [
         SSHService(port=20022, auth=["publickey"]),
         HTTPService(port=20443, tls=True),
     ]
@@ -79,22 +100,20 @@ class LogfileGit(Host):
         super().__init__()
         # Registered public keys per user: {username: [(comment, PKey), …]}
         self._public_keys: dict[str, list[tuple[str, paramiko.PKey]]] = {}
-        self._git_server: Any = None
+        self._git_server: GitServer | None = None
 
-    def configure(self, session_data: dict) -> None:
+    def configure(self, session_data: dict[str, object]) -> None:
         for user in self.__class__.users:
             reg_key = f"logfilegit_register_keys_{user.username}"
-            if reg_key in session_data:
-                self._public_keys[user.username] = list(session_data[reg_key])
+            keys = session_data.get(reg_key)
+            if isinstance(keys, list):
+                self._public_keys[user.username] = keys
 
     # ── service ──────────────────────────────────────────────────────────
 
-    def start_services(self, session_data: dict) -> dict:
+    def start_services(self, session_data: dict[str, object]) -> dict[str, object]:
         """Start the HTTP git server and return ``git_server_url`` + ``git_server_port``."""
-        from sshmitm.tutorial.gitserver import (
-            GitCommit, GitRepo, GitServer, GitServerConfig, GitUser,
-        )
-
+        del session_data  # not needed: git content is derived from self._public_keys
         git_users = []
         for user in self.__class__.users:
             pubkeys = [
@@ -103,25 +122,29 @@ class LogfileGit(Host):
             ]
             repos = []
             if user is MaxMorgan:
-                for r in _MMORGAN_REPOS:
-                    repos.append(GitRepo(
-                        name        = r["name"],
-                        description = r["description"],
-                        language    = r["language"],
-                        visibility  = r["visibility"],
-                        updated     = r["updated"],
-                        commits     = [
+                repos = [
+                    GitRepo(
+                        name=r["name"],
+                        description=r["description"],
+                        language=r["language"],
+                        visibility=r["visibility"],
+                        updated=r["updated"],
+                        commits=[
                             GitCommit(msg, author, ts)
                             for msg, author, ts in r["commits"]
                         ],
-                    ))
-            git_users.append(GitUser(
-                username = user.username,
-                fullname = user.full_name,
-                bio      = f"{user.role} @ Logfile Inc.",
-                pubkeys  = pubkeys,
-                repos    = repos,
-            ))
+                    )
+                    for r in _MMORGAN_REPOS
+                ]
+            git_users.append(
+                GitUser(
+                    username=user.username,
+                    fullname=user.full_name,
+                    bio=f"{user.role} @ Logfile Inc.",
+                    pubkeys=pubkeys,
+                    repos=repos,
+                )
+            )
 
         config = GitServerConfig(brand="LogfileGit", users=git_users)
         srv = GitServer(config)
@@ -129,7 +152,7 @@ class LogfileGit(Host):
         self._git_server = srv
         return {
             "git_server_port": srv.port,
-            "git_server_url":  srv.url,
+            "git_server_url": srv.url,
         }
 
     def stop_services(self) -> None:
@@ -137,7 +160,7 @@ class LogfileGit(Host):
 
     # ── lifecycle ─────────────────────────────────────────────────────────
 
-    async def start(self, events: asyncio.Queue) -> None:
+    async def start(self, events: asyncio.Queue[Event]) -> None:
         await super().start(events)
 
     async def stop(self) -> None:

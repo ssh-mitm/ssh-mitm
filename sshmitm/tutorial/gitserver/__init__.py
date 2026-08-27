@@ -37,13 +37,14 @@ Usage::
 
 from __future__ import annotations
 
+import asyncio
 import dataclasses
 import hashlib
 import threading
-from typing import TYPE_CHECKING
 
-if TYPE_CHECKING:
-    pass
+from aiohttp import web
+
+from sshmitm.tutorial.gitserver._server import make_app
 
 
 @dataclasses.dataclass
@@ -62,6 +63,7 @@ class GitCommit:
         Hex SHA shown in the UI.  Auto-computed from *message* and *author*
         if left empty.
     """
+
     message: str
     author: str
     age: str
@@ -70,7 +72,7 @@ class GitCommit:
     def __post_init__(self) -> None:
         if not self.sha:
             raw = f"{self.message}\x00{self.author}".encode()
-            self.sha = hashlib.sha1(raw).hexdigest()[:7]  # noqa: S324
+            self.sha = hashlib.sha1(raw, usedforsecurity=False).hexdigest()[:7]
 
 
 @dataclasses.dataclass
@@ -97,6 +99,7 @@ class GitRepo:
         Ordered list of :class:`GitCommit` objects shown on the repo page
         (most recent first).
     """
+
     name: str
     description: str = ""
     language: str = ""
@@ -125,6 +128,7 @@ class GitUser:
     repos:
         Repositories owned by this user.
     """
+
     username: str
     fullname: str = ""
     bio: str = ""
@@ -145,6 +149,7 @@ class GitServerConfig:
     port:
         TCP port to bind on.  ``0`` lets the OS pick a free port.
     """
+
     users: list[GitUser] = dataclasses.field(default_factory=list)
     brand: str = "LogfileGit"
     port: int = 0
@@ -202,17 +207,16 @@ class GitServer:
     # ------------------------------------------------------------------
 
     def _run(self) -> None:
-        import asyncio
-        from sshmitm.tutorial.gitserver._server import make_app
-
         async def _main() -> None:
-            from aiohttp import web
             app = make_app(self._config)
             runner = web.AppRunner(app, access_log=None)
             await runner.setup()
             site = web.TCPSite(runner, "127.0.0.1", self._config.port)
             await site.start()
-            self._port = site._server.sockets[0].getsockname()[1]  # type: ignore[union-attr]
+            # resolve actual port when port=0 was requested; aiohttp does not
+            # expose this through a public API.
+            server = site._server  # pylint: disable=protected-access
+            self._port = server.sockets[0].getsockname()[1]  # type: ignore[union-attr]
             self._ready.set()
             await asyncio.Event().wait()
 

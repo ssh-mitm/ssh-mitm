@@ -1,3 +1,4 @@
+import contextlib
 import logging
 import os
 import select
@@ -148,6 +149,101 @@ class SSHMirrorForwarder(SSHForwarder):
         self.conn_thread = threading.Thread(target=self.injector_connect)
         self.conn_thread.start()
 
+    def _start_mirror_transport(self) -> paramiko.Transport:
+        """Accept the pending connection on injector_sock and start a server Transport."""
+        self.injector_client_sock, _ = self.injector_sock.accept()
+
+        mirror_transport = paramiko.Transport(self.injector_client_sock)
+        mirror_transport.load_server_moduli()
+        if self.args.ssh_mirrorshell_key:
+            mirror_transport.add_server_key(
+                paramiko.RSAKey(filename=self.args.ssh_mirrorshell_key)
+            )
+        else:
+            mirror_transport.add_server_key(
+                paramiko.RSAKey.generate(bits=self.HOST_KEY_LENGTH)
+            )
+
+        self.inject_server = InjectServer(self.server_channel)
+        event = threading.Event()
+        mirror_transport.start_server(event=event, server=self.inject_server)
+        injector_channel = None
+        while not injector_channel:
+            injector_channel = mirror_transport.accept(0.5)
+        event.wait()
+        return mirror_transport
+
+    @staticmethod
+    def _mirror_banner(client_addr: str) -> bytes:
+        """Banner visible to the mirror client in their terminal."""
+        sep = b"\033[33m" + b"\xe2\x94\x80" * 60 + b"\033[0m\r\n"
+        return (
+            b"\r\n"
+            + sep
+            + b"\033[1;33m  \xf0\x9f\x95\xb5  Mirror session active\033[0m\r\n"
+            + (f"     observer: {client_addr}\r\n".encode() if client_addr else b"")
+            + b"\033[2m     The terminal may appear blank if no data is currently\r\n"
+            + b"     being sent -- the session is connected.\033[0m\r\n"
+            + sep
+            + b"\r\n"
+        )
+
+    def _relay_mirror_session(self, banner: bytes) -> None:
+        """Relay data from the mirror client's channel to the real session, until it closes."""
+        banner_sent = False
+        while True:
+            chan = self.inject_server.injector_channel  # type: ignore[union-attr]
+            if chan is None:
+                time.sleep(0.1)
+                continue
+            if not banner_sent:
+                chan.sendall(banner)
+                banner_sent = True
+            if chan.closed:
+                break
+            if chan.recv_ready():
+                buf = chan.recv(self.BUF_LEN)
+                if not buf:
+                    break
+                self.server_channel.sendall(buf)
+            else:
+                time.sleep(0.1)
+
+    def _handle_mirror_connection(self) -> bool:
+        """Accept and service one mirror-client connection. Returns False to stop polling."""
+        try:
+            mirror_transport = self._start_mirror_transport()
+        except OSError:
+            return False
+
+        client_addr = ""
+        # Set by _start_mirror_transport() above, which just succeeded.
+        assert self.injector_client_sock is not None  # noqa: S101 # nosec B101
+        with contextlib.suppress(OSError):
+            peer = self.injector_client_sock.getpeername()
+            client_addr = f"{peer[0]}:{peer[1]}"
+
+        logging.info(
+            "%s %s",
+            Colors.emoji("sleuth_or_spy"),
+            Colors.stylize(
+                f"mirror client connected{' from ' + client_addr if client_addr else ''}",
+                fg("yellow") + attr("bold"),
+            ),
+        )
+
+        self._relay_mirror_session(self._mirror_banner(client_addr))
+
+        logging.info(
+            "%s %s",
+            Colors.emoji("electric_plug"),
+            Colors.stylize(
+                "mirror client disconnected", fg("light_gray") + attr("bold")
+            ),
+        )
+        del mirror_transport
+        return True
+
     def injector_connect(self) -> None:
         inject_host, inject_port = self.injector_sock.getsockname()
         logging.info(
@@ -161,92 +257,9 @@ class SSHMirrorForwarder(SSHForwarder):
         try:
             while self.session.running:
                 readable = select.select([self.injector_sock], [], [], 0.5)[0]
-                if len(readable) == 1 and readable[0] is self.injector_sock:
-                    try:
-                        self.injector_client_sock, _ = self.injector_sock.accept()
-                    except OSError:
-                        break
-
-                    mirror_transport = paramiko.Transport(self.injector_client_sock)
-                    mirror_transport.load_server_moduli()
-                    if self.args.ssh_mirrorshell_key:
-                        mirror_transport.add_server_key(
-                            paramiko.RSAKey(filename=self.args.ssh_mirrorshell_key)
-                        )
-                    else:
-                        mirror_transport.add_server_key(
-                            paramiko.RSAKey.generate(bits=self.HOST_KEY_LENGTH)
-                        )
-
-                    self.inject_server = InjectServer(self.server_channel)
-                    event = threading.Event()
-                    mirror_transport.start_server(
-                        event=event, server=self.inject_server
-                    )
-                    injector_channel = None
-                    while not injector_channel:
-                        injector_channel = mirror_transport.accept(0.5)
-                    event.wait()
-
-                    client_addr = ""
-                    try:
-                        peer = self.injector_client_sock.getpeername()
-                        client_addr = f"{peer[0]}:{peer[1]}"
-                    except OSError:
-                        pass
-
-                    # Banner visible to the mirror client in their terminal
-                    _SEP = b"\033[33m" + b"\xe2\x94\x80" * 60 + b"\033[0m\r\n"
-                    _banner = (
-                        b"\r\n"
-                        + _SEP
-                        + b"\033[1;33m  \xf0\x9f\x95\xb5  Mirror session active\033[0m\r\n"
-                        + (
-                            f"     observer: {client_addr}\r\n".encode()
-                            if client_addr else b""
-                        )
-                        + b"\033[2m     The terminal may appear blank if no data is currently\r\n"
-                        + b"     being sent -- the session is connected.\033[0m\r\n"
-                        + _SEP
-                        + b"\r\n"
-                    )
-                    logging.info(
-                        "%s %s",
-                        Colors.emoji("sleuth_or_spy"),
-                        Colors.stylize(
-                            f"mirror client connected{' from ' + client_addr if client_addr else ''}",
-                            fg("yellow") + attr("bold"),
-                        ),
-                    )
-
-                    _banner_sent = False
-                    while True:
-                        chan = self.inject_server.injector_channel
-                        if chan is None:
-                            time.sleep(0.1)
-                            continue
-                        if not _banner_sent:
-                            chan.sendall(_banner)
-                            _banner_sent = True
-                        if chan.closed:
-                            break
-                        if chan.recv_ready():
-                            buf = chan.recv(self.BUF_LEN)
-                            if not buf:
-                                break
-                            self.server_channel.sendall(buf)
-                        else:
-                            time.sleep(0.1)
-
-                    logging.info(
-                        "%s %s",
-                        Colors.emoji("electric_plug"),
-                        Colors.stylize(
-                            "mirror client disconnected",
-                            fg("light_gray") + attr("bold"),
-                        ),
-                    )
-
+                is_ready = len(readable) == 1 and readable[0] is self.injector_sock
+                if is_ready and not self._handle_mirror_connection():
+                    break
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception(
                 "mirrorshell - injector connection suffered an unexpected error"

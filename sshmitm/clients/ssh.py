@@ -105,7 +105,7 @@ class SSHClient(BaseSSHClient):
         self.interactive_handler: Callable[..., Any] | None = interactive_handler
         self.interactive_submethods: str = interactive_submethods
 
-    def connect(self) -> bool:  # noqa: C901, PLR0915
+    def connect(self) -> bool:  # noqa: C901
         """
         Connects to the remote host using the specified authentication method.
 
@@ -185,7 +185,7 @@ class SSHClient(BaseSSHClient):
                 raise InvalidHostKey
             self.connected = True
             # return True to force a login
-            return True  # noqa: TRY300
+            return True
 
         except paramiko.SSHException:
             message = "general ssh error"

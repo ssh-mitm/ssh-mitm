@@ -9,22 +9,20 @@ import json
 import logging
 import pathlib
 import re
+import shutil
 import signal
-import subprocess
 import webbrowser
 from datetime import datetime
 from importlib import resources as _resources
-from typing import TYPE_CHECKING
+from importlib.metadata import entry_points
+from typing import ClassVar
 
 from aiohttp import web
 
-from sshmitm.tutorial._definitions import Tutorial
 from sshmitm.tutorial._conditions import has_continue
+from sshmitm.tutorial._definitions import Tutorial
 from sshmitm.tutorial._progress import load_completed, mark_completed
 from sshmitm.tutorial._runner import TutorialRunner, TutorialState
-
-if TYPE_CHECKING:
-    pass
 
 _log = logging.getLogger(__name__)
 _LOGO_PATH = pathlib.Path(__file__).parent.parent / "data" / "ssh-mitm-logo.png"
@@ -35,6 +33,7 @@ _SERVICE_LABELS: dict[str, str] = {
     "git_server": "LogfileGit",
 }
 
+
 def _format_service_name(key: str) -> str:
     for suffix in ("_port", "_url"):
         if key.endswith(suffix):
@@ -44,11 +43,12 @@ def _format_service_name(key: str) -> str:
         name = key
     return _SERVICE_LABELS.get(name, " ".join(w.capitalize() for w in name.split("_")))
 
+
 _STATIC_TYPES: dict[str, tuple[str, str | None]] = {
     "tutorial.html": ("text/html", "utf-8"),
-    "tutorial.css":  ("text/css", "utf-8"),
-    "tutorial.js":   ("application/javascript", "utf-8"),
-    "intro.png":     ("image/png", None),
+    "tutorial.css": ("text/css", "utf-8"),
+    "tutorial.js": ("application/javascript", "utf-8"),
+    "intro.png": ("image/png", None),
 }
 
 
@@ -60,19 +60,21 @@ def _read_static(name: str) -> bytes:
 # Markdown → HTML  (covers what our tutorials actually use)
 # ---------------------------------------------------------------------------
 
+
 def _md_to_html(text: str) -> str:
-    import re
     try:
-        import markdown  # type: ignore[import-untyped]
+        import markdown  # noqa: PLC0415  # pylint: disable=import-outside-toplevel
+
         html = markdown.markdown(text, extensions=["tables", "md_in_html"])
     except ImportError:
-        return text
+        # `markdown` is an optional dependency; fall back to our minimal
+        # hand-rolled renderer rather than showing raw, unrendered markdown.
+        return _simple_md(text)
     return re.sub(
         r'<a href="(https?://[^"]*)"',
         r'<a href="\1" target="_blank" rel="noopener noreferrer"',
         html,
     )
-    return _simple_md(text)
 
 
 def _simple_md(text: str) -> str:
@@ -104,13 +106,13 @@ def _simple_md(text: str) -> str:
 def _inline(text: str) -> str:
     text = _html.escape(text)
     text = re.sub(r"\*\*(.*?)\*\*", r"<strong>\1</strong>", text)
-    text = re.sub(r"`(.*?)`", r"<code>\1</code>", text)
-    return text
+    return re.sub(r"`(.*?)`", r"<code>\1</code>", text)
 
 
 # ---------------------------------------------------------------------------
 # Server
 # ---------------------------------------------------------------------------
+
 
 class TutorialWebServer:
 
@@ -119,18 +121,18 @@ class TutorialWebServer:
         self._selected: Tutorial | None = None
         self._runner: TutorialRunner | None = None
         self._completed: set[str] = load_completed()
-        self._clients: list[asyncio.Queue[dict]] = []
+        self._clients: list[asyncio.Queue[dict[str, object]]] = []
         self._lock = asyncio.Lock()
         self._sshmitm_running = False
         self._loop: asyncio.AbstractEventLoop | None = None
 
     # SSE client management
 
-    async def _add_client(self, q: asyncio.Queue[dict]) -> None:
+    async def _add_client(self, q: asyncio.Queue[dict[str, object]]) -> None:
         async with self._lock:
             self._clients.append(q)
 
-    async def _remove_client(self, q: asyncio.Queue[dict]) -> None:
+    async def _remove_client(self, q: asyncio.Queue[dict[str, object]]) -> None:
         async with self._lock:
             with contextlib.suppress(ValueError):
                 self._clients.remove(q)
@@ -140,7 +142,7 @@ class TutorialWebServer:
         hex_port = f"{port:04X}"
         for path in ("/proc/net/tcp", "/proc/net/tcp6"):
             try:
-                with open(path) as f:
+                with open(path, encoding="utf-8") as f:
                     next(f)
                     for line in f:
                         parts = line.split()
@@ -174,12 +176,13 @@ class TutorialWebServer:
 
     def _broadcast_threadsafe(self, event_type: str, data: object) -> None:
         """Bridge from TutorialRunner threads into the asyncio event loop."""
-        assert self._loop is not None
+        # Set in build_app()'s on_startup before any request can arrive.
+        assert self._loop is not None  # noqa: S101 # nosec B101
         asyncio.run_coroutine_threadsafe(self.broadcast(event_type, data), self._loop)
 
     # State
 
-    def get_state(self) -> dict:
+    def get_state(self) -> dict[str, object]:
         current = self._runner.current_step if self._runner else 0
         steps = []
         if self._selected:
@@ -198,19 +201,25 @@ class TutorialWebServer:
                 if self._runner:
                     hint, hint_type = self._runner.get_step_hint(i)
                 else:
-                    hint, hint_type = (s.hint_done if i < current else s.hint_waiting if i == current else ""), "info"
-                steps.append({
-                    "id": s.id,
-                    "title": s.title,
-                    "content_html": _md_to_html(content),
-                    "command": cmd,
-                    "copyable": copyable,
-                    "hint": hint,
-                    "hint_type": hint_type,
-                    "done": i < current,
-                    "active": self._runner is not None and i == current,
-                    "has_continue": has_continue(s.condition),
-                })
+                    hint, hint_type = (
+                        s.hint_done
+                        if i < current
+                        else s.hint_waiting if i == current else ""
+                    ), "info"
+                steps.append(
+                    {
+                        "id": s.id,
+                        "title": s.title,
+                        "content_html": _md_to_html(content),
+                        "command": cmd,
+                        "copyable": copyable,
+                        "hint": hint,
+                        "hint_type": hint_type,
+                        "done": i < current,
+                        "active": self._runner is not None and i == current,
+                        "has_continue": has_continue(s.condition),
+                    }
+                )
         return {
             "tutorials": [
                 {
@@ -228,7 +237,9 @@ class TutorialWebServer:
             "current_step": current,
             "steps": steps,
             "sshmitm_running": self._sshmitm_running,
-            "user_inputs": self._runner.get_active_user_inputs() if self._runner else [],
+            "user_inputs": (
+                self._runner.get_active_user_inputs() if self._runner else []
+            ),
             "step_ready": self._runner.is_step_ready() if self._runner else False,
             "lab_services": self._build_lab_services(),
         }
@@ -265,7 +276,9 @@ class TutorialWebServer:
     async def submit_all(self, values: dict[str, str]) -> dict[str, bool]:
         if not self._runner:
             return {}
-        results = {key: self._runner.submit_input(key, value) for key, value in values.items()}
+        results = {
+            key: self._runner.submit_input(key, value) for key, value in values.items()
+        }
         await self.broadcast("state", self.get_state())
         return results
 
@@ -277,30 +290,49 @@ class TutorialWebServer:
             return advanced
         return False
 
-    def _build_lab_services(self) -> list[dict]:
+    def _build_lab_services(self) -> list[dict[str, object]]:
         if not self._runner:
             return []
-        labels: dict[str, str] = getattr(self._selected, "lab_service_labels", {}) if self._selected else {}
+        labels: dict[str, str] = (
+            getattr(self._selected, "lab_service_labels", {}) if self._selected else {}
+        )
         services = []
         for key, val in sorted(self._runner.tutorial_session_data.items()):
             if key.endswith("_url"):
-                services.append({"label": labels.get(key, _format_service_name(key)), "value": str(val), "is_url": True})
+                services.append(
+                    {
+                        "label": labels.get(key, _format_service_name(key)),
+                        "value": str(val),
+                        "is_url": True,
+                    }
+                )
             elif key.endswith("_port"):
-                services.append({"label": labels.get(key, _format_service_name(key)), "value": f"127.0.0.1:{val}", "is_url": False})
+                services.append(
+                    {
+                        "label": labels.get(key, _format_service_name(key)),
+                        "value": f"127.0.0.1:{val}",
+                        "is_url": False,
+                    }
+                )
         return services
 
     def _make_runner(self) -> TutorialRunner:
-        assert self._selected is not None
+        # Only called from the "start" action after checking self._selected.
+        assert self._selected is not None  # noqa: S101 # nosec B101
         return TutorialRunner(
             self._selected,
             on_step_complete=self._on_step_complete,
             on_auth_event=self._on_auth_event,
             on_alert=self._on_runner_alert,
-            on_state_update=lambda: self._broadcast_threadsafe("state", self.get_state()),
+            on_state_update=lambda: self._broadcast_threadsafe(
+                "state", self.get_state()
+            ),
         )
 
-    def _on_runner_alert(self, alert: dict) -> None:
-        self._broadcast_threadsafe("alert", {"ts": datetime.now().strftime("%H:%M:%S"), **alert})
+    def _on_runner_alert(self, alert: dict[str, object]) -> None:
+        self._broadcast_threadsafe(
+            "alert", {"ts": datetime.now().astimezone().strftime("%H:%M:%S"), **alert}
+        )
 
     def _on_step_complete(self, _idx: int) -> None:
         if (
@@ -312,11 +344,12 @@ class TutorialWebServer:
             self._completed = load_completed()
         self._broadcast_threadsafe("state", self.get_state())
 
-    _AUTH_METHOD_LABELS = {
-        "password":             "password",
-        "publickey":            "public key",
+    # Display labels, not credentials.
+    _AUTH_METHOD_LABELS: ClassVar[dict[str, str]] = {
+        "password": "password",  # nosec B105
+        "publickey": "public key",
         "keyboard-interactive": "keyboard-interactive",
-        "none":                 "no credentials",
+        "none": "no credentials",
     }
 
     def _on_auth_event(self, method: str, username: str, ok: bool) -> None:
@@ -334,19 +367,25 @@ class TutorialWebServer:
         else:
             title = f"{username} failed {method_label} authentication"
             detail = "The mock server rejected the credentials."
-        self._broadcast_threadsafe("activity", {
-            "source": "mockserver",
-            "type": "success" if ok else "warning",
-            "title": title,
-            "detail": detail,
-            "ts": datetime.now().strftime("%H:%M:%S"),
-        })
+        self._broadcast_threadsafe(
+            "activity",
+            {
+                "source": "mockserver",
+                "type": "success" if ok else "warning",
+                "title": title,
+                "detail": detail,
+                "ts": datetime.now().astimezone().strftime("%H:%M:%S"),
+            },
+        )
 
     # HTTP route handlers
 
     async def _handle_root(self, _request: web.Request) -> web.Response:
-        return web.Response(body=_read_static("tutorial.html"),
-                            content_type="text/html", charset="utf-8")
+        return web.Response(
+            body=_read_static("tutorial.html"),
+            content_type="text/html",
+            charset="utf-8",
+        )
 
     async def _handle_state(self, _request: web.Request) -> web.Response:
         return web.json_response(self.get_state())
@@ -358,14 +397,14 @@ class TutorialWebServer:
         response.headers["X-Accel-Buffering"] = "no"
         await response.prepare(request)
 
-        q: asyncio.Queue[dict] = asyncio.Queue()
+        q: asyncio.Queue[dict[str, object]] = asyncio.Queue()
         await self._add_client(q)
         try:
             await self._sse_write(response, {"type": "state", "data": self.get_state()})
             while True:
                 try:
                     event = await asyncio.wait_for(q.get(), timeout=15)
-                except asyncio.TimeoutError:
+                except TimeoutError:
                     await response.write(b": keepalive\n\n")
                     continue
                 await self._sse_write(response, event)
@@ -385,7 +424,9 @@ class TutorialWebServer:
         if name in _STATIC_TYPES:
             ct, charset = _STATIC_TYPES[name]
             if charset:
-                return web.Response(body=_read_static(name), content_type=ct, charset=charset)
+                return web.Response(
+                    body=_read_static(name), content_type=ct, charset=charset
+                )
             return web.Response(body=_read_static(name), content_type=ct)
         return web.Response(status=404)
 
@@ -402,7 +443,9 @@ class TutorialWebServer:
         return web.json_response({"ok": True})
 
     @staticmethod
-    async def _sse_write(response: web.StreamResponse, event: dict) -> None:
+    async def _sse_write(
+        response: web.StreamResponse, event: dict[str, object]
+    ) -> None:
         await response.write(f"data: {json.dumps(event)}\n\n".encode())
 
     def build_app(self) -> web.Application:
@@ -418,7 +461,7 @@ class TutorialWebServer:
             if self._runner:
                 self._runner.stop()
                 self._runner = None
-            task: asyncio.Task = _app.get("status_task")
+            task: asyncio.Task[None] = _app.get("status_task")
             if task:
                 task.cancel()
                 with contextlib.suppress(asyncio.CancelledError):
@@ -439,14 +482,19 @@ class TutorialWebServer:
 # Entry point
 # ---------------------------------------------------------------------------
 
+
 def _load_tutorials() -> list[Tutorial]:
-    from importlib.metadata import entry_points
     tutorials: list[Tutorial] = []
     for ep in entry_points(group="sshmitm.Tutorial"):
         try:
+            # Third-party entry points can fail for many unpredictable
+            # reasons (bad plugin code, missing deps); one bad plugin must
+            # not prevent the rest from loading.
             cls = ep.load()
-        except Exception:
-            _log.warning("Failed to load tutorial entry point %r", ep.name, exc_info=True)
+        except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
+            _log.warning(
+                "Failed to load tutorial entry point %r", ep.name, exc_info=True
+            )
             continue
         if isinstance(cls, type) and issubclass(cls, Tutorial):
             tutorials.append(cls())
@@ -462,20 +510,29 @@ async def _run_async(port: int, open_browser: bool) -> None:
     site = web.TCPSite(runner, "127.0.0.1", port, shutdown_timeout=0.5)
     await site.start()
 
-    # resolve actual port when port=0 was requested
-    actual_port = site._server.sockets[0].getsockname()[1]  # type: ignore[union-attr]
+    # resolve actual port when port=0 was requested; aiohttp does not expose
+    # this through a public API.
+    server = site._server  # pylint: disable=protected-access
+    actual_port = server.sockets[0].getsockname()[1]  # type: ignore[union-attr]
     url = f"http://127.0.0.1:{actual_port}"
     _log.info("Tutorial server listening on %s", url)
     print(f"SSH-MITM Tutorial  →  {url}")
 
     if open_browser:
-        try:
-            subprocess.Popen(
-                ["xdg-open", url],
-                stdout=subprocess.DEVNULL,
-                stderr=subprocess.DEVNULL,
-            )
-        except FileNotFoundError:
+        xdg_open = shutil.which("xdg-open")
+        opened = False
+        if xdg_open:
+            try:
+                await asyncio.create_subprocess_exec(
+                    xdg_open,
+                    url,
+                    stdout=asyncio.subprocess.DEVNULL,
+                    stderr=asyncio.subprocess.DEVNULL,
+                )
+                opened = True
+            except OSError:
+                opened = False
+        if not opened:
             webbrowser.open(url)
 
     try:
@@ -489,7 +546,5 @@ async def _run_async(port: int, open_browser: bool) -> None:
 def run(port: int = 0, open_browser: bool = True) -> None:
     if hasattr(signal, "SIGHUP"):
         signal.signal(signal.SIGHUP, signal.SIG_IGN)
-    try:
+    with contextlib.suppress(KeyboardInterrupt):
         asyncio.run(_run_async(port, open_browser))
-    except KeyboardInterrupt:
-        pass

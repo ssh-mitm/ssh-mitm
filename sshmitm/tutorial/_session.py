@@ -8,15 +8,16 @@ a mapping of alias → host class, and a list of
 :class:`~sshmitm.tutorial._requirements.Requirement` objects and produces a
 fully configured :class:`ScenarioSession`.
 """
+
 from __future__ import annotations
 
 import asyncio
 from typing import TYPE_CHECKING
 
 if TYPE_CHECKING:
-    from sshmitm.tutorial.hosts import Host, Scenario, User
     from sshmitm.tutorial._events import Event
     from sshmitm.tutorial._requirements import Requirement
+    from sshmitm.tutorial.hosts import Host, Scenario, User
 
 
 class ScenarioSession:
@@ -35,15 +36,15 @@ class ScenarioSession:
 
     def __init__(
         self,
-        hosts:        dict[str, Host],
+        hosts: dict[str, Host],
         host_classes: dict[str, type[Host]],
-        session_data: dict,
+        session_data: dict[str, object],
         sshmitm_port: int,
     ) -> None:
-        self._hosts        = hosts
+        self._hosts = hosts
         self._host_classes = host_classes
-        self.session_data  = session_data
-        self.sshmitm_port  = sshmitm_port
+        self.session_data = session_data
+        self.sshmitm_port = sshmitm_port
         self.events: asyncio.Queue[Event] = asyncio.Queue()
 
     # ── credential accessors ────────────────────────────────────────────
@@ -58,7 +59,7 @@ class ScenarioSession:
 
     # ── template variable export ────────────────────────────────────────
 
-    def template_vars(self) -> dict:
+    def template_vars(self) -> dict[str, object]:
         """Return all variables available in step command/hint templates.
 
         Includes everything from *session_data* plus per-host convenience
@@ -70,19 +71,19 @@ class ScenarioSession:
         * ``{alias}_port_{protocol.lower()}`` — port for each service
         * ``sshmitm_port``
         """
-        vars: dict = dict(self.session_data)
-        vars["sshmitm_port"] = self.sshmitm_port
+        result: dict[str, object] = dict(self.session_data)
+        result["sshmitm_port"] = self.sshmitm_port
         for alias, host in self._hosts.items():
             cls = host.__class__
-            vars[f"{alias}_address"]  = cls.address
-            vars[f"{alias}_hostname"] = cls.hostname
+            result[f"{alias}_address"] = cls.address
+            result[f"{alias}_hostname"] = cls.hostname
             ssh_svc = host.get_service("SSH") or host.get_service("SFTP")
             if ssh_svc:
-                vars[f"{alias}_port"]     = ssh_svc.port
-                vars[f"{alias}_port_ssh"] = ssh_svc.port
+                result[f"{alias}_port"] = ssh_svc.port
+                result[f"{alias}_port_ssh"] = ssh_svc.port
             for svc in cls.services:
-                vars[f"{alias}_port_{svc.protocol.lower()}"] = svc.port
-        return vars
+                result[f"{alias}_port_{svc.protocol.lower()}"] = svc.port
+        return result
 
     # ── lifecycle ───────────────────────────────────────────────────────
 
@@ -117,19 +118,22 @@ class ScenarioGenerator:
     @classmethod
     def build(
         cls,
-        scenario:     type[Scenario] | None,
+        scenario: type[Scenario] | None,
         host_aliases: dict[str, type[Host]],
-        requires:     list[Requirement],
+        requires: list[Requirement],
         sshmitm_port: int,
     ) -> ScenarioSession:
+        # `scenario` is accepted for API/documentation purposes (see the
+        # Tutorial.scenario docstring: "used for documentation and
+        # consistency checks") but no consistency check is implemented yet.
+        del scenario
         # Instantiate each unique host class once.
         host_instances: dict[type[Host], Host] = {
-            host_cls: host_cls()
-            for host_cls in set(host_aliases.values())
+            host_cls: host_cls() for host_cls in set(host_aliases.values())
         }
 
         # Generate all session data.
-        session_data: dict = {}
+        session_data: dict[str, object] = {}
         for req in requires:
             session_data.update(req.generate())
 
@@ -139,13 +143,12 @@ class ScenarioGenerator:
 
         # Map aliases → instances.
         alias_to_instance = {
-            alias: host_instances[cls]
-            for alias, cls in host_aliases.items()
+            alias: host_instances[cls] for alias, cls in host_aliases.items()
         }
 
         return ScenarioSession(
-            hosts        = alias_to_instance,
-            host_classes = host_aliases,
-            session_data = session_data,
-            sshmitm_port = sshmitm_port,
+            hosts=alias_to_instance,
+            host_classes=host_aliases,
+            session_data=session_data,
+            sshmitm_port=sshmitm_port,
         )

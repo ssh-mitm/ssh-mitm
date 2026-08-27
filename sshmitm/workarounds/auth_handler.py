@@ -62,8 +62,11 @@ def _check_pubkey_auth(
     handler: AuthHandler,
     username: str,
     key: PKey,
-    sig_attached: bool = True,  # noqa: ARG001 – kept for frame inspection in check_auth_publickey
+    sig_attached: bool = True,
 ) -> int:
+    # sig_attached is accepted for call-site symmetry with paramiko's
+    # AuthHandler._parse_userauth_request but is not consumed here.
+    del sig_attached
     if handler.transport.server_object is None:
         return AUTH_FAILED
     return handler.transport.server_object.check_auth_publickey(username, key)

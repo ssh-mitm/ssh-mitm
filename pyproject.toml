@@ -189,7 +189,13 @@ addopts = "--ignore=tests/integration"
 target-version = ["py311"]
 
 [tool.flake8]
-ignore = ["E203", "E501", "W503"]
+# E203/W503 conflict with black's formatting; E704 (one-statement-per-line
+# for `def foo(): ...` stubs) is collapsed onto one line by black too, and
+# unlike E203/W503 ruff doesn't implement E704 at all, so it can't be
+# suppressed per-line via `# noqa` without ruff rejecting the unrecognised
+# code (RUF102) — a project-wide ignore is the only option, same rationale
+# as the other two.
+ignore = ["E203", "E501", "E704", "W503"]
 
 [tool.mypy]
 strict = true
@@ -198,6 +204,11 @@ non_interactive = true
 
 [tool.pylint]
 disable = [
+    "cyclic-import",  # sshmitm.tutorial.hosts.logfile_inc: parent package exposes shared
+                      # fixtures (Users/Segments) needed by child host modules, while the
+                      # parent's own host roster lazily imports those same child modules
+                      # (see the `# noqa: PLC0415` local imports in logfile_inc/__init__.py);
+                      # pylint also mis-attributes the finding to an unrelated empty module.
     "duplicate-code",
     "fixme",
     "line-too-long",
@@ -207,6 +218,7 @@ disable = [
     "too-few-public-methods",
     "too-many-branches",
     "too-many-instance-attributes",
+    "too-many-lines",
     "too-many-locals",
     "too-many-positional-arguments",
     "too-many-return-statements",
@@ -218,6 +230,7 @@ ignored-modules = [
     "sshmitm.apps.mosh.hostinput_pb2",
     "sshmitm.apps.mosh.transportinstruction_pb2",
     "sshmitm.apps.mosh.userinput_pb2",
+    "lxml.etree",  # compiled C extension; pylint cannot introspect its members
 ]
 
 [tool.pylint.MASTER]
@@ -229,6 +242,7 @@ ignore = [
     "A005",    # Module shadows a Python standard-library module
     "ANN401",  # Dynamically typed expressions (typing.Any) are disallowed
     "COM812",  # Trailing comma missing
+    "CPY001",  # Missing copyright notice at top of file (project does not use per-file headers)
     "D",       # Docstring related
     "E501",    # Line too long
     "FA100",   # Missing from __future__ import annotations
@@ -241,6 +255,8 @@ ignore = [
     "PLR0911", # Too many return statements
     "PLR0912", # Too many branches
     "PLR0913", # Too many arguments in function definition
+    "PLR0915", # Too many statements (same family as PLR0911/0912, already ignored)
+    "PLR0917", # Too many positional arguments (same family as PLR0913, already ignored)
     "PLR2004", # Magic value used in comparison
     "PTH103",  # `os.makedirs()` should be replaced by `Path.mkdir(parents=True)`
     "PTH107",  # `os.remove()` should be replaced by `Path.unlink()`
@@ -253,6 +269,7 @@ ignore = [
     "S104",    # Possible binding to all interfaces
     "SLF001",  # Private member accessed: `_indent`
     "T201",    # `print` found
+    "TRY300",  # Consider moving statement to an `else` block (same family as TRY301/400, already ignored)
     "TRY301",  # Abstract `raise` to an inner function
     "TRY400",  # Use `logging.exception` instead of `logging.error`
 ]

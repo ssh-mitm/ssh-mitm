@@ -111,7 +111,7 @@ class AgentLocalSocket:
         try:
             agent_sock.connect(sock_path)
             self._bridge(client_sock, agent_sock)
-        except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
+        except Exception:  # pylint: disable=broad-exception-caught
             logging.debug("agent local socket: connection error", exc_info=True)
         finally:
             agent_sock.close()

@@ -25,8 +25,9 @@ import logging
 import os
 import re
 import struct
-from datetime import datetime, timezone
-from typing import IO, TYPE_CHECKING, Generator
+from collections.abc import Generator
+from datetime import UTC, datetime
+from typing import IO, TYPE_CHECKING
 
 from lxml import etree
 from psrpcore._payload import Message, unpack_fragment, unpack_message
@@ -76,20 +77,22 @@ _RUNSPACE_STATES: dict[int, str] = {
 }
 
 # Message types logged at INFO level; all others are DEBUG.
-_INFO_TYPES = frozenset({
-    PSRPMessageType.SessionCapability,
-    PSRPMessageType.InitRunspacePool,
-    PSRPMessageType.RunspacePoolState,
-    PSRPMessageType.CreatePipeline,
-    PSRPMessageType.PipelineState,
-    PSRPMessageType.ErrorRecord,
-    PSRPMessageType.WarningRecord,
-    PSRPMessageType.InformationRecord,
-})
+_INFO_TYPES = frozenset(
+    {
+        PSRPMessageType.SessionCapability,
+        PSRPMessageType.InitRunspacePool,
+        PSRPMessageType.RunspacePoolState,
+        PSRPMessageType.CreatePipeline,
+        PSRPMessageType.PipelineState,
+        PSRPMessageType.ErrorRecord,
+        PSRPMessageType.WarningRecord,
+        PSRPMessageType.InformationRecord,
+    }
+)
 
 # Transcript column widths for human-readable output.
-_COL_DIR = 13    # "client→server" / "server→client"
-_COL_TYPE = 20   # message type name
+_COL_DIR = 13  # "client→server" / "server→client"
+_COL_TYPE = 20  # message type name
 
 
 class _PSRPStreamParser:
@@ -106,7 +109,12 @@ class _PSRPStreamParser:
             last_end = match.end()
             try:
                 raw = bytearray(base64.b64decode(match.group(1)))
-            except Exception:  # pylint: disable=broad-exception-caught
+            except Exception:  # nosec B112  # pylint: disable=broad-exception-caught
+                # The regex only matches a complete <Data>...</Data> element,
+                # so a decode failure here means genuinely malformed content,
+                # not an incomplete in-progress chunk; skip it and keep
+                # reassembling from the next regex match.
+                logging.debug("psrp: malformed base64 chunk in stream", exc_info=True)
                 continue
             if len(raw) < _FRAGMENT_HEADER:
                 continue
@@ -114,8 +122,11 @@ class _PSRPStreamParser:
             if len(raw) < _FRAGMENT_HEADER + blob_len:
                 continue
             try:
-                frag = unpack_fragment(raw[:_FRAGMENT_HEADER + blob_len])
-            except Exception:  # pylint: disable=broad-exception-caught
+                frag = unpack_fragment(raw[: _FRAGMENT_HEADER + blob_len])
+            except Exception:  # nosec B112  # pylint: disable=broad-exception-caught
+                # Malformed/truncated fragment; skip it and keep
+                # reassembling from the next regex match.
+                logging.debug("psrp: malformed fragment in stream", exc_info=True)
                 continue
             if frag.start:
                 self._fragments[frag.object_id] = bytearray()
@@ -145,9 +156,7 @@ def _attr_texts(root: "etree._Element", tag: str, attr: str) -> list[str]:
     return [
         el.text or ""
         for el in root.iter()
-        if etree.QName(el.tag).localname == tag
-        and el.get("N") == attr
-        and el.text
+        if etree.QName(el.tag).localname == tag and el.get("N") == attr and el.text
     ]
 
 
@@ -162,6 +171,31 @@ def _int_attr(root: "etree._Element", tag: str, attr: str) -> int | None:
     return None
 
 
+# Scalar leaf element tags per MS-PSRP CLIXML schema.
+_SCALAR_TAGS = frozenset(
+    {
+        "S",
+        "I8",
+        "I16",
+        "I32",
+        "I64",
+        "U8",
+        "U16",
+        "U32",
+        "U64",
+        "Db",
+        "Dec",
+        "Sg",
+        "B",
+        "C",
+        "SB",
+        "By",
+        "DT",
+        "TS",
+    }
+)
+
+
 def _all_strings(root: "etree._Element") -> list[str]:
     """Collect text of all scalar leaf elements per MS-PSRP CLIXML schema.
 
@@ -169,11 +203,11 @@ def _all_strings(root: "etree._Element") -> list[str]:
     we compare only the local name to stay namespace-agnostic.
     Note: Double is serialised as <Db>, not <Dbl>.
     """
-    _SCALAR_TAGS = frozenset({
-        "S", "I8", "I16", "I32", "I64", "U8", "U16", "U32", "U64",
-        "Db", "Dec", "Sg", "B", "C", "SB", "By", "DT", "TS",
-    })
-    return [el.text for el in root.iter() if etree.QName(el.tag).localname in _SCALAR_TAGS and el.text]
+    return [
+        el.text
+        for el in root.iter()
+        if etree.QName(el.tag).localname in _SCALAR_TAGS and el.text
+    ]
 
 
 class PSRPLoggingForwarder(PowerShellForwarder):
@@ -237,17 +271,30 @@ class PSRPLoggingForwarder(PowerShellForwarder):
         try:
             os.makedirs(transcript_dir, exist_ok=True)
             path = os.path.join(transcript_dir, f"{self.session.sessionid}.log")
-            fh = open(path, "w", encoding="utf-8", buffering=1)  # line-buffered
+            # The handle is intentionally kept open for the lifetime of this
+            # forwarder (closed in forward()'s finally block), so it cannot
+            # be scoped to a `with` block here.
+            fh = open(  # noqa: SIM115  # pylint: disable=consider-using-with
+                path, "w", encoding="utf-8", buffering=1
+            )  # line-buffered
             fh.write(f"# PSRP transcript  session={self.session.sessionid}\n")
-            fh.write(f"# started={datetime.now(tz=timezone.utc).isoformat()}\n")
-            fh.write(f"# {'timestamp':<26}  {'direction':<{_COL_DIR}}  {'type':<{_COL_TYPE}}  detail\n")
+            fh.write(f"# started={datetime.now(tz=UTC).isoformat()}\n")
+            fh.write(
+                f"# {'timestamp':<26}  {'direction':<{_COL_DIR}}  {'type':<{_COL_TYPE}}  detail\n"
+            )
             fh.write("#" + "-" * 100 + "\n")
             logging.info(
-                "psrp: writing transcript to %s", path, extra={"event": "psrp_transcript_open"}
+                "psrp: writing transcript to %s",
+                path,
+                extra={"event": "psrp_transcript_open"},
             )
             return fh
         except OSError:
-            logging.warning("psrp: could not open transcript file in %s", transcript_dir, exc_info=True)
+            logging.warning(
+                "psrp: could not open transcript file in %s",
+                transcript_dir,
+                exc_info=True,
+            )
             return None
 
     def forward(self) -> None:
@@ -255,9 +302,7 @@ class PSRPLoggingForwarder(PowerShellForwarder):
             super().forward()
         finally:
             if self._transcript:
-                self._transcript.write(
-                    f"# ended={datetime.now(tz=timezone.utc).isoformat()}\n"
-                )
+                self._transcript.write(f"# ended={datetime.now(tz=UTC).isoformat()}\n")
                 self._transcript.close()
                 self._transcript = None
 
@@ -274,7 +319,7 @@ class PSRPLoggingForwarder(PowerShellForwarder):
     def _write_transcript(self, direction: str, mtype_name: str, detail: str) -> None:
         if self._transcript is None:
             return
-        ts = datetime.now(tz=timezone.utc).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
+        ts = datetime.now(tz=UTC).strftime("%Y-%m-%dT%H:%M:%S.%f")[:-3] + "Z"
         self._transcript.write(
             f"  {ts}  {direction:<{_COL_DIR}}  {mtype_name:<{_COL_TYPE}}  {detail}\n"
         )
@@ -325,14 +370,18 @@ class PSRPLoggingForwarder(PowerShellForwarder):
 
         elif mtype == PSRPMessageType.PipelineState:
             code = _int_attr(root, "I32", "PipelineState") if root is not None else None
-            state = _PIPELINE_STATES.get(code, str(code)) if code is not None else "unknown"
+            state = (
+                _PIPELINE_STATES.get(code, str(code)) if code is not None else "unknown"
+            )
             extra["state"] = state
             logging.info("psrp %s PipelineState: %s", direction, state, extra=extra)
             self._write_transcript(direction, "PipelineState", state)
 
         elif mtype == PSRPMessageType.RunspacePoolState:
             code = _int_attr(root, "I32", "RunspaceState") if root is not None else None
-            state = _RUNSPACE_STATES.get(code, str(code)) if code is not None else "unknown"
+            state = (
+                _RUNSPACE_STATES.get(code, str(code)) if code is not None else "unknown"
+            )
             extra["state"] = state
             logging.info("psrp %s RunspacePoolState: %s", direction, state, extra=extra)
             self._write_transcript(direction, "RunspacePoolState", state)
@@ -343,5 +392,9 @@ class PSRPLoggingForwarder(PowerShellForwarder):
 
         else:
             logging.debug(
-                "psrp %s %s (%d bytes)", direction, mtype.name, len(xml_bytes), extra=extra
+                "psrp %s %s (%d bytes)",
+                direction,
+                mtype.name,
+                len(xml_bytes),
+                extra=extra,
             )

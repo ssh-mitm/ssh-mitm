@@ -4,14 +4,20 @@ Core network router managed by Thomas Webb.  SNMP is enabled with a read-write
 community string stored in the running configuration.  Thomas's SSH sessions
 tend to stay open for hours.
 """
+
 from __future__ import annotations
 
-import asyncio
+from typing import TYPE_CHECKING, ClassVar
 
 import paramiko
 
-from sshmitm.tutorial.hosts import Host, SNMPService, SSHService
+from sshmitm.tutorial.hosts import Host, Service, SNMPService, SSHService, User
 from sshmitm.tutorial.hosts.logfile_inc import ManagementSegment, ThomasWebb
+
+if TYPE_CHECKING:
+    import asyncio
+
+    from sshmitm.tutorial._events import Event
 
 SHELL_PROMPT = b"router01> "
 
@@ -37,12 +43,12 @@ _HELP_TEXT = (
 class Router01(Host):
     """router01.logfileinc.internal — core network router."""
 
-    label    = "router01"
+    label = "router01"
     hostname = "router01.logfileinc.internal"
-    address  = "127.4.0.1"
-    segment  = ManagementSegment
-    users    = [ThomasWebb]
-    services = [
+    address = "127.4.0.1"
+    segment = ManagementSegment
+    users: ClassVar[list[type[User]]] = [ThomasWebb]
+    services: ClassVar[list[Service]] = [
         SSHService(port=20022, auth=["publickey"]),
         SNMPService(port=20161),
     ]
@@ -50,15 +56,15 @@ class Router01(Host):
     def __init__(self) -> None:
         super().__init__()
         self._authorized_keys: dict[str, list[paramiko.PKey]] = {}
-        self._snmp_secret: str = "public"
+        # Mock SNMP community string fixture default, not a real credential.
+        self._snmp_secret: str = "public"  # noqa: S105 # nosec B105
 
-    def configure(self, session_data: dict) -> None:
+    def configure(self, session_data: dict[str, object]) -> None:
         for user in self.__class__.users:
             auth_key = f"authorize_key_{user.username}"
-            if auth_key in session_data:
-                self._authorized_keys.setdefault(user.username, []).append(
-                    session_data[auth_key]
-                )
+            key = session_data.get(auth_key)
+            if isinstance(key, paramiko.PKey):
+                self._authorized_keys.setdefault(user.username, []).append(key)
         if "router01_snmp_secret" in session_data:
             self._snmp_secret = str(session_data["router01_snmp_secret"])
 
@@ -67,7 +73,7 @@ class Router01(Host):
     def shell_prompt(self) -> bytes:
         return SHELL_PROMPT
 
-    def shell_outputs(self, session_data: dict) -> dict[str, bytes]:
+    def shell_outputs(self, session_data: dict[str, object]) -> dict[str, bytes]:
         secret = str(session_data.get("router01_snmp_secret", self._snmp_secret))
         running_config = (
             f"# router01 running configuration\r\n"
@@ -132,7 +138,7 @@ class Router01(Host):
             "traceroute 127.4.0.254": b" 1  127.4.0.254  0.9 ms\r\n",
         }
 
-    def sftp_files(self, session_data: dict) -> dict[str, bytes]:
+    def sftp_files(self, session_data: dict[str, object]) -> dict[str, bytes]:
         secret = str(session_data.get("router01_snmp_secret", self._snmp_secret))
         config = (
             f"# router01 configuration\r\n"
@@ -146,7 +152,7 @@ class Router01(Host):
 
     # ── lifecycle ────────────────────────────────────────────────────────
 
-    async def start(self, events: asyncio.Queue) -> None:
+    async def start(self, events: asyncio.Queue[Event]) -> None:
         await super().start(events)
 
     async def stop(self) -> None:

@@ -69,7 +69,10 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
     """
 
     _kb_interactive_bridge: KeyboardInteractiveBridge | None = None
-    _kb_interactive_prompts: list[tuple[str, bool]] = []
+    # Deliberately not ClassVar: always reassigned (never mutated in place)
+    # to a fresh per-instance list at lines below; ClassVar would conflict
+    # with those instance assignments under mypy.
+    _kb_interactive_prompts: list[tuple[str, bool]] = []  # noqa: RUF012
 
     @classmethod
     def parser_arguments(cls) -> None:
@@ -201,7 +204,10 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
             logging.info(
                 "got ssh command: %s",
                 command.decode("utf8"),
-                extra={"event": "channel_ssh_command", "command": command.decode("utf8")},
+                extra={
+                    "event": "channel_ssh_command",
+                    "command": command.decode("utf8"),
+                },
             )
 
             handler_entry = ExecHandlerRegistry.get_exec_handler(
@@ -304,7 +310,10 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
                 logging.info(
                     "Remote auth-methods: %s",
                     str(self.possible_auth_methods),
-                    extra={"event": "remote_auth_methods", "methods": self.possible_auth_methods},
+                    extra={
+                        "event": "remote_auth_methods",
+                        "methods": self.possible_auth_methods,
+                    },
                 )
             except paramiko.ssh_exception.SSHException as ex:
                 self.session.remote.address_reachable = False
@@ -328,11 +337,15 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
         kb_interactive_disabled = getattr(
             self.args, "disable_keyboard_interactive_auth", False
         )
-        if not kb_interactive_disabled and (unknown or "keyboard-interactive" in remote or self.args.enable_trivial_auth):
+        if not kb_interactive_disabled and (
+            unknown or "keyboard-interactive" in remote or self.args.enable_trivial_auth
+        ):
             allowed_auths.append("keyboard-interactive")
 
         accept_first = getattr(self.args, "accept_first_publickey", False)
-        if not self.args.disable_pubkey_auth and (unknown or "publickey" in remote or accept_first):
+        if not self.args.disable_pubkey_auth and (
+            unknown or "publickey" in remote or accept_first
+        ):
             allowed_auths.append("publickey")
 
         if not self.args.disable_password_auth and (unknown or "password" in remote):
@@ -475,7 +488,10 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
 
         hide = getattr(self.args, "auth_hide_credentials", False)
         prompts = self._kb_interactive_prompts
-        round_pairs = list(zip([p for p, _ in prompts], responses))
+        # strict=False: a misbehaving/adversarial client may legitimately
+        # send a different number of responses than prompts; truncate
+        # rather than raising.
+        round_pairs = list(zip([p for p, _ in prompts], responses, strict=False))
         self.session.auth.kbdint_responses.extend(round_pairs)
         logging.info(
             "auth_kbdint_response",
@@ -722,7 +738,9 @@ class ServerInterface(BaseServerInterface):  # pylint: disable=too-many-public-m
                 ).handler,
             )
         except paramiko.ssh_exception.SSHException:
-            logging.info("TCP forwarding request denied", extra={"event": "port_forward_denied"})
+            logging.info(
+                "TCP forwarding request denied", extra={"event": "port_forward_denied"}
+            )
             return False
 
     def cancel_port_forward_request(self, address: str, port: int) -> None:
@@ -847,7 +865,8 @@ class ProxySFTPServer(paramiko.SFTPServer):
 
         t, data = self._read_packet()  # type: ignore[attr-defined]
         if t != CMD_INIT:
-            raise SFTPError("Incompatible sftp protocol")  # noqa: TRY003,EM101
+            err_msg = "Incompatible sftp protocol"
+            raise SFTPError(err_msg)
         version = struct.unpack(">I", data[:4])[0]
         msg = Message()
         msg.add_int(_VERSION)
@@ -870,7 +889,7 @@ class ProxySFTPServer(paramiko.SFTPServer):
                     return
                 self.session.sftp.client.subsystem_count += 1
                 super().start_subsystem(name, transport, channel)
-            except Exception:  # pylint: disable=broad-exception-caught # noqa: BLE001
+            except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
                 logging.error("failed to start sftp subsystem - closing subsystem")
 
     def finish_subsystem(self) -> None:

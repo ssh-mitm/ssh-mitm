@@ -1,12 +1,12 @@
+import io
 import logging
 import os
 import select
 import sys
 import threading
 import time
-import io
 from binascii import hexlify
-from dataclasses import dataclass, field
+from dataclasses import dataclass
 from pathlib import Path
 from socket import socket
 
@@ -25,7 +25,6 @@ from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
 from sshmitm.console import sshconsole
 from sshmitm.exceptions import KeyGenerationError
-from sshmitm.state import get_state_dir
 from sshmitm.forwarders.agent import (
     AgentBaseForwarder,
     AgentForwarder,
@@ -56,8 +55,8 @@ from sshmitm.moduleparser.colors import Colors
 from sshmitm.multisocket import create_server_sock
 from sshmitm.plugins.session import key_negotiation
 from sshmitm.session import Session
+from sshmitm.state import get_state_dir
 from sshmitm.utils import SSHPubKey
-
 
 _ALGO_CLASS: dict[str, type[PKey]] = {
     "rsa": RSAKey,
@@ -153,10 +152,7 @@ class SSHProxyServer:
 
         self.setup_host_keys()
 
-    def print_serverinfo(self, json_log: bool = False) -> None:
-        if not self._host_key_entries:
-            return
-
+    def _host_key_entries_data(self) -> list[dict[str, object]]:
         entries_data = []
         for entry in self._host_key_entries:
             pub = SSHPubKey(entry.key)
@@ -166,92 +162,111 @@ class SSHProxyServer:
             else:
                 origin = "temporary"
                 location = ""
-            entries_data.append({
-                "origin": origin,
-                "location": location,
-                "algorithm": type(entry.key).__name__,
-                "bits": entry.key.get_bits(),
-                "md5": pub.hash_md5(),
-                "sha256": pub.hash_sha256(),
-                "sha512": pub.hash_sha512(),
-            })
+            entries_data.append(
+                {
+                    "origin": origin,
+                    "location": location,
+                    "algorithm": type(entry.key).__name__,
+                    "bits": entry.key.get_bits(),
+                    "md5": pub.hash_md5(),
+                    "sha256": pub.hash_sha256(),
+                    "sha512": pub.hash_sha512(),
+                }
+            )
+        return entries_data
+
+    def _log_serverinfo_json(self, entries_data: list[dict[str, object]]) -> None:
+        logging.info(
+            "ssh-mitm server info",
+            extra={
+                "serverinfo": {
+                    "host_keys": entries_data,
+                    "listen_address": self.listen_address,
+                    "listen_port": self.listen_port,
+                    "transparent_mode": self.transparent,
+                }
+            },
+        )
+
+    @staticmethod
+    def _print_flatpak_warning() -> None:
+        # "container" (lowercase) is a third-party convention set by the
+        # container runtime itself (podman/toolbx), not ours to capitalize.
+        if not os.environ.get("container"):  # noqa: SIM112
+            return
+        rich_print("[bold red]:exclamation: You are executing SSH-MITM as Flatpak")
+        rich_print(
+            "Without further configuration, SSH-MITM can only access Flatpaks default data directory"
+        )
+        app_data = os.path.expanduser("~/.var/app/at.ssh_mitm.server/data/")
+        folder_link = f"[link=file://{app_data}]{app_data}[/link]"
+        rich_print(f"[bold]Data directory:[/bold] {folder_link}")
+        rich_print(
+            ":light_bulb: If you need access to other files and directories, you can use [link=https://flathub.org/apps/com.github.tchx84.Flatseal]Flatseal[/link] to reconfigure SSH-MITM."
+        )
+        sshconsole.rule(characters=".", style="bright_black")
+
+    @staticmethod
+    def _print_host_keys_console(entries_data: list[dict[str, object]]) -> None:
+        rich_print("[bold blue]:key: SSH-Host-Keys:[/bold blue]")
+        for d in entries_data:
+            if d["origin"] == "temporary":
+                rich_print(
+                    f"   [yellow]:warning: {d['algorithm']} {d['bits']} bit — temporary (not persisted, changes on every restart)[/yellow]"
+                )
+            elif d["origin"] == "generated":
+                rich_print(
+                    f"   [green]:floppy_disk: {d['algorithm']} {d['bits']} bit — generated, saved to[/green] [bold]{d['location']}[/bold]"
+                )
+            else:
+                rich_print(
+                    f"   [green]:white_check_mark: {d['algorithm']} {d['bits']} bit — loaded from[/green] [bold]{d['location']}[/bold]"
+                )
+            sha256 = Colors.stylize(d["sha256"], fg("light_blue") + attr("bold"))
+            md5 = Colors.stylize(d["md5"], fg("light_blue") + attr("bold"))
+            print(f"      ├─ {sha256}\n      └─ {md5}")
+        sshconsole.rule(characters=".", style="bright_black")
+
+    def _print_serverinfo_console(self, entries_data: list[dict[str, object]]) -> None:
+        print("\33]0;SSH-MITM - ssh audits made simple\a", end="", flush=True)
+        sshconsole.rule("[bold blue]SSH-MITM - ssh audits made simple", style="blue")
+        if self.debug:
+            rich_print(f"[bold]Version:[/bold] {ssh_mitm_version}")
+            rich_print("[bold]License:[/bold] GNU General Public License v3.0")
+
+        rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
+        rich_print("[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues")
+        sshconsole.rule("[blue]Configuration", style="blue")
+
+        self._print_flatpak_warning()
+        self._print_host_keys_console(entries_data)
+
+        servericon = Colors.emoji("computer")
+        print(
+            f"{servericon} listen interfaces {self.listen_address} "
+            f"on port {self.listen_port}"
+        )
+        if self.transparent:
+            rich_print(
+                ":exclamation: Transparent mode enabled [red bold](experimental)"
+            )
+        if self.debug:
+            rich_print("[bold red]:exclamation: Debug mode enabled")
+        rich_print(
+            ":mortar_board: [bold]New to SSH-MITM?[/bold] Run [bold cyan]ssh-mitm tutorial[/bold cyan] for an interactive, browser-based introduction."
+        )
+        sshconsole.rule("[red]waiting for connections", style="red")
+
+    def print_serverinfo(self, json_log: bool = False) -> None:
+        if not self._host_key_entries:
+            return
+
+        entries_data = self._host_key_entries_data()
 
         if json_log or not sys.stdout.isatty():
-            logging.info("ssh-mitm server info", extra={"serverinfo": {
-                "host_keys": entries_data,
-                "listen_address": self.listen_address,
-                "listen_port": self.listen_port,
-                "transparent_mode": self.transparent,
-            }})
+            self._log_serverinfo_json(entries_data)
         else:
-            print("\33]0;SSH-MITM - ssh audits made simple\a", end="", flush=True)
-            sshconsole.rule(
-                "[bold blue]SSH-MITM - ssh audits made simple", style="blue"
-            )
-            if self.debug:
-                rich_print(f"[bold]Version:[/bold] {ssh_mitm_version}")
-                rich_print("[bold]License:[/bold] GNU General Public License v3.0")
-
-            rich_print("[bold]Documentation:[/bold] https://docs.ssh-mitm.at")
-            rich_print(
-                "[bold]Issues:[/bold] https://github.com/ssh-mitm/ssh-mitm/issues"
-            )
-            sshconsole.rule("[blue]Configuration", style="blue")
-
-            if os.environ.get("container"):  # noqa: SIM112
-                rich_print(
-                    "[bold red]:exclamation: You are executing SSH-MITM as Flatpak"
-                )
-                rich_print(
-                    "Without further configuration, SSH-MITM can only access Flatpaks default data directory"
-                )
-                app_data = os.path.expanduser("~/.var/app/at.ssh_mitm.server/data/")
-                folder_link = f"[link=file://{app_data}]{app_data}[/link]"
-                rich_print(f"[bold]Data directory:[/bold] {folder_link}")
-                rich_print(
-                    ":light_bulb: If you need access to other files and directories, you can use [link=https://flathub.org/apps/com.github.tchx84.Flatseal]Flatseal[/link] to reconfigure SSH-MITM."
-                )
-                sshconsole.rule(characters=".", style="bright_black")
-
-            rich_print("[bold blue]:key: SSH-Host-Keys:[/bold blue]")
-            for d in entries_data:
-                if d["origin"] == "temporary":
-                    rich_print(
-                        f"   [yellow]:warning: {d['algorithm']} {d['bits']} bit — temporary (not persisted, changes on every restart)[/yellow]"
-                    )
-                elif d["origin"] == "generated":
-                    rich_print(
-                        f"   [green]:floppy_disk: {d['algorithm']} {d['bits']} bit — generated, saved to[/green] [bold]{d['location']}[/bold]"
-                    )
-                else:
-                    rich_print(
-                        f"   [green]:white_check_mark: {d['algorithm']} {d['bits']} bit — loaded from[/green] [bold]{d['location']}[/bold]"
-                    )
-                print(  # pylint: disable=consider-using-f-string
-                    "      ├─ {sha256}\n"
-                    "      └─ {md5}".format(
-                        sha256=Colors.stylize(d["sha256"], fg("light_blue") + attr("bold")),
-                        md5=Colors.stylize(d["md5"], fg("light_blue") + attr("bold")),
-                    )
-                )
-            sshconsole.rule(characters=".", style="bright_black")
-            print(
-                "{servericon} listen interfaces {listen_address} on port {listen_port}".format(
-                    servericon=Colors.emoji("computer"),
-                    listen_address=self.listen_address,
-                    listen_port=self.listen_port,
-                )
-            )
-            if self.transparent:
-                rich_print(
-                    ":exclamation: Transparent mode enabled [red bold](experimental)"
-                )
-            if self.debug:
-                rich_print("[bold red]:exclamation: Debug mode enabled")
-            rich_print(
-                ":mortar_board: [bold]New to SSH-MITM?[/bold] Run [bold cyan]ssh-mitm tutorial[/bold cyan] for an interactive, browser-based introduction."
-            )
-            sshconsole.rule("[red]waiting for connections", style="red")
+            self._print_serverinfo_console(entries_data)
 
     def setup_host_keys(self) -> None:
         if not self._key_algorithms:
@@ -274,21 +289,31 @@ class SSHProxyServer:
             key_path = Path(explicit_path)
             if key_path.is_file():
                 key = self._load_pkey(key_path)
-                self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=False))
+                self._host_key_entries.append(
+                    HostKeyEntry(key=key, path=key_path, was_generated=False)
+                )
             else:
                 key = self._generate_and_persist_pkey(algo, key_path)
-                self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=True))
+                self._host_key_entries.append(
+                    HostKeyEntry(key=key, path=key_path, was_generated=True)
+                )
         elif state_dir is not None:
             key_path = state_dir / _ALGO_STATE_FILE[algo]
             if key_path.is_file():
                 key = self._load_pkey(key_path)
-                self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=False))
+                self._host_key_entries.append(
+                    HostKeyEntry(key=key, path=key_path, was_generated=False)
+                )
             else:
                 key = self._generate_and_persist_pkey(algo, key_path)
-                self._host_key_entries.append(HostKeyEntry(key=key, path=key_path, was_generated=True))
+                self._host_key_entries.append(
+                    HostKeyEntry(key=key, path=key_path, was_generated=True)
+                )
         else:
             key = self._generate_temp_pkey(algo)
-            self._host_key_entries.append(HostKeyEntry(key=key, path=None, was_generated=True))
+            self._host_key_entries.append(
+                HostKeyEntry(key=key, path=None, was_generated=True)
+            )
 
     def _generate_and_persist_pkey(self, algo: str, key_path: Path) -> PKey:
         key_path.parent.mkdir(parents=True, exist_ok=True)
@@ -411,13 +436,10 @@ class SSHProxyServer:
         try:
             session_args, _ = self.session_class.parser().parse_known_args()
             return int(getattr(session_args, "max_connections", 100))
-        except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+        except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
             return 100
 
-    def start(self) -> None:
-        self._clean_environment()
-        sock: socket | None = None
-
+    def _create_listen_socket(self) -> socket | None:
         try:
             sock = create_server_sock(
                 (self.listen_address, self.listen_port),
@@ -439,35 +461,70 @@ class SSHProxyServer:
                     "%s - unknown error",
                     Colors.stylize("error creating socket!", fg("red") + attr("bold")),
                 )
-            return
+            return None
         if sock is None:
             logging.error(
                 "%s", Colors.stylize("error creating socket!", fg("red") + attr("bold"))
             )
+        return sock
+
+    def _accept_one(self, sock: socket) -> None:
+        client, addr = sock.accept()
+        remoteaddr = client.getsockname()
+        self._threads = [t for t in self._threads if t.is_alive()]
+        max_connections = self._resolve_max_connections()
+        if max_connections and len(self._threads) >= max_connections:
+            logging.warning(
+                "max connections reached (%d), rejecting connection from %s",
+                max_connections,
+                addr,
+            )
+            client.close()
+        else:
+            thread = threading.Thread(
+                target=self.create_session, args=(client, addr, remoteaddr)
+            )
+            thread.start()
+            self._threads.append(thread)
+
+    def _accept_loop(self, sock: socket) -> None:
+        while self.running:
+            readable = select.select([sock], [], [], self.SELECT_TIMEOUT)[0]
+            if len(readable) == 1 and readable[0] is sock:
+                self._accept_one(sock)
+
+    def _shutdown(self, sock: socket | None) -> None:
+        self.running = False
+        logging.info(
+            "%s %s",
+            Colors.emoji("exclamation"),
+            Colors.stylize("Shutting down server ...", fg("red")),
+        )
+        if sock is not None:
+            sock.close()
+        shutdown_timeout = 30
+        deadline = time.monotonic() + shutdown_timeout
+        for thread in list(self._threads):
+            wait = max(0.0, deadline - time.monotonic())
+            thread.join(timeout=wait)
+        still_alive = [t for t in self._threads if t.is_alive()]
+        if still_alive:
+            logging.warning(
+                "%d session thread(s) did not stop within %ds, forcing exit",
+                len(still_alive),
+                shutdown_timeout,
+            )
+            os._exit(os.EX_OK)
+
+    def start(self) -> None:
+        self._clean_environment()
+        sock = self._create_listen_socket()
+        if sock is None:
             return
 
         self.running = True
         try:
-            while self.running:
-                readable = select.select([sock], [], [], self.SELECT_TIMEOUT)[0]
-                if len(readable) == 1 and readable[0] is sock:
-                    client, addr = sock.accept()
-                    remoteaddr = client.getsockname()
-                    self._threads = [t for t in self._threads if t.is_alive()]
-                    max_connections = self._resolve_max_connections()
-                    if max_connections and len(self._threads) >= max_connections:
-                        logging.warning(
-                            "max connections reached (%d), rejecting connection from %s",
-                            max_connections,
-                            addr,
-                        )
-                        client.close()
-                    else:
-                        thread = threading.Thread(
-                            target=self.create_session, args=(client, addr, remoteaddr)
-                        )
-                        thread.start()
-                        self._threads.append(thread)
+            self._accept_loop(sock)
         except KeyboardInterrupt:
             self.running = False
             if sys.stdout.isatty():
@@ -476,27 +533,7 @@ class SSHProxyServer:
         except Exception:  # pylint: disable=broad-exception-caught
             logging.exception("Error creating socket!")
         finally:
-            self.running = False
-            logging.info(
-                "%s %s",
-                Colors.emoji("exclamation"),
-                Colors.stylize("Shutting down server ...", fg("red")),
-            )
-            if sock is not None:
-                sock.close()
-            shutdown_timeout = 30
-            deadline = time.monotonic() + shutdown_timeout
-            for thread in list(self._threads):
-                wait = max(0.0, deadline - time.monotonic())
-                thread.join(timeout=wait)
-            still_alive = [t for t in self._threads if t.is_alive()]
-            if still_alive:
-                logging.warning(
-                    "%d session thread(s) did not stop within %ds, forcing exit",
-                    len(still_alive),
-                    shutdown_timeout,
-                )
-                os._exit(os.EX_OK)
+            self._shutdown(sock)
 
     def create_session(
         self,
@@ -533,7 +570,6 @@ class SSHProxyServer:
                             scp_interface = interface_class(session)
                             thread = threading.Thread(target=scp_interface.forward)
                             thread.start()
-
 
                 else:
                     logging.warning("(%s) session not started", session)

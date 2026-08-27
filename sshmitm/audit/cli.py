@@ -24,7 +24,7 @@ def perform_cve_2023_25136(args: argparse.Namespace) -> bool:
         transport.connect(username="", password="")  # nosec
     except paramiko.ssh_exception.AuthenticationException:
         return False
-    except Exception:  # pylint: disable=broad-exception-caught # noqa: BLE001
+    except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
         # catch all exceptions to avoid applicaiton crashes
         logging.error("error executing check for CVE-2023-25136")
     return True
@@ -66,11 +66,11 @@ def _gssapi_server_auth_methods(host: str, port: int, timeout: float) -> list[st
             transport.auth_none("__probe__")
         except paramiko.BadAuthenticationType as exc:
             return list(exc.allowed_types)
-        except Exception:  # pylint: disable=broad-exception-caught # noqa: BLE001
+        except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
             return []
         finally:
             transport.close()
-    except Exception:  # pylint: disable=broad-exception-caught # noqa: BLE001
+    except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
         return []
     return []
 
@@ -120,8 +120,14 @@ def _gssapi_probe_user(host: str, port: int, username: str, timeout: float) -> s
                 result["value"] = _GSSAPIProbeResult.NOT_FOUND
             event.set()
 
-        auth_handler._parse_userauth_info_request = on_gssapi_response  # type: ignore[method-assign]
-        auth_handler._parse_userauth_failure = on_failure  # type: ignore[method-assign]
+        # pylint: disable-next=protected-access
+        auth_handler._parse_userauth_info_request = (  # type: ignore[attr-defined]
+            on_gssapi_response
+        )
+        # pylint: disable-next=protected-access
+        auth_handler._parse_userauth_failure = (  # type: ignore[attr-defined]
+            on_failure
+        )
 
         # Manual SSH_MSG_USERAUTH_REQUEST (RFC 4252 §5 + RFC 4462 §3.2):
         #   byte    50  SSH2_MSG_USERAUTH_REQUEST
@@ -137,7 +143,9 @@ def _gssapi_probe_user(host: str, port: int, username: str, timeout: float) -> s
         message.add_string("gssapi-with-mic")
         message.add_int(1)
         message.add_string(_KRB5_OID)
-        transport._send_message(message)  # type: ignore[attr-defined]
+        transport._send_message(  # type: ignore[attr-defined]  # pylint: disable=protected-access
+            message
+        )
 
         if not event.wait(timeout=timeout):
             transport.close()
@@ -146,7 +154,7 @@ def _gssapi_probe_user(host: str, port: int, username: str, timeout: float) -> s
         transport.close()
         return result["value"] or _GSSAPIProbeResult.ERROR
 
-    except Exception:  # pylint: disable=broad-exception-caught # noqa: BLE001
+    except Exception:  # noqa: BLE001 # pylint: disable=broad-exception-caught
         return _GSSAPIProbeResult.ERROR
 
 
@@ -168,7 +176,9 @@ def _load_usernames(args: argparse.Namespace) -> list[str]:
 _DEFAULT_VERIFY_USERS: Final = ("root", "daemon")
 
 
-def _check_gssapi_available(console: Console, host: str, port: int, timeout: float) -> list[str]:
+def _check_gssapi_available(
+    console: Console, host: str, port: int, timeout: float
+) -> list[str]:
     console.print(f"[bold]Connecting to {host}:{port} ...[/bold]")
     methods = _gssapi_server_auth_methods(host, port, timeout)
     if not methods:
@@ -262,7 +272,9 @@ def perform_gssapi_usercheck_verify_patch(args: argparse.Namespace) -> None:
     for username in [*usernames, control_user]:
         probe_result = _gssapi_probe_user(args.host, args.port, username, args.timeout)
         results[username] = probe_result
-        label = username if username != control_user else f"{username} [dim](control)[/dim]"
+        label = (
+            username if username != control_user else f"{username} [dim](control)[/dim]"
+        )
         table.add_row(label, _probe_result_label(probe_result))
 
     console.print(table)

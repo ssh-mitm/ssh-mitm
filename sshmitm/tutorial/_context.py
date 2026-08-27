@@ -3,6 +3,27 @@
 from __future__ import annotations
 
 import dataclasses
+import re
+
+
+def as_int(value: object, default: int = 0) -> int:
+    """Best-effort int coercion for a tutorial session-data value.
+
+    Session-data values are stored as ``object`` (the dict is heterogeneous),
+    but keys like ``"sshmitm_port"`` are always populated with an ``int`` by
+    the runner.  This narrows the type for mypy without silencing the
+    checker; *default* is returned only for a missing/non-numeric value.
+    """
+    if isinstance(value, bool):
+        return int(value)
+    if isinstance(value, int):
+        return value
+    if isinstance(value, str):
+        try:
+            return int(value)
+        except ValueError:
+            return default
+    return default
 
 
 @dataclasses.dataclass
@@ -91,7 +112,7 @@ class TutorialContext:
         hex_port = f"{port:04X}"
         for path in ("/proc/net/tcp", "/proc/net/tcp6"):
             try:
-                with open(path) as f:
+                with open(path, encoding="utf-8") as f:
                     next(f)
                     for line in f:
                         parts = line.split()
@@ -109,12 +130,10 @@ class TutorialContext:
 
     def has_auth_event(self, method: str, success: bool) -> bool:
         return any(
-            e.method == method and e.success == success
-            for e in self.auth_events
+            e.method == method and e.success == success for e in self.auth_events
         )
 
     def has_sftp_event(self, operation: str, path_pattern: str | None = None) -> bool:
-        import re
         for e in self.sftp_events:
             if e.operation != operation:
                 continue
@@ -123,12 +142,10 @@ class TutorialContext:
         return False
 
     def has_shell_input(self, pattern: str) -> bool:
-        import re
         return any(
             re.search(pattern, e.data.decode("utf-8", errors="replace"))
             for e in self.shell_input_events
         )
 
     def has_exec_command(self, pattern: str) -> bool:
-        import re
         return any(re.search(pattern, e.command) for e in self.exec_command_events)

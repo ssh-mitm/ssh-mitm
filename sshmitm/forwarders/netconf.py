@@ -74,7 +74,7 @@ plugin is :class:`sshmitm.plugins.netconf.log_session.NetconfLoggingForwarder`.
 
 import logging
 import time
-import xml.etree.ElementTree as ET
+import xml.etree.ElementTree as ET  # nosec B405 - see usages below for rationale
 
 import paramiko
 
@@ -99,7 +99,10 @@ def _parse_hello(raw: bytes) -> frozenset[str]:
     if not xml_bytes:
         return frozenset()
     try:
-        root = ET.fromstring(xml_bytes)
+        # xml.etree.ElementTree does not resolve external entities/DTDs, so
+        # unlike lxml it is not vulnerable to classic XXE attacks; parsing
+        # intercepted NETCONF traffic is inherent to this MITM forwarder.
+        root = ET.fromstring(xml_bytes)  # noqa: S314  # nosec B314
     except ET.ParseError:
         logging.warning("NETCONF: failed to parse <hello> XML")
         return frozenset()
@@ -199,7 +202,9 @@ class NetconfBaseForwarder(ExecForwarder):
     # Framing readers
     # ------------------------------------------------------------------
 
-    def _read_eom(self, chan: paramiko.Channel, initial: bytes, deadline: float) -> bytes:
+    def _read_eom(
+        self, chan: paramiko.Channel, initial: bytes, deadline: float
+    ) -> bytes:
         """Read until the ``]]>]]>`` EOM terminator.
 
         *initial* holds bytes already read from the channel.
@@ -217,7 +222,9 @@ class NetconfBaseForwarder(ExecForwarder):
             buf += chunk
         return buf
 
-    def _read_chunked_after_lf_hash(self, chan: paramiko.Channel, deadline: float) -> bytes:
+    def _read_chunked_after_lf_hash(
+        self, chan: paramiko.Channel, deadline: float
+    ) -> bytes:
         r"""Read the remainder of an RFC 6242 chunked message.
 
         Called after the leading ``\n#`` bytes have been consumed.
@@ -275,7 +282,9 @@ class NetconfBaseForwarder(ExecForwarder):
                 msg = f"Expected # in NETCONF chunk delimiter, got {hash_byte!r}"
                 raise ValueError(msg)
 
-    def read_netconf_message(self, chan: paramiko.Channel, timeout: float | None = None) -> bytes:
+    def read_netconf_message(
+        self, chan: paramiko.Channel, timeout: float | None = None
+    ) -> bytes:
         r"""Read one complete NETCONF message from *chan*.
 
         Framing is detected automatically from the first two bytes:
@@ -352,9 +361,11 @@ class NetconfBaseForwarder(ExecForwarder):
         )
         logging.info(
             "NETCONF framing negotiated: %s",
-            "chunked (RFC 6242 :base:1.1)"
-            if self.session.netconf.use_chunked
-            else "EOM (RFC 4742 :base:1.0)",
+            (
+                "chunked (RFC 6242 :base:1.1)"
+                if self.session.netconf.use_chunked
+                else "EOM (RFC 4742 :base:1.0)"
+            ),
         )
 
     def _read_rpc_message(self, chan: paramiko.Channel) -> bytes:
@@ -375,16 +386,15 @@ class NetconfBaseForwarder(ExecForwarder):
                 msg = f"Expected # for chunked framing, got {h!r}"
                 raise ValueError(msg)
             return b"\n#" + self._read_chunked_after_lf_hash(chan, deadline)
-        else:
-            remaining = deadline - time.monotonic()
-            if remaining <= 0:
-                msg = "Timeout reading NETCONF EOM message"
-                raise TimeoutError(msg)
-            chan.settimeout(remaining)
-            first = chan.recv(1)
-            if not first:
-                return b""
-            return self._read_eom(chan, first, deadline)
+        remaining = deadline - time.monotonic()
+        if remaining <= 0:
+            msg = "Timeout reading NETCONF EOM message"
+            raise TimeoutError(msg)
+        chan.settimeout(remaining)
+        first = chan.recv(1)
+        if not first:
+            return b""
+        return self._read_eom(chan, first, deadline)
 
     # ------------------------------------------------------------------
     # Framing encode/decode (Phase 3 helpers)
@@ -417,7 +427,8 @@ class NetconfBaseForwarder(ExecForwarder):
         if not xml:
             return None
         try:
-            root = ET.fromstring(xml)
+            # See rationale on the ET.fromstring call in _parse_hello above.
+            root = ET.fromstring(xml)  # noqa: S314  # nosec B314
         except ET.ParseError:
             return None
         if root.tag not in (f"{{{_NETCONF_NS}}}rpc", "rpc"):
@@ -439,7 +450,8 @@ class NetconfBaseForwarder(ExecForwarder):
         if not xml:
             return None
         try:
-            root = ET.fromstring(xml)
+            # See rationale on the ET.fromstring call in _parse_hello above.
+            root = ET.fromstring(xml)  # noqa: S314  # nosec B314
         except ET.ParseError:
             return None
         if root.tag not in (f"{{{_NETCONF_NS}}}rpc-reply", "rpc-reply"):
@@ -450,11 +462,8 @@ class NetconfBaseForwarder(ExecForwarder):
     # RPC hooks — override in subclasses / plugins (Phase 3)
     # ------------------------------------------------------------------
 
-    def handle_rpc_request(
-        self,
-        message_id: str,
-        operation: str,
-        element: ET.Element,
+    def handle_rpc_request(  # pylint: disable=useless-return
+        self, message_id: str, operation: str, element: ET.Element
     ) -> ET.Element | None:
         """Called for each client RPC after the ``<hello>`` exchange.
 
@@ -466,12 +475,14 @@ class NetconfBaseForwarder(ExecForwarder):
         forward the original bytes unchanged.  The default implementation
         always returns ``None``.
         """
+        del message_id, operation, element
+        # Explicit return required: mypy strict mode flags "Missing return
+        # statement" for a function typed `-> X | None` without one, even
+        # though pylint considers it redundant.
         return None
 
-    def handle_rpc_reply(
-        self,
-        message_id: str,
-        element: ET.Element,
+    def handle_rpc_reply(  # pylint: disable=useless-return
+        self, message_id: str, element: ET.Element
     ) -> ET.Element | None:
         """Called for each server RPC reply after the ``<hello>`` exchange.
 
@@ -482,6 +493,7 @@ class NetconfBaseForwarder(ExecForwarder):
         forward the original bytes unchanged.  The default implementation
         always returns ``None``.
         """
+        del message_id, element
         return None
 
     # ------------------------------------------------------------------
@@ -495,7 +507,12 @@ class NetconfBaseForwarder(ExecForwarder):
         if parsed is None:
             return data
         message_id, operation, element = parsed
-        modified = self.handle_rpc_request(message_id, operation, element)
+        # pylint infers "always None" from this base class's own
+        # implementation; subclasses/plugins may override it to return a
+        # real Element (see NetconfLoggingForwarder for an example).
+        modified = self.handle_rpc_request(  # pylint: disable=assignment-from-none
+            message_id, operation, element
+        )
         if modified is None:
             return data
         return self._apply_framing(
@@ -509,7 +526,9 @@ class NetconfBaseForwarder(ExecForwarder):
         if parsed is None:
             return data
         message_id, element = parsed
-        modified = self.handle_rpc_reply(message_id, element)
+        modified = self.handle_rpc_reply(  # pylint: disable=assignment-from-none
+            message_id, element
+        )
         if modified is None:
             return data
         return self._apply_framing(
@@ -528,13 +547,77 @@ class NetconfForwarder(NetconfBaseForwarder):
     docstring for a full list of known limitations before using this class.
     """
 
-    def forward(self) -> None:  # noqa: C901,PLR0915
+    def _pump_client_to_server(self, client_channel: paramiko.Channel) -> None:
+        if client_channel.recv_ready():
+            buf = self._read_rpc_message(client_channel)
+            if buf:
+                self.session.netconf.command = buf
+                buf = self.handle_client_data(buf)
+                self.sendall(self.server_channel, buf, self.server_channel.send)
 
-        # pylint: disable=protected-access
-        if self.session.ssh.pty_kwargs is not None:
-            self.server_channel.get_pty(**self.session.ssh.pty_kwargs)
+    def _pump_server_to_client(self, client_channel: paramiko.Channel) -> None:
+        if self.server_channel.recv_ready():
+            buf = self._read_rpc_message(self.server_channel)
+            if buf:
+                logging.info(
+                    "received response: %s [command=%s]",
+                    buf.decode("utf-8", errors="replace"),
+                    self.session.netconf.command,
+                )
+                buf = self.handle_server_data(buf)
+                self.sendall(client_channel, buf, client_channel.send)
 
-        # Guard against EOF that arrived before the loop starts.
+    def _pump_stderr(self, client_channel: paramiko.Channel) -> None:
+        if client_channel.recv_stderr_ready():
+            buf = self.handle_error(client_channel.recv_stderr(self.BUF_LEN))
+            self.sendall(self.server_channel, buf, self.server_channel.send_stderr)
+        if self.server_channel.recv_stderr_ready():
+            buf = self.handle_error(self.server_channel.recv_stderr(self.BUF_LEN))
+            self.sendall(client_channel, buf, client_channel.send_stderr)
+
+    def _check_exit_status(self, client_channel: paramiko.Channel) -> bool:
+        """Handle exit-status-ready on either channel. Returns True if the loop should stop."""
+        if self.server_channel.exit_status_ready():
+            logging.debug("Exit from server ready")
+            status = self.server_channel.recv_exit_status()
+            self.server_exit_code_received = True
+            self.close_session_with_status(client_channel, status)
+            logging.info(
+                "remote netconf command '%s' exited with code: %s",
+                self.session.netconf.command.decode("utf-8", errors="replace"),
+                status,
+            )
+            time.sleep(0.1)
+            return True
+        if client_channel.exit_status_ready():
+            logging.debug("Exit from client ready")
+            self.client_exit_code_received = True
+            client_channel.recv_exit_status()
+            self.close_session(client_channel)
+            return True
+        return False
+
+    def _check_closed_or_eof(self, client_channel: paramiko.Channel) -> bool:
+        """Handle closed/EOF on either channel. Returns True if the loop should stop."""
+        if self._closed(client_channel):
+            logging.info("client channel closed")
+            self.server_channel.close()
+            self.close_session(client_channel)
+            return True
+        if self._closed(self.server_channel):
+            logging.info("server channel closed")
+            self.close_session(client_channel)
+            return True
+        if client_channel.eof_received:
+            logging.debug("client channel eof received")
+            self.server_channel.shutdown_write()
+        if self.server_channel.eof_received:
+            logging.debug("server channel eof received")
+            client_channel.shutdown_write()
+        return False
+
+    def _guard_pre_loop_eof(self) -> None:
+        """Handle EOF that arrived on either channel before the poll loop starts."""
         if self.client_channel is not None and self.client_channel.eof_received:
             logging.debug("client channel eof received")
             self.server_channel.shutdown_write()
@@ -543,6 +626,12 @@ class NetconfForwarder(NetconfBaseForwarder):
             if self.client_channel is not None:
                 self.client_channel.shutdown_write()
 
+    def forward(self) -> None:
+        # pylint: disable=protected-access
+        if self.session.ssh.pty_kwargs is not None:
+            self.server_channel.get_pty(**self.session.ssh.pty_kwargs)
+
+        self._guard_pre_loop_eof()
         self.server_channel.invoke_subsystem("netconf")
         self._handle_hello_exchange()
 
@@ -551,74 +640,16 @@ class NetconfForwarder(NetconfBaseForwarder):
                 if self.client_channel is None:
                     msg = "No Netconf Channel available!"
                     raise ValueError(msg)
+                client_channel = self.client_channel
 
-                if self.client_channel.recv_ready():
-                    buf = self._read_rpc_message(self.client_channel)
-                    if buf:
-                        self.session.netconf.command = buf
-                        buf = self.handle_client_data(buf)
-                        self.sendall(self.server_channel, buf, self.server_channel.send)
+                self._pump_client_to_server(client_channel)
+                self._pump_server_to_client(client_channel)
+                self._pump_stderr(client_channel)
 
-                if self.server_channel.recv_ready():
-                    buf = self._read_rpc_message(self.server_channel)
-                    if buf:
-                        logging.info(
-                            "received response: %s [command=%s]",
-                            buf.decode("utf-8", errors="replace"),
-                            self.session.netconf.command,
-                        )
-                        buf = self.handle_server_data(buf)
-                        self.sendall(self.client_channel, buf, self.client_channel.send)
-
-                if self.client_channel.recv_stderr_ready():
-                    buf = self.client_channel.recv_stderr(self.BUF_LEN)
-                    buf = self.handle_error(buf)
-                    self.sendall(
-                        self.server_channel, buf, self.server_channel.send_stderr
-                    )
-                if self.server_channel.recv_stderr_ready():
-                    buf = self.server_channel.recv_stderr(self.BUF_LEN)
-                    buf = self.handle_error(buf)
-                    self.sendall(
-                        self.client_channel,
-                        buf,
-                        self.client_channel.send_stderr,
-                    )
-
-                if self.server_channel.exit_status_ready():
-                    logging.debug("Exit from server ready")
-                    status = self.server_channel.recv_exit_status()
-                    self.server_exit_code_received = True
-                    self.close_session_with_status(self.client_channel, status)
-                    logging.info(
-                        "remote netconf command '%s' exited with code: %s",
-                        self.session.netconf.command.decode("utf-8", errors="replace"),
-                        status,
-                    )
-                    time.sleep(0.1)
+                if self._check_exit_status(client_channel):
                     break
-                if self.client_channel.exit_status_ready():
-                    logging.debug("Exit from client ready")
-                    self.client_exit_code_received = True
-                    self.client_channel.recv_exit_status()
-                    self.close_session(self.client_channel)
+                if self._check_closed_or_eof(client_channel):
                     break
-
-                if self._closed(self.client_channel):
-                    logging.info("client channel closed")
-                    self.server_channel.close()
-                    self.close_session(self.client_channel)
-                    break
-                if self._closed(self.server_channel):
-                    logging.info("server channel closed")
-                    self.close_session(self.client_channel)
-                    break
-                if self.client_channel.eof_received:
-                    logging.debug("client channel eof received")
-                    self.server_channel.shutdown_write()
-                if self.server_channel.eof_received:
-                    logging.debug("server channel eof received")
-                    self.client_channel.shutdown_write()
 
                 time.sleep(0.1)
         except TimeoutError:

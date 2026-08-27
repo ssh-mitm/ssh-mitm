@@ -1,35 +1,45 @@
 """Base classes for scenario assets: users, segments, services, hosts, scenarios."""
+
 from __future__ import annotations
 
-import asyncio
 from typing import TYPE_CHECKING, ClassVar
 
 if TYPE_CHECKING:
+    import asyncio
+
     from sshmitm.tutorial._events import Event
 
 
 # ── Users ──────────────────────────────────────────────────────────────────
 
+
 class User:
     """A person who appears in the scenario."""
-    username:  ClassVar[str] = ""
+
+    username: ClassVar[str] = ""
     full_name: ClassVar[str] = ""
-    role:      ClassVar[str] = ""
+    role: ClassVar[str] = ""
 
 
 # ── Segments ───────────────────────────────────────────────────────────────
 
+
 class Segment:
     """A network segment in the lab topology."""
-    name:   ClassVar[str] = ""
+
+    name: ClassVar[str] = ""
     subnet: ClassVar[str] = ""
 
 
 # ── Services ───────────────────────────────────────────────────────────────
 
+
 class Service:
     """A single network service on a host."""
-    protocol: ClassVar[str] = ""
+
+    # Not a ClassVar: HTTPService overrides it per-instance (see below) based
+    # on the `tls` argument.
+    protocol: str = ""
 
     def __init__(self, port: int) -> None:
         self.port = port
@@ -46,9 +56,6 @@ class SSHService(Service):
 class SFTPService(Service):
     protocol = "SFTP"
 
-    def __init__(self, port: int) -> None:
-        super().__init__(port)
-
 
 class HTTPService(Service):
     protocol = "HTTP"
@@ -63,18 +70,13 @@ class HTTPService(Service):
 class SNMPService(Service):
     protocol = "SNMP"
 
-    def __init__(self, port: int) -> None:
-        super().__init__(port)
-
 
 class PostgreSQLService(Service):
     protocol = "PostgreSQL"
 
-    def __init__(self, port: int) -> None:
-        super().__init__(port)
-
 
 # ── Host ───────────────────────────────────────────────────────────────────
+
 
 class Host:
     """A mock server in the scenario.
@@ -83,11 +85,12 @@ class Host:
     the host; override :meth:`configure`, :meth:`start`, and :meth:`stop` to
     provide mock behaviour.
     """
-    label:    ClassVar[str] = ""
+
+    label: ClassVar[str] = ""
     hostname: ClassVar[str] = ""
-    address:  ClassVar[str] = ""
-    segment:  ClassVar[type[Segment] | None] = None
-    users:    ClassVar[list[type[User]]] = []
+    address: ClassVar[str] = ""
+    segment: ClassVar[type[Segment] | None] = None
+    users: ClassVar[list[type[User]]] = []
     services: ClassVar[list[Service]] = []
 
     def __init__(self) -> None:
@@ -108,7 +111,7 @@ class Host:
 
     # ── lifecycle ───────────────────────────────────────────────────────
 
-    def configure(self, session_data: dict) -> None:
+    def configure(self, session_data: dict[str, object]) -> None:
         """Inject session values (passwords, keys, secrets) before start."""
 
     async def start(self, events: asyncio.Queue[Event]) -> None:
@@ -122,7 +125,7 @@ class Host:
 
     # ── additional services (non-SSH) ──────────────────────────────────
 
-    def start_services(self, session_data: dict) -> dict:
+    def start_services(self, session_data: dict[str, object]) -> dict[str, object]:
         """Start any non-SSH services (HTTP, Git, SNMP, …) for this host.
 
         Called synchronously by the runner.  Returns additional session
@@ -131,6 +134,9 @@ class Host:
 
         Override in hosts that run supplemental services alongside SSH.
         """
+        # session_data is part of the override contract for hosts that run
+        # supplemental services; unused in the default no-op implementation.
+        del session_data
         return {}
 
     def stop_services(self) -> None:
@@ -145,8 +151,10 @@ class Host:
 
 # ── Scenario ───────────────────────────────────────────────────────────────
 
+
 class Scenario:
     """Groups the hosts and users that belong to one assessment scenario."""
-    name:  ClassVar[str] = ""
+
+    name: ClassVar[str] = ""
     users: ClassVar[list[type[User]]] = []
     hosts: ClassVar[list[type[Host]]] = []

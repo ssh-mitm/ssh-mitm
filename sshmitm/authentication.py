@@ -107,7 +107,9 @@ class PublicKeyEnumerator:
     def _rsa_algorithm(self) -> str:
         if self.transport is None:
             return "rsa-sha2-512"
-        server_sig_algs = self.transport.server_extensions.get(
+        # server_extensions exists on paramiko.Transport at runtime but is
+        # missing from the types-paramiko stub.
+        server_sig_algs = self.transport.server_extensions.get(  # type: ignore[attr-defined]
             "server-sig-algs", b""
         ).decode()
         for algo in ("rsa-sha2-512", "rsa-sha2-256", "ssh-rsa"):

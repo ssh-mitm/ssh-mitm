@@ -27,10 +27,12 @@ Example — common configurations::
 from __future__ import annotations
 
 import dataclasses
+from typing import TYPE_CHECKING
 
-import paramiko
+if TYPE_CHECKING:
+    import paramiko
 
-from sshmitm.mockserver._interfaces import KbdintRound
+    from sshmitm.mockserver._interfaces import KbdintRound
 
 
 @dataclasses.dataclass
@@ -40,6 +42,7 @@ class PasswordAuth:
     ``password=None`` generates a random credential at tutorial start.
     The generated value is stored in ``credentials["password_value"]``.
     """
+
     password: str | None = None
 
 
@@ -51,6 +54,7 @@ class PublicKeyAuth:
     The generated key is stored internally; the fingerprint is available
     as ``credentials["pubkey_fingerprint"]``.
     """
+
     key: paramiko.PKey | None = None
 
 
@@ -62,6 +66,7 @@ class KeyboardInteractiveAuth:
     of prompts and the expected answers.  Multi-round sequences simulate MFA
     flows (e.g. OTP followed by a password).
     """
+
     rounds: list[KbdintRound] = dataclasses.field(default_factory=list)
 
 
@@ -89,6 +94,7 @@ class UserConfig:
     For tutorials with multiple users of the same auth type, set an explicit
     *username* and reference it directly in your step content/commands.
     """
+
     username: str | None = None
     auth: AuthConfig = dataclasses.field(default_factory=PasswordAuth)
 
@@ -101,9 +107,8 @@ class MockServerConfig:
     the majority of tutorial scenarios — most tutorials do not need to set
     this attribute at all.
     """
-    users: list[UserConfig] = dataclasses.field(
-        default_factory=lambda: [UserConfig()]
-    )
+
+    users: list[UserConfig] = dataclasses.field(default_factory=lambda: [UserConfig()])
     subsystems: list[str] = dataclasses.field(default_factory=lambda: ["sftp"])
     allow_shell: bool = True
     allow_exec: bool = True
@@ -130,6 +135,7 @@ class TargetServerConfig:
     port:
         TCP port to listen on.  ``0`` lets the OS pick a free port.
     """
+
     name: str
     users: list[UserConfig] = dataclasses.field(default_factory=list)
     port: int = 0
