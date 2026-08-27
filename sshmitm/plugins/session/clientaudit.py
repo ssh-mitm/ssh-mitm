@@ -4,9 +4,9 @@ from collections import defaultdict
 from typing import TYPE_CHECKING, Any, cast
 
 from colored.colored import attr, fg
-from packaging import version
 from paramiko import ECDSAKey
 
+from packaging import version
 from sshmitm.moduleparser.colors import Colors
 from sshmitm.plugins.session.server_host_key_algorithms import (
     SERVER_HOST_KEY_ALGORITHMS,
