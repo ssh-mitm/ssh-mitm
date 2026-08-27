@@ -123,6 +123,8 @@ docs = ["doc/requirements.txt"]
 [tool.hatch.build]
 include = [
     "requirements.in",
+    "requirements-build.txt",
+    "packaging",
     "sshmitm/**/*.py",
     "sshmitm/data/*.*",
     "sshmitm/apps/mosh/*.*",

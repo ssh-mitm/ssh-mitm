@@ -39,4 +39,5 @@ By the end of this chapter, you will have a comprehensive understanding of the d
    auth-testing
    scenario
    scenario_framework
+   reproducible-builds
    changelog
