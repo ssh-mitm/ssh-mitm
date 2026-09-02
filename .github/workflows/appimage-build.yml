@@ -57,6 +57,17 @@ jobs:
         name: debug-mksquashfs
         path: /tmp/mksq-build/squashfs-tools/squashfs-tools/mksquashfs
         retention-days: 1
+    - name: DEBUG AppDir content manifest
+      run: |
+        cd build/AppDir
+        find . -type f -exec sha256sum {} \; | sort -k2 > /tmp/appdir-manifest.txt
+        wc -l /tmp/appdir-manifest.txt
+    - name: DEBUG upload AppDir manifest
+      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
+      with:
+        name: debug-manifest
+        path: /tmp/appdir-manifest.txt
+        retention-days: 1
     - name: Generate checksums
       run: |
         cd dist
