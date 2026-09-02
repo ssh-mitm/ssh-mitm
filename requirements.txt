@@ -10,8 +10,6 @@ aiohttp==3.14.3
     # via -r requirements.in
 aiosignal==1.4.0
     # via aiohttp
-appimage==2.0.1
-    # via -r requirements.in
 argcomplete==3.7.2
     # via -r requirements.in
 attrs==26.1.0

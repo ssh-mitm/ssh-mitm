@@ -1,5 +1,5 @@
 [build-system]
-requires = ["hatchling", "hatch-requirements-txt"]
+requires = ["hatchling==1.32.0", "hatch-requirements-txt==0.4.1"]
 build-backend = "hatchling.build"
 
 [project]
@@ -167,18 +167,37 @@ build = [
     "sphinx-build doc build/html",
 ]
 
-[tool.appimage.build]
+[tool.appimage]
+build_pylock = "pylock.build.toml"
+
+python_date = "20260901"
+python_sha256 = "64427febea27864d136db46c8efe968eb6fa5ca2813ce1dca4bb95aec31cb2e4"
+pylock = "pylock.toml"
+
+app = "ssh-mitm"
+entry_point = "ssh-mitm"
+python = "3.11"
+icon = "appimage/ssh-mitm.png"
+desktop = "appimage/ssh-mitm.desktop"
+appimagetool_version = "appimagetool, continuous build (git version 8c8c91f), build 295 built on 2025-12-04 17:56:36 UTC"
+appimagetool_sha256 = "a6d71e2b6cd66f8e8d16c37ad164658985e0cf5fcaa950c90a482890cb9d13e0"
+runtime_sha256 = "1cc49bcf1e2ccd593c379adb17c9f85a36d619088296504de95b1d06215aebbf"
+appimagectl_version = "3.0.0"
 extras = ["production"]
-python_date = "20260211"
 update_info = "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync"
+appimage_version = "3.0.0"
+appimage_sha256 = "f2a2a6d0e4e927c069f9b012e62682a84b6157324acb69692b4c3a23da08f783"
+reproducible = true
+verify_downloads = true
+require_zsyncmake = true
 
 [tool.hatch.envs.appimage]
 detached = false
-dependencies = ["appimage>=2.0.0"]
+dependencies = ["appimage>=3.0.0"]
 
 [tool.hatch.envs.appimage.scripts]
 build = [
-    "python -m appimage.build",
+    "python -m appimage.ctl",
 ]
 
 [tool.pytest.ini_options]

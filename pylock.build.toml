@@ -1,0 +1,79 @@
+lock-version = "1.0"
+created-by = "pip"
+
+[[packages]]
+name = "hatch-requirements-txt"
+version = "0.4.1"
+
+[[packages.wheels]]
+name = "hatch_requirements_txt-0.4.1-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/98/a3/9a71667d284dff0e5d1c95b99b2383bbfcfc120843209522f8054055c0bb/hatch_requirements_txt-0.4.1-py3-none-any.whl"
+
+[packages.wheels.hashes]
+sha256 = "13c6ab7707cbc0aba128b3626dacae4be7065f1dbafc792461c9f547b3c3ffde"
+
+[[packages]]
+name = "hatchling"
+version = "1.32.0"
+
+[[packages.wheels]]
+name = "hatchling-1.32.0-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/a9/84/1798b6d85ecde0e31546004efd25c5de1b1f49250644a60cce460e12593a/hatchling-1.32.0-py3-none-any.whl"
+
+[packages.wheels.hashes]
+sha256 = "0e17c9c3b9aa7c625acc8d0f5b622f107d5049af9ecf5ada4de1aada5be7cdbc"
+
+[[packages]]
+name = "packaging"
+version = "26.3"
+
+[[packages.wheels]]
+name = "packaging-26.3-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/63/34/ba1c580383c9eada3711951fef0795c80b829a078d72188184bcab9dd527/packaging-26.3-py3-none-any.whl"
+
+[packages.wheels.hashes]
+sha256 = "d7193f7c8e4e93f444fde0262bf90af30e16fa0ad0ad44cb553c87339b23cd1c"
+
+[[packages]]
+name = "pathspec"
+version = "1.1.1"
+
+[[packages.wheels]]
+name = "pathspec-1.1.1-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/f1/d9/7fb5aa316bc299258e68c73ba3bddbc499654a07f151cba08f6153988714/pathspec-1.1.1-py3-none-any.whl"
+
+[packages.wheels.hashes]
+sha256 = "a00ce642f577bf7f473932318056212bc4f8bfdf53128c78bbd5af0b9b20b189"
+
+[[packages]]
+name = "pluggy"
+version = "1.6.0"
+
+[[packages.wheels]]
+name = "pluggy-1.6.0-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/54/20/4d324d65cc6d9205fabedc306948156824eb9f0ee1633355a8f7ec5c66bf/pluggy-1.6.0-py3-none-any.whl"
+
+[packages.wheels.hashes]
+sha256 = "e920276dd6813095e9377c0bc5566d94c932c33b27a3e3945d8389c374dd4746"
+
+[[packages]]
+name = "tomlkit"
+version = "0.15.1"
+
+[[packages.wheels]]
+name = "tomlkit-0.15.1-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/13/bc/8c13eb66537dce1d2bd3a57132902f38d0e7f5bb46fa9f4daed9fe9d76ee/tomlkit-0.15.1-py3-none-any.whl"
+
+[packages.wheels.hashes]
+sha256 = "177a05aece5a8ca5266fd3c448abb47b8d352f09d477d3ca8332db4d89b24304"
+
+[[packages]]
+name = "trove-classifiers"
+version = "2026.6.1.19"
+
+[[packages.wheels]]
+name = "trove_classifiers-2026.6.1.19-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/7c/a4/81502f486f01db95bc8320646a8a12511f5e556cb63d5e224d91816605c4/trove_classifiers-2026.6.1.19-py3-none-any.whl"
+
+[packages.wheels.hashes]
+sha256 = "ab4c4ec93cc4a4e7815fa759906e05e6bb3f2fbd92ea0f897288c6a43efd15b3"
