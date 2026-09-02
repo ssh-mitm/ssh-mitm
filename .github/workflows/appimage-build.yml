@@ -14,8 +14,6 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
-    - name: DEBUG cpu flags
-      run: grep '^flags' /proc/cpuinfo | head -1 | tr ' ' '\n' | grep -E '^(bmi1|bmi2|avx2|avx512|sse2|sse4)'
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
     - name: Set up Python
       uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
@@ -27,25 +25,6 @@ jobs:
         python -m pip install hatch
     - name: Build AppImage
       run: hatch run appimage:build
-    - name: DEBUG sorted+single-threaded rebuild for repro investigation
-      run: |
-        nproc
-        find build/AppDir -mindepth 1 | sed "s|^build/AppDir/||" | sort > /tmp/sortfile-paths.txt
-        python3 -c "
-        paths = [l.rstrip(chr(10)) for l in open('/tmp/sortfile-paths.txt')]
-        with open('/tmp/sortfile.txt', 'w') as out:
-            for i, p in enumerate(paths, start=1):
-                escaped = p.replace(chr(92), chr(92)*2).replace(' ', chr(92)+' ')
-                out.write(f'{escaped} {i}' + chr(10))
-        "
-        chmod +x build/appimagetool-x86_64.AppImage
-        SOURCE_DATE_EPOCH=0 build/appimagetool-x86_64.AppImage \
-          --runtime-file build/runtime-x86_64 \
-          -u "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync" \
-          --mksquashfs-opt "-sort" --mksquashfs-opt "/tmp/sortfile.txt" \
-          --mksquashfs-opt "-processors" --mksquashfs-opt "1" \
-          build/AppDir /tmp/ssh-mitm-sorted.AppImage
-        sha256sum /tmp/ssh-mitm-sorted.AppImage
     - name: Generate checksums
       run: |
         cd dist
