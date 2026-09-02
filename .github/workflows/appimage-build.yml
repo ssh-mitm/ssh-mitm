@@ -60,13 +60,18 @@ jobs:
     - name: DEBUG AppDir content manifest
       run: |
         cd build/AppDir
-        find . -type f -exec sha256sum {} \; | sort -k2 > /tmp/appdir-manifest.txt
-        wc -l /tmp/appdir-manifest.txt
+        find . -type f -exec sha256sum {} \; | LC_ALL=C sort -k2 > /tmp/appdir-manifest.txt
+        find . -type l -exec sh -c 'printf "%s -> %s\n" "$1" "$(readlink "$1")"' _ {} \; | LC_ALL=C sort > /tmp/appdir-symlinks.txt
+        find . -mindepth 1 -exec sh -c 'stat -c "%A %U:%G %n" "$1"' _ {} \; | LC_ALL=C sort -k3 > /tmp/appdir-perms.txt
+        wc -l /tmp/appdir-manifest.txt /tmp/appdir-symlinks.txt /tmp/appdir-perms.txt
     - name: DEBUG upload AppDir manifest
       uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
       with:
         name: debug-manifest
-        path: /tmp/appdir-manifest.txt
+        path: |
+          /tmp/appdir-manifest.txt
+          /tmp/appdir-symlinks.txt
+          /tmp/appdir-perms.txt
         retention-days: 1
     - name: Generate checksums
       run: |
