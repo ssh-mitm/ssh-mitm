@@ -32,7 +32,7 @@ jobs:
         wget -q https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
         tar xzf zstd-1.5.7.tar.gz
         make -C zstd-1.5.7/lib -j"$(nproc)" libzstd.a
-        git clone --quiet --depth 1 https://github.com/plougher/squashfs-tools.git
+        git clone --quiet --depth 1 --branch 4.6.1 https://github.com/plougher/squashfs-tools.git
         cd squashfs-tools/squashfs-tools
         make -j"$(nproc)" GZIP_SUPPORT=0 XZ_SUPPORT=0 LZO_SUPPORT=0 LZ4_SUPPORT=0 ZSTD_SUPPORT=1 COMP_DEFAULT=zstd \
           EXTRA_CFLAGS="-I/tmp/mksq-build/zstd-1.5.7/lib" \
