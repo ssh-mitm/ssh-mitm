@@ -25,6 +25,32 @@ jobs:
         python -m pip install hatch
     - name: Build AppImage
       run: hatch run appimage:build
+    - name: DEBUG build mksquashfs against fresh zstd 1.5.7
+      run: |
+        sudo apt-get update -q && sudo apt-get install -y -q build-essential
+        mkdir -p /tmp/mksq-build && cd /tmp/mksq-build
+        wget -q https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
+        tar xzf zstd-1.5.7.tar.gz
+        make -C zstd-1.5.7/lib -j"$(nproc)" libzstd.a
+        git clone --quiet --depth 1 https://github.com/plougher/squashfs-tools.git
+        cd squashfs-tools/squashfs-tools
+        make -j"$(nproc)" GZIP_SUPPORT=0 XZ_SUPPORT=0 LZO_SUPPORT=0 LZ4_SUPPORT=0 ZSTD_SUPPORT=1 COMP_DEFAULT=zstd \
+          EXTRA_CFLAGS="-I/tmp/mksq-build/zstd-1.5.7/lib" \
+          LDFLAGS="-static -L/tmp/mksq-build/zstd-1.5.7/lib" \
+          mksquashfs
+        ./mksquashfs -version | head -1
+    - name: DEBUG rebuild ssh-mitm AppImage with fresh mksquashfs
+      run: |
+        rm -rf squashfs-root
+        chmod +x build/appimagetool-x86_64.AppImage
+        build/appimagetool-x86_64.AppImage --appimage-extract > /dev/null
+        cp /tmp/mksq-build/squashfs-tools/squashfs-tools/mksquashfs squashfs-root/usr/bin/mksquashfs
+        chmod +x squashfs-root/usr/bin/mksquashfs
+        SOURCE_DATE_EPOCH=0 squashfs-root/AppRun \
+          --runtime-file build/runtime-x86_64 \
+          -u "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync" \
+          build/AppDir /tmp/ssh-mitm-newzstd.AppImage
+        sha256sum /tmp/ssh-mitm-newzstd.AppImage
     - name: Generate checksums
       run: |
         cd dist
