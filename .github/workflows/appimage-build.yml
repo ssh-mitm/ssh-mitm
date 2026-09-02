@@ -27,8 +27,9 @@ jobs:
         python -m pip install hatch
     - name: Build AppImage
       run: hatch run appimage:build
-    - name: DEBUG sorted rebuild for repro investigation
+    - name: DEBUG sorted+single-threaded rebuild for repro investigation
       run: |
+        nproc
         find build/AppDir -mindepth 1 | sed "s|^build/AppDir/||" | sort > /tmp/sortfile-paths.txt
         python3 -c "
         paths = [l.rstrip(chr(10)) for l in open('/tmp/sortfile-paths.txt')]
@@ -42,6 +43,7 @@ jobs:
           --runtime-file build/runtime-x86_64 \
           -u "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync" \
           --mksquashfs-opt "-sort" --mksquashfs-opt "/tmp/sortfile.txt" \
+          --mksquashfs-opt "-processors" --mksquashfs-opt "1" \
           build/AppDir /tmp/ssh-mitm-sorted.AppImage
         sha256sum /tmp/ssh-mitm-sorted.AppImage
     - name: Generate checksums
