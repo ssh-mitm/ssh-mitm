@@ -30,13 +30,6 @@ jobs:
         cd dist
         sha256sum ssh-mitm-x86_64.AppImage ssh-mitm-x86_64.AppImage.zsync > SHA256SUMS
         cat SHA256SUMS
-    - name: DEBUG upload for cross-machine repro investigation
-      if: github.event_name == 'workflow_dispatch'
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
-      with:
-        name: debug-appimage
-        path: dist/ssh-mitm-x86_64.AppImage
-        retention-days: 1
     - name: Upload release assets
       if: github.event_name == 'release'
       env:
