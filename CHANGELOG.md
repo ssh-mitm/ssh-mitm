@@ -9,6 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- **Reproducible AppImage packaging**: the AppImage build now pins the full
+  toolchain (Python interpreter, `appimagetool`, runtime stub, the
+  `appimage` packaging tool itself) by hash, verifies all dependencies via
+  `pylock.toml`/`pylock.build.toml`, and runs in a dedicated `AppImage
+  build` CI workflow. Local and CI now produce a byte-identical
+  `.AppImage`.
 - **GSSAPI username validity oracle audit tool**: New `ssh-mitm audit
   gssapi-usercheck` subcommand enumerates usernames against a target's
   GSSAPI pre-authentication username validity oracle (CVE-2026-60000
