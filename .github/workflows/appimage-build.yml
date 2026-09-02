@@ -25,54 +25,32 @@ jobs:
         python -m pip install hatch
     - name: Build AppImage
       run: hatch run appimage:build
-    - name: DEBUG build mksquashfs against fresh zstd 1.5.7
+    - name: DEBUG build squashfskit (reproducible mksquashfs fork)
       run: |
-        sudo apt-get update -q && sudo apt-get install -y -q build-essential
+        sudo apt-get update -q && sudo apt-get install -y -q build-essential liblzma-dev
         mkdir -p /tmp/mksq-build && cd /tmp/mksq-build
         wget -q https://github.com/facebook/zstd/releases/download/v1.5.7/zstd-1.5.7.tar.gz
         tar xzf zstd-1.5.7.tar.gz
         make -C zstd-1.5.7/lib -j"$(nproc)" libzstd.a
-        git clone --quiet --depth 1 --branch 4.6.1 https://github.com/plougher/squashfs-tools.git
-        cd squashfs-tools/squashfs-tools
-        make -j"$(nproc)" GZIP_SUPPORT=0 XZ_SUPPORT=0 LZO_SUPPORT=0 LZ4_SUPPORT=0 ZSTD_SUPPORT=1 COMP_DEFAULT=zstd \
-          EXTRA_CFLAGS="-I/tmp/mksq-build/zstd-1.5.7/lib" \
+        git clone --quiet --depth 1 https://github.com/squashfskit/squashfskit.git
+        cd squashfskit/squashfs-tools
+        make -j"$(nproc)" GZIP_SUPPORT=0 LZO_SUPPORT=0 LZ4_SUPPORT=0 ZSTD_SUPPORT=1 COMP_DEFAULT=zstd \
+          EXTRA_CFLAGS="-I/tmp/mksq-build/zstd-1.5.7/lib -fcommon -Wno-error=incompatible-pointer-types -Wno-error=implicit-function-declaration -Wno-error=implicit-int -fpermissive" \
           LDFLAGS="-static -L/tmp/mksq-build/zstd-1.5.7/lib" \
           mksquashfs
-        ./mksquashfs -version | head -1
-    - name: DEBUG rebuild ssh-mitm AppImage with fresh mksquashfs
+        ./mksquashfs -version | head -2
+    - name: DEBUG rebuild ssh-mitm AppImage with squashfskit
       run: |
         rm -rf squashfs-root
         chmod +x build/appimagetool-x86_64.AppImage
         build/appimagetool-x86_64.AppImage --appimage-extract > /dev/null
-        cp /tmp/mksq-build/squashfs-tools/squashfs-tools/mksquashfs squashfs-root/usr/bin/mksquashfs
+        cp /tmp/mksq-build/squashfskit/squashfs-tools/mksquashfs squashfs-root/usr/bin/mksquashfs
         chmod +x squashfs-root/usr/bin/mksquashfs
         SOURCE_DATE_EPOCH=0 squashfs-root/AppRun \
           --runtime-file build/runtime-x86_64 \
           -u "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync" \
-          build/AppDir /tmp/ssh-mitm-newzstd.AppImage
-        sha256sum /tmp/ssh-mitm-newzstd.AppImage
-    - name: DEBUG upload CI-built mksquashfs binary
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
-      with:
-        name: debug-mksquashfs
-        path: /tmp/mksq-build/squashfs-tools/squashfs-tools/mksquashfs
-        retention-days: 1
-    - name: DEBUG AppDir content manifest
-      run: |
-        cd build/AppDir
-        find . -type f -exec sha256sum {} \; | LC_ALL=C sort -k2 > /tmp/appdir-manifest.txt
-        find . -type l -exec sh -c 'printf "%s -> %s\n" "$1" "$(readlink "$1")"' _ {} \; | LC_ALL=C sort > /tmp/appdir-symlinks.txt
-        find . -mindepth 1 -exec sh -c 'stat -c "%A %U:%G %n" "$1"' _ {} \; | LC_ALL=C sort -k3 > /tmp/appdir-perms.txt
-        wc -l /tmp/appdir-manifest.txt /tmp/appdir-symlinks.txt /tmp/appdir-perms.txt
-    - name: DEBUG upload AppDir manifest
-      uses: actions/upload-artifact@ea165f8d65b6e75b540449e92b4886f43607fa02  # v4
-      with:
-        name: debug-manifest
-        path: |
-          /tmp/appdir-manifest.txt
-          /tmp/appdir-symlinks.txt
-          /tmp/appdir-perms.txt
-        retention-days: 1
+          build/AppDir /tmp/ssh-mitm-squashfskit.AppImage
+        sha256sum /tmp/ssh-mitm-squashfskit.AppImage
     - name: Generate checksums
       run: |
         cd dist
