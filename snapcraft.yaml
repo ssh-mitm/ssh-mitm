@@ -36,6 +36,8 @@ parts:
     source: .
     python-packages:
       - pip
+    python-requirements:
+      - pylock.snap.toml
 
 apps:
   ssh-mitm:

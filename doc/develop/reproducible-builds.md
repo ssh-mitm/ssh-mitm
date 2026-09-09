@@ -142,6 +142,29 @@ wheel. `appimage-build.yml` runs it automatically before every release
 build (not on a plain `workflow_dispatch` test run, to avoid the extra
 build cost); a failure aborts the release before anything gets uploaded.
 
+## Snap build
+
+`snapcraft.yaml`'s `python` part installs from `pylock.snap.toml`
+(`python-requirements`), hash-verified the same way `pylock.docs.toml`
+is - no `--require-hashes` flag needed, consuming a pylock.toml enables
+it automatically.
+
+Unlike the other pylock files, this one **must** be regenerated on an
+`ubuntu-24.04` runner (matching `base: core24`), not locally - pylock's
+hashes pin exact wheel URLs for a specific (Python version, platform)
+combination, and the snap build resolves against Ubuntu 24.04's Python
+(3.12), not whatever's running `pip lock` locally:
+
+```bash
+python3 -m pip lock -r requirements.in -o pylock.snap.toml
+```
+
+Confirmed empirically: generating it with Python 3.13 locally pins
+`cp313` wheels, which don't match what `core24`'s Python 3.12 needs. Run
+the command above as a step in `ubuntu-24.04` CI (e.g. `snapcore/action-build`),
+immediately before the actual snap build, to guarantee both run against
+the same Python.
+
 ## CI tooling and docs
 
 The tools that drive CI itself are pinned the same way, one level removed
