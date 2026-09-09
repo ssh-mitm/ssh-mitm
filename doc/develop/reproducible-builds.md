@@ -1,10 +1,17 @@
 # Reproducible Wheel Builds
 
 The wheel published to [pypi.org](https://pypi.org/project/ssh-mitm/) is
-built via `hatch build`, using `hatchling` and `hatch-requirements-txt` as
-the PEP 518 build backend (`[build-system]` in `pyproject.toml`). This
-page covers how that build is made hash-verified and provably
-bit-identical across independent builds of the same commit.
+built with `hatchling` and `hatch-requirements-txt` as the PEP 518 build
+backend (`[build-system]` in `pyproject.toml`). This page covers how that
+build is made hash-verified and provably bit-identical across independent
+builds of the same commit.
+
+`hatch build` works fine for a local build, but doesn't hash-verify the
+build backend itself. The release workflow
+(`.github/workflows/python-publish.yml`) instead uses the hash-verified
+path this page documents directly: `python -m build --sdist
+--no-isolation` for the sdist, `pip wheel --build-constraint
+requirements-build.txt --no-deps` for the wheel.
 
 ## Hash-pinning the build dependencies
 
@@ -132,13 +139,46 @@ wheel:
 rm -rf build && hatch run appimage:build && sha256sum dist/ssh-mitm-x86_64.AppImage
 ```
 
+## CI tooling and docs
+
+The tools that drive CI itself are pinned the same way, one level removed
+from what actually ships:
+
+- `pylock.ci.toml` - hash-pinned `hatch`, used by the lint
+  (`python-package.yml`) and AppImage-build (`appimage-build.yml`)
+  workflows to run `hatch run lint:check`/`hatch run appimage:build`.
+  `python-publish.yml` doesn't need it - it builds directly via `pip
+  wheel`/`python -m build` (see above), not through hatch.
+- `pylock.docs.toml` - hash-pinned Sphinx toolchain
+  (`doc/requirements.in`, the loose input spec), installed by Read the
+  Docs (`.readthedocs.yaml`), `hatch run docs:build`, and
+  `packaging/build-docs.sh` alike.
+
+Installing from either needs pip >= 26.1 - older pip can't parse the
+pylock.toml format at all and errors out trying to read it as a classic
+requirements.txt. Every consumer pins pip to an exact version first
+(`pip==<version>`) before touching either file.
+
+Regenerate either with `pip lock`, e.g.:
+
+```bash
+pip lock "hatch==<version>" -o pylock.ci.toml
+pip lock -r doc/requirements.in -o pylock.docs.toml
+```
+
+pip itself isn't hash-pinned - it comes from GitHub's or Read the Docs'
+own managed build images, already-trusted infrastructure a hash pin on
+pip wouldn't meaningfully add to.
+
+PyPI publishing uses [Trusted
+Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC via
+`pypa/gh-action-pypi-publish`) - no long-lived token stored in the repo.
+
 ## Known limits / not covered here
 
 - Snap builds are not covered — snapcraft's container-based build has no
   direct equivalent to `--build-constraint`/`SOURCE_DATE_EPOCH`, and
   achieving bit-identical snaps would be a separate effort.
-- CI does not yet run `verify-reproducible-build.sh` as part of the
-  release workflow (`python-publish.yml`). Wiring it in is planned
-  alongside a move to [Trusted
-  Publishing](https://docs.pypi.org/trusted-publishers/), which replaces
-  the long-lived `TWINE_PASSWORD` token currently used there.
+- CI does not run `verify-reproducible-build.sh` (or an AppImage
+  equivalent) on every push/PR the way appimage's own CI does - only as a
+  manual pre-release check.
