@@ -41,6 +41,8 @@ jobs:
         python -m pip install pip==26.2.1
         pip install --require-hashes -r requirements-build.txt
         pip install build==1.6.0
+    - name: Verify the wheel build is reproducible
+      run: packaging/verify-reproducible-build.sh
     - name: Build sdist
       run: python -m build --sdist --no-isolation
     - name: Build hash-verified, reproducible wheel
