@@ -65,7 +65,9 @@ OK: bit-identical wheel across two independent builds (<hash>)
 ```
 
 Not part of the regular lint/test loop — building the wheel twice is too
-slow for the everyday dev loop. Run it as a pre-release check instead.
+slow for the everyday dev loop. `python-publish.yml` runs it automatically
+before every release build; a failure aborts the release before anything
+gets published.
 
 ## AppImage build
 
@@ -130,14 +132,15 @@ exactly the case it exists to handle. If that happens, remove the stale
 scratch, regenerates `pylock.toml`, and only re-adds `reproducible = true`
 once a real build succeeds.
 
-To confirm the AppImage build is itself bit-identical, build it twice from
-a clean `build/` directory and compare hashes, the same idea as
-`verify-reproducible-build.sh` above but for the AppImage instead of the
-wheel:
-
 ```bash
-rm -rf build && hatch run appimage:build && sha256sum dist/ssh-mitm-x86_64.AppImage
+packaging/verify-appimage-reproducible-build.sh
 ```
+
+confirms the AppImage build is itself bit-identical, the same idea as
+`verify-reproducible-build.sh` above but for the AppImage instead of the
+wheel. `appimage-build.yml` runs it automatically before every release
+build (not on a plain `workflow_dispatch` test run, to avoid the extra
+build cost); a failure aborts the release before anything gets uploaded.
 
 ## CI tooling and docs
 
@@ -179,6 +182,7 @@ Publishing](https://docs.pypi.org/trusted-publishers/) (OIDC via
 - Snap builds are not covered — snapcraft's container-based build has no
   direct equivalent to `--build-constraint`/`SOURCE_DATE_EPOCH`, and
   achieving bit-identical snaps would be a separate effort.
-- CI does not run `verify-reproducible-build.sh` (or an AppImage
-  equivalent) on every push/PR the way appimage's own CI does - only as a
-  manual pre-release check.
+- Neither reproducibility check runs on every push/PR the way appimage's
+  own CI does - only automatically before a release, a deliberate
+  trade-off to avoid the extra build cost on every push (see the release
+  workflows for where each one is wired in).
