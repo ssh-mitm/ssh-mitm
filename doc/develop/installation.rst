@@ -62,7 +62,7 @@ Requires Python 3.11 or newer. If you use ``pip``, you can install it with:
 
 .. code-block:: none
 
-    $ python3 -m pip install "ssh-mitm[production]"
+    $ python3 -m pip install ssh-mitm
 
 If installing using ``python3 -m pip install --user``, you must add the user-level ``bin`` directory
 to your PATH environment variable in order to launch ``ssh-mitm``.
@@ -77,7 +77,7 @@ If you use ``pipenv``, you can install it as:
 
 .. code-block:: none
 
-    $ pipenv install "ssh-mitm[production]"
+    $ pipenv install ssh-mitm
     $ pipenv shell
 
 When using ``pipenv``, in order to launch ``ssh-mitm``,
@@ -158,7 +158,7 @@ which means SSL communication will not be required for downloading Python librar
 .. code:: none
 
     # Install ssh-mitm (without SSL)
-    $ python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org "ssh-mitm[production]"
+    $ python3 -m pip install --trusted-host pypi.org --trusted-host files.pythonhosted.org ssh-mitm
 
 Using the tips from above, you can handle many network problems
 related to installing Python libraries.

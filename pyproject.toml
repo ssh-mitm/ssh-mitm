@@ -117,7 +117,6 @@ path = "sshmitm/__init__.py"
 files = ["requirements.in"]
 
 [tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
-production = ["requirements.txt"]
 docs = ["doc/requirements.txt"]
 
 [tool.hatch.build]
@@ -181,7 +180,6 @@ entry_point = "ssh-mitm"
 python = "3.11"
 icon = "appimage/ssh-mitm.png"
 desktop = "appimage/ssh-mitm.desktop"
-extras = ["production"]
 update_info = "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync"
 
 # Toolchain pins - refresh with `python -m appimage.ctl update-tools`,

@@ -176,10 +176,6 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   plugin lets you supply fixed credentials for the upstream server without
   using the passthrough authenticator.
 
-- **Pinned production dependencies**: `pip install ssh-mitm[production]`
-  installs a fully tested set of dependency versions suitable for production
-  use.
-
 - **PowerShell remoting (PSRP over SSH) interception**: SSH-MITM now intercepts
   PowerShell remoting sessions that use the SSH transport (`Enter-PSSession
   -HostName …`). The binary PSRP stream is relayed transparently between the

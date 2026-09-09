@@ -90,6 +90,16 @@ table in `pyproject.toml`. The pins it enforces:
   dependencies and the wheel build backend, via `pip install
   --require-hashes`
 
+`pylock.toml` locks bare `.` - `ssh-mitm`'s regular `dependencies`, the
+same loose ranges (`requirements.in`) any `pip install ssh-mitm` resolves
+against. There's deliberately no extra or constraint file anchoring it to
+a previous resolution: every `lock` run re-resolves fully fresh against
+whatever's currently newest and compatible on the index, the same way a
+plain `pip install ssh-mitm` would. That trades away pip-compile-style
+"stays put until I explicitly upgrade" stability for having a single
+source of truth - no separate `requirements.txt`/`production` extra to
+keep in sync with it.
+
 `reproducible = true`, `verify_downloads = true`, and `require_zsyncmake =
 true` in `[tool.appimage]` turn all of the above into hard build failures
 instead of warnings if a pin is missing or a download doesn't match.
@@ -127,9 +137,6 @@ rm -rf build && hatch run appimage:build && sha256sum dist/ssh-mitm-x86_64.AppIm
 - Snap builds are not covered — snapcraft's container-based build has no
   direct equivalent to `--build-constraint`/`SOURCE_DATE_EPOCH`, and
   achieving bit-identical snaps would be a separate effort.
-- The runtime dependency set (`requirements.txt`) is version-pinned but
-  not hash-pinned — that affects the wheel's `Requires-Dist` metadata,
-  not the wheel bytes themselves, and is out of scope here.
 - CI does not yet run `verify-reproducible-build.sh` as part of the
   release workflow (`python-publish.yml`). Wiring it in is planned
   alongside a move to [Trusted
