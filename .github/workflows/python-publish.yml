@@ -7,6 +7,7 @@ on:
 
 permissions:
   contents: read
+  actions: read
 
 jobs:
   build:
@@ -14,6 +15,22 @@ jobs:
     runs-on: ubuntu-latest
 
     steps:
+    - name: Refuse to publish unless CI is green for this commit
+      env:
+        GH_TOKEN: ${{ github.token }}
+      run: |
+        conclusion=$(gh run list --repo "${{ github.repository }}" --commit "${{ github.sha }}" \
+          --workflow "Python package" --json status,conclusion --jq '
+            if length == 0 then "missing"
+            elif any(.status != "completed") then "pending"
+            elif any(.conclusion != "success") then "failure"
+            else "success"
+            end')
+        if [ "$conclusion" != "success" ]; then
+          echo "::error::CI (Python package) is not green for ${{ github.sha }} (state: $conclusion) - refusing to publish."
+          exit 1
+        fi
+        echo "CI is green for ${{ github.sha }} - proceeding."
     - uses: actions/checkout@3d3c42e5aac5ba805825da76410c181273ba90b1  # v7.0.1
     - name: Set up Python
       uses: actions/setup-python@5fda3b95a4ea91299a34e894583c3862153e4b97  # v7.0.0
