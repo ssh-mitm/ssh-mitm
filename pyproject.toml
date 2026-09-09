@@ -176,38 +176,42 @@ build = [
 ]
 
 [tool.appimage]
-build_pylock = "pylock.build.toml"
-
-python_date = "20260901"
-python_sha256 = "64427febea27864d136db46c8efe968eb6fa5ca2813ce1dca4bb95aec31cb2e4"
-pylock = "pylock.toml"
-
 app = "ssh-mitm"
 entry_point = "ssh-mitm"
 python = "3.11"
 icon = "appimage/ssh-mitm.png"
 desktop = "appimage/ssh-mitm.desktop"
-appimagetool_version = "appimagetool, continuous build (git version 8c8c91f), build 295 built on 2025-12-04 17:56:36 UTC"
-appimagetool_sha256 = "a6d71e2b6cd66f8e8d16c37ad164658985e0cf5fcaa950c90a482890cb9d13e0"
-runtime_sha256 = "1cc49bcf1e2ccd593c379adb17c9f85a36d619088296504de95b1d06215aebbf"
-appimagectl_version = "3.0.1"
 extras = ["production"]
 update_info = "gh-releases-zsync|ssh-mitm|ssh-mitm|latest|ssh-mitm-x86_64.AppImage.zsync"
-appimage_version = "3.0.1"
-appimage_sha256 = "b44ee938a5482ae7cd95106d8c2f8f2e58b19b0becf4be97e2b62ca88af9905f"
+
+# Toolchain pins - refresh with `python -m appimage.ctl update-tools`,
+# see doc/develop/reproducible-builds.md.
+python_date = "20260901"
+python_sha256 = "64427febea27864d136db46c8efe968eb6fa5ca2813ce1dca4bb95aec31cb2e4"
+appimage_version = "4.0.1"
+appimage_sha256 = "4b1c574a07b839b9050fec699a4d060c99b81fd0050dbcea1d169b0a1f0f0248"
+appimagetool_version = "appimagetool, continuous build (git version 8c8c91f), build 296 built on 2025-12-04 17:55:56 UTC"
+appimagetool_sha256 = "ed4ce84f0d9caff66f50bcca6ff6f35aae54ce8135408b3fa33abfc3cb384eb0"
+runtime_version = "20251108"
+runtime_sha256 = "2fca8b443c92510f1483a883f60061ad09b46b978b2631c807cd873a47ec260d"
+appimagectl_version = "4.0.1"
+pylock = "pylock.toml"
+build_pylock = "pylock.build.toml"
+
 reproducible = true
 verify_downloads = true
 require_zsyncmake = true
 
 [tool.hatch.envs.appimage]
 detached = false
+skip-install = true
 dependencies = [
-    "appimage @ https://files.pythonhosted.org/packages/62/44/5418008becc4c6209263df4e212f5b57e20a8586d0aad93c85a814f5cda2/appimage-3.0.1-py3-none-any.whl#sha256=b44ee938a5482ae7cd95106d8c2f8f2e58b19b0becf4be97e2b62ca88af9905f",
+    "appimage @ https://files.pythonhosted.org/packages/12/02/c001f32c6b97404ec1f5d297487a6be7c72b385cf8b44ef6be62a883817c/appimage-4.0.1-py3-none-any.whl#sha256=4b1c574a07b839b9050fec699a4d060c99b81fd0050dbcea1d169b0a1f0f0248",
 ]
 
 [tool.hatch.envs.appimage.scripts]
 build = [
-    "python -m appimage.ctl",
+    "python -m appimage.ctl build",
 ]
 
 [tool.pytest.ini_options]

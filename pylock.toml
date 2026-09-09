@@ -36,14 +36,14 @@ sha256 = "053243f8b92b990551949e63930a839ff0cf0b0ebbe0597b0f3fb19e1a0fe82e"
 
 [[packages]]
 name = "appimage"
-version = "3.0.0"
+version = "4.0.1"
 
 [[packages.wheels]]
-name = "appimage-3.0.0-py3-none-any.whl"
-url = "https://files.pythonhosted.org/packages/f4/05/ad2b32c1f9f95dc2aa6f4b407da3f2a1c0ea2e16af34191c8ab44f34ee06/appimage-3.0.0-py3-none-any.whl"
+name = "appimage-4.0.1-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/12/02/c001f32c6b97404ec1f5d297487a6be7c72b385cf8b44ef6be62a883817c/appimage-4.0.1-py3-none-any.whl"
 
 [packages.wheels.hashes]
-sha256 = "f2a2a6d0e4e927c069f9b012e62682a84b6157324acb69692b4c3a23da08f783"
+sha256 = "4b1c574a07b839b9050fec699a4d060c99b81fd0050dbcea1d169b0a1f0f0248"
 
 [[packages]]
 name = "argcomplete"
