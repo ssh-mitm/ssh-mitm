@@ -17,25 +17,24 @@ change renders correctly, it is good practice to test it locally.
 
 #. Make sure you have successfuly completed :ref:`develop/setup`.
 
-#. Install the packages required to build the docs.
+#. Build the html version of the docs, the same way `Read the Docs
+   <https://docs.ssh-mitm.at>`_ does (see ``.readthedocs.yaml``):
 
    .. code-block:: none
 
-      python3 -m pip install -r doc/requirements.txt
+      packaging/build-docs.sh
 
-#. Build the html version of the docs. This is the most commonly used
-   output format, so verifying it renders as you should is usually good
-   enough.
+   This installs ``doc/requirements.txt`` plus ``ssh-mitm`` itself into
+   your current Python environment, regenerates the API reference, and
+   builds the HTML output - displaying any syntax or formatting errors in
+   the documentation, along with the filename / line number in which they
+   occurred. Fix them and re-run the script to re-render the documentation.
 
-   .. code-block:: none
+   If you use `hatch <https://hatch.pypa.io>`_, ``hatch run docs:build``
+   does the same thing in a dedicated, hatch-managed environment instead
+   of your current one.
 
-      python setup.py build_sphinx
-
-   This step will display any syntax or formatting errors in the documentation,
-   along with the filename / line number in which they occurred. Fix them,
-   and re-run the ``python setup.py build_sphinx`` command to re-render the documentation.
-
-#. View the rendered documentation by opening ``build/sphinx/html/index.html`` in
+#. View the rendered documentation by opening ``build/html/index.html`` in
    a web browser.
 
    .. tip::

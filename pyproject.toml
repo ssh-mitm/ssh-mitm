@@ -4,7 +4,7 @@ build-backend = "hatchling.build"
 
 [project]
 name = "ssh-mitm"
-dynamic = ["version", "dependencies", "optional-dependencies"]
+dynamic = ["version", "dependencies"]
 authors = [
     {name = "SSH-MITM Dev-Team", email = "support@ssh-mitm.at"}
 ]
@@ -116,9 +116,6 @@ path = "sshmitm/__init__.py"
 [tool.hatch.metadata.hooks.requirements_txt]
 files = ["requirements.in"]
 
-[tool.hatch.metadata.hooks.requirements_txt.optional-dependencies]
-docs = ["doc/requirements.txt"]
-
 [tool.hatch.build]
 include = [
     "requirements.in",
@@ -166,10 +163,11 @@ check = [
 
 [tool.hatch.envs.docs]
 detached = false
-features = ["docs"]
+skip-install = true
 
 [tool.hatch.envs.docs.scripts]
 build = [
+    "pip install -r doc/requirements.txt .",
     "sphinx-apidoc -T -e -M -d 1 -o doc/develop/api sshmitm",
     "sphinx-build doc build/html",
 ]
