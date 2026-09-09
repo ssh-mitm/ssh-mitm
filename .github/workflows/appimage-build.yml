@@ -28,11 +28,11 @@ jobs:
       run: packaging/verify-appimage-reproducible-build.sh
     - name: Build AppImage
       run: hatch run appimage:build
-    - name: Generate checksums
+    - name: Generate checksum
       run: |
         cd dist
-        sha256sum ssh-mitm-x86_64.AppImage ssh-mitm-x86_64.AppImage.zsync > SHA256SUMS
-        cat SHA256SUMS
+        sha256sum ssh-mitm-x86_64.AppImage > ssh-mitm-x86_64.AppImage.sha256
+        cat ssh-mitm-x86_64.AppImage.sha256
     - name: Upload release assets
       if: github.event_name == 'release'
       env:
@@ -41,5 +41,5 @@ jobs:
         gh release upload "${{ github.event.release.tag_name }}" \
           dist/ssh-mitm-x86_64.AppImage \
           dist/ssh-mitm-x86_64.AppImage.zsync \
-          dist/SHA256SUMS \
+          dist/ssh-mitm-x86_64.AppImage.sha256 \
           --repo "${{ github.repository }}"
