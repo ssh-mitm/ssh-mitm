@@ -364,7 +364,7 @@ class Authenticator(SSHMITMBaseModule):
             "--hide-credentials",
             dest="auth_hide_credentials",
             action="store_true",
-            help="do not log credentials (usefull for presentations)",
+            help="do not log credentials (useful for presentations)",
         )
 
         honeypot_group = cls.argument_group(
@@ -374,7 +374,7 @@ class Authenticator(SSHMITMBaseModule):
         honeypot_group.add_argument(
             "--enable-auth-fallback",
             action="store_true",
-            help="enabled the fallback to a hoenypot when authentication not possible",
+            help="enabled the fallback to a honeypot when authentication not possible",
         )
         honeypot_group.add_argument(
             "--fallback-host",
