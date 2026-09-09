@@ -55,7 +55,7 @@ from sshmitm.moduleparser.colors import Colors
 from sshmitm.multisocket import create_server_sock
 from sshmitm.plugins.session import key_negotiation
 from sshmitm.session import Session
-from sshmitm.state import get_state_dir
+from sshmitm.state import DeploymentVariant, detect_deployment, get_state_dir
 from sshmitm.utils import SSHPubKey
 
 _ALGO_CLASS: dict[str, type[PKey]] = {
@@ -287,16 +287,19 @@ class SSHProxyServer:
     ) -> None:
         if explicit_path:
             key_path = Path(explicit_path)
-            if key_path.is_file():
-                key = self._load_pkey(key_path)
-                self._host_key_entries.append(
-                    HostKeyEntry(key=key, path=key_path, was_generated=False)
-                )
-            else:
-                key = self._generate_and_persist_pkey(algo, key_path)
-                self._host_key_entries.append(
-                    HostKeyEntry(key=key, path=key_path, was_generated=True)
-                )
+            try:
+                if key_path.is_file():
+                    key = self._load_pkey(key_path)
+                    self._host_key_entries.append(
+                        HostKeyEntry(key=key, path=key_path, was_generated=False)
+                    )
+                else:
+                    key = self._generate_and_persist_pkey(algo, key_path)
+                    self._host_key_entries.append(
+                        HostKeyEntry(key=key, path=key_path, was_generated=True)
+                    )
+            except PermissionError:
+                self._exit_on_host_key_permission_denied(key_path)
         elif state_dir is not None:
             key_path = state_dir / _ALGO_STATE_FILE[algo]
             if key_path.is_file():
@@ -314,6 +317,25 @@ class SSHProxyServer:
             self._host_key_entries.append(
                 HostKeyEntry(key=key, path=None, was_generated=True)
             )
+
+    @staticmethod
+    def _exit_on_host_key_permission_denied(key_path: Path) -> None:
+        hint = ""
+        if detect_deployment() == DeploymentVariant.SNAP:
+            hint = (
+                " Note: running as a snap, the ssh-keys interface isn't "
+                "connected by default - connect it first: "
+                "sudo snap connect ssh-mitm:ssh-keys"
+            )
+        logging.error(
+            "%s%s",
+            Colors.stylize(
+                f"permission denied reading host key: {key_path}",
+                fg("red") + attr("bold"),
+            ),
+            hint,
+        )
+        sys.exit(1)
 
     def _generate_and_persist_pkey(self, algo: str, key_path: Path) -> PKey:
         key_path.parent.mkdir(parents=True, exist_ok=True)
