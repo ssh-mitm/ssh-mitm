@@ -11,6 +11,11 @@ build:
   tools:
     python: "3.11"
   jobs:
+    pre_install:
+      # Installing from a pylock.toml (below) needs pip >= 26.1; older
+      # pip doesn't recognize the format and errors out trying to parse
+      # it as a classic requirements.txt.
+      - python -m pip install pip==26.2.1
     pre_build:
       - sphinx-apidoc -T -e -M -d 1 -o doc/develop/api sshmitm
 
@@ -23,6 +28,6 @@ sphinx:
 # declare the Python requirements required to build your docs
 python:
   install:
-    - requirements: doc/requirements.txt
+    - requirements: pylock.docs.toml
     - method: pip
       path: .
