@@ -54,6 +54,15 @@ If you use ``snap``, you can install it with:
 
     $ sudo snap install ssh-mitm
 
+Host keys are persisted automatically and need no extra setup. If you
+want to reuse an *existing* key from ``~/.ssh/`` (e.g. via
+``--host-key-rsa``), the snap's ``ssh-keys`` interface isn't connected
+automatically - connect it manually first:
+
+.. code-block:: none
+
+    $ sudo snap connect ssh-mitm:ssh-keys
+
 
 :fab:`python` pip
 ------------------
