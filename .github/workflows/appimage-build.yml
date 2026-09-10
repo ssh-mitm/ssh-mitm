@@ -33,14 +33,11 @@ jobs:
         cd dist
         sha256sum ssh-mitm-x86_64.AppImage > ssh-mitm-x86_64.AppImage.sha256
         cat ssh-mitm-x86_64.AppImage.sha256
-    - name: Upload build artifact
+    - name: Upload checksum artifact
       uses: actions/upload-artifact@043fb46d1a93c77aae656e7c1c64a875d1fc6a0a  # v7.0.1
       with:
-        name: appimage
-        path: |
-          dist/ssh-mitm-x86_64.AppImage
-          dist/ssh-mitm-x86_64.AppImage.zsync
-          dist/ssh-mitm-x86_64.AppImage.sha256
+        name: appimage-sha256
+        path: dist/ssh-mitm-x86_64.AppImage.sha256
     - name: Upload release assets
       if: github.event_name == 'release'
       env:
