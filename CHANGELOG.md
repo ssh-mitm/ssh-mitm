@@ -7,6 +7,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+## [6.0.0] - 2026-09-10
+
 ### Added
 
 - **Reproducible AppImage packaging**: the AppImage build now pins the full
@@ -695,7 +697,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - fixed pseudo terminal on exec command
 
-[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/5.0.1...master
+[Unreleased]: https://github.com/ssh-mitm/ssh-mitm/compare/6.0.0...master
+[6.0.0]: https://github.com/ssh-mitm/ssh-mitm/compare/5.0.1...6.0.0
 [5.0.1]: https://github.com/ssh-mitm/ssh-mitm/compare/5.0.0...5.0.1
 [5.0.0]: https://github.com/ssh-mitm/ssh-mitm/compare/4.1.1...5.0.0
 [4.1.1]: https://github.com/ssh-mitm/ssh-mitm/compare/4.1.0...4.1.1

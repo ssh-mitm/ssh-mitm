@@ -1,6 +1,6 @@
 name: ssh-mitm
 base: core24
-version: '5.0.1'
+version: '6.0.0'
 license: GPL-3.0-only
 website: https://docs.ssh-mitm.at
 source-code: https://github.com/ssh-mitm/ssh-mitm
