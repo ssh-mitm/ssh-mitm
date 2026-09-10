@@ -170,11 +170,22 @@ the same Python.
 The tools that drive CI itself are pinned the same way, one level removed
 from what actually ships:
 
-- `pylock.ci.toml` - hash-pinned `hatch`, used by the lint
-  (`python-package.yml`) and AppImage-build (`appimage-build.yml`)
-  workflows to run `hatch run lint:check`/`hatch run appimage:build`.
+- `pylock.ci.toml` - hash-pinned `hatch`, used by the AppImage-build
+  workflow (`appimage-build.yml`) to run `hatch run appimage:build`.
   `python-publish.yml` doesn't need it - it builds directly via `pip
   wheel`/`python -m build` (see above), not through hatch.
+
+  `python-package.yml` deliberately does *not* use it, even though it
+  also runs hatch (`hatch run lint:check`) - it matrix-tests against
+  four Python versions (3.11-3.14), and pylock's hashes pin exact wheel
+  artifacts for one specific (Python version, platform) combination.
+  Hash-pinning `hatch` there once broke every job for whichever Python
+  version wasn't the one the lock happened to be generated with (a
+  transitive dependency, `backports-zstd`, has no matching wheel on
+  3.14). Plain version pinning (`hatch==<version>`, matching what
+  appimage's own `python-package.yml` does) is what actually fits a
+  matrix - pip resolves the right wheel per target environment on its
+  own, same as any regular dependency install.
 - `pylock.docs.toml` - hash-pinned Sphinx toolchain
   (`doc/requirements.in`, the loose input spec), installed by Read the
   Docs (`.readthedocs.yaml`), `hatch run docs:build`, and
