@@ -24,8 +24,9 @@ change renders correctly, it is good practice to test it locally.
 
       packaging/build-docs.sh
 
-   This installs ``doc/requirements.txt`` plus ``ssh-mitm`` itself into
-   your current Python environment, regenerates the API reference, and
+   This installs the hash-pinned Sphinx toolchain (``pylock.docs.toml``)
+   plus ``ssh-mitm`` itself into your current Python environment,
+   regenerates the API reference, and
    builds the HTML output - displaying any syntax or formatting errors in
    the documentation, along with the filename / line number in which they
    occurred. Fix them and re-run the script to re-render the documentation.
