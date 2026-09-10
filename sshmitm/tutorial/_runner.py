@@ -10,7 +10,11 @@ from typing import TYPE_CHECKING
 
 import paramiko
 
-from sshmitm.mockserver._interfaces import MultiUserMockServer, _UserConfig
+from sshmitm.mockserver._interfaces import (
+    _CHANNEL_REQUEST_REPLY_GRACE,
+    MultiUserMockServer,
+    _UserConfig,
+)
 from sshmitm.mockserver._runner import start_server_thread
 from sshmitm.tutorial._conditions import collect_user_inputs
 from sshmitm.tutorial._context import AuthEventData, TutorialContext
@@ -159,6 +163,11 @@ class _TutorialServer(MultiUserMockServer):
 
     @staticmethod
     def _mock_exec(channel: paramiko.Channel, output: bytes) -> None:
+        # See _CHANNEL_REQUEST_REPLY_GRACE: without this, this thread's
+        # channel.close() below reliably races ahead of paramiko's pending
+        # CHANNEL_SUCCESS reply for the exec request, and the client sees
+        # "Channel closed" instead of the command output.
+        time.sleep(_CHANNEL_REQUEST_REPLY_GRACE)
         try:
             if output:
                 channel.sendall(output)

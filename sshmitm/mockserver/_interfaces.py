@@ -16,6 +16,15 @@ import paramiko.server
 
 log = logging.getLogger(__name__)
 
+# paramiko sends the channel-request SUCCESS reply on the caller's thread,
+# right after check_channel_*_request() returns. The worker thread spawned
+# by that handler runs concurrently and, with no delay, reliably wins the
+# race to write to the channel first - the client then sees the channel
+# close (or further traffic) before the SUCCESS reply, and raises
+# "Channel closed." instead of completing exec_command()/invoke_shell().
+# This grace period lets the reply go out first.
+_CHANNEL_REQUEST_REPLY_GRACE = 0.05
+
 
 @dataclasses.dataclass
 class KbdintRound:
@@ -81,6 +90,7 @@ class NoneAuthServer(paramiko.ServerInterface):
 
     @staticmethod
     def _exec(channel: paramiko.Channel, command: bytes) -> None:
+        time.sleep(_CHANNEL_REQUEST_REPLY_GRACE)
         try:
             channel.sendall(f"REMOTE_OK:{command.decode()}\n".encode())
             channel.send_exit_status(0)
@@ -120,6 +130,7 @@ class PublicKeyServer(paramiko.ServerInterface):
 
     @staticmethod
     def _exec(channel: paramiko.Channel, command: bytes) -> None:
+        time.sleep(_CHANNEL_REQUEST_REPLY_GRACE)
         try:
             channel.sendall(f"REMOTE_OK:{command.decode()}\n".encode())
             channel.send_exit_status(0)
@@ -160,6 +171,7 @@ class PasswordServer(paramiko.ServerInterface):
 
     @staticmethod
     def _exec(channel: paramiko.Channel, command: bytes) -> None:
+        time.sleep(_CHANNEL_REQUEST_REPLY_GRACE)
         try:
             channel.sendall(f"REMOTE_OK:{command.decode()}\n".encode())
             channel.send_exit_status(0)
@@ -669,6 +681,7 @@ def _make_round_query(round_: KbdintRound) -> paramiko.server.InteractiveQuery:
 
 
 def _run_exec(channel: paramiko.Channel, command: bytes) -> None:
+    time.sleep(_CHANNEL_REQUEST_REPLY_GRACE)
     try:
         result = subprocess.run(  # noqa: S603 # nosec B603
             shlex.split(command.decode("utf-8", errors="replace")),
