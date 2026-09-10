@@ -36,6 +36,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
   check incorrectly evaluated `supports_cbc_etm or supports_cbc_etm` instead of
   `supports_chacha20 or supports_cbc_etm`, causing ChaCha20-Poly1305 to never
   be considered when determining vulnerability status.
+- snap: permission errors reading the host key now report that the
+  `ssh-keys` interface needs to be connected, instead of a raw traceback
+
+### Removed
+
+- removed the `production` and `docs` extras; install `ssh-mitm` directly
 
 ### Changed
 
