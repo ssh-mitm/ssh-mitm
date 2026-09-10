@@ -175,6 +175,14 @@ from what actually ships:
   `python-publish.yml` doesn't need it - it builds directly via `pip
   wheel`/`python -m build` (see above), not through hatch.
 
+  This only works because `appimage-build.yml` pins an exact Python
+  version (`actions/setup-python` with `python-version: '3.13'`), matching
+  the `cp313` wheels the lock was generated against. A floating `'3.x'`
+  spec broke the 6.0.0 AppImage build the moment GitHub's runners started
+  defaulting to 3.14 - the exact `backports-zstd` failure described below
+  for `python-package.yml`'s matrix, just with a "single" environment that
+  wasn't actually pinned.
+
   `python-package.yml` deliberately does *not* use it, even though it
   also runs hatch (`hatch run lint:check`) - it matrix-tests against
   four Python versions (3.11-3.14), and pylock's hashes pin exact wheel
