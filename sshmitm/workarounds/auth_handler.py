@@ -64,9 +64,12 @@ def _check_pubkey_auth(
     key: PKey,
     sig_attached: bool = True,
 ) -> int:
-    # sig_attached is accepted for call-site symmetry with paramiko's
-    # AuthHandler._parse_userauth_request but is not consumed here.
-    del sig_attached
+    # sig_attached is not passed as an explicit argument to
+    # check_auth_publickey() - it must stay bound as a local here so that
+    # check_auth_publickey()'s frame introspection (which reads sig_attached
+    # from its caller's locals, to interoperate with paramiko's own
+    # AuthHandler._parse_userauth_request calling convention) can find it.
+    logging.debug("_check_pubkey_auth: sig_attached=%s", sig_attached)
     if handler.transport.server_object is None:
         return AUTH_FAILED
     return handler.transport.server_object.check_auth_publickey(username, key)

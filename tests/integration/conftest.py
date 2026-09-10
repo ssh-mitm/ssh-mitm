@@ -164,6 +164,42 @@ def mitm_trivial_auth(
         proc.wait(timeout=5)
 
 
+@pytest.fixture
+def mitm_pubkey_auth(
+    tmp_path: Path,
+    mock_ssh_target: int,
+    fake_agent: MockAgent,
+) -> Generator[int, None, None]:
+    """Start plain ssh-mitm (no --enable-trivial-auth) pointing at the mock target.
+
+    Regular pubkey auth flow: pk_lookup probes the target, then the client
+    proves key ownership (directly, or via publickey-hostbound-v00@openssh.com
+    for OpenSSH clients new enough to negotiate it - the default for OpenSSH
+    9.x+ regardless of whether the key is actually host-restricted).
+
+    Yields the MITM listening port.
+    """
+    mitm_port = _free_port()
+
+    proc = subprocess.Popen(
+        [
+            _ssh_mitm_bin(), "server",
+            "--listen-port", str(mitm_port),
+            "--remote-host", "127.0.0.1",
+            "--remote-port", str(mock_ssh_target),
+            "--disable-remote-fingerprint-warning",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        _wait_port(mitm_port)
+        yield mitm_port
+    finally:
+        proc.terminate()
+        proc.wait(timeout=5)
+
+
 @pytest.fixture(scope="session")
 def mock_none_auth_target(
     _session_keys: tuple[paramiko.PKey, paramiko.PKey],
