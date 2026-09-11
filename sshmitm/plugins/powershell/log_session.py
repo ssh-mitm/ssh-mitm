@@ -30,10 +30,14 @@ from datetime import UTC, datetime
 from typing import IO, TYPE_CHECKING
 
 from lxml import etree
-from psrpcore._payload import Message, unpack_fragment, unpack_message
-from psrpcore.types import PSRPMessageType
 
 from sshmitm.forwarders.powershell import PowerShellForwarder
+from sshmitm.plugins.powershell.psrp_wire import (
+    Message,
+    PSRPMessageType,
+    unpack_fragment,
+    unpack_message,
+)
 
 if TYPE_CHECKING:
     import sshmitm

@@ -13,6 +13,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - Replaced `pytz` with the standard library's `datetime.UTC`
 - Replaced `colored` with an in-house ANSI styling module (`sshmitm.colors`), now respecting `NO_COLOR`/`FORCE_COLOR`
 - `Colors.emoji()` now uses `rich.emoji.Emoji` instead of `rich`'s private `_emoji_codes`
+- Replaced `psrpcore` with an in-house PSRP wire-format parser (`sshmitm.plugins.powershell.psrp_wire`)
 
 ## [6.0.0] - 2026-09-10
 

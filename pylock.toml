@@ -288,17 +288,6 @@ url = "https://files.pythonhosted.org/packages/22/df/c799fe7a05ef16ba853a59db01f
 sha256 = "97198b77e369a0abd8e262b8f6c7266c55ddb796a3a12c76d7b8881188ed83aa"
 
 [[packages]]
-name = "psrpcore"
-version = "0.3.1"
-
-[[packages.wheels]]
-name = "psrpcore-0.3.1-py3-none-any.whl"
-url = "https://files.pythonhosted.org/packages/1d/fe/263925adbc42b95f9b65b08ba0919917dc576a674b1e55aebe86a8a399af/psrpcore-0.3.1-py3-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "37384e305b1bc8f2ad3129ee093777f90e035a4d936dd65b08f4578bf30a2eda"
-
-[[packages]]
 name = "pycparser"
 version = "3.0"
 

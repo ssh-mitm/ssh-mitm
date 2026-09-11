@@ -4,7 +4,6 @@ cryptography>=50.0.0
 paramiko==5.0.0
 protobuf
 lxml
-psrpcore
 pyte
 pyyaml
 requests
