@@ -223,14 +223,14 @@ sha256 = "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
 
 [[packages]]
 name = "multidict"
-version = "6.7.1"
+version = "6.8.0"
 
 [[packages.wheels]]
-name = "multidict-6.7.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
-url = "https://files.pythonhosted.org/packages/f3/8d/5e5be3ced1d12966fefb5c4ea3b2a5b480afcea36406559442c6e31d4a48/multidict-6.7.1-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+name = "multidict-6.8.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+url = "https://files.pythonhosted.org/packages/c6/c7/4544cc02e45bbfac4d8788b05379bb360021fd8c53fa74b0f624126ac188/multidict-6.8.0-cp312-cp312-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
 
 [packages.wheels.hashes]
-sha256 = "bfde23ef6ed9db7eaee6c37dcec08524cb43903c60b285b172b6c094711b3961"
+sha256 = "003a3bddb32915c3f67096ea41d24e53edf710edb65a1f5d0c70ab40b0e4d20b"
 
 [[packages]]
 name = "packaging"
@@ -343,28 +343,6 @@ url = "https://files.pythonhosted.org/packages/59/d0/bb522283b90853afbf506cd5b71
 sha256 = "85db42a35798a5aafa96ac4d8da78b090b2c933248819157fc0e6f78876a0135"
 
 [[packages]]
-name = "python-json-logger"
-version = "4.2.0"
-
-[[packages.wheels]]
-name = "python_json_logger-4.2.0-py3-none-any.whl"
-url = "https://files.pythonhosted.org/packages/dc/55/6467fde553886cb293e41538f3a8b4e4fd4688c6df242cf982162d8367fb/python_json_logger-4.2.0-py3-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "158a52126fcd6869e09574d2b66272666f3dc8f468c62637ef9a1fa883719cb9"
-
-[[packages]]
-name = "pytz"
-version = "2026.3.post1"
-
-[[packages.wheels]]
-name = "pytz-2026.3.post1-py2.py3-none-any.whl"
-url = "https://files.pythonhosted.org/packages/0f/7b/39c34ca613b0b198cb866466651b26b045e2009864c5183c979a3b83f383/pytz-2026.3.post1-py2.py3-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "dd95840dd199baea12d9cc096a1d452caa6596a1c1e4b5f3dbd1541855d5e815"
-
-[[packages]]
 name = "pyyaml"
 version = "6.0.3"
 
@@ -443,14 +421,14 @@ sha256 = "d5b73dba6158a595ec9370350e7f2637bcac8d6c5e4fde34f30fcffb6103a5e4"
 
 [[packages]]
 name = "wrapt"
-version = "2.4.0"
+version = "2.4.1"
 
 [[packages.wheels]]
-name = "wrapt-2.4.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
-url = "https://files.pythonhosted.org/packages/f8/fd/b20e3cb3cab35131b515edf18e8cd777dff680fc76fc00919481f4e536af/wrapt-2.4.0-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+name = "wrapt-2.4.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
+url = "https://files.pythonhosted.org/packages/a3/4f/17a89a580cb0082e61b8375074d5c9e5d38e4aa83ee19b6174ee472d17c2/wrapt-2.4.1-cp312-cp312-manylinux1_x86_64.manylinux_2_28_x86_64.manylinux_2_5_x86_64.whl"
 
 [packages.wheels.hashes]
-sha256 = "d7dbbdbfdacb85c2d962fa52db791c77943fd777d600d74c95af2d53b32f5a94"
+sha256 = "30d11c289b013bf384ff1a1a6553f150d0b855901708a9bef667a5680f8247c9"
 
 [[packages]]
 name = "yarl"

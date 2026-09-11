@@ -7,6 +7,11 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Changed
+
+- Replaced `python-json-logger` with an in-house JSON log formatter
+- Replaced `pytz` with the standard library's `datetime.UTC`
+
 ## [6.0.0] - 2026-09-10
 
 ### Added

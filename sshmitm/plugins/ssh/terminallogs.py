@@ -5,8 +5,6 @@ import time as time_module
 from abc import ABC, abstractmethod
 from pathlib import Path
 
-import pytz
-
 
 class TerminalLogFormat(ABC):
     def __init__(self, logdir: str | os.PathLike[str], prefix: str = "session") -> None:
@@ -58,9 +56,9 @@ class ScriptLogFormat(TerminalLogFormat):
 
         self.file_stdout.write(
             "Session started on {}\n".format(  # pylint: disable=consider-using-f-string
-                datetime.datetime.now(tz=datetime.UTC)
-                .replace(tzinfo=pytz.utc)
-                .strftime("%a %d %b %Y %H:%M:%S %Z")
+                datetime.datetime.now(tz=datetime.UTC).strftime(
+                    "%a %d %b %Y %H:%M:%S %Z"
+                )
             ).encode()
         )
         self.file_stdout.flush()

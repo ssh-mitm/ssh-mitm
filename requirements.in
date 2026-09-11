@@ -7,8 +7,6 @@ protobuf
 lxml
 psrpcore
 pyte
-python-json-logger
-pytz
 pyyaml
 requests
 aiohttp
