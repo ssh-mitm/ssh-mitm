@@ -109,6 +109,22 @@ plain `pip install ssh-mitm` would. That trades away pip-compile-style
 source of truth - no separate `requirements.txt`/`production` extra to
 keep in sync with it.
 
+Regenerate it (e.g. after a `requirements.in` change) with:
+
+```bash
+packaging/update-pylock.sh
+```
+
+A plain `pip lock .` on its own isn't enough: it emits a `[packages.directory]`
+self-entry for `ssh-mitm` itself, which has no hash and makes
+`pip install --require-hashes -r pylock.toml` fail outright, and it has no
+way to know about the `appimage` package bundled inside the AppImage for
+its own `--appimage-extract`-style self-update, since that isn't one of
+`ssh-mitm`'s own dependencies. `update-pylock.sh` wraps `pip lock .` with
+both fixups. It must run under the same Python minor version
+`[tool.appimage].python` pins (see the `pylock.snap.toml` note further
+below for why) - defaults to `python3.11`, override with `PYLOCK_PYTHON`.
+
 `reproducible = true`, `verify_downloads = true`, and `require_zsyncmake =
 true` in `[tool.appimage]` turn all of the above into hard build failures
 instead of warnings if a pin is missing or a download doesn't match.
