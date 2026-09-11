@@ -10,7 +10,6 @@ from dataclasses import dataclass
 from pathlib import Path
 from socket import socket
 
-from colored import attr, fg
 from cryptography.hazmat.primitives.asymmetric.ed25519 import Ed25519PrivateKey
 from cryptography.hazmat.primitives.serialization import (
     Encoding,
@@ -23,6 +22,7 @@ from rich import print as rich_print
 
 from sshmitm import __version__ as ssh_mitm_version
 from sshmitm.authentication import Authenticator, AuthenticatorPassThrough
+from sshmitm.colors import Colors
 from sshmitm.console import sshconsole
 from sshmitm.exceptions import KeyGenerationError
 from sshmitm.forwarders.agent import (
@@ -51,7 +51,6 @@ from sshmitm.interfaces.server import (
     ServerInterface,
 )
 from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInterface
-from sshmitm.moduleparser.colors import Colors
 from sshmitm.multisocket import create_server_sock
 from sshmitm.plugins.session import key_negotiation
 from sshmitm.session import Session
@@ -222,8 +221,8 @@ class SSHProxyServer:
                 rich_print(
                     f"   [green]:white_check_mark: {d['algorithm']} {d['bits']} bit — loaded from[/green] [bold]{d['location']}[/bold]"
                 )
-            sha256 = Colors.stylize(d["sha256"], fg("light_blue") + attr("bold"))
-            md5 = Colors.stylize(d["md5"], fg("light_blue") + attr("bold"))
+            sha256 = Colors.highlight(d["sha256"])
+            md5 = Colors.highlight(d["md5"])
             print(f"      ├─ {sha256}\n      └─ {md5}")
         sshconsole.rule(characters=".", style="bright_black")
 
@@ -329,10 +328,7 @@ class SSHProxyServer:
             )
         logging.error(
             "%s%s",
-            Colors.stylize(
-                f"permission denied reading host key: {key_path}",
-                fg("red") + attr("bold"),
-            ),
+            Colors.error(f"permission denied reading host key: {key_path}"),
             hint,
         )
         sys.exit(1)
@@ -471,23 +467,21 @@ class SSHProxyServer:
             if self.transparent and permerror.errno == 1:
                 logging.error(
                     "%s Note: running SSH-MITM in transparent mode requires root privileges",
-                    Colors.stylize("error creating socket!", fg("red") + attr("bold")),
+                    Colors.error("error creating socket!"),
                 )
             elif permerror.errno == 13 and self.listen_port < 1024:
                 logging.error(
                     "%s Note: running SSH-MITM on a port < 1024 requires root privileges",
-                    Colors.stylize("error creating socket!", fg("red") + attr("bold")),
+                    Colors.error("error creating socket!"),
                 )
             else:
                 logging.exception(
                     "%s - unknown error",
-                    Colors.stylize("error creating socket!", fg("red") + attr("bold")),
+                    Colors.error("error creating socket!"),
                 )
             return None
         if sock is None:
-            logging.error(
-                "%s", Colors.stylize("error creating socket!", fg("red") + attr("bold"))
-            )
+            logging.error("%s", Colors.error("error creating socket!"))
         return sock
 
     def _accept_one(self, sock: socket) -> None:
@@ -519,8 +513,8 @@ class SSHProxyServer:
         self.running = False
         logging.info(
             "%s %s",
-            Colors.emoji("exclamation"),
-            Colors.stylize("Shutting down server ...", fg("red")),
+            Colors.emoji("information"),
+            Colors.heading("Shutting down server ..."),
         )
         if sock is not None:
             sock.close()

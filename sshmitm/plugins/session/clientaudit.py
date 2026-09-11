@@ -3,11 +3,10 @@ import re
 from collections import defaultdict
 from typing import TYPE_CHECKING, Any, cast
 
-from colored.colored import attr, fg
 from paramiko import ECDSAKey
 
 from packaging import version
-from sshmitm.moduleparser.colors import Colors
+from sshmitm.colors import Colors
 from sshmitm.plugins.session.server_host_key_algorithms import (
     SERVER_HOST_KEY_ALGORITHMS,
 )
@@ -54,8 +53,10 @@ class ClientAuditReport:
         self.vulnerable = vulnerable
 
     def __str__(self) -> str:
-        title_color = "red" if self.vulnerable else "green"
-        value = [f"    {Colors.stylize(self.title, fg(title_color) + attr('bold'))}"]
+        title = (
+            Colors.error(self.title) if self.vulnerable else Colors.success(self.title)
+        )
+        value = [f"    {title}"]
         value.extend([f"      * {v}" for v in self.messages])
         return "\n".join(value)
 
@@ -191,9 +192,9 @@ class SSHClientAudit:
                         f"client uses same server_host_key_algorithms as {client_name}"
                     )
                     messages.append(
-                        Colors.stylize(
+                        Colors.success(
                             "client seems to connect for the first time or using a default key order",
-                            fg("green"),
+                            bold=False,
                         )
                     )
                     break
@@ -227,16 +228,16 @@ class SSHClientAudit:
         for host_key_algo in server_host_key_algorithms:
             if self.key_negotiation_data.server_host_key_algorithms == host_key_algo:
                 messages.append(
-                    Colors.stylize(
+                    Colors.success(
                         "client connecting for the first time or using default key order!",
-                        fg("green"),
+                        bold=False,
                     )
                 )
                 break
         else:
             messages.append(
-                Colors.stylize(
-                    "client has a locally cached remote fingerprint.", fg("yellow")
+                Colors.warning(
+                    "client has a locally cached remote fingerprint.", bold=False
                 )
             )
         return messages
@@ -322,7 +323,6 @@ class SSHClientAudit:
         vulnerable = (
             bool(chacha20_affected) or bool(cbc_etm_affected)
         ) and not strict_kex
-        status_color = "red" if vulnerable else "green"
 
         report = ClientAuditReport(
             "CVE-2023-48795 - Terrapin-Attack", vulnerable=vulnerable
@@ -346,9 +346,12 @@ class SSHClientAudit:
         else:
             report.messages.append("CBC-EtM: not affected")
 
-        report.messages.append(
-            f"Mitigation status: {Colors.stylize('vulnerable' if vulnerable else 'mitigated', fg(status_color))}"
+        mitigation_status = (
+            Colors.error("vulnerable", bold=False)
+            if vulnerable
+            else Colors.success("mitigated", bold=False)
         )
+        report.messages.append(f"Mitigation status: {mitigation_status}")
         return {"clientaudit": report}
 
     def run_audit(self) -> None:
@@ -368,11 +371,8 @@ class SSHClientAudit:
         log_output = []
         log_output.extend(
             [
-                Colors.stylize(
-                    Colors.emoji("information") + " client information:",
-                    fg("blue") + attr("bold"),
-                ),
-                f"  - client version: {Colors.stylize(self.client_version, fg('green') + attr('bold'))}",
+                Colors.heading(Colors.emoji("information") + " client information:"),
+                f"  - client version: {Colors.success(self.client_version)}",
                 f"  - product name: {self.product_name}",
                 f"  - vendor url:  {self.vendor_url}",
                 f" - client address: ip={self.key_negotiation_data.session.client_address[0]} port={self.key_negotiation_data.session.client_address[1]}",
@@ -384,10 +384,9 @@ class SSHClientAudit:
             log_output.append(
                 "".join(
                     [
-                        Colors.stylize(
+                        Colors.warning(
                             Colors.emoji("warning")
-                            + " CVEs detected by client version string:\n",
-                            fg("yellow") + attr("bold"),
+                            + " CVEs detected by client version string:\n"
                         ),
                         "\n".join(cvemessagelist),
                     ]
@@ -399,10 +398,9 @@ class SSHClientAudit:
             log_output.append(
                 "".join(
                     [
-                        Colors.stylize(
+                        Colors.heading(
                             Colors.emoji("warning")
-                            + " detected vulnerabilities by active tests:\n",
-                            fg("blue") + attr("bold"),
+                            + " detected vulnerabilities by active tests:\n"
                         ),
                         "\n".join([str(v) for v in client_audits if v]),
                     ]

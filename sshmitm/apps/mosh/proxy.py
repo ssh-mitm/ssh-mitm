@@ -7,8 +7,6 @@ import zlib
 from collections import defaultdict
 from typing import cast
 
-from colored.colored import attr, fg
-
 try:
     from cryptography.hazmat.primitives.ciphers.aead import AESOCB3
 except ImportError as e:
@@ -19,7 +17,7 @@ except ImportError as e:
     raise ImportError(_MSG) from e
 
 from sshmitm.apps.mosh import hostinput_pb2, transportinstruction_pb2, userinput_pb2
-from sshmitm.moduleparser.colors import Colors
+from sshmitm.colors import Colors
 from sshmitm.plugins.ssh.terminallogs import TerminalLogFormat
 from sshmitm.session import Session
 from sshmitm.utils import format_hex
@@ -245,11 +243,8 @@ class UdpProxy:
             logging.info(
                 "%s MOSH monitor on port %s - view intercepted session with: %s",
                 Colors.emoji("information"),
-                Colors.stylize(port, fg("light_blue") + attr("bold")),
-                Colors.stylize(
-                    f"ssh-mitm mosh client 127.0.0.1 {port}",
-                    fg("light_blue") + attr("bold"),
-                ),
+                Colors.highlight(port),
+                Colors.highlight(f"ssh-mitm mosh client 127.0.0.1 {port}"),
             )
         # Highest server new_num seen — used to skip already-processed diffs.
         self._server_max_new_num: int = -1
@@ -392,7 +387,7 @@ class UdpProxy:
 
             if self.show_debug and (not is_heartbeat or self.log_heartbeats):
                 data_to_print = [
-                    f"{Colors.stylize('MOSH Data', attr('bold'))}",
+                    f"{Colors.stylize('MOSH Data', bold=True)}",
                     f"from->to: {addr} -> {destination_addr}",
                     f"timestamp (ms): {int.from_bytes(timestamp, 'big')} (0x{timestamp.hex()})",
                     f"timestamp_reply (ms): {int.from_bytes(timestamp_reply, 'big')} (0x{timestamp_reply.hex()})",
@@ -441,9 +436,8 @@ def handle_mosh(
             mosh_connect_parts = mosh_connect.strip().split(" ")
             mosh_info = "\n".join(
                 [
-                    Colors.stylize(
-                        Colors.emoji("information") + " MOSH connection info",
-                        fg("blue") + attr("bold"),
+                    Colors.heading(
+                        Colors.emoji("information") + " MOSH connection info"
                     ),
                     f"  * MOSH-port: {mosh_connect_parts[2]}",
                     f"  * MOSH-shared-secret: {mosh_connect_parts[3]}",
@@ -469,7 +463,7 @@ def handle_mosh(
                 logging.info(
                     "%s MOSH proxy started on port %s - the SSH connection will close, but MOSH remains active",
                     Colors.emoji("information"),
-                    Colors.stylize(mosh_port, fg("light_blue") + attr("bold")),
+                    Colors.highlight(mosh_port),
                 )
                 return f"MOSH CONNECT {mosh_port} {mosh_connect_parts[3]}".encode()
         except Exception:  # pylint: disable=broad-exception-caught

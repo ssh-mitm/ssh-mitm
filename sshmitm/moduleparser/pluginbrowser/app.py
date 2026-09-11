@@ -24,7 +24,7 @@ from textual.widgets import (
     Tree,
 )
 
-from sshmitm.moduleparser.colors import Colors
+from sshmitm.colors import Colors
 from sshmitm.moduleparser.pluginbrowser.config import (
     BrowserConfig,
     get_config_path,

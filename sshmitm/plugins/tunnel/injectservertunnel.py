@@ -3,10 +3,9 @@ from socket import socket
 from typing import TYPE_CHECKING
 
 import paramiko
-from colored.colored import attr, fg
 
+from sshmitm.colors import Colors
 from sshmitm.forwarders.tunnel import RemotePortForwardingForwarder, TunnelForwarder
-from sshmitm.moduleparser.colors import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 
 if TYPE_CHECKING:
@@ -73,7 +72,7 @@ class InjectableRemotePortForwardingForwarder(RemotePortForwardingForwarder):
         logging.info(
             "%s %s - created server tunnel injector for host %s on port %s to destination %s",
             Colors.emoji("information"),
-            Colors.stylize(session.sessionid, fg("light_blue") + attr("bold")),
+            Colors.highlight(session.sessionid),
             self.tcpserver.network,
             self.tcpserver.port,
             self.destination,

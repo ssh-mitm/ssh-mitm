@@ -4,13 +4,12 @@ from importlib import resources
 from typing import TYPE_CHECKING
 
 import yaml
-from colored.colored import attr, fg
 from paramiko import Transport, common
 from paramiko.message import Message
 from paramiko.ssh_exception import SSHException
 from rich.markup import escape
 
-from sshmitm.moduleparser.colors import Colors
+from sshmitm.colors import Colors
 from sshmitm.plugins.session.clientaudit import SSHClientAudit
 
 if TYPE_CHECKING:
@@ -41,7 +40,7 @@ class KeyNegotiationData:
         logging.debug(
             "%s connected client version: %s",
             Colors.emoji("information"),
-            Colors.stylize(self.client_version, fg("green") + attr("bold")),
+            Colors.success(self.client_version),
         )
         logging.debug("cookie: %s", self.cookie.hex())
         logging.debug("kex_algorithms: %s", escape(str(self.kex_algorithms)))

@@ -41,10 +41,10 @@ from paramiko import Transport
 from paramiko.auth_handler import AuthHandler
 
 from sshmitm import __version__ as ssh_mitm_version
+from sshmitm.colors import Colors
 from sshmitm.config import CONFIGFILE
 from sshmitm.logger import FailSaveLogStream, PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
-from sshmitm.moduleparser.colors import Colors
 from sshmitm.workarounds import auth_handler, monkeypatch, transport
 
 

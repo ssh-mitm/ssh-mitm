@@ -8,10 +8,9 @@ import time
 from typing import TYPE_CHECKING
 
 import paramiko
-from colored.colored import attr, fg
 
+from sshmitm.colors import Colors
 from sshmitm.forwarders.ssh import SSHForwarder
-from sshmitm.moduleparser.colors import Colors
 from sshmitm.plugins.ssh.terminallogs import (
     AsciinemLogFormat,
     ScriptLogFormat,
@@ -226,9 +225,8 @@ class SSHMirrorForwarder(SSHForwarder):
         logging.info(
             "%s %s",
             Colors.emoji("sleuth_or_spy"),
-            Colors.stylize(
-                f"mirror client connected{' from ' + client_addr if client_addr else ''}",
-                fg("yellow") + attr("bold"),
+            Colors.warning(
+                f"mirror client connected{' from ' + client_addr if client_addr else ''}"
             ),
         )
 
@@ -237,9 +235,7 @@ class SSHMirrorForwarder(SSHForwarder):
         logging.info(
             "%s %s",
             Colors.emoji("electric_plug"),
-            Colors.stylize(
-                "mirror client disconnected", fg("light_gray") + attr("bold")
-            ),
+            Colors.dimmed("mirror client disconnected"),
         )
         del mirror_transport
         return True
@@ -250,9 +246,7 @@ class SSHMirrorForwarder(SSHForwarder):
             "%s created mirrorshell on port %s. connect with: %s",
             Colors.emoji("information"),
             inject_port,
-            Colors.stylize(
-                f"ssh -p {inject_port} {inject_host}", fg("light_blue") + attr("bold")
-            ),
+            Colors.highlight(f"ssh -p {inject_port} {inject_host}"),
         )
         try:
             while self.session.running:

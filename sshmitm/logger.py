@@ -13,7 +13,7 @@ from typing import Any
 from rich.highlighter import NullHighlighter
 from rich.logging import RichHandler
 
-from sshmitm.moduleparser.colors import Colors
+from sshmitm.colors import Colors
 
 THREAD_DATA = threading.local()
 

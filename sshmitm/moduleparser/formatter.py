@@ -3,9 +3,7 @@
 import argparse
 from typing import Any
 
-from colored.colored import attr, fg
-
-from sshmitm.moduleparser.colors import Colors
+from sshmitm.colors import Colors
 
 
 class ModuleFormatter(argparse.HelpFormatter):
@@ -45,7 +43,7 @@ class ModuleFormatter(argparse.HelpFormatter):
                 current_indent = (
                     self.formatter._current_indent
                 )  # pylint: disable=protected-access
-                heading = f"{' ' * current_indent}{Colors.stylize(self.heading, fg('red') + attr('bold'))}:\n"
+                heading = f"{' ' * current_indent}{Colors.error(self.heading)}:\n"
             else:
                 heading = ""
 

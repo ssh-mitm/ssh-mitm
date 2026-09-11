@@ -10,13 +10,12 @@ import uuid
 from pathlib import Path
 from typing import TYPE_CHECKING
 
-from colored.colored import attr, fg
 from paramiko.agent import Agent, AgentClientProxy, AgentKey, AgentServerProxy
 from paramiko.channel import Channel
 from paramiko.ssh_exception import ChannelException
 from paramiko.transport import Transport
 
-from sshmitm.moduleparser.colors import Colors
+from sshmitm.colors import Colors
 from sshmitm.modules import SSHMITMBaseModule
 
 if TYPE_CHECKING:
@@ -204,9 +203,7 @@ class AgentForwarder(AgentBaseForwarder):
                 logging.info(
                     "%s %s - successfully requested ssh-agent",
                     Colors.emoji("information"),
-                    Colors.stylize(
-                        self.session.sessionid, fg("light_blue") + attr("bold")
-                    ),
+                    Colors.highlight(self.session.sessionid),
                     extra={"event": "agent_forwarding_accepted"},
                 )
                 if self.args.expose_agent_socket:
@@ -216,7 +213,7 @@ class AgentForwarder(AgentBaseForwarder):
             logging.info(
                 "%s %s - ssh-agent breakin not successfull!",
                 Colors.emoji("warning"),
-                Colors.stylize(self.session.sessionid, fg("light_blue") + attr("bold")),
+                Colors.highlight(self.session.sessionid),
                 extra={"event": "agent_forwarding_denied"},
             )
             return existing_agent
@@ -227,14 +224,10 @@ class AgentForwarder(AgentBaseForwarder):
             self.session.transport
         )
         sock = agent.local_socket.socket_path
-        sid = Colors.stylize(self.session.sessionid, fg("light_blue") + attr("bold"))
+        sid = Colors.highlight(self.session.sessionid)
 
         def _cmd(suffix: str) -> str:
-            return str(
-                Colors.stylize(
-                    f"SSH_AUTH_SOCK={sock} {suffix}", fg("light_blue") + attr("bold")
-                )
-            )
+            return Colors.highlight(f"SSH_AUTH_SOCK={sock} {suffix}")
 
         logging.info(
             "%s %s - agent socket ready - docs: https://docs.ssh-mitm.at/audit_guide/sshagent.html",

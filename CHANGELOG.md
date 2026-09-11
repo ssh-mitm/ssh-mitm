@@ -11,6 +11,8 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 - Replaced `python-json-logger` with an in-house JSON log formatter
 - Replaced `pytz` with the standard library's `datetime.UTC`
+- Replaced `colored` with an in-house ANSI styling module (`sshmitm.colors`), now respecting `NO_COLOR`/`FORCE_COLOR`
+- `Colors.emoji()` now uses `rich.emoji.Emoji` instead of `rich`'s private `_emoji_codes`
 
 ## [6.0.0] - 2026-09-10
 

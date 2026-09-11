@@ -11,12 +11,11 @@ from types import TracebackType
 from typing import TYPE_CHECKING, Any, Self
 
 import paramiko
-from colored.colored import attr, fg
 from paramiko import PKey
 
 from sshmitm.clients.ssh import AuthenticationMethod, SSHClient
+from sshmitm.colors import Colors
 from sshmitm.exceptions import MissingHostException
-from sshmitm.moduleparser.colors import Colors
 from sshmitm.modules import SSHMITMBaseModule
 from sshmitm.utils import SSHPubKey
 
@@ -565,15 +564,13 @@ class Authenticator(SSHMITMBaseModule):
                 logging.error(
                     "\n".join(
                         [
-                            Colors.stylize(
+                            Colors.error(
                                 Colors.emoji("exclamation")
-                                + " ssh agent keys are not allowed for signing. Remote authentication not possible.",
-                                fg("red") + attr("bold"),
+                                + " ssh agent keys are not allowed for signing. Remote authentication not possible."
                             ),
-                            Colors.stylize(
+                            Colors.warning(
                                 Colors.emoji("information")
-                                + " To intercept clients, you can provide credentials for a honeypot.",
-                                fg("yellow") + attr("bold"),
+                                + " To intercept clients, you can provide credentials for a honeypot."
                             ),
                         ]
                     )
@@ -582,15 +579,13 @@ class Authenticator(SSHMITMBaseModule):
                 logging.error(
                     "\n".join(
                         [
-                            Colors.stylize(
+                            Colors.error(
                                 Colors.emoji("exclamation")
-                                + " ssh agent not forwarded. Login to remote host not possible with publickey authentication.",
-                                fg("red") + attr("bold"),
+                                + " ssh agent not forwarded. Login to remote host not possible with publickey authentication."
                             ),
-                            Colors.stylize(
+                            Colors.warning(
                                 Colors.emoji("information")
-                                + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot.",
-                                fg("yellow") + attr("bold"),
+                                + " To intercept clients without a forwarded agent, you can provide credentials for a honeypot."
                             ),
                         ]
                     )
@@ -607,19 +602,17 @@ class Authenticator(SSHMITMBaseModule):
         )
         if auth_status == paramiko.common.AUTH_SUCCESSFUL:
             logging.warning(
-                Colors.stylize(
+                Colors.warning(
                     Colors.emoji("warning")
-                    + " publickey authentication failed - no agent forwarded - connecting to honeypot!",
-                    fg("yellow") + attr("bold"),
+                    + " publickey authentication failed - no agent forwarded - connecting to honeypot!"
                 ),
                 extra={"event": "honeypot_redirect"},
             )
         else:
             logging.error(
-                Colors.stylize(
+                Colors.error(
                     Colors.emoji("exclamation")
-                    + " Authentication against honeypot failed!",
-                    fg("red") + attr("bold"),
+                    + " Authentication against honeypot failed!"
                 ),
                 extra={"event": "honeypot_failed"},
             )
@@ -694,11 +687,7 @@ class Authenticator(SSHMITMBaseModule):
                 ):
                     auth_status = paramiko.common.AUTH_SUCCESSFUL
             except paramiko.SSHException:
-                logging.error(
-                    Colors.stylize(
-                        "Connection to remote server refused", fg("red") + attr("bold")
-                    )
-                )
+                logging.error(Colors.error("Connection to remote server refused"))
                 return paramiko.common.AUTH_FAILED
             if run_post_auth:
                 self.post_auth_action(auth_status == paramiko.common.AUTH_SUCCESSFUL)
@@ -961,13 +950,9 @@ class AuthenticatorPassThrough(Authenticator):
 
         logmessage = []
         if success:
-            logmessage.append(
-                Colors.stylize(
-                    "Remote authentication succeeded", fg("green") + attr("bold")
-                )
-            )
+            logmessage.append(Colors.success("Remote authentication succeeded"))
         else:
-            logmessage.append(Colors.stylize("Remote authentication failed", fg("red")))
+            logmessage.append(Colors.error("Remote authentication failed", bold=False))
 
         if self.session.ssh.client is not None:
             logmessage.append(
@@ -980,7 +965,7 @@ class AuthenticatorPassThrough(Authenticator):
             if not self.args.auth_hide_credentials:
                 display_password = self.session.auth.password_provided
             logmessage.append(
-                f"\tPassword: {display_password or Colors.stylize('*******', fg('dark_gray'))}"
+                f"\tPassword: {display_password or Colors.muted('*******')}"
             )
 
         if (

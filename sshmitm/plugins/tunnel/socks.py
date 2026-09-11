@@ -4,13 +4,12 @@ import sys
 from typing import TYPE_CHECKING, ClassVar
 
 import paramiko
-from colored.colored import attr, fg
 
+from sshmitm.colors import Colors
 from sshmitm.forwarders.tunnel import (
     LocalPortForwardingForwarder,
     TunnelForwarder,
 )
-from sshmitm.moduleparser.colors import Colors
 from sshmitm.plugins.session.tcpserver import TCPServerThread
 from sshmitm.plugins.tunnel.socks4 import Socks4Error, Socks4Server
 from sshmitm.plugins.tunnel.socks5 import Socks5Error, Socks5Server
@@ -163,12 +162,12 @@ class SOCKSTunnelForwarder(LocalPortForwardingForwarder):
                 "    * netcat: %s"
             ),
             Colors.emoji("information"),
-            Colors.stylize(session.sessionid, fg("light_blue") + attr("bold")),
-            Colors.stylize("SOCKS port:", attr("bold")),
-            Colors.stylize(server_thread.port, fg("light_blue") + attr("bold")),
-            Colors.stylize("SOCKS4:", attr("bold")),
-            Colors.stylize(socat_cmd, fg("light_blue") + attr("bold")),
-            Colors.stylize(netcat4_cmd, fg("light_blue") + attr("bold")),
-            Colors.stylize("SOCKS5:", attr("bold")),
-            Colors.stylize(netcat5_cmd, fg("light_blue") + attr("bold")),
+            Colors.highlight(session.sessionid),
+            Colors.stylize("SOCKS port:", bold=True),
+            Colors.highlight(server_thread.port),
+            Colors.stylize("SOCKS4:", bold=True),
+            Colors.highlight(socat_cmd),
+            Colors.highlight(netcat4_cmd),
+            Colors.stylize("SOCKS5:", bold=True),
+            Colors.highlight(netcat5_cmd),
         )

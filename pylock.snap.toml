@@ -101,17 +101,6 @@ url = "https://files.pythonhosted.org/packages/6f/89/bb5108dc6c3651dca963f2b0a3b
 sha256 = "b9af956078716df40d985fb0dfeb2c2120c5ca92ba4ff4b388acfd01cdc14d08"
 
 [[packages]]
-name = "colored"
-version = "2.3.2"
-
-[[packages.wheels]]
-name = "colored-2.3.2-py3-none-any.whl"
-url = "https://files.pythonhosted.org/packages/ee/93/2cfa674b84be707dc0b1653b00f7da9270c78a8fd43f7d80f0d8b1f5ead9/colored-2.3.2-py3-none-any.whl"
-
-[packages.wheels.hashes]
-sha256 = "f192e0545b7214f5479031495d14f4a46b29695650c46a50bf5bb8fb5cbd7893"
-
-[[packages]]
 name = "cryptography"
 version = "50.0.1"
 

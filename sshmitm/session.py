@@ -34,12 +34,11 @@ from typing import TYPE_CHECKING, Any, Self, cast
 from uuid import uuid4
 
 import paramiko
-from colored.colored import attr, fg
 from paramiko import Transport
 
 from sshmitm import __version__ as ssh_mitm_version
+from sshmitm.colors import Colors
 from sshmitm.logger import THREAD_DATA
-from sshmitm.moduleparser.colors import Colors
 from sshmitm.modules import SSHMITMBaseModule
 
 if TYPE_CHECKING:
@@ -200,7 +199,7 @@ class Session(BaseSession):
         logging.info(
             "%s session %s created",
             Colors.emoji("information"),
-            Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
+            Colors.highlight(self.sessionid),
         )
         self._transport: paramiko.Transport | None = None
         self._active_channels: dict[str, paramiko.Channel] = {}
@@ -483,7 +482,7 @@ class Session(BaseSession):
         logging.info(
             "%s %s - session started",
             Colors.emoji("information"),
-            Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
+            Colors.highlight(self.sessionid),
             extra={"event": "session_started"},
         )
 
@@ -524,7 +523,7 @@ class Session(BaseSession):
         logging.info(
             "%s session %s closed",
             Colors.emoji("information"),
-            Colors.stylize(self.sessionid, fg("light_blue") + attr("bold")),
+            Colors.highlight(self.sessionid),
             extra=event_extra,
         )
         self.closed = True

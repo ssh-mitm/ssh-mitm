@@ -4,9 +4,7 @@ from collections.abc import Sequence
 from importlib import metadata
 from typing import TYPE_CHECKING, Any
 
-from colored.colored import attr, fg
-
-from sshmitm.moduleparser.colors import Colors
+from sshmitm.colors import Colors
 
 if TYPE_CHECKING:
     from sshmitm.moduleparser.modules import BaseModule
@@ -97,12 +95,11 @@ def set_module_kwargs(
             if not loaded_class.__doc__
             else loaded_class.__doc__.strip().split("\n")[0]
         )
+        highlighted_name = Colors.highlight(entry_point.name, bold=False)
         if entry_point_desc:
-            entry_point_description = f"  * {Colors.stylize(entry_point.name, fg('blue'))} -> {entry_point_desc}"
+            entry_point_description = f"  * {highlighted_name} -> {entry_point_desc}"
         else:
-            entry_point_description = (
-                f"  * {Colors.stylize(entry_point.name, fg('blue'))}"
-            )
+            entry_point_description = f"  * {highlighted_name}"
         descriptions.append(entry_point_description)
 
     if not kwargs.get("help") and entry_point_class.__doc__:
@@ -111,8 +108,6 @@ def set_module_kwargs(
     kwargs["choices"] = sorted(choices)
     kwargs["help"] = kwargs.get("help") or ""
     if default_name:
-        kwargs[
-            "help"
-        ] += f"\ndefault module: {Colors.stylize(default_name, fg('blue') + attr('bold'))}"
+        kwargs["help"] += f"\ndefault module: {Colors.highlight(default_name)}"
     kwargs["help"] += "\navailable modules:\n{}".format("\n".join(descriptions))
     return kwargs
