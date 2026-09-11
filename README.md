@@ -62,9 +62,11 @@ terminating both sides independently and forwarding all traffic while giving the
 SSH-MITM requires no installation. Download the AppImage and you are ready to go:
 
 ```bash
-wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-chmod +x ssh-mitm-x86_64.AppImage
+wget -O ssh-mitm https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+chmod +x ssh-mitm
 ```
+
+Move it to a directory on your `PATH` (e.g. `~/.local/bin`) to run it as `ssh-mitm` like below.
 
 For other installation options (pip, Flatpak, Snap) see the [installation guide](https://docs.ssh-mitm.at/develop/installation.html).
 
@@ -81,7 +83,7 @@ For other installation options (pip, Flatpak, Snap) see the [installation guide]
 Point SSH-MITM at your target host — use a system you are authorized to test:
 
 ```bash
-./ssh-mitm-x86_64.AppImage server --remote-host <target-host>
+ssh-mitm server --remote-host <target-host>
 ```
 
 ### 3. Route a client connection

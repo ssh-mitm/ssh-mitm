@@ -28,8 +28,10 @@ If you use the ``AppImage``, you can install it as:
 
 .. code:: none
 
-    $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-    $ chmod +x ssh-mitm*.AppImage
+    $ wget -O ssh-mitm https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+    $ chmod +x ssh-mitm
+
+Move it to a directory on your ``PATH`` (e.g. ``~/.local/bin``) to run it as ``ssh-mitm``.
 
 
 :fab:`linux` Flatpak

@@ -22,10 +22,11 @@ Install
 
         .. code-block:: none
 
-            $ wget https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
-            $ chmod +x ssh-mitm-x86_64.AppImage
+            $ wget -O ssh-mitm https://github.com/ssh-mitm/ssh-mitm/releases/latest/download/ssh-mitm-x86_64.AppImage
+            $ chmod +x ssh-mitm
 
-        In all commands below, replace ``ssh-mitm`` with ``./ssh-mitm-x86_64.AppImage``.
+        Move it to a directory on your ``PATH`` (e.g. ``~/.local/bin``) to use it as
+        ``ssh-mitm`` in all commands below.
 
     .. tab-item:: Snap
 
