@@ -1,0 +1,15 @@
+#!/bin/bash
+# Blocks commits whose message attributes authorship to Claude/Anthropic
+# (e.g. a "Co-Authored-By: Claude <noreply@anthropic.com>" trailer, or a
+# "Generated with Claude Code" footer). See AGENTS.md: no AI-attribution
+# footers in commit messages in this repository, no exceptions.
+#
+# Only matches attribution-style lines, not any mention of the words
+# "claude"/"anthropic" -- a commit discussing the AI policy itself must
+# still be able to say those words in prose.
+if grep -iE '^(co-authored-by|signed-off-by)[^\n]*(claude|anthropic\.com)' "$1" \
+    || grep -iE 'generated (with|by)[^\n]*claude' "$1"; then
+    echo "Commit abgelehnt: Commit-Message enthaelt eine Claude/Anthropic-Attribution." >&2
+    echo "Siehe AGENTS.md -- keine AI-Attribution in Commit-Messages, keine Ausnahmen." >&2
+    exit 1
+fi

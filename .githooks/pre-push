@@ -4,3 +4,26 @@ if [[ "$branch" == wip/* ]]; then
     echo "Push von wip/-Branches ist gesperrt: $branch"
     exit 1
 fi
+
+# Second line of defense against Claude/Anthropic co-author attribution
+# (see AGENTS.md) -- catches commits that slipped past the commit-msg
+# hook, e.g. cherry-picks or commits made without hooks enabled.
+zero="0000000000000000000000000000000000000000"
+while read -r local_ref local_sha remote_ref remote_sha; do
+    [ "$local_sha" = "$zero" ] && continue
+    if [ "$remote_sha" = "$zero" ]; then
+        range=$(git rev-list "$local_sha" --not --branches --remotes)
+    else
+        range="$remote_sha..$local_sha"
+    fi
+    [ -z "$range" ] && continue
+    for commit in $(git rev-list "$range" 2>/dev/null); do
+        msg=$(git log -1 --format=%B "$commit")
+        if grep -iE '^(co-authored-by|signed-off-by)[^\n]*(claude|anthropic\.com)' <<<"$msg" \
+            || grep -iE 'generated (with|by)[^\n]*claude' <<<"$msg"; then
+            echo "Push blockiert: Commit $commit enthaelt eine Claude/Anthropic-Attribution."
+            echo "Siehe AGENTS.md -- keine AI-Attribution in Commit-Messages, keine Ausnahmen."
+            exit 1
+        fi
+    done
+done
