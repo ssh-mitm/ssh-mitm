@@ -28,7 +28,6 @@ compression: lzo
 platforms:
   amd64:
   arm64:
-  armhf:
 
 parts:
   ssh-mitm:
@@ -37,7 +36,7 @@ parts:
     python-packages:
       - pip
     python-requirements:
-      - pylock.snap.toml
+      - requirements-snap.txt
 
 apps:
   ssh-mitm:

@@ -15,6 +15,18 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 - `Colors.emoji()` now uses `rich.emoji.Emoji` instead of `rich`'s private `_emoji_codes`
 - Replaced `psrpcore` with an in-house PSRP wire-format parser (`sshmitm.plugins.powershell.psrp_wire`)
 
+### Fixed
+
+- snap: build was broken on arm64/armhf — `pylock.snap.toml` only pinned
+  x86_64 wheel URLs (generated on an amd64 `ubuntu-24.04` runner per
+  `doc/develop/reproducible-builds.md`), so `pip` had no matching
+  distribution to install on those architectures. Replaced it with
+  `requirements-snap.txt`, a `pip-compile --generate-hashes` lock that
+  pins every published wheel/sdist hash per package instead of one
+  platform-specific wheel, so a single file covers both architectures.
+  `snapcraft.yaml` drops `armhf` (no working build to begin with) and
+  keeps `amd64`/`arm64`.
+
 ## [6.0.0] - 2026-09-10
 
 ### Added

@@ -122,8 +122,11 @@ way to know about the `appimage` package bundled inside the AppImage for
 its own `--appimage-extract`-style self-update, since that isn't one of
 `ssh-mitm`'s own dependencies. `update-pylock.sh` wraps `pip lock .` with
 both fixups. It must run under the same Python minor version
-`[tool.appimage].python` pins (see the `pylock.snap.toml` note further
-below for why) - defaults to `python3.11`, override with `PYLOCK_PYTHON`.
+`[tool.appimage].python` pins - `pip lock`'s hashes pin exact wheel URLs
+for one specific (Python version, platform) combination, so locking under
+the wrong Python version pins wheels that don't match the AppImage's
+bundled interpreter - defaults to `python3.11`, override with
+`PYLOCK_PYTHON`.
 
 `reproducible = true`, `verify_downloads = true`, and `require_zsyncmake =
 true` in `[tool.appimage]` turn all of the above into hard build failures
@@ -160,26 +163,36 @@ build cost); a failure aborts the release before anything gets uploaded.
 
 ## Snap build
 
-`snapcraft.yaml`'s `python` part installs from `pylock.snap.toml`
-(`python-requirements`), hash-verified the same way `pylock.docs.toml`
-is - no `--require-hashes` flag needed, consuming a pylock.toml enables
-it automatically.
+`snapcraft.yaml`'s `python` part installs from `requirements-snap.txt`
+(`python-requirements`), hash-verified via classic `pip install
+--require-hashes` semantics (a `--hash` on any requirement turns it on
+automatically).
 
-Unlike the other pylock files, this one **must** be regenerated on an
-`ubuntu-24.04` runner (matching `base: core24`), not locally - pylock's
-hashes pin exact wheel URLs for a specific (Python version, platform)
-combination, and the snap build resolves against Ubuntu 24.04's Python
-(3.12), not whatever's running `pip lock` locally:
+This is deliberately *not* a pylock.toml, unlike the AppImage and docs
+toolchains. `snapcraft.yaml` builds for more than one platform (`amd64`,
+`arm64`) from a single `python-requirements` file, and pylock's hashes
+pin exactly one wheel URL for one specific (Python version, platform)
+combination - the approach used for `pylock.snap.toml` originally
+required a separate lock file per architecture, regenerated on a
+matching runner for each.
+
+`requirements-snap.txt` avoids that by using plain
+`pip-compile --generate-hashes` with no `--python-platform` restriction:
+pip-compile then pins the hash of *every* wheel (and the sdist) PyPI
+published for the resolved version, not just the one matching whatever
+machine ran the compile. `pip` picks whichever file matches the actual
+install target and verifies it against the matching hash - one file
+covers every architecture snapcraft builds for. Regenerate it from any
+machine with:
 
 ```bash
-python3 -m pip lock -r requirements.in -o pylock.snap.toml
+packaging/update-snap-requirements.sh            # keep existing pins stable
+packaging/update-snap-requirements.sh --upgrade   # move pins forward
 ```
 
-Confirmed empirically: generating it with Python 3.13 locally pins
-`cp313` wheels, which don't match what `core24`'s Python 3.12 needs. Run
-the command above as a step in `ubuntu-24.04` CI (e.g. `snapcore/action-build`),
-immediately before the actual snap build, to guarantee both run against
-the same Python.
+This buys hash-verified integrity, not bit-identical reproducibility -
+see "Known limits" below; ssh-mitm only guarantees byte-identical builds
+for the AppImage.
 
 ## CI tooling and docs
 
