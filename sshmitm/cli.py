@@ -45,6 +45,12 @@ from sshmitm.colors import Colors
 from sshmitm.config import CONFIGFILE
 from sshmitm.logger import FailSaveLogStream, PlainJsonFormatter
 from sshmitm.moduleparser import ModuleParser
+from sshmitm.state import (
+    FLATPAK_FILESYSTEM_HINT,
+    DeploymentVariant,
+    detect_deployment,
+    flatpak_has_broad_filesystem_access,
+)
 from sshmitm.workarounds import auth_handler, monkeypatch, transport
 
 
@@ -130,6 +136,11 @@ def main() -> None:
         logging.getLogger("paramiko").setLevel(logging.INFO)
     else:
         logging.getLogger("paramiko").setLevel(logging.WARNING)
+
+    if detect_deployment() == DeploymentVariant.FLATPAK and not (
+        flatpak_has_broad_filesystem_access()
+    ):
+        logging.warning(FLATPAK_FILESYSTEM_HINT)
 
     try:
         parser.execute_subcommand(args.subparser_name, args)

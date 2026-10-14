@@ -54,7 +54,13 @@ from sshmitm.interfaces.sftp import BaseSFTPServerInterface, SFTPProxyServerInte
 from sshmitm.multisocket import create_server_sock
 from sshmitm.plugins.session import key_negotiation
 from sshmitm.session import Session
-from sshmitm.state import DeploymentVariant, detect_deployment, get_state_dir
+from sshmitm.state import (
+    FLATPAK_FILESYSTEM_HINT,
+    DeploymentVariant,
+    detect_deployment,
+    flatpak_has_broad_filesystem_access,
+    get_state_dir,
+)
 from sshmitm.utils import SSHPubKey
 
 _ALGO_CLASS: dict[str, type[PKey]] = {
@@ -326,6 +332,10 @@ class SSHProxyServer:
                 "connected by default - connect it first: "
                 "sudo snap connect ssh-mitm:ssh-keys"
             )
+        elif detect_deployment() == DeploymentVariant.FLATPAK and not (
+            flatpak_has_broad_filesystem_access()
+        ):
+            hint = f" Note: {FLATPAK_FILESYSTEM_HINT}"
         logging.error(
             "%s%s",
             Colors.error(f"permission denied reading host key: {key_path}"),

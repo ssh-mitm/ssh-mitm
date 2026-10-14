@@ -7,6 +7,15 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- Flatpak: warn at startup when running sandboxed without `home`/`host`
+  filesystem access, since custom host key files, `--scp-replace-file`/
+  `--sftp-replace-file`/`--ssh-mirrorshell-key` paths, and other files
+  outside the app's private data directory are unreachable otherwise. The
+  same hint is now also shown for permission-denied host key reads under
+  Flatpak, alongside the existing Snap `ssh-keys` hint.
+
 ### Changed
 
 - Replaced `python-json-logger` with an in-house JSON log formatter

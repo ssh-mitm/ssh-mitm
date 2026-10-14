@@ -36,6 +36,7 @@ Supports all relevant Linux deployment variants:
 
 from __future__ import annotations
 
+import configparser
 import logging
 import os
 from enum import Enum, auto
@@ -65,6 +66,37 @@ def detect_deployment() -> DeploymentVariant:
     if os.getuid() == 0:
         return DeploymentVariant.ROOT
     return DeploymentVariant.USER
+
+
+FLATPAK_FILESYSTEM_HINT = (
+    "running as a flatpak without broad filesystem access - custom host key "
+    "files, --scp-replace-file/--sftp-replace-file/--ssh-mirrorshell-key "
+    "paths and other files outside this app's private data directory are "
+    "unreachable unless you grant access first: "
+    "flatpak override --user --filesystem=home at.ssh_mitm.server"
+)
+
+
+def flatpak_has_broad_filesystem_access() -> bool | None:
+    """
+    Return whether the Flatpak sandbox was granted "host" or "home"
+    filesystem access, by reading /.flatpak-info's [Context] section.
+
+    Returns None when not running inside a Flatpak sandbox at all.
+    """
+    if detect_deployment() != DeploymentVariant.FLATPAK:
+        return None
+
+    info = configparser.ConfigParser(delimiters=("=",))
+    try:
+        with open("/.flatpak-info", encoding="utf-8") as info_file:
+            info.read_file(info_file)
+        filesystems = info.get("Context", "filesystems", fallback="")
+    except (OSError, configparser.Error):
+        filesystems = ""
+
+    tokens = {entry.split(":", 1)[0] for entry in filesystems.split(";") if entry}
+    return bool(tokens & {"host", "home"})
 
 
 def _candidates() -> list[Path]:
