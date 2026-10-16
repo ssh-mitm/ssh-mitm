@@ -227,6 +227,30 @@ def honeypot_target() -> Generator[int, None, None]:
 
 
 @pytest.fixture
+def honeypot_sftp_target() -> Generator[int, None, None]:
+    """Same as honeypot_target, but also exposes an SFTP file.
+
+    Regression coverage for a honeypot fallback that authenticates fine but
+    hangs on the first SFTP subsystem request: _start_channels() returns
+    True from auth_fallback() succeeding without ever setting
+    sftp.client_ready, which SFTPProxyServerInterface blocks on. exec/scp
+    don't wait on it, so they were unaffected and masked this. NETCONF and
+    PowerShell wait on ssh.client_created/client_auth_finished instead,
+    which auth_fallback()'s connect() always sets - confirmed unaffected by
+    hand (no fixture for them here, since that needs a NETCONF/PowerShell
+    speaking backend this mock doesn't implement).
+
+    Yields the listening port.
+    """
+    port, stop, _ = start_server_thread(
+        lambda: PasswordServer("honeypot-pass", "honeypot-user"),
+        sftp_files={"/greeting.txt": b"hello from the honeypot\n"},
+    )
+    yield port
+    stop.set()
+
+
+@pytest.fixture
 def mitm_fallback_honeypot(
     tmp_path: Path,
     mock_ssh_target: int,
@@ -255,6 +279,43 @@ def mitm_fallback_honeypot(
             "--enable-auth-fallback",
             "--fallback-host", "127.0.0.1",
             "--fallback-port", str(honeypot_target),
+            "--fallback-username", "honeypot-user",
+            "--fallback-password", "honeypot-pass",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        _wait_port(mitm_port)
+        yield mitm_port
+    finally:
+        proc.terminate()
+        proc.wait(timeout=5)
+
+
+@pytest.fixture
+def mitm_fallback_honeypot_sftp(
+    tmp_path: Path,
+    mock_ssh_target: int,
+    honeypot_sftp_target: int,
+) -> Generator[int, None, None]:
+    """Same scenario as mitm_fallback_honeypot, against the SFTP-capable
+    honeypot_sftp_target instead.
+
+    Yields the MITM listening port.
+    """
+    mitm_port = _free_port()
+
+    proc = subprocess.Popen(
+        [
+            _ssh_mitm_bin(), "server",
+            "--listen-port", str(mitm_port),
+            "--remote-host", "127.0.0.1",
+            "--remote-port", str(mock_ssh_target),
+            "--disable-remote-fingerprint-warning",
+            "--enable-auth-fallback",
+            "--fallback-host", "127.0.0.1",
+            "--fallback-port", str(honeypot_sftp_target),
             "--fallback-username", "honeypot-user",
             "--fallback-password", "honeypot-pass",
         ],

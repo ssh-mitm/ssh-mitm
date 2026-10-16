@@ -386,6 +386,20 @@ class Session(BaseSession):
 
         return self._transport
 
+    def _mark_client_ready(self) -> bool:
+        # Every path through _start_channels() that ends in a usable
+        # connection - direct, agent-authenticated, or via auth_fallback() -
+        # must go through this before returning True. Subsystem handlers
+        # (SFTPProxyServerInterface, NetconfClient, PowerShellClient) block
+        # on these events rather than on client_created/client_auth_finished;
+        # a path that returns True without setting them leaves any later
+        # subsystem request hanging forever, even though exec/scp (which
+        # don't wait on these events) work fine over the same connection.
+        self.sftp.client_ready.set()
+        self.netconf.client_ready.set()
+        self.powershell.client_ready.set()
+        return True
+
     def _start_channels(self) -> bool:
         self.auth.agent = self.proxyserver.create_agent_forwarder(self).request(
             self.auth.agent
@@ -393,20 +407,19 @@ class Session(BaseSession):
 
         # create client or master channel
         if self.ssh.client:
-            self.sftp.client_ready.set()
-            self.netconf.client_ready.set()
-            self.powershell.client_ready.set()
-            return True
+            return self._mark_client_ready()
 
         # Connect method start
         if not self.auth.agent:
             if self.auth.username_provided is None:
                 logging.error("No username provided during login!")
                 return False
-            return (
+            if (
                 self.authenticator.auth_fallback(self.auth.username_provided)
                 == paramiko.common.AUTH_SUCCESSFUL
-            )
+            ):
+                return self._mark_client_ready()
+            return False
 
         if (
             self.authenticator.authenticate(store_credentials=False)
@@ -419,7 +432,7 @@ class Session(BaseSession):
                 self.authenticator.auth_fallback(self.auth.username_provided)
                 == paramiko.common.AUTH_SUCCESSFUL
             ):
-                return True
+                return self._mark_client_ready()
             self.transport.close()
             return False
 
@@ -437,10 +450,7 @@ class Session(BaseSession):
             self.transport.close()
             return False
 
-        self.sftp.client_ready.set()
-        self.netconf.client_ready.set()
-        self.powershell.client_ready.set()
-        return True
+        return self._mark_client_ready()
 
     def start(self) -> bool:
         """

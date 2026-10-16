@@ -98,6 +98,37 @@ def test_fallback_redirects_to_honeypot_repeatedly(mitm_fallback_honeypot, clien
         )
 
 
+def test_fallback_sftp_does_not_hang(mitm_fallback_honeypot_sftp, client_key_file, tmp_path):
+    """Regression test for _start_channels() returning True from a
+    successful auth_fallback() without setting sftp.client_ready:
+    SFTPProxyServerInterface.open() blocks on that event forever, so an
+    SFTP download through the fallback hung indefinitely (timeout, not an
+    error) even though exec/scp over the same fallback worked fine."""
+    mitm_port = mitm_fallback_honeypot_sftp
+    local_file = tmp_path / "downloaded.txt"
+
+    result = subprocess.run(
+        [
+            "sftp", *_SSH_OPTS,
+            "-i", str(client_key_file),
+            "-o", "IdentitiesOnly=yes",
+            "-P", str(mitm_port),
+            "testuser@127.0.0.1:/greeting.txt",
+            str(local_file),
+        ],
+        stdin=subprocess.DEVNULL,
+        capture_output=True,
+        timeout=15,
+    )
+
+    assert result.returncode == 0, (
+        f"sftp exited with {result.returncode}\n"
+        f"stdout: {result.stdout.decode()}\n"
+        f"stderr: {result.stderr.decode()}"
+    )
+    assert local_file.read_bytes() == b"hello from the honeypot\n"
+
+
 def test_fallback_key_redirects_to_honeypot(mitm_fallback_honeypot_key, client_key_file):
     """--fallback-key: the honeypot is reached with a private key ssh-mitm
     holds locally instead of a password, using a key distinct from the
