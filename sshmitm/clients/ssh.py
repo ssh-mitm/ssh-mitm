@@ -187,8 +187,13 @@ class SSHClient(BaseSSHClient):
             # return True to force a login
             return True
 
-        except paramiko.SSHException:
-            message = "general ssh error"
+        except paramiko.SSHException as exc:
+            # The specific SSHException subclass and its text are the only
+            # clue to why the remote connection was refused (bad password,
+            # auth method not offered by that server, protocol mismatch,
+            # ...) - swallowing them into a fixed string left this
+            # undiagnosable from the log alone.
+            message = f"general ssh error: {exc!r}"
         except NoAgentKeys:
             message = "no agent keys found"
         except InvalidHostKey:

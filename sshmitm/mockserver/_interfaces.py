@@ -141,9 +141,19 @@ class PublicKeyServer(paramiko.ServerInterface):
 class PasswordServer(paramiko.ServerInterface):
     """Accepts password authentication."""
 
-    def __init__(self, password: str, username: str = "testuser") -> None:
+    def __init__(
+        self,
+        password: str,
+        username: str = "testuser",
+        *,
+        reply_prefix: str = "REMOTE_OK",
+    ) -> None:
         self._password = password
         self._username = username
+        # Lets a test stand up two distinct PasswordServer instances (e.g. a
+        # real target and a honeypot fallback target) and tell which one
+        # actually answered an exec request from the reply text alone.
+        self._reply_prefix = reply_prefix
 
     def get_allowed_auths(self, username: str) -> str:
         del username
@@ -169,11 +179,10 @@ class PasswordServer(paramiko.ServerInterface):
         ).start()
         return True
 
-    @staticmethod
-    def _exec(channel: paramiko.Channel, command: bytes) -> None:
+    def _exec(self, channel: paramiko.Channel, command: bytes) -> None:
         time.sleep(_CHANNEL_REQUEST_REPLY_GRACE)
         try:
-            channel.sendall(f"REMOTE_OK:{command.decode()}\n".encode())
+            channel.sendall(f"{self._reply_prefix}:{command.decode()}\n".encode())
             channel.send_exit_status(0)
         finally:
             channel.close()

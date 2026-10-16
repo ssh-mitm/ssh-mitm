@@ -232,6 +232,7 @@ class Session(BaseSession):
         self._upstream_transport: paramiko.Transport | None = None
         self._upstream_remote_version: str | None = None
         self._upstream_sock: socket.socket | None = None
+        self._upstream_address: tuple[str, int] | None = None
 
     def get_session_log_dir(self) -> str | None:
         """
@@ -331,6 +332,7 @@ class Session(BaseSession):
                 return
             self._upstream_sock = sock
             self._upstream_remote_version = server_banner
+            self._upstream_address = (host, port)
             logging.debug(
                 "(%s) pre-connected to %s:%d for banner passthrough", self, host, port
             )

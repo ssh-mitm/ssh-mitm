@@ -31,6 +31,7 @@ patch_channel()
 from sshmitm.mockserver import (
     MockAgent,
     NoneAuthServer,
+    PasswordServer,
     PublicKeyServer,
     RecordingServer,
     start_server_thread,
@@ -38,14 +39,20 @@ from sshmitm.mockserver import (
 
 
 def _ssh_mitm_bin() -> str:
-    """Return the path to the ssh-mitm binary, searching the active venv first."""
-    found = shutil.which("ssh-mitm")
-    if found:
-        return found
-    # Fall back to the same bin/ directory as the running Python interpreter
+    """Return the path to the ssh-mitm binary, searching the active venv first.
+
+    Must check the running interpreter's own bin/ dir before falling back to
+    a PATH search: shutil.which() picks up whatever "ssh-mitm" happens to be
+    installed system-wide (e.g. a Snap package) ahead of the one just
+    pip-installed into this venv, silently running the tests against the
+    wrong build with no error - previously this order was reversed.
+    """
     candidate = Path(sys.executable).parent / "ssh-mitm"
     if candidate.exists():
         return str(candidate)
+    found = shutil.which("ssh-mitm")
+    if found:
+        return found
     raise FileNotFoundError("ssh-mitm not found — install it into the active venv")
 
 
@@ -188,6 +195,68 @@ def mitm_pubkey_auth(
             "--remote-host", "127.0.0.1",
             "--remote-port", str(mock_ssh_target),
             "--disable-remote-fingerprint-warning",
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        _wait_port(mitm_port)
+        yield mitm_port
+    finally:
+        proc.terminate()
+        proc.wait(timeout=5)
+
+
+@pytest.fixture
+def honeypot_target() -> Generator[int, None, None]:
+    """Start a password-auth mock target standing in for a honeypot.
+
+    Uses its own host key (independent of ``_session_keys``) and a reply
+    prefix distinct from the real target's, so a test can tell from the
+    exec reply alone which backend actually answered.
+
+    Yields the listening port.
+    """
+    port, stop, _ = start_server_thread(
+        lambda: PasswordServer(
+            "honeypot-pass", "honeypot-user", reply_prefix="HONEYPOT_OK"
+        ),
+    )
+    yield port
+    stop.set()
+
+
+@pytest.fixture
+def mitm_fallback_honeypot(
+    tmp_path: Path,
+    mock_ssh_target: int,
+    honeypot_target: int,
+) -> Generator[int, None, None]:
+    """Start ssh-mitm with --enable-auth-fallback against the honeypot.
+
+    ``mock_ssh_target`` (PublicKeyServer) only accepts pubkey auth and is
+    reachable for the pk_lookup probe, but no agent is forwarded by the
+    client in tests using this fixture — so the real connect must fail over
+    to the honeypot. Deliberately does NOT depend on ``fake_agent``: that is
+    what makes the fallback path trigger instead of a full agent-forwarded
+    proxy session.
+
+    Yields the MITM listening port.
+    """
+    mitm_port = _free_port()
+
+    proc = subprocess.Popen(
+        [
+            _ssh_mitm_bin(), "server",
+            "--listen-port", str(mitm_port),
+            "--remote-host", "127.0.0.1",
+            "--remote-port", str(mock_ssh_target),
+            "--disable-remote-fingerprint-warning",
+            "--enable-auth-fallback",
+            "--fallback-host", "127.0.0.1",
+            "--fallback-port", str(honeypot_target),
+            "--fallback-username", "honeypot-user",
+            "--fallback-password", "honeypot-pass",
         ],
         stdout=subprocess.DEVNULL,
         stderr=subprocess.DEVNULL,

@@ -659,12 +659,37 @@ class Authenticator(SSHMITMBaseModule):
 
         auth_status = paramiko.common.AUTH_FAILED
         with self.session.ssh.client_created:
-            upstream_transport = (
-                # pylint: disable-next=protected-access
-                self.session._upstream_transport
-            )
+            # pylint: disable-next=protected-access
+            upstream_transport = self.session._upstream_transport
+            # pylint: disable-next=protected-access
+            upstream_address = self.session._upstream_address
             # pylint: disable-next=protected-access
             self.session._upstream_transport = None
+            # pylint: disable-next=protected-access
+            self.session._upstream_address = None
+            if upstream_transport is not None and upstream_address != (host, port):
+                # The pre-connected upstream transport (opened for banner
+                # passthrough against the configured remote host) is only
+                # safe to reuse when this connect() call targets that same
+                # host/port. A caller asking for a different target - e.g.
+                # the honeypot fallback connecting to --fallback-host while
+                # a transport to --remote-host is already pre-connected -
+                # must get a fresh transport to the host it actually asked
+                # for, or authentication silently runs against the wrong
+                # server.
+                logging.debug(
+                    "(%s) discarding pre-connected upstream transport to %s, "
+                    "connect() requested %s:%d",
+                    self.session,
+                    upstream_address,
+                    host,
+                    port,
+                )
+                try:
+                    upstream_transport.close()
+                except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
+                    pass
+                upstream_transport = None
             self.session.ssh.client = SSHClient(
                 host,
                 port,
