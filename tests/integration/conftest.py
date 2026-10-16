@@ -270,6 +270,77 @@ def mitm_fallback_honeypot(
 
 
 @pytest.fixture(scope="session")
+def _honeypot_key_pair() -> paramiko.PKey:
+    """The honeypot's own key pair, distinct from ``_session_keys``'s
+    client key: the point of --fallback-key is that the honeypot trusts a
+    key ssh-mitm holds locally, not the client's own key."""
+    return paramiko.RSAKey.generate(2048)
+
+
+@pytest.fixture
+def honeypot_key_file(tmp_path: Path, _honeypot_key_pair: paramiko.PKey) -> Path:
+    """Write the honeypot's private key to a temp file for --fallback-key."""
+    key_file = tmp_path / "honeypot_rsa"
+    _honeypot_key_pair.write_private_key_file(str(key_file))
+    os.chmod(str(key_file), 0o600)
+    return key_file
+
+
+@pytest.fixture
+def honeypot_pubkey_target(
+    _honeypot_key_pair: paramiko.PKey,
+) -> Generator[int, None, None]:
+    """Start a pubkey-auth mock target standing in for a honeypot that is
+    reached via --fallback-key instead of --fallback-password.
+
+    Yields the listening port.
+    """
+    port, stop, _ = start_server_thread(
+        lambda: PublicKeyServer(_honeypot_key_pair, reply_prefix="HONEYPOT_OK"),
+    )
+    yield port
+    stop.set()
+
+
+@pytest.fixture
+def mitm_fallback_honeypot_key(
+    tmp_path: Path,
+    mock_ssh_target: int,
+    honeypot_pubkey_target: int,
+    honeypot_key_file: Path,
+) -> Generator[int, None, None]:
+    """Same scenario as mitm_fallback_honeypot, but the honeypot is reached
+    with --fallback-key instead of --fallback-password.
+
+    Yields the MITM listening port.
+    """
+    mitm_port = _free_port()
+
+    proc = subprocess.Popen(
+        [
+            _ssh_mitm_bin(), "server",
+            "--listen-port", str(mitm_port),
+            "--remote-host", "127.0.0.1",
+            "--remote-port", str(mock_ssh_target),
+            "--disable-remote-fingerprint-warning",
+            "--enable-auth-fallback",
+            "--fallback-host", "127.0.0.1",
+            "--fallback-port", str(honeypot_pubkey_target),
+            "--fallback-username", "honeypot-user",
+            "--fallback-key", str(honeypot_key_file),
+        ],
+        stdout=subprocess.DEVNULL,
+        stderr=subprocess.DEVNULL,
+    )
+    try:
+        _wait_port(mitm_port)
+        yield mitm_port
+    finally:
+        proc.terminate()
+        proc.wait(timeout=5)
+
+
+@pytest.fixture(scope="session")
 def mock_none_auth_target(
     _session_keys: tuple[paramiko.PKey, paramiko.PKey],
 ) -> Generator[int, None, None]:

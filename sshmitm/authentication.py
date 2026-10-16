@@ -393,11 +393,18 @@ class Authenticator(SSHMITMBaseModule):
             required="--enable-auth-fallback" in sys.argv,
             help="username for the honeypot",
         )
-        honeypot_group.add_argument(
+        fallback_credentials = honeypot_group.add_mutually_exclusive_group(
+            required="--enable-auth-fallback" in sys.argv,
+        )
+        fallback_credentials.add_argument(
             "--fallback-password",
             dest="fallback_password",
-            required="--enable-auth-fallback" in sys.argv,
             help="password for the honeypot",
+        )
+        fallback_credentials.add_argument(
+            "--fallback-key",
+            dest="fallback_key",
+            help="ssh private key for the honeypot",
         )
 
     def __init__(self, session: "sshmitm.session.Session") -> None:
@@ -592,14 +599,24 @@ class Authenticator(SSHMITMBaseModule):
                 )
             return paramiko.common.AUTH_FAILED
 
-        auth_status = self.connect(
-            user=self.args.fallback_username or username,
-            password=self.args.fallback_password,
-            host=self.args.fallback_host,
-            port=self.args.fallback_port,
-            method=AuthenticationMethod.PASSWORD,
-            run_post_auth=False,
-        )
+        if self.args.fallback_key:
+            auth_status = self.connect(
+                user=self.args.fallback_username or username,
+                key=RemoteCredentials.load_private_key(self.args.fallback_key),
+                host=self.args.fallback_host,
+                port=self.args.fallback_port,
+                method=AuthenticationMethod.PUBLICKEY,
+                run_post_auth=False,
+            )
+        else:
+            auth_status = self.connect(
+                user=self.args.fallback_username or username,
+                password=self.args.fallback_password,
+                host=self.args.fallback_host,
+                port=self.args.fallback_port,
+                method=AuthenticationMethod.PASSWORD,
+                run_post_auth=False,
+            )
         if auth_status == paramiko.common.AUTH_SUCCESSFUL:
             logging.warning(
                 Colors.warning(
@@ -768,6 +785,14 @@ class AuthenticatorPassThrough(Authenticator):
             --fallback-host 192.0.2.1 \\
             --fallback-username honeypot \\
             --fallback-password secret
+
+    ``--fallback-key`` authenticates to the honeypot with a private key
+    instead of a password - use one or the other, not both::
+
+        ssh-mitm server --enable-auth-fallback \\
+            --fallback-host 192.0.2.1 \\
+            --fallback-username honeypot \\
+            --fallback-key /path/to/honeypot_key
 
     **Notes**
 

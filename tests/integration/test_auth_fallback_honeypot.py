@@ -96,3 +96,24 @@ def test_fallback_redirects_to_honeypot_repeatedly(mitm_fallback_honeypot, clien
             f"attempt {i}: expected the honeypot's reply, got "
             f"stdout={result.stdout!r} stderr={result.stderr!r}"
         )
+
+
+def test_fallback_key_redirects_to_honeypot(mitm_fallback_honeypot_key, client_key_file):
+    """--fallback-key: the honeypot is reached with a private key ssh-mitm
+    holds locally instead of a password, using a key distinct from the
+    client's own (mitm_fallback_honeypot_key's honeypot_pubkey_target only
+    accepts the honeypot's key, never the client's)."""
+    mitm_port = mitm_fallback_honeypot_key
+
+    result = _ssh_no_agent(mitm_port, client_key_file, "echo fallback-key-test")
+
+    assert result.returncode == 0, (
+        f"ssh exited with {result.returncode}\n"
+        f"stdout: {result.stdout.decode()}\n"
+        f"stderr: {result.stderr.decode()}"
+    )
+    assert b"HONEYPOT_OK:echo fallback-key-test" in result.stdout, (
+        "expected the honeypot's reply, got:\n"
+        f"stdout: {result.stdout!r}\n"
+        f"stderr: {result.stderr!r}"
+    )

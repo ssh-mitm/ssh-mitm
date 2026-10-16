@@ -135,6 +135,7 @@ Authentication-Plugins
       fallback-port = 22
       fallback-username =
       fallback-password =
+      fallback-key =
 
    :option boolean close-pubkey-enumerator-with-session: :bdg-primary-line:`True` :bdg-primary:`False` |br|
       Closes the public key enumerator when the session is closed. Useful for hiding traces of user validity oracle queries.
@@ -163,7 +164,9 @@ Authentication-Plugins
    :option string fallback-username: |br|
       Specifies the username for the honeypot fallback. Required if ``enable-auth-fallback`` is set to ``True``.
    :option string fallback-password: |br|
-      Specifies the password for the honeypot fallback. Required if ``enable-auth-fallback`` is set to ``True``.
+      Specifies the password for the honeypot fallback. Either this or ``fallback-key`` is required if ``enable-auth-fallback`` is set to ``True``.
+   :option string fallback-key: |br|
+      Specifies the path to an SSH private key for the honeypot fallback, used instead of ``fallback-password``.
 
 .. confval:: [sshmitm.interfaces.server:ServerInterface]
 

@@ -101,8 +101,17 @@ class NoneAuthServer(paramiko.ServerInterface):
 class PublicKeyServer(paramiko.ServerInterface):
     """Accepts one specific public key."""
 
-    def __init__(self, accepted_key: paramiko.PKey) -> None:
+    def __init__(
+        self,
+        accepted_key: paramiko.PKey,
+        *,
+        reply_prefix: str = "REMOTE_OK",
+    ) -> None:
         self._accepted_key = accepted_key
+        # Lets a test stand up two distinct PublicKeyServer instances (e.g. a
+        # real target and a honeypot fallback target) and tell which one
+        # actually answered an exec request from the reply text alone.
+        self._reply_prefix = reply_prefix
 
     def get_allowed_auths(self, username: str) -> str:
         del username
@@ -128,11 +137,10 @@ class PublicKeyServer(paramiko.ServerInterface):
         ).start()
         return True
 
-    @staticmethod
-    def _exec(channel: paramiko.Channel, command: bytes) -> None:
+    def _exec(self, channel: paramiko.Channel, command: bytes) -> None:
         time.sleep(_CHANNEL_REQUEST_REPLY_GRACE)
         try:
-            channel.sendall(f"REMOTE_OK:{command.decode()}\n".encode())
+            channel.sendall(f"{self._reply_prefix}:{command.decode()}\n".encode())
             channel.send_exit_status(0)
         finally:
             channel.close()

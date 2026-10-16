@@ -122,6 +122,9 @@ SSH-MITM can redirect the session to a honeypot.
         --fallback-username HONEYPOT_USER \
         --fallback-password HONEYPOT_PASSWORD
 
+``--fallback-key PATH`` authenticates to the honeypot with a private key instead
+of a password - use one or the other, not both.
+
 Connections are only redirected to the honeypot if no agent was forwarded after publickey authentication.
 All other connections are forwarded to the destination server and a full man in the middle attack is possible.
 
