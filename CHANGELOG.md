@@ -7,6 +7,10 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Fixed
+
+- `--enable-auth-fallback`: the honeypot connection used the wrong upstream transport and failed
+
 ## [6.0.1] - 2026-10-14
 
 ### Added
