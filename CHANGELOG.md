@@ -7,9 +7,14 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ## [Unreleased]
 
+### Added
+
+- `--fallback-key`: authenticate to the auth-fallback honeypot with a private key instead of a password
+
 ### Fixed
 
 - `--enable-auth-fallback`: the honeypot connection used the wrong upstream transport and failed
+- `--enable-auth-fallback`: SFTP hung after connecting to the honeypot, exec/scp were unaffected
 
 ## [6.0.1] - 2026-10-14
 
