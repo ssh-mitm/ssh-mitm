@@ -1,4 +1,5 @@
 # pylint: disable=too-many-lines
+import contextlib
 import logging
 import os
 import queue
@@ -702,10 +703,8 @@ class Authenticator(SSHMITMBaseModule):
                     host,
                     port,
                 )
-                try:
+                with contextlib.suppress(Exception):
                     upstream_transport.close()
-                except Exception:  # pylint: disable=broad-exception-caught  # noqa: BLE001
-                    pass
                 upstream_transport = None
             self.session.ssh.client = SSHClient(
                 host,
