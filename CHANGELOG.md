@@ -9,7 +9,12 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 
 ### Added
 
+- Python 3.15 is supported
 - `--fallback-key`: authenticate to the auth-fallback honeypot with a private key instead of a password
+
+### Security
+
+- Updated pinned dependencies (aiohttp, urllib3, certifi, multidict) to versions without known vulnerabilities
 
 ### Fixed
 

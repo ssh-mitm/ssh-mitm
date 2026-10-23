@@ -14,14 +14,14 @@ sha256 = "9243213661e29250eb41368e5daa826fc017156c3b8a11440826b2e3ed376472"
 
 [[packages]]
 name = "aiohttp"
-version = "3.14.3"
+version = "3.14.5"
 
 [[packages.wheels]]
-name = "aiohttp-3.14.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
-url = "https://files.pythonhosted.org/packages/a5/b9/2b8f0c0ce09c87a1daf80fd483431b56b1435d3f62789bc86f572e1245de/aiohttp-3.14.3-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+name = "aiohttp-3.14.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+url = "https://files.pythonhosted.org/packages/42/74/2a2b22953de15c6c8a80debf26db3047e4e8a5a5db6dd7c2c6c01eec0605/aiohttp-3.14.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
 
 [packages.wheels.hashes]
-sha256 = "53e7b4ce82b54a8bcc71b3b67a5cbd177ca1d7f592cbc92cd38b7349f73482db"
+sha256 = "50a195903119008fe9cc68710535eb37f556ffffd6a7759afe70a2c145587045"
 
 [[packages]]
 name = "aiosignal"
@@ -80,14 +80,14 @@ sha256 = "611f0a17aa4a25a69362dcc299fda5c8a3d4f160e2abb3831041feb77393a14a"
 
 [[packages]]
 name = "certifi"
-version = "2026.7.22"
+version = "2026.10.19"
 
 [[packages.wheels]]
-name = "certifi-2026.7.22-py3-none-any.whl"
-url = "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl"
+name = "certifi-2026.10.19-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/c4/51/29046e48f693c54e5b7412216d447a1d8362c9653148d98c02cdf65fa733/certifi-2026.10.19-py3-none-any.whl"
 
 [packages.wheels.hashes]
-sha256 = "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"
+sha256 = "42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b"
 
 [[packages]]
 name = "cffi"
@@ -223,14 +223,14 @@ sha256 = "84008a41e51615a49fc9966191ff91509e3c40b939176e643fd50a5c2196b8f8"
 
 [[packages]]
 name = "multidict"
-version = "6.8.0"
+version = "7.1.0"
 
 [[packages.wheels]]
-name = "multidict-6.8.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
-url = "https://files.pythonhosted.org/packages/f2/9d/6bb4f84fdd82acfa09dc312ac133e7f76cbf2370004447f2a90e65e5d63f/multidict-6.8.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+name = "multidict-7.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+url = "https://files.pythonhosted.org/packages/ec/ac/a91709d7153489a3b53661b62af371112b96fb083d10443e22d54665a1e1/multidict-7.1.0-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
 
 [packages.wheels.hashes]
-sha256 = "ab83fdd8cf307353edba9c427c17a3a021c2522d690f5633dd9f72d28b48ccca"
+sha256 = "c54ae1b89e582aa25f213cd8b5eac0bda1724e79299f486baeb3f562bbf82ca5"
 
 [[packages]]
 name = "packaging"
@@ -388,14 +388,14 @@ sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
 
 [[packages]]
 name = "urllib3"
-version = "2.7.0"
+version = "2.8.0"
 
 [[packages.wheels]]
-name = "urllib3-2.7.0-py3-none-any.whl"
-url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl"
+name = "urllib3-2.8.0-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl"
 
 [packages.wheels.hashes]
-sha256 = "9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897"
+sha256 = "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3"
 
 [[packages]]
 name = "wcwidth"
@@ -421,11 +421,11 @@ sha256 = "8ec7aeb92e956810eedc268fe75f8c11f05d6c3d864d0995a53eb6623b3b6a51"
 
 [[packages]]
 name = "yarl"
-version = "1.24.5"
+version = "1.25.1"
 
 [[packages.wheels]]
-name = "yarl-1.24.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
-url = "https://files.pythonhosted.org/packages/66/ca/95aa4d0e5b7ea4f20e4d577c42d001ed9df207569fdb063cc5ed4ebb496b/yarl-1.24.5-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+name = "yarl-1.25.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
+url = "https://files.pythonhosted.org/packages/95/0c/a71501bbc1a674ff72c4d6c2b75f4d9a5af819f5244c3a7558080a8802c5/yarl-1.25.1-cp311-cp311-manylinux2014_x86_64.manylinux_2_17_x86_64.manylinux_2_28_x86_64.whl"
 
 [packages.wheels.hashes]
-sha256 = "570fec8fbd22b032733625f03f10b7ff023bc399213db15e72a7acaef28c2f4e"
+sha256 = "d5add7b4ca7afeea91d52e4d4e4db3b1fe9885b71f07054560d8c4296b7441a2"

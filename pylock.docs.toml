@@ -47,14 +47,14 @@ sha256 = "d6f88de62e1d4e38ecb1077eb9724cd0eff29d2a08ca16a401e9b9e93f117cf9"
 
 [[packages]]
 name = "certifi"
-version = "2026.7.22"
+version = "2026.10.19"
 
 [[packages.wheels]]
-name = "certifi-2026.7.22-py3-none-any.whl"
-url = "https://files.pythonhosted.org/packages/0b/a7/71ac2cff56fec219ed242bb11b8efb69fcc4bec75db06fb7bfe35de520e6/certifi-2026.7.22-py3-none-any.whl"
+name = "certifi-2026.10.19-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/c4/51/29046e48f693c54e5b7412216d447a1d8362c9653148d98c02cdf65fa733/certifi-2026.10.19-py3-none-any.whl"
 
 [packages.wheels.hashes]
-sha256 = "62f22742b58a1a33014a2b6b706588a8d7e2a88ae7bd1a6ebe8c992928483775"
+sha256 = "42d35340cc5b9ba78e818ddbff0c5b1c2b779de448a340fd1b989f5fa8670e1b"
 
 [[packages]]
 name = "charset-normalizer"
@@ -454,14 +454,14 @@ sha256 = "481caa481374e813c1b176ada14e97f1f67a4539ce9cfeb3f350d78d6370c2e8"
 
 [[packages]]
 name = "urllib3"
-version = "2.7.0"
+version = "2.8.0"
 
 [[packages.wheels]]
-name = "urllib3-2.7.0-py3-none-any.whl"
-url = "https://files.pythonhosted.org/packages/7f/3e/5db95bcf282c52709639744ca2a8b149baccf648e39c8cc87553df9eae0c/urllib3-2.7.0-py3-none-any.whl"
+name = "urllib3-2.8.0-py3-none-any.whl"
+url = "https://files.pythonhosted.org/packages/92/9d/c4e665119135114480843e7ab388fa94d8480650450e6f8e26b70d323a4c/urllib3-2.8.0-py3-none-any.whl"
 
 [packages.wheels.hashes]
-sha256 = "9fb4c81ebbb1ce9531cce37674bbc6f1360472bc18ca9a553ede278ef7276897"
+sha256 = "0cf3cae568d36aa9576b28dfb35f11328f1cb974ca7647d9475ebb86c75ac6e3"
 
 [[packages]]
 name = "wheel"
