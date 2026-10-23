@@ -214,7 +214,7 @@ from what actually ships:
 
   `python-package.yml` deliberately does *not* use it, even though it
   also runs hatch (`hatch run lint:check`) - it matrix-tests against
-  four Python versions (3.11-3.14), and pylock's hashes pin exact wheel
+  four Python versions (3.11-3.15), and pylock's hashes pin exact wheel
   artifacts for one specific (Python version, platform) combination.
   Hash-pinning `hatch` there once broke every job for whichever Python
   version wasn't the one the lock happened to be generated with (a
