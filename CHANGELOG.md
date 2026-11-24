@@ -15,6 +15,7 @@ and this project adheres to [Semantic Versioning](https://semver.org/spec/v2.0.0
 ### Security
 
 - Updated pinned dependencies (aiohttp, urllib3, certifi, multidict) to versions without known vulnerabilities
+- GitHub Actions dependencies are locked in `.github/workflows/actions.lock` (`gh actions-lock`)
 
 ### Fixed
 
