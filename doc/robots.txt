@@ -1,3 +1,11 @@
+# User-initiated fetchers of AI assistants (the "Ask AI about this page" links
+# hand them the page source under /_sources/).
+User-agent: ChatGPT-User
+User-agent: Claude-User
+Allow: /_sources/
+Disallow: /genindex.html
+Disallow: /search.html
+
 User-agent: *
 Disallow: /_sources/
 Disallow: /genindex.html
