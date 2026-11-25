@@ -13,8 +13,8 @@ with no stability guarantees.
 References:
     MS-PSRP 2.2.1 PowerShell Remoting Protocol Message
         https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-psrp/497ac440-89fb-4cb3-9cc1-3434c1aa74c3
-    MS-PSRP 2.2.2 Message Type
-        https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-psrp/33d75f2b-8869-4e1d-a736-4d64d3f28542
+    MS-PSRP 2.2.2 Message Types
+        https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-psrp/a6136495-3260-4ff9-a982-7edf7ec95af2
     MS-PSRP 2.2.4 Packet Fragment
         https://learn.microsoft.com/en-us/openspecs/windows_protocols/ms-psrp/3610dae4-67f7-4175-82da-a3fab83af288
 """
